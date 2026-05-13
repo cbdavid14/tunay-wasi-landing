@@ -4,6 +4,8 @@ dist
 .env.production
 .env.local
 .env.*.local
+functions/.env.local
+functions/lib
 
 .idea
 .claude

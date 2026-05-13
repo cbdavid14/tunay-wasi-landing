@@ -1,3 +1,4 @@
+import { Routes, Route } from 'react-router-dom';
 import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/sections/Hero';
@@ -11,8 +12,9 @@ import Cafe from '@/features/catalog/components/Cafe';
 import Contacto from '@/features/contact/components/Contacto';
 import Checkout from '@/features/checkout/components/Checkout';
 import GrainOverlay from '@/components/decor/GrainOverlay';
+import FichaCaficultor from '@/pages/FichaCaficultor';
 
-export default function App() {
+function LandingPage() {
   return (
     <>
       <GrainOverlay/>
@@ -31,5 +33,14 @@ export default function App() {
       <CartDrawer/>
       <Checkout/>
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/ficha/:id" element={<FichaCaficultor />} />
+      <Route path="*" element={<LandingPage />} />
+    </Routes>
   );
 }
