@@ -71,7 +71,7 @@ export default function CaficultorProfileModal({ producer: p, idx, total, onClos
           </div>
 
           {/* SCA badge */}
-          <div style={{ position: 'absolute', top: 16, right: 56, background: '#c96e4b', color: '#f2e0cc', padding: '8px 14px', borderRadius: 8, fontFamily: 'Cormorant Garamond, serif', fontSize: 22, fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1, boxShadow: '0 8px 18px -8px #533b22aa' }}>
+          <div style={{ position: 'absolute', top: 16, right: 56, background: '#c96e4b', color: '#f2e0cc', padding: '8px 14px', borderRadius: 8, fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(16px, 3.5vw, 22px)', fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1, boxShadow: '0 8px 18px -8px #533b22aa', maxWidth: 'calc(100% - 80px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             SCA {p.score}
           </div>
 
@@ -103,7 +103,7 @@ export default function CaficultorProfileModal({ producer: p, idx, total, onClos
         </div>
 
         {/* body */}
-        <div style={{ padding: '32px 36px 40px' }}>
+        <div style={{ padding: 'clamp(20px, 4vw, 32px) clamp(16px, 4vw, 36px) 40px' }}>
           {/* name + location */}
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#c96e4b', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -160,25 +160,25 @@ export default function CaficultorProfileModal({ producer: p, idx, total, onClos
           )}
 
           {/* stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, background: '#1f302812', borderRadius: 14, overflow: 'hidden', marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 2, background: '#1f302812', borderRadius: 14, overflow: 'hidden', marginBottom: 24 }}>
             {[
-              [p.yearsExp != null ? String(p.yearsExp) : '—', 'Años de experiencia'],
+              [p.yearsExp != null ? String(p.yearsExp) : '—', 'Años de exp.'],
               [p.farmHa != null ? String(p.farmHa) : '—', 'Ha de cafetal'],
-              [`SCA ${p.score}`, 'Cata (referencial)'],
+              [`SCA ${p.score}`, 'Cata confirmada'],
             ].map(([val, label]) => (
-              <div key={label} style={{ background: '#f2e0cc', padding: '20px 18px', textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 36, fontWeight: 700, color: '#1f3028', lineHeight: 1, marginBottom: 6 }}>{val}</div>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.2em', color: '#533b22', textTransform: 'uppercase' }}>{label}</div>
+              <div key={label} style={{ background: '#f2e0cc', padding: 'clamp(12px, 3vw, 20px) clamp(8px, 2vw, 18px)', textAlign: 'center' }}>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(18px, 4vw, 34px)', fontWeight: 700, color: '#1f3028', lineHeight: 1, marginBottom: 6, wordBreak: 'break-word' }}>{val}</div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 'clamp(7px, 1.5vw, 9px)', letterSpacing: '0.15em', color: '#533b22', textTransform: 'uppercase' }}>{label}</div>
               </div>
             ))}
           </div>
 
           {/* specs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4, borderTop: '1px solid #1f302820', paddingTop: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 4, borderTop: '1px solid #1f302820', paddingTop: 20 }}>
             {([['Alt.', p.alt], ['Variedad', p.variety], ['Proceso', p.process]] as [string, string][]).map(([k, v]) => (
               <div key={k}>
                 <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.2em', color: '#533b22', textTransform: 'uppercase', marginBottom: 5 }}>{k}</div>
-                <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 600, color: '#1f3028' }}>{v}</div>
+                <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(11px, 2.5vw, 13px)', fontWeight: 600, color: '#1f3028', wordBreak: 'break-word' }}>{v}</div>
               </div>
             ))}
           </div>
