@@ -48,7 +48,7 @@ export default function Cafe() {
             <span style={{ fontFamily: 'Bowlby One SC, sans-serif', fontSize: 11, letterSpacing: '0.32em', color: '#c96e4b', textTransform: 'uppercase' }}>03 — Café de cosecha</span>
           </div>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 14, lineHeight: 1.65, color: '#533b22', maxWidth: 380, margin: 0 }}>
-            Reserva ahora — tostamos un día antes de despachar. Tu pedido inicia el siguiente ciclo de tueste.
+            Preventa abierta — tostamos y despachamos en junio.
           </p>
         </div>
 
