@@ -9,6 +9,11 @@
         "caficultores": ["alpaso-app-caficultores"],
         "negocios": ["alpaso-app-negocios"]
       }
+    },
+    "tunay-wasi": {
+      "hosting": {
+        "clientes": ["tunay-wasi"]
+      }
     }
   }
 }

@@ -29,13 +29,13 @@ export default function Preventa() {
   const minLabel = minEntry ? `${Money.formatPEN(minEntry[1])} · ${minEntry[0]}` : 'S/ 78.00 · 250 g';
 
   return (
-    <section id="preventa" style={{ position: 'relative', padding: '100px 36px', background: '#1f3028', color: '#f2e0cc', overflow: 'hidden' }}>
+    <section id="preventa" style={{ position: 'relative', padding: 'clamp(60px, 8vw, 100px) clamp(16px, 4vw, 36px)', background: '#1f3028', color: '#f2e0cc', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: 720, height: 720, borderRadius: '50%', background: 'radial-gradient(circle, #c96e4b66 0%, #c96e4b00 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '-30%', left: '-10%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, #8faf8a44 0%, #8faf8a00 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', inset: 0, opacity: 0.18, backgroundImage: 'radial-gradient(#c4b29766 1px, transparent 1px)', backgroundSize: '24px 24px', pointerEvents: 'none' }} />
 
       <div style={{ maxWidth: 1320, margin: '0 auto', position: 'relative' }}>
-        <div style={{ background: 'linear-gradient(135deg, #2a3d33 0%, #1f3028 60%)', border: '1px solid #c96e4b44', borderRadius: 28, padding: 35, position: 'relative', overflow: 'hidden', boxShadow: '0 40px 80px -32px #000000aa' }}>
+        <div style={{ background: 'linear-gradient(135deg, #2a3d33 0%, #1f3028 60%)', border: '1px solid #c96e4b44', borderRadius: 28, padding: 'clamp(20px, 4vw, 35px)', position: 'relative', overflow: 'hidden', boxShadow: '0 40px 80px -32px #000000aa' }}>
           <div style={{ position: 'absolute', top: 24, bottom: 24, left: 0, width: 4, background: 'linear-gradient(180deg, #c96e4b 0%, #8faf8a 100%)', borderRadius: 4 }} />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 64, alignItems: 'center' }} className="tw-2col">
@@ -68,8 +68,8 @@ export default function Preventa() {
                     [String(t.s).padStart(2, '0'), 'seg'],
                   ] as [string, string][]).map(([n, l]) => (
                     <Fragment key={l}>
-                      <div style={{ flex: 1, textAlign: 'center', padding: '20px 8px', background: '#0f1a14', border: '1px solid #c96e4b33', borderRadius: 14, boxShadow: 'inset 0 1px 0 #ffffff08, 0 6px 20px -10px #000000cc', minWidth: 80 }}>
-                        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 44, lineHeight: 1, color: '#f2e0cc', letterSpacing: '0.02em' }}>{n}</div>
+                      <div style={{ flex: 1, textAlign: 'center', padding: 'clamp(12px, 2vw, 20px) 4px', background: '#0f1a14', border: '1px solid #c96e4b33', borderRadius: 14, boxShadow: 'inset 0 1px 0 #ffffff08, 0 6px 20px -10px #000000cc', minWidth: 0 }}>
+                        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 'clamp(28px, 5vw, 44px)', lineHeight: 1, color: '#f2e0cc', letterSpacing: '0.02em' }}>{n}</div>
                         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#c4b29799', marginTop: 8, textTransform: 'uppercase' }}>{l}</div>
                       </div>
                     </Fragment>
