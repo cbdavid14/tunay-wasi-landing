@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 
 export const SLICES = [
-  { pct: 38.6, label: 'Caficultor',             color: '#c96e4b', detail: 'Pago directo a la finca antes de que el grano viaje — por encima del doble del comercio justo tradicional.' },
-  { pct: 14.0, label: 'Tueste + Cata Q-Grader', color: '#8faf8a', detail: 'Tostado artesanal en Lima + análisis sensorial certificado por Q-Grader.' },
-  { pct: 22.4, label: 'Packaging y Envío',       color: '#c4b297', detail: 'Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.' },
-  { pct: 19.0, label: 'Tunay Wasi',              color: '#1f3028', detail: 'Plataforma, tecnología y operación del marketplace.' },
+  { pct: 50, label: 'Caficultor',             color: '#c96e4b', detail: 'Hasta el 50% del precio neto directo a la finca, antes de que el grano viaje.' },
+  { pct: 17, label: 'Tueste + Cata Q-Grader', color: '#8faf8a', detail: 'Tostado artesanal en Lima + análisis sensorial certificado por Q-Grader.' },
+  { pct:  6, label: 'Packaging y Envío',       color: '#c4b297', detail: 'Packaging completo y envío desde origen.' },
+  { pct: 27, label: 'Tunay Wasi',              color: '#3d5c4a', detail: 'Plataforma, tecnología y operación del marketplace.' },
 ];
 
 export default function Modelo() {
