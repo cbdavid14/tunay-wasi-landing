@@ -14,7 +14,7 @@ const TEMAS: [Tema, string][] = [
 const STATIC_CONTACTS: [string, string][] = [
   ['Correo', 'hola@tunaywasi.pe'],
   ['Lima', 'Jr. Independencia 240, Barranco'],
-  ['Cosecha', 'Acopio en Cusco · San Martín · Puno'],
+  ['Cosecha', 'Jaén, Cajamarca'],
 ];
 
 export default function Contacto() {
@@ -27,7 +27,7 @@ export default function Contacto() {
     ? [
         ['Correo', landingConfig.contact.email],
         ['Lima', landingConfig.contact.address.replace(', Lima', '')],
-        ['Cosecha', 'Acopio en Cusco · San Martín · Puno'],
+        ['Cosecha', 'Jaén, Cajamarca'],
       ]
     : STATIC_CONTACTS;
 

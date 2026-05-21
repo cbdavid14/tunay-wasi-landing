@@ -8,8 +8,6 @@ export default function CafiHero() {
   const { data } = useCafiLandingConfig();
   const minPrice = data?.hero.minPricePerKg.toFixed(2) ?? '34.65';
   const maxPrice = data?.hero.maxPricePerKg.toFixed(2) ?? '85.78';
-  const minLabel = data?.hero.minScaLabel ?? '82 pts';
-  const maxLabel = data?.hero.maxScaLabel ?? '90+ pts';
 
   const fade = (delay: number): React.CSSProperties => ({
     opacity: loaded ? 1 : 0,

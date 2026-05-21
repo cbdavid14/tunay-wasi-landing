@@ -96,8 +96,8 @@ const STATIC_CAFICULTORES: Caficultor[] = [
 
 const STATIC_CYCLE: CicloActivo = {
   closeAt: '31 may.',
-  deliverLima: 'ago. (1a semana)',
-  deliverProv: 'ago. (2a semana)',
+  deliverLima: 'jun. (1a semana)',
+  deliverProv: 'jun. (2a semana)',
   cutoffTimestamp: new Date('2026-05-31T23:59:59-05:00').getTime(),
 };
 
@@ -115,9 +115,10 @@ export async function fetchProductos(): Promise<Producto[]> {
     const snap = await getDocs(collection(db, 'productos'));
     if (snap.empty) return STATIC_PRODUCTS;
     const mapped = snap.docs.map((d) => mapProductoDoc(d.id, d.data()));
-    const valid = mapped.filter((p) => p.name && p.weights);
+    const valid = mapped.filter((p) => p.name && p.weights && p.label === 'PREVENTA');
     return valid.length > 0 ? valid : STATIC_PRODUCTS;
-  } catch {
+  } catch (e) {
+    console.error('[fetchProductos]', e);
     return STATIC_PRODUCTS;
   }
 }
@@ -128,8 +129,8 @@ export async function fetchCaficultores(): Promise<Caficultor[]> {
     if (snap.empty) return STATIC_CAFICULTORES;
     const mapped = snap.docs
       .map((d) => mapCaficultorDoc(d.id, d.data() as CaficultorDoc))
-      .filter((c) => c.name && c.farm);
-    return mapped.length > 0 ? mapped : STATIC_CAFICULTORES;
+      .filter((c) => c.name && c.farm && c.status === 'activo');
+    return mapped;
   } catch {
     return STATIC_CAFICULTORES;
   }
@@ -152,13 +153,12 @@ export interface ComisionesData { b2c: B2CSlice[]; producerShareFactor: number }
 
 export const STATIC_COMISIONES: ComisionesData = {
   b2c: [
-    { key: 'caficultor',  pct: 42, label: 'Caficultor',             color: '#c96e4b', detail: 'Pago directo a la finca, antes de que el grano viaje.' },
-    { key: 'tostador',   pct: 15, label: 'Tueste + Cata Q-Grader', color: '#8faf8a', detail: 'Tostado artesanal y certificación de calidad SCA.' },
-    { key: 'logistica',  pct:  6, label: 'Flete y Empaque',         color: '#c4b297', detail: 'Transporte desde origen y embalaje kraft reciclado.' },
-    { key: 'igv',        pct: 15, label: 'IGV (18%)',               color: '#533b22', detail: 'Impuesto al consumo incluido en el precio final.' },
-    { key: 'plataforma', pct: 22, label: 'Tunay Wasi',              color: '#1f3028', detail: 'Plataforma, tecnología y operación del marketplace.' },
+    { key: 'caficultor',  pct: 38.6, label: 'Caficultor',             color: '#c96e4b', detail: 'Pago directo a la finca antes de que el grano viaje.' },
+    { key: 'tostador',   pct: 14.0, label: 'Tueste + Cata Q-Grader', color: '#8faf8a', detail: 'Tostado artesanal y certificación de calidad SCA.' },
+    { key: 'logistica',  pct: 22.4, label: 'Packaging y Envío',       color: '#c4b297', detail: 'Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.' },
+    { key: 'plataforma', pct: 19.0, label: 'Tunay Wasi',              color: '#1f3028', detail: 'Plataforma, tecnología y operación del marketplace.' },
   ],
-  producerShareFactor: 0.421,
+  producerShareFactor: 0.386,
 };
 
 export async function fetchComisiones(): Promise<ComisionesData> {
@@ -222,9 +222,14 @@ export const STATIC_LANDING_CONFIG: LandingConfigData = {
   contact: {
     email: 'tunaywasi@gmail.com',
     whatsapp: '+51917959370',
-    address: 'Jr. Independencia 240, Barranco, Lima',
+    address: 'Amazonas · Cajamarca, Perú',
     appUrl: 'https://app.tunaywasi.pe',
     adminEmail: 'tunaywasi@gmail.com',
+  },
+  heroMetrics: {
+    producerPctDisplay: 42,
+    farmCount: 2,
+    altitudMedia: '1,500 m',
   },
 };
 
