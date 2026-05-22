@@ -1,15 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-
-export const SLICES = [
-  { pct: 38.6, label: 'Caficultor',             color: '#c96e4b', detail: 'Pago directo a la finca antes de que el grano viaje — por encima del doble del comercio justo tradicional.' },
-  { pct: 14.0, label: 'Tueste + Cata Q-Grader', color: '#8faf8a', detail: 'Tostado artesanal en Lima + análisis sensorial certificado por Q-Grader.' },
-  { pct: 22.4, label: 'Packaging y Envío',       color: '#c4b297', detail: 'Packaging completo y envío desde origen.' },
-  { pct: 19.0, label: 'Tunay Wasi',              color: '#3d5c4a', detail: 'Plataforma, tecnología y operación del marketplace.' },
-];
+import { useComisiones } from '@/features/catalog/useComisiones';
+import { STATIC_COMISIONES } from '@/features/catalog/catalogService';
 
 export default function Modelo() {
   const [animated, setAnimated] = useState(false);
   const ref = useRef<HTMLElement>(null);
+  const { data: comisiones } = useComisiones();
+  const slices = comisiones?.b2c ?? STATIC_COMISIONES.b2c;
 
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
@@ -44,7 +41,7 @@ export default function Modelo() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'center' }} className="tw-2col">
           <div>
             <div className="tw-modelo-bar" style={{ display: 'flex', height: 54, borderRadius: 12, overflow: 'hidden', boxShadow: '0 18px 36px -18px #00000077', border: '1px solid #f2e0cc22' }}>
-              {SLICES.map((s, i) => (
+              {slices.map((s, i) => (
                 <div key={s.label} style={{
                   width: animated ? `${s.pct}%` : '0%',
                   background: s.color,
@@ -68,7 +65,7 @@ export default function Modelo() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {SLICES.map((s) => (
+            {slices.map((s) => (
               <div key={s.label} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f2e0cc14' }}>
                 <div style={{ width: 6, height: 36, background: s.color, borderRadius: 3, flexShrink: 0, marginTop: 3 }} />
                 <div style={{ flex: 1 }}>
