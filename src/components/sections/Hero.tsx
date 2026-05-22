@@ -84,7 +84,7 @@ export default function Hero() {
             </div>
             <div style={{ marginTop: 32, ...fade(0.55) }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#533b22', marginBottom: 10, fontWeight: 600 }}>
-                🎁 Únete a la lista de espera — los primeros 50 reciben <span style={{ color: '#c96e4b' }}>50% de descuento</span> en su primera compra.
+                🎁 Únete a la lista — sé el primero en conocer los nuevos microlotes y accede antes que nadie a la próxima preventa.
               </p>
               {wlStatus === 'sent' ? (
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#533b22' }}>
@@ -109,7 +109,7 @@ export default function Hero() {
                 </p>
               )}
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#533b2288', marginTop: 8, letterSpacing: '0.04em' }}>
-                El descuento se aplica luego de tu primera compra. Sin spam.
+                Sin spam.
               </p>
             </div>
 
