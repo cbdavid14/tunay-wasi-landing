@@ -45,7 +45,9 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
   const [grindType, setGrindType] = useState<GrindType>('V60');
   const { add, open: openCart } = useCartActions();
   const tone = TAG_TONES[p.tagTone] ?? TAG_TONES.sage;
-  const [wLabel, unitCents] = p.weights[weightIdx];
+  const hasPromo = p.promoActivated === true && Array.isArray(p.weightsPromo) && p.weightsPromo.length > weightIdx;
+  const [wLabel, unitCents] = hasPromo ? p.weightsPromo![weightIdx] : p.weights[weightIdx];
+  const originalCents = hasPromo ? p.weights[weightIdx][1] : null;
   const stockDispo = disponibleKg(p.stockKg, p.stockReservedKg);
   const computedMaxQty = maxQtyForWeight(stockDispo, wLabel as WeightLabel);
   const isAgotado = computedMaxQty === 0;
@@ -246,6 +248,11 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
             <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 32, lineHeight: 1, color: '#1f3028' }}>
               {Money.formatPEN(unitCents * qty)}
             </div>
+            {originalCents !== null && (
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 400, fontSize: 20, lineHeight: 1, color: '#533b2266', textDecoration: 'line-through' }}>
+                {Money.formatPEN(originalCents * qty)}
+              </div>
+            )}
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.14em', color: '#533b2299', textTransform: 'uppercase' }}>inc. IGV</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>

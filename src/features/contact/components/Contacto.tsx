@@ -1,4 +1,6 @@
 import { useState, type ChangeEvent } from 'react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/shared/firebase';
 import { useLandingConfig } from '@/features/catalog/useLandingConfig';
 import { contactoSchema, type ContactoForm } from '@/shared/validation/contactoSchema';
 import { sendMail } from '@/services/mailService';
@@ -71,6 +73,15 @@ export default function Contacto() {
     } catch {
       emailError = true;
     }
+    try {
+      await addDoc(collection(db, 'contactos'), {
+        nombre: values.nombre,
+        email: values.email,
+        tema: values.tema,
+        mensaje: values.mensaje,
+        createdAt: serverTimestamp(),
+      });
+    } catch { /* no bloquea el flujo si falla */ }
     setStatus(emailError ? 'failed' : 'sent');
   };
 

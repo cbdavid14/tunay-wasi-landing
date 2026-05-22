@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/shared/firebase';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
 import ImageSlot from '@/components/decor/ImageSlot';
 import { useCaficultores } from '@/features/catalog/useCaficultores';
@@ -6,7 +8,21 @@ import { useLandingConfig } from '@/features/catalog/useLandingConfig';
 
 export default function Hero() {
   const [loaded, setLoaded] = useState(false);
+  const [wlEmail, setWlEmail] = useState('');
+  const [wlStatus, setWlStatus] = useState<'idle' | 'sending' | 'sent' | 'duplicate'>('idle');
   useEffect(() => { setLoaded(true); }, []);
+
+  async function handleWaitlist(e: React.FormEvent) {
+    e.preventDefault();
+    const normalized = wlEmail.trim().toLowerCase();
+    if (!normalized) return;
+    setWlStatus('sending');
+    const existing = await getDocs(query(collection(db, 'whitelist-b2c'), where('email', '==', normalized)));
+    if (!existing.empty) { setWlStatus('duplicate'); return; }
+    await addDoc(collection(db, 'whitelist-b2c'), { email: normalized, origen: 'hero', createdAt: serverTimestamp() });
+    setWlStatus('sent');
+    setWlEmail('');
+  }
 
   const { data: caficultores } = useCaficultores();
   const { data: landingConfig } = useLandingConfig();
@@ -66,6 +82,37 @@ export default function Hero() {
                 Conoce a los caficultores
               </a>
             </div>
+            <div style={{ marginTop: 32, ...fade(0.55) }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#533b22', marginBottom: 10, fontWeight: 600 }}>
+                🎁 Únete a la lista — sé el primero en conocer los nuevos microlotes y accede antes que nadie a la próxima preventa.
+              </p>
+              {wlStatus === 'sent' ? (
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#533b22' }}>
+                  ✓ Listo, te avisamos antes que nadie cuando haya lote nuevo.
+                </p>
+              ) : (
+                <form onSubmit={handleWaitlist} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <input
+                    type="email" value={wlEmail} onChange={e => setWlEmail(e.target.value)}
+                    placeholder="tu@correo.com" required
+                    style={{ flex: '1 1 200px', padding: '11px 16px', borderRadius: 999, border: '1px solid #1f302844', background: '#ffffff88', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#1f3028', outline: 'none' }}
+                  />
+                  <button type="submit" disabled={wlStatus === 'sending' || wlStatus === 'duplicate'}
+                    style={{ padding: '11px 22px', borderRadius: 999, border: 'none', background: wlStatus === 'duplicate' ? '#8faf8a' : '#1f3028', color: '#f2e0cc', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 13, cursor: wlStatus === 'sending' || wlStatus === 'duplicate' ? 'default' : 'pointer', whiteSpace: 'nowrap', opacity: wlStatus === 'duplicate' ? 0.8 : 1 }}>
+                    {wlStatus === 'sending' ? '...' : wlStatus === 'duplicate' ? '✓ Apuntado' : 'Apúntame'}
+                  </button>
+                </form>
+              )}
+              {wlStatus === 'duplicate' && (
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#533b22', marginTop: 6 }}>
+                  Ya estás en la lista. Te avisamos cuando haya stock nuevo.
+                </p>
+              )}
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#533b2288', marginTop: 8, letterSpacing: '0.04em' }}>
+                Sin spam.
+              </p>
+            </div>
+
             <div style={{ display: 'flex', gap: 36, marginTop: 48, flexWrap: 'wrap', ...fade(0.6) }}>
               {([
                 [`Hasta ${producerPctDisplay}%`, 'directo al productor'],
