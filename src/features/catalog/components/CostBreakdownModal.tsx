@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { SLICES } from '@/components/sections/Modelo';
+import { useComisiones } from '@/features/catalog/useComisiones';
+import { STATIC_COMISIONES } from '@/features/catalog/catalogService';
 import { Money } from '@/shared/money';
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 export default function CostBreakdownModal({ unitCents, qty, producerPct, onClose }: Props) {
   const [animated, setAnimated] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
+  const { data: comisiones } = useComisiones();
+  const slices = comisiones?.b2c ?? STATIC_COMISIONES.b2c;
 
   useEffect(() => {
     const t = setTimeout(() => setAnimated(true), 60);
@@ -30,10 +33,10 @@ export default function CostBreakdownModal({ unitCents, qty, producerPct, onClos
   const netTotal = Math.round(totalConIgv / 1.18);
 
   // Compute display slices: override caficultor with producerPct, adjust Tunay Wasi as remainder
-  const fixedPct = SLICES.filter(s => s.label !== 'Caficultor' && s.label !== 'Tunay Wasi')
+  const fixedPct = slices.filter(s => s.label !== 'Caficultor' && s.label !== 'Tunay Wasi')
     .reduce((sum, s) => sum + s.pct, 0);
   const tunayPct = Math.max(0, 100 - producerPct - fixedPct);
-  const displaySlices = SLICES.map(s => {
+  const displaySlices = slices.map(s => {
     if (s.label === 'Caficultor') return { ...s, pct: producerPct };
     if (s.label === 'Tunay Wasi') return { ...s, pct: tunayPct };
     return s;
