@@ -107,7 +107,10 @@ function mapProductoDoc(id: string, raw: Record<string, unknown>): Producto {
   const weights = (raw.weights as WeightEntry[]).map(
     (w) => [w.label, w.cents] as [string, number],
   );
-  return { ...(raw as Omit<Producto, 'id' | 'weights'>), id, weights };
+  const weightsPromo = Array.isArray(raw.weightsPromo)
+    ? (raw.weightsPromo as WeightEntry[]).map((w) => [w.label, w.cents] as [string, number])
+    : undefined;
+  return { ...(raw as Omit<Producto, 'id' | 'weights' | 'weightsPromo'>), id, weights, ...(weightsPromo ? { weightsPromo } : {}) };
 }
 
 export async function fetchProductos(): Promise<Producto[]> {
