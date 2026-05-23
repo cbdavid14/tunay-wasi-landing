@@ -12,12 +12,12 @@ export default function Waitlist() {
     if (!normalized) return;
     setStatus('sending');
     try {
-      const existing = await getDocs(query(collection(db, 'whitelist-b2c'), where('email', '==', normalized)));
+      const existing = await getDocs(query(collection(db, 'waitlist-b2c'), where('email', '==', normalized)));
       if (!existing.empty) {
         setStatus('duplicate');
         return;
       }
-      await addDoc(collection(db, 'whitelist-b2c'), {
+      await addDoc(collection(db, 'waitlist-b2c'), {
         email: normalized,
         origen: 'clientes_landing',
         createdAt: serverTimestamp(),
