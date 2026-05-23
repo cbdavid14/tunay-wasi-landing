@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Lectura pública para catálogo y configuraciones
+    match /productos/{id} {
+      allow read: if true;
+      // Solo permite incrementar stockReservedKg (reserva de stock en checkout)
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stockReservedKg']);
+      allow create, delete: if false;
+    }
+    match /caficultores/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /configurations/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Pedidos: solo crear (cliente hace checkout)
+    match /pedidos/{id} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Waitlist caficultores
+    match /waitlist-caficultores/{id} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Waitlist B2C (lista prioritaria — web + lead form Facebook)
+    match /waitlist-b2c/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Todo lo demás bloqueado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

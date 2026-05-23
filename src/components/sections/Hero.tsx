@@ -17,9 +17,9 @@ export default function Hero() {
     const normalized = wlEmail.trim().toLowerCase();
     if (!normalized) return;
     setWlStatus('sending');
-    const existing = await getDocs(query(collection(db, 'whitelist-b2c'), where('email', '==', normalized)));
+    const existing = await getDocs(query(collection(db, 'waitlist-b2c'), where('email', '==', normalized)));
     if (!existing.empty) { setWlStatus('duplicate'); return; }
-    await addDoc(collection(db, 'whitelist-b2c'), { email: normalized, origen: 'hero', createdAt: serverTimestamp() });
+    await addDoc(collection(db, 'waitlist-b2c'), { email: normalized, origen: 'hero', createdAt: serverTimestamp() });
     setWlStatus('sent');
     setWlEmail('');
   }
