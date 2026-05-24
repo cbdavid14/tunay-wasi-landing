@@ -237,9 +237,56 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
             );
           })}
         </div>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.18em', color: '#533b22', marginTop: 8 }}>
-          Stock verde: {p.stockKg} kg{p.stockReservedKg ? ` · reservado: ${p.stockReservedKg.toFixed(2)} kg` : ''}
-        </div>
+        {(() => {
+          const totalKg = p.stockKg ?? 0;
+          const reservedKg = p.stockReservedKg ?? 0;
+          const availableKg = Math.max(0, totalKg - reservedKg);
+          const reservedPct = totalKg > 0 ? Math.min(100, (reservedKg / totalKg) * 100) : 0;
+          const isCritical = availableKg < totalKg * 0.2 && availableKg > 0;
+          return (
+            <div style={{
+              marginTop: 10, padding: '10px 12px', borderRadius: 10,
+              background: isCritical ? '#c96e4b14' : '#8faf8a18',
+              border: `1px solid ${isCritical ? '#c96e4b55' : '#8faf8a66'}`,
+              transition: 'all .3s ease',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{
+                    width: 7, height: 7, borderRadius: '50%', flexShrink: 0, display: 'inline-block',
+                    background: isCritical ? '#c96e4b' : '#8faf8a',
+                    animation: 'tw-pulse-mini 2s ease-in-out infinite',
+                  }} />
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.22em', color: '#533b22', textTransform: 'uppercase' }}>
+                    Stock verde
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 20, fontWeight: 700, lineHeight: 1, color: isCritical ? '#c96e4b' : '#1f3028' }}>
+                    {availableKg % 1 === 0 ? availableKg : availableKg.toFixed(1)}
+                  </span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.14em', color: '#533b2299' }}>kg disp.</span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.1em', color: '#533b2255' }}>/ {totalKg} kg</span>
+                </div>
+              </div>
+              <div style={{ height: 4, borderRadius: 999, background: '#1f302814', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 999,
+                  width: `${reservedPct}%`,
+                  background: isCritical
+                    ? 'linear-gradient(90deg, #c96e4b 0%, #b85a3a 100%)'
+                    : 'linear-gradient(90deg, #8faf8a 0%, #6d9468 100%)',
+                  transition: 'width .6s cubic-bezier(.2,.7,.2,1)',
+                }} />
+              </div>
+              {reservedKg > 0 && (
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: '0.14em', color: '#533b2266', marginTop: 5 }}>
+                  {reservedKg.toFixed(1)} kg reservado · {reservedPct.toFixed(0)}% comprometido
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
