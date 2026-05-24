@@ -29,13 +29,17 @@ export interface SolicitudSupply {
 export async function saveSolicitudSupply(data: SolicitudSupply): Promise<void> {
   const normalizedEmail = data.email.toLowerCase().trim();
 
-  await addDoc(collection(db, COLLECTION), {
+  const raw = {
     ...data,
     email: normalizedEmail,
     status: 'nuevo',
     source: 'negocios-landing',
     createdAt: serverTimestamp(),
-  });
+  };
+  const payload = Object.fromEntries(
+    Object.entries(raw).filter(([, v]) => v !== undefined),
+  );
+  await addDoc(collection(db, COLLECTION), payload);
 
   const loteReservado = data.loteId
     ? { id: data.loteId, variedad: data.loteVariedad ?? '', origen: data.loteOrigen ?? '', sca: data.loteSca ?? 0, precioKg: data.lotePrecioKg ?? 0 }
