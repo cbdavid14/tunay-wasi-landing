@@ -1,4 +1,4 @@
-name: Deploy → caficultores (tunay-wasi-caficultores.web.app)
+name: (tunay-wasi) Deploy → caficultores
 
 on:
   workflow_dispatch:

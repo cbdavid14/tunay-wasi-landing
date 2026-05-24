@@ -1,4 +1,4 @@
-name: Deploy → clientes (tunay-wasi.web.app)
+name: (tunay-wasi) Deploy → clientes
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Deploy → clientes (alpaso-app.web.app)
+name: (alpaso-app) Deploy → clientes
 
 on:
   workflow_dispatch:

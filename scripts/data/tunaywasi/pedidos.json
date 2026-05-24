@@ -1,0 +1,57 @@
+[
+  {
+    "id": "f194e675-e09b-40d6-8403-2ae4f51d5985",
+    "orderId": "TW-MPGD21W0-F194E675",
+    "status": "pendiente_pago",
+    "adapter": "transferencia",
+    "items": [
+      {
+        "productoId": "caturra-honey-aydee-2026",
+        "caficultorId": "Aydee Rojas Saldivar",
+        "sku": "02",
+        "name": "Aydee Rojas - Caturra Honey",
+        "weight": "250g",
+        "grind": "Grano",
+        "unitCents": 2705,
+        "qty": 2,
+        "caficultor": "Aydee Rojas Saldivar",
+        "finca": "Finca Vista Hermosa",
+        "producerPct": 38.6
+      },
+      {
+        "productoId": "caturra-honey-aydee-2026",
+        "caficultorId": "Aydee Rojas Saldivar",
+        "sku": "02",
+        "name": "Aydee Rojas - Caturra Honey",
+        "weight": "1kg",
+        "grind": "Grano",
+        "unitCents": 9700,
+        "qty": 2,
+        "caficultor": "Aydee Rojas Saldivar",
+        "finca": "Finca Vista Hermosa",
+        "producerPct": 38.6
+      }
+    ],
+    "shipping": {
+      "nombre": "sdfsdfsdf",
+      "telefono": "911232322",
+      "departamento": "Lima Metropolitana",
+      "distrito": "Miraflores",
+      "direccion": "av brasi l123",
+      "referencia": "",
+      "zone": "lima"
+    },
+    "totals": {
+      "subtotalCents": 24810,
+      "shippingCents": 0,
+      "discountCents": 0,
+      "taxIncludedCents": 3785,
+      "totalCents": 24810,
+      "producerShareCents": 9577
+    },
+    "cicloCloseAt": "31 may.",
+    "deliverEstimate": "ago. (1a semana)",
+    "createdAt": "2026-05-22T03:29:18.096Z",
+    "updatedAt": "2026-05-22T03:29:18.096Z"
+  }
+]
