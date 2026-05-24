@@ -1,0 +1,40 @@
+{
+  "lotes": [
+    {
+      "id": "caturra-honey-aydee-2026",
+      "origen": "Cajamarca · Jaén",
+      "finca": "Finca Vista Hermosa",
+      "variedad": "Caturra",
+      "proceso": "Honey",
+      "altitud": "1,500 m",
+      "sca": 82.5,
+      "sacos": 1,
+      "kg": 12,
+      "precio": 194.00,
+      "tag": "honey",
+      "notas": "Dulce · Caramelo · Frutal",
+      "tone": "green",
+      "estado": "preventa",
+      "activo": true,
+      "featured": true
+    },
+    {
+      "id": "geisha-honey-aydee-2026",
+      "origen": "Cajamarca · Jaén",
+      "finca": "Finca Vista Hermosa",
+      "variedad": "Geisha",
+      "proceso": "Honey",
+      "altitud": "1,500 m",
+      "sca": 82.5,
+      "sacos": 1,
+      "kg": 12,
+      "precio": 194.00,
+      "tag": "honey",
+      "notas": "Frutal · Miel · Floral",
+      "tone": "green",
+      "estado": "preventa",
+      "activo": true,
+      "featured": false
+    }
+  ]
+}

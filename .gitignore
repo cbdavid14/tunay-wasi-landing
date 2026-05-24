@@ -15,5 +15,6 @@ dist
 
 
 package-lock.json
+scripts/service-account*.json
 # Added by code-review-graph
 .code-review-graph/
