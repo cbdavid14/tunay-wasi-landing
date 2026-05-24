@@ -132,7 +132,7 @@ export async function fetchCaficultores(): Promise<Caficultor[]> {
     if (snap.empty) return STATIC_CAFICULTORES;
     const mapped = snap.docs
       .map((d) => mapCaficultorDoc(d.id, d.data() as CaficultorDoc))
-      .filter((c) => c.name && c.farm && c.status === 'activo');
+      .filter((c) => c.name && c.farm && c.status === 'aprobado');
     return mapped;
   } catch {
     return STATIC_CAFICULTORES;

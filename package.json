@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:tunaywasi": "vite --mode tunaywasy",
     "build": "tsc --noEmit && vite build",
     "build:clientes": "VITE_APP_TARGET=clientes vite build --outDir dist/clientes",
     "build:caficultores": "VITE_APP_TARGET=caficultores vite build --outDir dist/caficultores",
