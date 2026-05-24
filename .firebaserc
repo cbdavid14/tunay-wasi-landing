@@ -1,6 +1,8 @@
 {
   "projects": {
-    "default": "alpaso-app"
+    "default": "alpaso-app",
+    "qa": "alpaso-app",
+    "prod": "tunay-wasi"
   },
   "targets": {
     "alpaso-app": {
@@ -12,7 +14,9 @@
     },
     "tunay-wasi": {
       "hosting": {
-        "clientes": ["tunay-wasi"]
+        "clientes": ["tunay-wasi"],
+        "caficultores": ["tunay-wasi-caficultores"],
+        "negocios": ["tunay-wasi-negocios"]
       }
     }
   }

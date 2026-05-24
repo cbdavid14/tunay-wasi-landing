@@ -128,11 +128,11 @@ export default function PoliciesModal({ onClose }: Props) {
             <P><strong>Paso 1 — Datos de envío</strong></P>
             <Item>Ingresa tu nombre, celular, correo y dirección.</Item>
             <Item>La zona de envío se detecta automáticamente según tu departamento y distrito.</Item>
-            <Item>Zonas Lima Ext. y Provincias (courier nacional) requieren tu <strong>DNI</strong> para la entrega.</Item>
+            <Item>Zonas Lima Ext. y Provincias (Olva Courier) requieren tu <strong>DNI</strong> para la entrega.</Item>
             <div style={{ marginTop: 10 }}><P><strong>Paso 2 — Pago</strong></P></div>
             <Item><strong>Yape / Plin:</strong> escanea el QR o ingresa el número, paga el monto exacto y presiona "Confirmé el pago".</Item>
             <Item><strong>Transferencia bancaria:</strong> copia los datos, realiza la transferencia y envía el voucher por WhatsApp usando el botón en pantalla.</Item>
-            <Item>Una vez realizado el pago, presiona "Confirmé el pago". Para transferencias, envía el voucher por WhatsApp usando el botón en pantalla para confirmar tu pedido.</Item>
+            <Item>El sistema verifica tu pago automáticamente. Si no lo detecta en 2 minutos, puedes subir una captura como comprobante.</Item>
           </Section>
 
           <Section title="3. Confirmación del Pedido">
@@ -163,7 +163,7 @@ export default function PoliciesModal({ onClose }: Props) {
               ))}
             </div>
             <Item>Pedidos confirmados antes de las <strong>3:00 pm</strong> se preparan el mismo día.</Item>
-            <Item>Si eliges recojo en agencia del courier, necesitarás presentar tu DNI al recoger.</Item>
+            <Item>Si eliges recojo en agencia Olva, necesitarás presentar tu DNI al recoger.</Item>
             <Item>Una vez despachado, recibirás el número de guía por WhatsApp o correo.</Item>
             <Item>Si el pedido no puede entregarse por datos incorrectos, el costo del reenvío corre por tu cuenta.</Item>
           </Section>
@@ -185,20 +185,20 @@ export default function PoliciesModal({ onClose }: Props) {
             <Item>Preferencia de sabor. El café de especialidad tiene perfiles complejos (acidez brillante, notas frutales) distintos al café comercial.</Item>
             <Item>Error en el tipo de molienda elegido por el cliente.</Item>
             <Item>Demoras del courier fuera del control de Tunay Wasi.</Item>
-            <P>Para iniciar una devolución, envía foto del producto por WhatsApp al <strong>+51 917 959 370</strong> al momento de recibir tu pedido. Pasado ese plazo no se aceptan reclamos. Los reembolsos aprobados se procesan por Yape o Plin en 48 horas.</P>
+            <P>Para iniciar una devolución, envía foto del producto por WhatsApp al <strong>+51 917 959 370</strong> dentro de las <strong>48 horas</strong> de recibido. Los reembolsos aprobados se procesan por Yape o Plin en 48 horas.</P>
           </Section>
 
           <Section title="7. Métodos de Pago">
             <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #1f302818' }}>
               <Row label="Yape — 917 959 370" value="Danny Santa Cruz Rojas" />
-              <Row label="Plin — 917 959 370" value="Danny Santa Cruz Rojas" />
+              <Row label="Plin — 917 959 370" value="Alpaso Live Commerce SAC" />
               <Row label="Transferencia BCP — 193-7332599054" value="Alpaso Live Commerce SAC" />
             </div>
             <div style={{ marginTop: 10 }}><P>No aceptamos tarjetas de crédito, débito ni efectivo en esta fase.</P></div>
           </Section>
 
           <Section title="8. Privacidad">
-            <P>Al completar el checkout recopilamos: nombre, correo, celular, dirección y DNI (solo si aplica envío por courier). Usamos estos datos únicamente para procesar tu pedido, enviarte el tracking y notificarte sobre nuevos lotes (si aceptas).</P>
+            <P>Al completar el checkout recopilamos: nombre, correo, celular, dirección y DNI (solo si aplica Olva). Usamos estos datos únicamente para procesar tu pedido, enviarte el tracking y notificarte sobre nuevos lotes (si aceptas).</P>
             <P><strong>No vendemos ni compartimos tus datos</strong> con terceros. Se almacenan en Firebase Firestore (Google Cloud, ISO 27001). Conforme a la Ley N° 29733 puedes acceder, rectificar o eliminar tus datos escribiendo a <strong>tunaywasi@gmail.com</strong>.</P>
           </Section>
 
