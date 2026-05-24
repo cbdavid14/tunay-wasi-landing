@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
 import ImageSlot from '@/components/decor/ImageSlot';
+import WaitlistForm from '@/components/WaitlistForm';
 import { useCaficultores } from '@/features/catalog/useCaficultores';
 import { useLandingConfig } from '@/features/catalog/useLandingConfig';
 
@@ -66,6 +67,13 @@ export default function Hero() {
                 Conoce a los caficultores
               </a>
             </div>
+            <WaitlistForm
+              firestoreCollection="waitlist-b2c"
+              origen="hero"
+              theme="light"
+              style={{ marginTop: 32, ...fade(0.55) }}
+            />
+
             <div style={{ display: 'flex', gap: 36, marginTop: 48, flexWrap: 'wrap', ...fade(0.6) }}>
               {([
                 [`Hasta ${producerPctDisplay}%`, 'directo al productor'],

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "caturra-honey-aydee-2026",
+    "estado": "preventa",
+    "featured": true,
+    "variedad": "Caturra",
+    "tone": "green",
+    "proceso": "Honey",
+    "finca": "Finca Vista Hermosa",
+    "notas": "Dulce · Caramelo · Frutal",
+    "origen": "Cajamarca · Jaén",
+    "sca": 82.5,
+    "precio": 194,
+    "altitud": "1,500 m",
+    "sacos": 1,
+    "tag": "honey",
+    "kg": 12,
+    "activo": true
+  },
+  {
+    "id": "geisha-honey-aydee-2026",
+    "estado": "preventa",
+    "featured": false,
+    "variedad": "Geisha",
+    "tone": "green",
+    "proceso": "Honey",
+    "finca": "Finca Vista Hermosa",
+    "notas": "Frutal · Miel · Floral",
+    "origen": "Cajamarca · Jaén",
+    "sca": 82.5,
+    "precio": 194,
+    "sacos": 1,
+    "tag": "honey",
+    "kg": 12,
+    "altitud": "1,500 m",
+    "activo": true
+  }
+]

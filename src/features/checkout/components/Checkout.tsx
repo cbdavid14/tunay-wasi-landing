@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
-import PoliciesModal from './PoliciesModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { Money } from '@/shared/money';
 import type { AdapterName, ShippingData, ShippingZone } from '@/shared/types/checkout';
 import type { CartItem } from '@/shared/types/cart';
+import PoliciesModal from './PoliciesModal';
 import type { CartTotals } from '@/shared/types/cart';
 import {
   useCartIsCheckoutOpen, useCartCheckoutStep, useCartActions, useCartItems,
@@ -497,7 +497,8 @@ function StepPago({
   };
 
   useEffect(() => {
-    if (phase === 'validating' && status === 'idle') setPhase('failed');
+    if (phase === 'validating' && status === 'idle') setPhase('select');
+    if (phase === 'validating' && status === 'done') setPhase('select');
   }, [status, phase]);
 
   const selectMethod = (m: 'yape' | 'plin' | 'transferencia') => { setSelectedMethod(m); setPhase(m === 'transferencia' ? 'transferencia' : 'qr'); };
@@ -752,7 +753,7 @@ function StepPago({
                 <strong>Verificando tu pago…</strong><br />
                 <span style={{ fontSize: 11, color: '#c4b297' }}>no cierres esta ventana</span>
               </div>
-              <ValidationTimer totalSeconds={120} whatsappPhone={yapePlin.yape.phone} />
+              <ValidationTimer totalSeconds={30} whatsappPhone={yapePlin.yape.phone} />
             </div>
           )}
 

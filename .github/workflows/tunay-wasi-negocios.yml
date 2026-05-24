@@ -1,4 +1,4 @@
-name: Deploy → caficultores (tunay-wasi-caficultores.web.app)
+name: Deploy → negocios (tunay-wasi-negocios.web.app)
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ env:
 
 jobs:
   deploy:
-    name: Build & Deploy caficultores
+    name: Build & Deploy negocios
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (${{ inputs.ref || 'qa' }})
@@ -30,8 +30,8 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      - name: Build caficultores → dist/caficultores
-        run: npm run build:caficultores
+      - name: Build negocios → dist/negocios
+        run: npm run build:negocios
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
@@ -45,11 +45,11 @@ jobs:
           VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
           VITE_EMAILJS_PRIVATE_KEY: ${{ secrets.VITE_EMAILJS_PRIVATE_KEY }}
 
-      - name: Deploy → tunay-wasi-caficultores.web.app
+      - name: Deploy → tunay-wasi-negocios.web.app
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TUNAY_WASI }}
           projectId: tunay-wasi
           channelId: live
-          target: caficultores
+          target: negocios

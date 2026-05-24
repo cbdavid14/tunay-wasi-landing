@@ -19,12 +19,12 @@ async function bootstrap() {
         </QueryClientProvider>
       </StrictMode>,
     );
-  } else if (target === 'mayoristas') {
-    const { default: AppMayoristas } = await import('./AppMayoristas');
+  } else if (target === 'negocios') {
+    const { default: AppNegocios } = await import('./AppNegocios');
     createRoot(root!).render(
       <StrictMode>
         <QueryClientProvider client={queryClient}>
-          <AppMayoristas />
+          <AppNegocios />
         </QueryClientProvider>
       </StrictMode>,
     );

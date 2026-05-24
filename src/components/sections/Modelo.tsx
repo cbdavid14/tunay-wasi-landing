@@ -1,18 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-
-export const SLICES = [
-  { pct: 50, label: 'Caficultor',             color: '#c96e4b', detail: 'Hasta el 50% del precio neto (sin IGV) directo a la finca, antes de que el grano viaje.' },
-  { pct: 17, label: 'Tueste + Cata Q-Grader', color: '#8faf8a', detail: 'Tostado artesanal y certificación de calidad SCA.' },
-  { pct:  6, label: 'Flete y Empaque',         color: '#c4b297', detail: 'Transporte desde origen y embalaje kraft reciclado.' },
-/*
-  { pct: 15, label: 'IGV (18%)',               color: '#533b22', detail: 'Impuesto al consumo recaudado y transferido íntegro a SUNAT.' },
-*/
-  { pct: 27, label: 'Tunay Wasi',              color: '#c96e4b', detail: 'Plataforma, tecnología y operación del marketplace.' },
-];
+import { useComisiones } from '@/features/catalog/useComisiones';
+import { STATIC_COMISIONES } from '@/features/catalog/catalogService';
 
 export default function Modelo() {
   const [animated, setAnimated] = useState(false);
   const ref = useRef<HTMLElement>(null);
+  const { data: comisiones } = useComisiones();
+  const slices = comisiones?.b2c ?? STATIC_COMISIONES.b2c;
 
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
@@ -47,7 +41,7 @@ export default function Modelo() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'center' }} className="tw-2col">
           <div>
             <div className="tw-modelo-bar" style={{ display: 'flex', height: 54, borderRadius: 12, overflow: 'hidden', boxShadow: '0 18px 36px -18px #00000077', border: '1px solid #f2e0cc22' }}>
-              {SLICES.map((s, i) => (
+              {slices.map((s, i) => (
                 <div key={s.label} style={{
                   width: animated ? `${s.pct}%` : '0%',
                   background: s.color,
@@ -64,14 +58,14 @@ export default function Modelo() {
             <div style={{ marginTop: 24, padding: 16, borderRadius: 14, background: 'rgba(201,110,75,0.12)', border: '1px solid #c96e4b44', boxShadow: '0 24px 50px -22px #00000066', display: 'flex', gap: 16, alignItems: 'center' }}>
               <div style={{ width: 54, height: 54, borderRadius: '50%', background: '#c96e4b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cormorant Garamond, serif', fontSize: 18, fontWeight: 700, flexShrink: 0, color: '#f2e0cc', textAlign: 'center', lineHeight: 1.1 }}>50%<br /><span style={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.1em' }}>neto</span></div>
               <div>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 17, fontStyle: 'italic', lineHeight: 1.2, color: '#f2e0cc' }}>Hasta el 50% del precio neto va al caficultor — el doble del comercio justo tradicional.</div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 17, fontStyle: 'italic', lineHeight: 1.2, color: '#f2e0cc' }}>Hasta el 50% del precio neto según puntaje SCA — el porcentaje varía por tier y siempre supera el doble del comercio justo tradicional.</div>
                 <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, marginTop: 8, color: '#c4b297' }}>Base: precio sin IGV · Comparativa SCAA Perú 2025 · Ratio FOB / consumidor.</div>
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {SLICES.map((s) => (
+            {slices.map((s) => (
               <div key={s.label} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f2e0cc14' }}>
                 <div style={{ width: 6, height: 36, background: s.color, borderRadius: 3, flexShrink: 0, marginTop: 3 }} />
                 <div style={{ flex: 1 }}>

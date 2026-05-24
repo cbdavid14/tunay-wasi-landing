@@ -33,7 +33,7 @@ export async function saveSolicitudSupply(data: SolicitudSupply): Promise<void> 
     ...data,
     email: normalizedEmail,
     status: 'nuevo',
-    source: 'mayoristas-landing',
+    source: 'negocios-landing',
     createdAt: serverTimestamp(),
   });
 

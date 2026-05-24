@@ -4,6 +4,7 @@ dist
 .env.production
 .env.local
 .env.*.local
+.env.local.tunaywasy
 
 .idea
 .claude
@@ -16,5 +17,6 @@ dist
 
 
 package-lock.json
+scripts/service-account*.json
 # Added by code-review-graph
 .code-review-graph/

@@ -1,0 +1,126 @@
+[
+  {
+    "id": "aydee-rojas-saldivar",
+    "nombreProductor": "Aydee Rojas Saldivar",
+    "nombreFinca": "Finca Vista Hermosa",
+    "provincia": "Jaén",
+    "departamento": "Cajamarca",
+    "distrito": "San José del Alto",
+    "altitud": "1500",
+    "variedades": [
+      "Caturra",
+      "Geisha"
+    ],
+    "resumen": "Productora de microlotes de especialidad en las alturas de Jaén. Aydee trabaja con proceso Honey y Natural, obteniendo perfiles frutales y florales únicos en su finca familiar.",
+    "historia": "Aydee Rojas Saldivar es una caficultora de la provincia de Jaén, Cajamarca. Su finca Vista Hermosa, situada a 1500 msnm, produce microlotes de alta calidad gracias a la dedicación familiar y un terroir privilegiado.",
+    "impactoSocial": "El 38.6% del precio neto de cada bolsa vendida va directo a Aydee, por encima del promedio de comercio justo, permitiéndole reinvertir en su finca y su familia.",
+    "experienciaAnos": "10",
+    "hectareas": "3",
+    "status": "activo",
+    "fotoPerfilUrl": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767831/aydeFinca_rm5arr.jpg",
+    "fotosUrls": [
+      "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767976/AydeFinca_lgry4p.jpg",
+      "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778768053/Screenshot_2026-05-14_at_9.13.55_AM_ppsgqu.png",
+      "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767939/finca6_ytusbx.jpg"
+    ],
+    "variedad": "Caturra · Geisha",
+    "proceso": "Lavado",
+    "puntajeSCA": "82.5 · Cata lote 2025"
+  },
+  {
+    "id": "1cbeBA81OevZYNGSM94J",
+    "waitlistId": "WRxArZPXLSgyELRa1PGc",
+    "telefono": "972597937",
+    "generacion": "3ra generación",
+    "email": "everjose@hotmail.com",
+    "variedades": [
+      "Geisha"
+    ],
+    "provincia": "Chanchamayo",
+    "historia": "Somos la tercera generación. La abuela María fue quien introdujo el café a la familia — tostaba en ollas y sartenes, tenía 50 árboles de Geisha bajo plátanos, naranjos y caña de azúcar, solo para uso familiar. Cuando llegábamos de visita nos servía café recién tostado en molino corona. La abuela era bajita, blanca, de ojos verdes e imponía autoridad. Con mi hija recorrimos el mundo buscando café. Mi padre dejó su trabajo y yo, luego de estudiar agricultura y administración, volví porque algo me llamaba desde el alma.",
+    "departamento": "Junín",
+    "proceso": "Lavado",
+    "experienciaAnos": 10,
+    "fecha": {
+      "_seconds": 1778338788,
+      "_nanoseconds": 700000000
+    },
+    "puntajeSCA": "",
+    "distrito": "Santa Ana de Perené",
+    "nombreFinca": "Don Pancho",
+    "altitud": "1800",
+    "nombre": "Jose Antonio Rever Cruz",
+    "status": "pendiente"
+  },
+  {
+    "id": "amyyl09NwkYCngnNRcBJ",
+    "nombreFinca": "Vista Alegre",
+    "waitlistId": "5JqEaTqULSVD67GOtGxj",
+    "altitud": "1900",
+    "variedades": [
+      "Geisha",
+      "Catimor",
+      "Típica",
+      "Borbón"
+    ],
+    "puntajesSCA": [
+      86,
+      86.5,
+      85,
+      84
+    ],
+    "telefono": "937554243",
+    "fecha": {
+      "_seconds": 1778336889,
+      "_nanoseconds": 256000000
+    },
+    "puntajeSCA": 86.5,
+    "historia": "Familia de segunda generación. Empezó a los 14 años, adquirió una finca de una hectárea y fue creciendo paulatinamente por pasión al campo y la producción.",
+    "generacion": "2da generación",
+    "email": "r7sm77ll7ndi7@gmail.com",
+    "distrito": "Echarati",
+    "nombre": "Rosmell Andia Yuto",
+    "departamento": "Cusco",
+    "proceso": "Lavado",
+    "experienciaAnos": 10,
+    "provincia": "La Convención",
+    "status": "pendiente"
+  },
+  {
+    "id": "darlyn-sanchez-hilario",
+    "nombreProductor": "Darlyn John Sánchez Hilario",
+    "nombreFinca": "Finca Bello Horizonte",
+    "provincia": "Chanchamayo",
+    "departamento": "Junín",
+    "distrito": "Pichanaki",
+    "altitud": "1550",
+    "variedades": [
+      "Bourbon"
+    ],
+    "proceso": "Lavado",
+    "puntajeSCA": "87.5+",
+    "resumen": "Productor de microlotes Bourbon Lavado en Pichanaki, Junín. 300 kg en fermentación, disponible julio 2026.",
+    "historia": "Jon Sánchez cultiva Bourbon en las laderas de Pichanaki, Chanchamayo. Su lote \"Las Travesuras de Milán\" combina altitud y proceso lavado clásico para lograr un perfil cítrico de gran claridad.",
+    "impactoSocial": "El 56% del precio neto va directo a Jon, por encima del promedio de comercio justo.",
+    "experienciaAnos": "8",
+    "hectareas": "5",
+    "variedad": "Bourbon",
+    "status": "pendiente"
+  },
+  {
+    "id": "rosmell-andia-2026",
+    "nombreProductor": "Rosmell Andia Yuto",
+    "nombreFinca": "Fusión 777",
+    "provincia": "Bagua",
+    "departamento": "Amazonas",
+    "distrito": "Bagua Grande",
+    "altitud": "1860",
+    "variedad": "Bourbon",
+    "proceso": "Lavado",
+    "puntajeSCA": "82.5+ (referencial)",
+    "resumen": "Productor de microlote Bourbon Lavado en Amazonas, 40 kg en cosecha. Entrega estimada agosto 2026.",
+    "historia": "Rosmell cultiva Bourbon en la finca Fusión 777 a 1860 msnm en Amazonas, con cosecha en proceso.",
+    "impactoSocial": "Producción familiar en Amazonas preservando variedades de especialidad en altura.",
+    "status": "pendiente"
+  }
+]

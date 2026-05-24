@@ -232,7 +232,7 @@
   },
 
   "supplyLanding": {
-    "_owner": "landing/mayoristas — configuración del landing B2B para tostadoras y mayoristas",
+    "_owner": "landing/negocios — configuración del landing B2B para tostadoras y negocios",
     "cosechaLabel": "abril 2026",
     "_lotesRef": "Ver scripts/data/microlotesLanding.json — Firestore: configurations/microlotesLanding",
     "logistics": [

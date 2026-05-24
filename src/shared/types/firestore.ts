@@ -503,7 +503,7 @@ export interface CafiLandingConfigDoc {
 // ═══════════════════════════════════════════════════════════════════════════
 // DOCUMENTO: configuration/supplyLanding
 // Path:  /configuration/supplyLanding
-// Owner: landing/mayoristas — B2B wholesale landing.
+// Owner: landing/negocios — B2B wholesale landing.
 // Controls cosechaLabel, logistics strip, contactB2B and heroCard.
 // Static fallback: scripts/data/config.json → supplyLanding
 //
@@ -561,7 +561,7 @@ export interface SolicitudSupplyDoc {
 
   // Set by saveSolicitudSupply — not from form
   status: SolicitudB2BStatus;   // always 'nuevo' on create
-  source: 'mayoristas-landing'; // distinguishes from tunaywasi admin entries ('web')
+  source: 'negocios-landing'; // distinguishes from tunaywasi admin entries ('web')
   createdAt: unknown;           // Firestore ServerTimestamp
 }
 
@@ -619,7 +619,7 @@ export interface PaymentGatewayConfigDoc {
 //   /configurations/paymentGateway        → PaymentGatewayConfigDoc
 //
 // Collections — B2B:
-//   /solicitudes_b2b/{id}  → SolicitudSupplyDoc   source: 'mayoristas-landing'
+//   /solicitudes_b2b/{id}  → SolicitudSupplyDoc   source: 'negocios-landing'
 //                                                   (same collection as tunaywasi admin reads)
 //
 // Firebase Storage paths:

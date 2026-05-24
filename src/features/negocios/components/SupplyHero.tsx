@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useSupplyLandingConfig } from '@/features/mayoristas/useSupplyLandingConfig';
-import { useMicrolotesLanding } from '@/features/mayoristas/useMicrolotesLanding';
+import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
+import { useMicrolotesLanding } from '@/features/negocios/useMicrolotesLanding';
 import { STATIC_SUPPLY_LANDING, STATIC_MICROLOTES } from '@/features/catalog/catalogService';
+import WaitlistForm from '@/components/WaitlistForm';
 
 const features = [
   ['Trazabilidad', 'Finca · lote · cosecha verificados.'],
@@ -13,7 +14,8 @@ export default function SupplyHero() {
   const { data: supply = STATIC_SUPPLY_LANDING } = useSupplyLandingConfig();
   const { data: microlotes = STATIC_MICROLOTES } = useMicrolotesLanding();
   const { heroCard } = supply;
-  const lote = microlotes.lotes.find(l => l.featured) ?? microlotes.lotes[0];
+  const activeLotes = microlotes.lotes.filter(l => l.activo !== false);
+  const lote = activeLotes.find(l => l.featured) ?? activeLotes[0];
 
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { setLoaded(true); }, []);
@@ -119,6 +121,13 @@ export default function SupplyHero() {
               Cómo trabajamos
             </a>
           </div>
+
+          <WaitlistForm
+            firestoreCollection="waitlist-b2b"
+            origen="supply-hero"
+            theme="dark"
+            style={{ marginTop: 32, ...fade(0.55) }}
+          />
 
           <div style={{
             marginTop: 72,

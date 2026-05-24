@@ -1,0 +1,287 @@
+{
+  "pricing_tiers": {
+    "version": "2.0",
+    "updatedAt": "2026-05",
+    "tiers": {
+      "selecto": {
+        "precioPublicoBolsa": 27.05,
+        "scaMin": 82,
+        "igv": 4.13,
+        "pagoCaficultorBolsa": 10.43,
+        "distribucionPct": {
+          "igv": 15.3,
+          "packagingEnvio": 12.9,
+          "tunayWasi": 21.2,
+          "caficultor": 38.6,
+          "costoProcesoFlete": 12
+        },
+        "costoTotalBolsa": 17.19,
+        "utilidadNetaTW": 5.73,
+        "costoFijoBolsa": 6.76,
+        "baseImponible": 22.92,
+        "scaMax": 83.9,
+        "label": "Selecto",
+        "precioPublicoCents": 2705
+      },
+      "geisha_exclusivo": {
+        "scaMax": null,
+        "label": "Exclusivo / Geisha",
+        "precioPublicoCents": 5126,
+        "costoTotalBolsa": 32.58,
+        "utilidadNetaTW": 10.86,
+        "costoFijoBolsa": 6.76,
+        "distribucionPct": {
+          "igv": 15.3,
+          "packagingEnvio": 6.8,
+          "tunayWasi": 21.2,
+          "caficultor": 50.4,
+          "costoProcesoFlete": 6.4
+        },
+        "baseImponible": 43.44,
+        "precioPublicoBolsa": 51.26,
+        "scaMin": 90,
+        "igv": 7.82,
+        "pagoCaficultorBolsa": 25.82
+      },
+      "joya_finca": {
+        "precioPublicoCents": 4229,
+        "scaMax": 89.9,
+        "label": "Joya de Finca",
+        "pagoCaficultorBolsa": 20.12,
+        "precioPublicoBolsa": 42.29,
+        "scaMin": 88,
+        "igv": 6.45,
+        "baseImponible": 35.84,
+        "distribucionPct": {
+          "costoProcesoFlete": 7.7,
+          "packagingEnvio": 8.3,
+          "tunayWasi": 21.2,
+          "caficultor": 47.6,
+          "igv": 15.3
+        },
+        "costoTotalBolsa": 26.88,
+        "utilidadNetaTW": 8.96,
+        "costoFijoBolsa": 6.76
+      },
+      "especialidad_estandar": {
+        "pagoCaficultorBolsa": 11.57,
+        "precioPublicoBolsa": 28.84,
+        "scaMin": 84,
+        "igv": 4.4,
+        "baseImponible": 24.44,
+        "distribucionPct": {
+          "costoProcesoFlete": 11.3,
+          "packagingEnvio": 12.1,
+          "tunayWasi": 21.2,
+          "caficultor": 40.1,
+          "igv": 15.3
+        },
+        "costoTotalBolsa": 18.33,
+        "utilidadNetaTW": 6.11,
+        "costoFijoBolsa": 6.76,
+        "precioPublicoCents": 2884,
+        "scaMax": 85.9,
+        "label": "Especialidad Estándar"
+      },
+      "especialidad_alta": {
+        "baseImponible": 31.28,
+        "distribucionPct": {
+          "costoProcesoFlete": 8.8,
+          "igv": 15.3,
+          "packagingEnvio": 9.5,
+          "tunayWasi": 21.2,
+          "caficultor": 45.2
+        },
+        "costoTotalBolsa": 23.46,
+        "utilidadNetaTW": 7.82,
+        "costoFijoBolsa": 6.76,
+        "pagoCaficultorBolsa": 16.7,
+        "precioPublicoBolsa": 36.91,
+        "scaMin": 86,
+        "igv": 5.63,
+        "precioPublicoCents": 3691,
+        "scaMax": 87.9,
+        "label": "Especialidad Alta"
+      }
+    },
+    "costoFijoBase": 6.76,
+    "nota": "Calculado con lote de 12 kg (tarifario Micro-Lote S/5/kg + cata S/35 + flete S/35)",
+    "igvPct": 18,
+    "margenTWPct": 25
+  },
+  "ciclo_activo": {
+    "closeAt": "31 may.",
+    "deliverLima": "jun. (1a semana)",
+    "deliverProv": "jun. (2a semana)",
+    "cutoffTimestamp": 1780289999000
+  },
+  "pricing_rules": {
+    "updatedAt": "2026-05",
+    "tarifarioLaboratorio": {
+      "procesamiento": [
+        {
+          "rangoKgMin": 0,
+          "tarifaPorKg": 5,
+          "nombre": "Micro-Lote Inicial",
+          "rangoKgMax": 20
+        },
+        {
+          "rangoKgMin": 21,
+          "tarifaPorKg": 4.5,
+          "nombre": "Lote Plata",
+          "rangoKgMax": 45
+        },
+        {
+          "nombre": "Lote Oro / Escala",
+          "rangoKgMax": null,
+          "rangoKgMin": 46,
+          "tarifaPorKg": 3.5
+        }
+      ],
+      "cataSensorial": {
+        "muestraGramos": 500,
+        "tarifaPorLote": 35,
+        "fase1Absorbido": true,
+        "descripcion": "Análisis físico y sensorial (Ficha Q-Grader)"
+      },
+      "envasado": {
+        "tarifaPorBolsa": 0.5,
+        "descripcion": "Tarifa plana por bolsa final"
+      }
+    },
+    "fase": "Fase 1 Activa",
+    "reglasNegocio": {
+      "liquidacionHoras": 48,
+      "cataGratuita": "Fase 1: TW absorbe S/35 de cata. No se descuenta al productor.",
+      "rechazoCalidad": {
+        "puntajeMinimo": 82,
+        "descripcion": "Café con menos de 82 pts SCA no ingresa al catálogo."
+      },
+      "penalizacionHumedad": {
+        "umbralPct": 12,
+        "formula": "kg_pagables = kg_brutos * (0.12 / humedad_real)"
+      }
+    },
+    "tiersCalidad": {
+      "geisha_exclusivo": {
+        "scaMin": 90,
+        "costoCafeVerdePorBolsa": 25.82,
+        "label": "Exclusivo / Geisha",
+        "scaMax": null,
+        "pagoCaficultorPorKgVerde": 85.78
+      },
+      "especialidad_alta": {
+        "pagoCaficultorPorKgVerde": 55.48,
+        "scaMax": 87.9,
+        "costoCafeVerdePorBolsa": 16.7,
+        "label": "Especialidad Alta",
+        "scaMin": 86
+      },
+      "especialidad_estandar": {
+        "scaMax": 85.9,
+        "pagoCaficultorPorKgVerde": 38.44,
+        "scaMin": 84,
+        "costoCafeVerdePorBolsa": 11.57,
+        "label": "Especialidad Estándar"
+      },
+      "joya_finca": {
+        "costoCafeVerdePorBolsa": 20.12,
+        "label": "Joya de Finca",
+        "scaMin": 88,
+        "pagoCaficultorPorKgVerde": 66.84,
+        "scaMax": 89.9
+      },
+      "selecto": {
+        "pagoCaficultorPorKgVerde": 34.65,
+        "scaMax": 83.9,
+        "costoCafeVerdePorBolsa": 10.43,
+        "label": "Selecto",
+        "scaMin": 82
+      }
+    },
+    "conversiones": {
+      "bolsasPorKgVerde": 3.32,
+      "kgVerdePorBolsa250g": 0.301,
+      "rendimientoTueste": 0.83
+    },
+    "packaging": {
+      "cajaPremiun": {
+        "desglose": {
+          "tarjeteria": 1.2,
+          "papelParafinado": 0.11,
+          "impresionSticker": 0.89,
+          "cajaRegular": 1.6
+        },
+        "gananciaNeta": 1.2,
+        "costoReal": 3.8,
+        "descripcion": "Add-on opcional en checkout",
+        "precioCliente": 5
+      },
+      "formatoBase": {
+        "descripcion": "Bolsa + Envío Courier (incluido en precio base del café)",
+        "costoTotal": 3.5,
+        "desglose": {
+          "presentacionMicrolote2caras": 1.2,
+          "stickerManoObra": 0.6,
+          "bolsaNegraEnvioCourier": 0.9,
+          "bolsaCafe250g": 0.8
+        }
+      }
+    },
+    "version": "2.0"
+  },
+  "comisiones": {
+    "producerShareFactor": 0.421,
+    "b2c": [
+      {
+        "pct": 42,
+        "color": "#c96e4b",
+        "key": "caficultor",
+        "detail": "Pago directo a la finca antes de que el grano viaje.",
+        "label": "Caficultor"
+      },
+      {
+        "pct": 15,
+        "key": "tostador",
+        "color": "#8faf8a",
+        "detail": "Tostado artesanal y certificación de calidad SCA.",
+        "label": "Tueste + Cata Q-Grader"
+      },
+      {
+        "pct": 6,
+        "color": "#c4b297",
+        "key": "logistica",
+        "detail": "Bolsa trilaminada, etc",
+        "label": "Packaging y Envío"
+      },
+      {
+        "pct": 15,
+        "key": "igv",
+        "color": "#533b22",
+        "detail": "Impuesto al consumo incluido en el precio final.",
+        "label": "IGV (18%)"
+      },
+      {
+        "pct": 22,
+        "key": "plataforma",
+        "color": "#8faf8a",
+        "detail": "Plataforma, tecnología y operación del marketplace.",
+        "label": "Tunay Wasi"
+      }
+    ]
+  },
+  "landing": {
+    "contact": {
+      "email": "tunaywasi@gmail.com",
+      "whatsapp": "+51917959370",
+      "appUrl": "https://app.tunaywasi.pe",
+      "adminEmail": "tunaywasi@gmail.com",
+      "address": "Jr. El Greco 223, San Borja, Lima"
+    },
+    "heroMetrics": {
+      "farmCount": 1,
+      "altitudMedia": "1,500 m",
+      "producerPctDisplay": 50
+    }
+  }
+}

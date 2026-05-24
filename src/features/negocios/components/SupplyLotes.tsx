@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
-import { useSupplyLandingConfig } from '@/features/mayoristas/useSupplyLandingConfig';
-import { useMicrolotesLanding } from '@/features/mayoristas/useMicrolotesLanding';
+import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
+import { useMicrolotesLanding } from '@/features/negocios/useMicrolotesLanding';
 import { STATIC_SUPPLY_LANDING, STATIC_MICROLOTES } from '@/features/catalog/catalogService';
-import { setLoteReservado } from '@/features/mayoristas/useLoteReservado';
+import { setLoteReservado } from '@/features/negocios/useLoteReservado';
 
 const PALETTE = {
   green: { accent: '#8faf8a' },
@@ -23,7 +23,8 @@ export default function SupplyLotes() {
   const { data: supply = STATIC_SUPPLY_LANDING } = useSupplyLandingConfig();
   const { data: microlotes = STATIC_MICROLOTES } = useMicrolotesLanding();
   const [filter, setFilter] = useState<string>('all');
-  const filtered = filter === 'all' ? microlotes.lotes : microlotes.lotes.filter(l => l.tag === filter);
+  const activeLotes = microlotes.lotes.filter(l => l.activo !== false);
+  const filtered = filter === 'all' ? activeLotes : activeLotes.filter(l => l.tag === filter);
 
   return (
     <section id="lotes" style={{

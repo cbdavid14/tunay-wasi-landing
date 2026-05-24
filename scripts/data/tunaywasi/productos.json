@@ -1,0 +1,248 @@
+[
+  {
+    "id": "bourbon-lavado-rosmell-2026",
+    "code": "03",
+    "name": "Fusión 777 - Bourbon Lavado",
+    "sub": "Lavado · Amazonas",
+    "region": "Perú · Amazonas",
+    "alt": "1860 m",
+    "farm": "Fusión 777",
+    "producer": "Rosmell Andia Yuto",
+    "notes": [
+      "Caramelo",
+      "Cítrico",
+      "Panela"
+    ],
+    "body": "Medio",
+    "acidity": "Cítrica limpia",
+    "score": "82.5+ (referencial)",
+    "tag": "Bourbon Lavado · Lote limitado",
+    "tagTone": "sage",
+    "brews": [
+      "V60",
+      "French Press",
+      "Espresso"
+    ],
+    "weights": [
+      {
+        "label": "250g",
+        "cents": 2705
+      }
+    ],
+    "producerPct": 34.65,
+    "tone": "tan",
+    "stockKg": 40,
+    "stockReservedKg": 0,
+    "desc": "Microlote Bourbon Lavado de Rosmell Andia, Fusión 777 · 1860 msnm. 40 kg en cosecha. Entrega estimada agosto 2026. Precio final tras cata Q-Grader.",
+    "label": "PROXIMAMENTE"
+  },
+  {
+    "id": "bourbon-lavado-jon-milan-2026",
+    "code": "02",
+    "name": "Las Travesuras de Milán - Bourbon",
+    "sub": "Lavado · Cajamarca",
+    "region": "Perú · Cajamarca",
+    "alt": "1550 m",
+    "farm": "Finca Darlyn Sánchez",
+    "producer": "Darlyn John Sánchez Hilario",
+    "body": "Medio-alto",
+    "acidity": "Cítrica limpia",
+    "score": "86+",
+    "tag": "Bourbon Lavado",
+    "tagTone": "sage",
+    "tone": "tan",
+    "stockKg": 300,
+    "stockReservedKg": 0,
+    "producerPct": 42,
+    "desc": "Microlote Bourbon proceso Lavado de Jon Sánchez. En fermentación, disponible julio 2026. 300 kg.",
+    "notes": [
+      "Caramelo",
+      "Cítrico",
+      "Chocolate"
+    ],
+    "brews": [
+      "V60",
+      "French Press",
+      "Espresso"
+    ],
+    "weights": [
+      {
+        "label": "250g",
+        "cents": 7200
+      },
+      {
+        "label": "1kg",
+        "cents": 26000
+      },
+      {
+        "label": "3kg",
+        "cents": 75000
+      }
+    ],
+    "label": "PROXIMAMENTE"
+  },
+  {
+    "id": "caturra-honey-aydee-2026",
+    "code": "02",
+    "name": "Aydee Rojas - Caturra Honey",
+    "sub": "Honey · Cajamarca",
+    "region": "Perú · Cajamarca · Jaén",
+    "alt": "1500 m",
+    "farm": "Finca Vista Hermosa",
+    "producer": "Aydee Rojas Saldivar",
+    "notes": [
+      "Dulce",
+      "Caramelo",
+      "Frutal"
+    ],
+    "body": "Medio",
+    "acidity": "Suave",
+    "score": "82.5+ (referencial)",
+    "tag": "Caturra Honey · Lote limitado",
+    "tagTone": "terra",
+    "brews": [
+      "V60",
+      "Chemex",
+      "Aeropress"
+    ],
+    "tone": "green",
+    "stockKg": 12,
+    "label": "PREVENTA",
+    "photo": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767831/aydeFinca_rm5arr.jpg",
+    "desc": "Microlote Caturra Honey de Aydee Rojas, Jaén. 12 kg disponibles. ",
+    "stockReservedKg": 4.216,
+    "comisiones": {
+      "b2c": {
+        "producerShareFactor": 0.386,
+        "breakdown": [
+          {
+            "key": "tostador",
+            "label": "Tueste + Cata Q-Grader",
+            "pct": 14,
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "color": "#8faf8a"
+          },
+          {
+            "color": "#c4b297",
+            "key": "logistica",
+            "pct": 22.4,
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "label": "Packaging y Envío"
+          },
+          {
+            "pct": 19,
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "label": "Tunay Wasi",
+            "key": "plataforma",
+            "color": "#1f3028"
+          }
+        ]
+      }
+    },
+    "tier": "selecto",
+    "promoActivated": true,
+    "weightsPromo": [
+      {
+        "cents": 2705,
+        "label": "250g"
+      },
+      {
+        "cents": 9700,
+        "label": "1kg"
+      }
+    ],
+    "weights": [
+      {
+        "cents": 5410,
+        "label": "250g"
+      },
+      {
+        "cents": 19400,
+        "label": "1kg"
+      }
+    ],
+    "producerPct": 42
+  },
+  {
+    "id": "geisha-honey-aydee-2026",
+    "code": "01",
+    "name": "Aydee Rojas - Geisha Honey",
+    "sub": "Honey · Cajamarca",
+    "region": "Perú · Cajamarca · Jaén",
+    "alt": "1500 m",
+    "farm": "Finca Vista Hermosa",
+    "producer": "Aydee Rojas Saldivar",
+    "notes": [
+      "Frutal",
+      "Miel",
+      "Floral"
+    ],
+    "body": "Medio",
+    "acidity": "Brillante",
+    "score": "82.5+",
+    "tag": "Geisha Honey",
+    "tagTone": "terra",
+    "brews": [
+      "V60",
+      "Chemex",
+      "Aeropress"
+    ],
+    "tone": "green",
+    "label": "PREVENTA",
+    "photo": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767831/aydeFinca_rm5arr.jpg",
+    "stockKg": 12,
+    "stockReservedKg": 0.301,
+    "desc": "Microlote Geisha proceso Honey de Aydee Rojas, en secado. Cosecha 2026. Cantidad limitada: 12 kg.",
+    "comisiones": {
+      "b2c": {
+        "breakdown": [
+          {
+            "label": "Tueste + Cata Q-Grader",
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "key": "tostador",
+            "pct": 14,
+            "color": "#8faf8a"
+          },
+          {
+            "color": "#c4b297",
+            "label": "Packaging y Envío",
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "key": "logistica",
+            "pct": 22.4
+          },
+          {
+            "key": "plataforma",
+            "pct": 19,
+            "label": "Tunay Wasi",
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "color": "#1f3028"
+          }
+        ],
+        "producerShareFactor": 0.386
+      }
+    },
+    "tier": "selecto",
+    "promoActivated": true,
+    "weightsPromo": [
+      {
+        "label": "250g",
+        "cents": 2705
+      },
+      {
+        "label": "1kg",
+        "cents": 9700
+      }
+    ],
+    "weights": [
+      {
+        "label": "250g",
+        "cents": 5410
+      },
+      {
+        "label": "1kg",
+        "cents": 19400
+      }
+    ],
+    "producerPct": 42
+  }
+]
