@@ -28,6 +28,15 @@ async function bootstrap() {
         </QueryClientProvider>
       </StrictMode>,
     );
+  } else if (target === 'pitchdeck') {
+    const { default: AppPitchDeck } = await import('./AppPitchDeck');
+    createRoot(root!).render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <AppPitchDeck />
+        </QueryClientProvider>
+      </StrictMode>,
+    );
   } else {
     const { default: AppClientes } = await import('./AppClientes');
     createRoot(root!).render(

@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_APP_TARGET?: 'clientes' | 'caficultores' | 'negocios';
+  readonly VITE_APP_TARGET?: 'clientes' | 'caficultores' | 'negocios' | 'pitchdeck';
 }
 
 interface ImportMeta {

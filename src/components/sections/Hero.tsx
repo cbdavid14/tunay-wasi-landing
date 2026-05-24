@@ -58,7 +58,7 @@ export default function Hero() {
             </p>
             <div style={{ display: 'flex', gap: 16, marginTop: 32, alignItems: 'center', flexWrap: 'wrap', ...fade(0.45) }}>
               <a href="#cafe" className="tw-cta-primary" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 14, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#f2e0cc', background: '#c96e4b', padding: '20px 32px', borderRadius: 999, textDecoration: 'none', boxShadow: '0 18px 40px -16px #533b22aa, inset 0 1px 0 #ffffff33', display: 'inline-flex', alignItems: 'center', gap: 12, transition: 'all .35s cubic-bezier(.2,.7,.2,1)', border: '1px solid #533b2244' }}>
-                Descubrir nuestro café
+                Conoce quién cosechó tu próxima taza
                 <span style={{ display: 'inline-block', transition: 'transform .35s ease' }} className="tw-cta-arrow">→</span>
               </a>
               <a href="#caficultores" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 14, letterSpacing: '0.06em', color: '#1f3028', textDecoration: 'none', padding: '20px 8px', borderBottom: '1px solid #1f3028', transition: 'all .3s ease' }}

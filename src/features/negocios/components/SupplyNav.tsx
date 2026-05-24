@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 const LINKS: [string, string][] = [
   ['Lotes', '#lotes'],
   ['Cómo funciona', '#proceso'],
+  ['Empresas', '#gifting-corporativo'],
   ['Solicitar', '#solicitud'],
 ];
 

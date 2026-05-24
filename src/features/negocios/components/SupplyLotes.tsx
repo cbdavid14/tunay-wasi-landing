@@ -114,6 +114,14 @@ export default function SupplyLotes() {
                     fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em',
                     color: '#533b22', textTransform: 'uppercase',
                   }}>{l.id}</span>
+                  {l.sacos <= 4 && (
+                    <span style={{
+                      fontFamily: 'Bowlby One SC, sans-serif', fontSize: 8, letterSpacing: '0.18em',
+                      color: '#f2e0cc', background: '#c96e4b',
+                      padding: '3px 8px', borderRadius: 999, textTransform: 'uppercase',
+                      boxShadow: '0 3px 8px -3px #c96e4b99',
+                    }}>Solo {l.sacos} {l.sacos === 1 ? 'saco' : 'sacos'}</span>
+                  )}
                 </div>
 
                 <div style={{
@@ -163,31 +171,49 @@ export default function SupplyLotes() {
 
                 <div style={{
                   marginTop: 22, paddingTop: 18, borderTop: '1px solid #533b2244',
-                  display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12,
+                  display: 'flex', flexDirection: 'column', gap: 10,
                 }}>
-                  <div>
-                    <div style={{
-                      fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.20em',
-                      color: '#533b22aa', textTransform: 'uppercase',
-                    }}>FOB Lima / kg</div>
-                    <div style={{
-                      fontFamily: 'Cormorant Garamond, serif', fontSize: 32, fontWeight: 600, color: '#1f3028',
-                      lineHeight: 1, marginTop: 4,
-                    }}>S/ {l.precio.toFixed(2)}</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+                    <div>
+                      <div style={{
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.20em',
+                        color: '#533b22aa', textTransform: 'uppercase',
+                      }}>FOB Lima / kg</div>
+                      <div style={{
+                        fontFamily: 'Cormorant Garamond, serif', fontSize: 32, fontWeight: 600, color: '#1f3028',
+                        lineHeight: 1, marginTop: 4,
+                      }}>S/ {l.precio.toFixed(2)}</div>
+                    </div>
+                    <a
+                      href="#solicitud"
+                      className="tw-sup-reservar"
+                      onClick={() => setLoteReservado({ id: l.id, variedad: l.variedad, origen: l.origen, sca: l.sca, precioKg: l.precio })}
+                      style={{
+                        fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600,
+                        letterSpacing: '0.08em', textTransform: 'uppercase',
+                        color: '#f2e0cc', background: '#1f3028',
+                        padding: '11px 16px', textDecoration: 'none',
+                        transition: 'all .25s ease',
+                      }}
+                    >
+                      Reservar →
+                    </a>
                   </div>
                   <a
                     href="#solicitud"
-                    className="tw-sup-reservar"
+                    className="tw-sup-muestra"
                     onClick={() => setLoteReservado({ id: l.id, variedad: l.variedad, origen: l.origen, sca: l.sca, precioKg: l.precio })}
                     style={{
-                      fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600,
-                      letterSpacing: '0.08em', textTransform: 'uppercase',
-                      color: '#f2e0cc', background: '#1f3028',
-                      padding: '11px 16px', textDecoration: 'none',
+                      fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 500,
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                      color: '#533b22', background: 'transparent',
+                      padding: '9px 16px', textDecoration: 'none', textAlign: 'center',
+                      border: '1px solid #533b2255', borderRadius: 2,
                       transition: 'all .25s ease',
+                      display: 'block',
                     }}
                   >
-                    Reservar →
+                    Pedir muestra 200g →
                   </a>
                 </div>
 
@@ -223,6 +249,7 @@ export default function SupplyLotes() {
       <style>{`
         .tw-sup-card:hover { transform: translateY(-4px); box-shadow: 0 24px 50px -22px #533b22aa; border-color: #1f3028; }
         .tw-sup-reservar:hover { background: #c96e4b !important; }
+        .tw-sup-muestra:hover { background: #1f302811 !important; border-color: #1f3028 !important; }
         @media (max-width: 880px) {
           .tw-sup-2col { grid-template-columns: 1fr !important; gap: 32px !important; }
         }

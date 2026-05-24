@@ -12,7 +12,7 @@ export const contactoSchema = z.object({
     .trim()
     .max(254, { message: 'Máximo 254 caracteres.' })
     .email({ message: 'Correo no válido.' }),
-  tema: z.enum(['cafe', 'mayorista', 'caficultor', 'prensa']),
+  tema: z.enum(['cafe', 'mayorista', 'caficultor', 'prensa', 'regalo']),
   mensaje: z
     .string({ message: 'El mensaje es requerido.' })
     .trim()

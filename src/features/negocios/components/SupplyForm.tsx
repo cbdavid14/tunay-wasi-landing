@@ -12,10 +12,13 @@ interface FormValues {
   nombre: string;
   email: string;
   telefono: string;
+  tipoNegocio: string;
   volumen: string;
   frecuencia: string;
   sca: string;
   variedad: string[];
+  quieroMuestra: boolean;
+  necesitaRuc: boolean;
   mensaje: string;
 }
 
@@ -187,8 +190,11 @@ export default function SupplyForm() {
   ];
   const [values, setValues] = useState<FormValues>({
     empresa: '', nombre: '', email: '', telefono: '',
+    tipoNegocio: '',
     volumen: '46', frecuencia: 'mensual',
-    sca: '84', variedad: [], mensaje: '',
+    sca: '84', variedad: [],
+    quieroMuestra: false, necesitaRuc: false,
+    mensaje: '',
   });
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [status, setStatus] = useState<Status>('idle');
@@ -238,10 +244,13 @@ export default function SupplyForm() {
         contacto: values.nombre,
         email: values.email,
         telefono: values.telefono,
+        tipoNegocio: values.tipoNegocio || undefined,
         volumenKg: Number(values.volumen),
         frecuencia: values.frecuencia,
         puntajeMin: Number(values.sca),
         variedad: values.variedad.length > 0 ? values.variedad.join(', ') : undefined,
+        quieroMuestra: values.quieroMuestra || undefined,
+        necesitaRuc: values.necesitaRuc || undefined,
         mensaje: values.mensaje || undefined,
         loteId: loteReservado?.id,
         loteVariedad: loteReservado?.variedad,
@@ -434,6 +443,17 @@ export default function SupplyForm() {
                 <SupplyInput name="nombre" label="Nombre de contacto" placeholder="Nombre y Apellidos" {...inputProps} />
                 <SupplyInput name="email" label="Email" type="email" placeholder="hola@negocio.pe" {...inputProps} />
                 <SupplyInput name="telefono" label="Teléfono" placeholder="+51 987 654 321" {...inputProps} />
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <SupplySelect name="tipoNegocio" label="Tipo de negocio" values={values} setVal={setVal as SelectProps['setVal']} options={[
+                    ['', 'Selecciona tu tipo de negocio…'],
+                    ['cafeteria', 'Cafetería de especialidad'],
+                    ['tostadora', 'Tostadora / laboratorio'],
+                    ['hotel-restaurante', 'Hotel · Restaurante de autor'],
+                    ['empresa', 'Empresa / Gifting corporativo'],
+                    ['distribuidor', 'Distribuidor / Importador'],
+                    ['otro', 'Otro'],
+                  ]} />
+                </div>
                 <SupplySelect name="volumen" label="Volumen requerido" values={values} setVal={setVal as SelectProps['setVal']} options={[
                   ['46', '46 kg · 1 saco'],
                   ['92', '92 kg · 2 sacos'],
@@ -460,6 +480,56 @@ export default function SupplyForm() {
                   selected={values.variedad}
                   toggle={toggleVariedad}
                 />
+              </div>
+
+              {/* Banner redirección oficina */}
+              {values.tipoNegocio === 'otro' && (
+                <div style={{
+                  background: '#8faf8a22', border: '1px solid #8faf8a55', borderRadius: 10,
+                  padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
+                }}>
+                  <span style={{ color: '#8faf8a', fontSize: 16, flexShrink: 0 }}>!</span>
+                  <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#c4b297', lineHeight: 1.55 }}>
+                    ¿Buscas café tostado para tu oficina? Tu pedido va por nuestra{' '}
+                    <a href="/" style={{ color: '#8faf8a', textDecoration: 'underline' }}>tienda al consumidor</a>
+                    {' '}— café tostado, entrega mensual, sin trámites.
+                  </div>
+                </div>
+              )}
+
+              {/* Checkboxes */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {(['cafeteria', 'tostadora', 'hotel-restaurante', ''].includes(values.tipoNegocio)) && (
+                  <label style={{
+                    display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer',
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={values.quieroMuestra}
+                      onChange={(e) => setValues(v => ({ ...v, quieroMuestra: e.target.checked }))}
+                      style={{ accentColor: '#c96e4b', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
+                    />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#c4b297', lineHeight: 1.4 }}>
+                      Quiero muestra de 200g antes de comprometer pedido
+                      <span style={{ display: 'block', fontSize: 11, color: '#c4b29788', marginTop: 2 }}>
+                        El flete va por nuestra cuenta — te la coordinamos en la propuesta.
+                      </span>
+                    </span>
+                  </label>
+                )}
+                <label style={{
+                  display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={values.necesitaRuc}
+                    onChange={(e) => setValues(v => ({ ...v, necesitaRuc: e.target.checked }))}
+                    style={{ accentColor: '#c96e4b', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
+                  />
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#c4b297', lineHeight: 1.4 }}>
+                    Necesito factura con RUC
+                  </span>
+                </label>
               </div>
 
               <div>

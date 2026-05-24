@@ -32,6 +32,8 @@ export interface Producto {
   desc: string;
   photo?: string;
   label?: ProductLabel;
+  roastDate?: string;      // fecha estimada de tueste, ej. "~3 jun."
+  qGraderName?: string;    // nombre del Q Grader que certificó el lote
 }
 
 export interface Caficultor {

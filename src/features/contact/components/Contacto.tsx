@@ -6,10 +6,11 @@ import { contactoSchema, type ContactoForm } from '@/shared/validation/contactoS
 import { sendMail } from '@/services/mailService';
 import { emailContactoCliente, emailContactoAdmin } from '@/services/emailTemplates';
 
-type Tema = 'cafe' | 'mayorista' | 'caficultor' | 'prensa';
+type Tema = 'cafe' | 'mayorista' | 'caficultor' | 'prensa' | 'regalo';
 
 const TEMAS: [Tema, string][] = [
   ['cafe', 'Comprar café'],
+  ['regalo', 'Quiero regalar'],
   ['prensa', 'Prensa'],
 ];
 

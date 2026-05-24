@@ -14,10 +14,13 @@ export interface SolicitudSupply {
   contacto: string;
   email: string;
   telefono: string;
+  tipoNegocio?: string;
   volumenKg: number;
   frecuencia: string;
   puntajeMin: number;
   variedad?: string;
+  quieroMuestra?: boolean;
+  necesitaRuc?: boolean;
   mensaje?: string;
   loteId?: string;
   loteVariedad?: string;

@@ -134,6 +134,31 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 500, padding: '6px 11px', borderRadius: 8, background: '#c4b297', color: '#1f3028' }}>{p.farm}</span>
       </div>
 
+      {(p.qGraderName || p.roastDate) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {p.qGraderName && (
+            <span style={{
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.16em',
+              padding: '4px 9px', borderRadius: 6,
+              background: '#8faf8a22', color: '#1f3028', border: '1px solid #8faf8a66',
+              textTransform: 'uppercase',
+            }}>
+              Q Grader · {p.qGraderName}
+            </span>
+          )}
+          {p.roastDate && (
+            <span style={{
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.16em',
+              padding: '4px 9px', borderRadius: 6,
+              background: '#c96e4b18', color: '#533b22', border: '1px solid #c96e4b44',
+              textTransform: 'uppercase',
+            }}>
+              Tueste est. {p.roastDate}
+            </span>
+          )}
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {p.notes.map((n) => (
           <span key={n} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 500, padding: '5px 11px', borderRadius: 999, background: '#8faf8a44', color: '#1f3028', border: '1px solid #8faf8a99' }}>{n}</span>
