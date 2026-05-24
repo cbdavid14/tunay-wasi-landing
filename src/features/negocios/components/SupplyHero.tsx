@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
 import { useMicrolotesLanding } from '@/features/negocios/useMicrolotesLanding';
 import { STATIC_SUPPLY_LANDING, STATIC_MICROLOTES } from '@/features/catalog/catalogService';
+import WaitlistForm from '@/components/WaitlistForm';
 
 const features = [
   ['Trazabilidad', 'Finca · lote · cosecha verificados.'],
@@ -119,6 +120,13 @@ export default function SupplyHero() {
               Cómo trabajamos
             </a>
           </div>
+
+          <WaitlistForm
+            firestoreCollection="waitlist-b2b"
+            origen="supply-hero"
+            theme="dark"
+            style={{ marginTop: 32, ...fade(0.55) }}
+          />
 
           <div style={{
             marginTop: 72,
