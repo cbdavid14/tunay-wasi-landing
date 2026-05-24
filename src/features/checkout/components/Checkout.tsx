@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
-import PoliciesModal from './PoliciesModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { Money } from '@/shared/money';
 import type { AdapterName, ShippingData, ShippingZone } from '@/shared/types/checkout';
