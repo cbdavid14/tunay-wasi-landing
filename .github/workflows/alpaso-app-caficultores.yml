@@ -1,4 +1,4 @@
-name: Deploy → caficultores (alpaso-app-caficultores.web.app)
+name: (alpaso-app) Deploy → caficultores
 
 on:
   workflow_dispatch:
