@@ -657,7 +657,7 @@ export function emailAlertaAdminMayoristaB2B(data: {
         Nueva solicitud B2B
       </h2>
       <p style="font-family:'Montserrat',Arial,sans-serif;font-size:12px;color:#533b22;margin:0;line-height:1.7;">
-        Desde el landing de mayoristas.
+        Desde el landing de negocios.
       </p>
 
       ${divider()}

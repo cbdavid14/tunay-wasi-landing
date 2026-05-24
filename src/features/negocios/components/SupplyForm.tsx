@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
-import { useSupplyLandingConfig } from '@/features/mayoristas/useSupplyLandingConfig';
+import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
 import { STATIC_SUPPLY_LANDING } from '@/features/catalog/catalogService';
-import { saveSolicitudSupply } from '@/features/mayoristas/supplyFormService';
-import { useLoteReservado, setLoteReservado } from '@/features/mayoristas/useLoteReservado';
+import { saveSolicitudSupply } from '@/features/negocios/supplyFormService';
+import { useLoteReservado, setLoteReservado } from '@/features/negocios/useLoteReservado';
 
 type Status = 'idle' | 'sending' | 'sent';
 

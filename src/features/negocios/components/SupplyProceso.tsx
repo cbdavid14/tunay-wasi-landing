@@ -1,4 +1,4 @@
-import { useSupplyLandingConfig } from '@/features/mayoristas/useSupplyLandingConfig';
+import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
 import { STATIC_SUPPLY_LANDING } from '@/features/catalog/catalogService';
 
 const pasos = [

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSupplyLandingConfig } from '@/features/mayoristas/useSupplyLandingConfig';
-import { useMicrolotesLanding } from '@/features/mayoristas/useMicrolotesLanding';
+import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
+import { useMicrolotesLanding } from '@/features/negocios/useMicrolotesLanding';
 import { STATIC_SUPPLY_LANDING, STATIC_MICROLOTES } from '@/features/catalog/catalogService';
 
 const features = [

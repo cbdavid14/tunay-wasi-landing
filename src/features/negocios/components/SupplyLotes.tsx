@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
-import { useSupplyLandingConfig } from '@/features/mayoristas/useSupplyLandingConfig';
-import { useMicrolotesLanding } from '@/features/mayoristas/useMicrolotesLanding';
+import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
+import { useMicrolotesLanding } from '@/features/negocios/useMicrolotesLanding';
 import { STATIC_SUPPLY_LANDING, STATIC_MICROLOTES } from '@/features/catalog/catalogService';
-import { setLoteReservado } from '@/features/mayoristas/useLoteReservado';
+import { setLoteReservado } from '@/features/negocios/useLoteReservado';
 
 const PALETTE = {
   green: { accent: '#8faf8a' },
