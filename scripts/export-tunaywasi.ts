@@ -42,10 +42,14 @@ db.settings({ databaseId: DATABASE_ID });
 
 // ── Colecciones a exportar ───────────────────────────────────────────────────
 const COLLECTIONS: { name: string; mode: 'array' | 'config' }[] = [
-  { name: 'caficultores',      mode: 'array'  },
-  { name: 'productos',         mode: 'array'  },
-  { name: 'configurations',    mode: 'config' },
-  { name: 'microlotesLanding', mode: 'array'  },
+  {name: 'caficultores', mode: 'array'},
+  {name: 'productos', mode: 'array'},
+  {name: 'configurations', mode: 'config'},
+  {name: 'microlotes', mode: 'array'},
+  {name: 'microlotesLanding', mode: 'array'},
+  {name: 'pedidos', mode: 'array'},
+  {name: 'waitlist-b2c', mode: 'array'},
+  {name: 'waitlist-caficultores', mode: 'array'},
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
