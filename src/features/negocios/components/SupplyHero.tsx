@@ -14,7 +14,8 @@ export default function SupplyHero() {
   const { data: supply = STATIC_SUPPLY_LANDING } = useSupplyLandingConfig();
   const { data: microlotes = STATIC_MICROLOTES } = useMicrolotesLanding();
   const { heroCard } = supply;
-  const lote = microlotes.lotes.find(l => l.featured) ?? microlotes.lotes[0];
+  const activeLotes = microlotes.lotes.filter(l => l.activo !== false);
+  const lote = activeLotes.find(l => l.featured) ?? activeLotes[0];
 
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { setLoaded(true); }, []);

@@ -23,7 +23,8 @@ export default function SupplyLotes() {
   const { data: supply = STATIC_SUPPLY_LANDING } = useSupplyLandingConfig();
   const { data: microlotes = STATIC_MICROLOTES } = useMicrolotesLanding();
   const [filter, setFilter] = useState<string>('all');
-  const filtered = filter === 'all' ? microlotes.lotes : microlotes.lotes.filter(l => l.tag === filter);
+  const activeLotes = microlotes.lotes.filter(l => l.activo !== false);
+  const filtered = filter === 'all' ? activeLotes : activeLotes.filter(l => l.tag === filter);
 
   return (
     <section id="lotes" style={{

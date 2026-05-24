@@ -14,7 +14,8 @@
       "tag": "washed",
       "notas": "Naranja sanguina · chocolate de leche · panela",
       "tone": "green",
-      "estado": "disponible",
+      "estado": "edición limitada",
+      "activo": true,
       "featured": true
     },
     {
@@ -32,6 +33,7 @@
       "notas": "Miel de caña · durazno blanco · cedro",
       "tone": "terra",
       "estado": "disponible",
+      "activo": true,
       "featured": false
     },
     {
@@ -49,6 +51,7 @@
       "notas": "Jazmín · bergamota · té negro · final largo",
       "tone": "gold",
       "estado": "edición limitada",
+      "activo": false,
       "featured": false
     },
     {
@@ -66,6 +69,7 @@
       "notas": "Caramelo · cacao · cuerpo redondo",
       "tone": "cream",
       "estado": "disponible",
+      "activo": false,
       "featured": false
     }
   ]

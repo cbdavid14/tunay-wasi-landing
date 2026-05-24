@@ -39,6 +39,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Waitlist B2B (negocios — tostadoras, cafeterías, mayoristas)
+    match /waitlist-b2b/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
     // Todo lo demás bloqueado
     match /{document=**} {
       allow read, write: if false;
