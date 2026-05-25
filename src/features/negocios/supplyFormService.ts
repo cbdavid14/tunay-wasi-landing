@@ -15,6 +15,8 @@ export interface SolicitudSupply {
   email: string;
   telefono: string;
   tipoNegocio?: string;
+  cantidadKits?: number;
+  tipoGifting?: string;
   volumenKg: number;
   frecuencia: string;
   puntajeMin: number;

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
 import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
 import { STATIC_SUPPLY_LANDING } from '@/features/catalog/catalogService';
@@ -13,6 +13,8 @@ interface FormValues {
   email: string;
   telefono: string;
   tipoNegocio: string;
+  cantidadKits: string;
+  tipoGifting: string;
   volumen: string;
   frecuencia: string;
   sca: string;
@@ -191,6 +193,7 @@ export default function SupplyForm() {
   const [values, setValues] = useState<FormValues>({
     empresa: '', nombre: '', email: '', telefono: '',
     tipoNegocio: '',
+    cantidadKits: '', tipoGifting: '',
     volumen: '46', frecuencia: 'mensual',
     sca: '84', variedad: [],
     quieroMuestra: false, necesitaRuc: false,
@@ -199,6 +202,15 @@ export default function SupplyForm() {
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [status, setStatus] = useState<Status>('idle');
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Pre-seleccionar empresa cuando llega desde SupplyGifting
+  useEffect(() => {
+    const handler = () => {
+      setValues(v => ({ ...v, tipoNegocio: 'empresa' }));
+    };
+    window.addEventListener('tw:gifting-cotizar', handler);
+    return () => window.removeEventListener('tw:gifting-cotizar', handler);
+  }, []);
 
   const errors = useMemo(() => {
     const e: Partial<Record<keyof FormValues, string>> = {};
@@ -245,6 +257,8 @@ export default function SupplyForm() {
         email: values.email,
         telefono: values.telefono,
         tipoNegocio: values.tipoNegocio || undefined,
+        cantidadKits: values.cantidadKits ? Number(values.cantidadKits) : undefined,
+        tipoGifting: values.tipoGifting || undefined,
         volumenKg: Number(values.volumen),
         frecuencia: values.frecuencia,
         puntajeMin: Number(values.sca),
@@ -454,6 +468,54 @@ export default function SupplyForm() {
                     ['otro', 'Otro'],
                   ]} />
                 </div>
+                {values.tipoNegocio === 'empresa' && (
+                  <>
+                    <div>
+                      <label style={{
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em',
+                        color: '#c4b297', textTransform: 'uppercase', display: 'block', marginBottom: 10,
+                      }}>¿Gifting puntual o beneficio mensual?</label>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {[['puntual', 'Gifting puntual'], ['mensual', 'Beneficio mensual']].map(([v, l]) => (
+                          <button
+                            key={v} type="button"
+                            onClick={() => setValues(vals => ({ ...vals, tipoGifting: v }))}
+                            style={{
+                              flex: 1, padding: '10px 12px', borderRadius: 8,
+                              fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600,
+                              cursor: 'pointer', border: 'none',
+                              background: values.tipoGifting === v ? '#c96e4b' : '#f2e0cc22',
+                              color: values.tipoGifting === v ? '#f2e0cc' : '#c4b297',
+                              transition: 'all .2s ease',
+                            }}
+                          >{l}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em',
+                        color: '#c4b297', textTransform: 'uppercase', display: 'block', marginBottom: 10,
+                      }}>¿Cuántos kits necesitas? (aprox.)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={values.cantidadKits}
+                        placeholder="Ej: 50"
+                        onChange={e => setValues(v => ({ ...v, cantidadKits: e.target.value }))}
+                        style={{
+                          width: '100%', boxSizing: 'border-box',
+                          fontFamily: 'Montserrat, sans-serif', fontSize: 14,
+                          color: '#f2e0cc', background: 'transparent',
+                          border: 'none', borderBottom: '1px solid #f2e0cc33',
+                          padding: '12px 0 10px', outline: 'none',
+                        }}
+                        onFocus={e => { e.target.style.borderBottomColor = '#c96e4b'; }}
+                        onBlur={e => { e.target.style.borderBottomColor = '#f2e0cc33'; }}
+                      />
+                    </div>
+                  </>
+                )}
                 <SupplySelect name="volumen" label="Volumen requerido" values={values} setVal={setVal as SelectProps['setVal']} options={[
                   ['46', '46 kg · 1 saco'],
                   ['92', '92 kg · 2 sacos'],
