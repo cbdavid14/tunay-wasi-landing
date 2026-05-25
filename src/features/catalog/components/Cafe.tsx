@@ -3,6 +3,7 @@ import { useCatalog } from '../useCatalog';
 import FilterPanel, { type FilterState } from './FilterPanel';
 import ProductCard from './ProductCard';
 import CostBreakdownModal from './CostBreakdownModal';
+import Resenas from './Resenas';
 
 const PER_PAGE = 3;
 
@@ -117,6 +118,8 @@ export default function Cafe() {
             </div>
           </>
         )}
+
+        <Resenas />
       </div>
 
       <style>{`

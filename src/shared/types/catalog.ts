@@ -34,6 +34,14 @@ export interface Producto {
   label?: ProductLabel;
   roastDate?: string;      // fecha estimada de tueste, ej. "~3 jun."
   qGraderName?: string;    // nombre del Q Grader que certificó el lote
+  receta?: {               // receta de extracción recomendada para el lote
+    metodo: string;        // "V60" | "Chemex" | "French Press" | "Aeropress"
+    ratio: string;         // "1:16 (15g / 240ml)"
+    temp: string;          // "93°C"
+    tiempo: string;        // "3:00–3:30 min"
+    molienda: string;      // "Medio-fina (similar a sal gruesa)"
+    nota?: string;         // consejo adicional opcional
+  };
 }
 
 export interface Caficultor {

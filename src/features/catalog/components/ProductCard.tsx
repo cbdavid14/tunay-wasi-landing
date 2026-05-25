@@ -7,6 +7,78 @@ import { useCartActions } from '@/features/cart/useCart';
 import ImageSlot from '@/components/decor/ImageSlot';
 import { maxQtyForWeight, disponibleKg } from '@/features/catalog/stockUtils';
 
+function RecetaPanel({ receta, nombre }: { receta: NonNullable<Producto['receta']>; nombre: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderTop: '1px solid #1f302822', paddingTop: 14 }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+          padding: 0,
+        }}
+      >
+        <span style={{
+          fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.2em',
+          color: '#533b22', textTransform: 'uppercase',
+        }}>Receta recomendada · {receta.metodo}</span>
+        <span style={{
+          fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+          color: '#c96e4b', transition: 'transform .25s ease',
+          display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none',
+        }}>▾</span>
+      </button>
+
+      {open && (
+        <div style={{
+          marginTop: 12, padding: '14px 16px',
+          background: '#1f30280a', border: '1px solid #1f302820', borderRadius: 10,
+          animation: 'tw-recipe-in .25s ease',
+        }}>
+          <div style={{
+            fontFamily: 'Bowlby One SC, sans-serif', fontSize: 9, letterSpacing: '0.24em',
+            color: '#c96e4b', textTransform: 'uppercase', marginBottom: 10,
+          }}>
+            {nombre} · {receta.metodo}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
+            {[
+              ['Ratio', receta.ratio],
+              ['Temperatura', receta.temp],
+              ['Tiempo', receta.tiempo],
+              ['Molienda', receta.molienda],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <div style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: '0.18em',
+                  color: '#533b2288', textTransform: 'uppercase',
+                }}>{k}</div>
+                <div style={{
+                  fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600,
+                  color: '#1f3028', marginTop: 2,
+                }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          {receta.nota && (
+            <div style={{
+              marginTop: 10, paddingTop: 10, borderTop: '1px solid #1f302818',
+              fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
+              fontSize: 13, color: '#533b22', lineHeight: 1.5,
+            }}>{receta.nota}</div>
+          )}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes tw-recipe-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
+    </div>
+  );
+}
+
 type GrindMode = 'Grano' | 'Molido';
 type GrindType = Exclude<GrindOption, 'Grano'>;
 
@@ -313,6 +385,8 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
           );
         })()}
       </div>
+
+      {p.receta && <RecetaPanel receta={p.receta} nombre={p.name} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
         <div>
