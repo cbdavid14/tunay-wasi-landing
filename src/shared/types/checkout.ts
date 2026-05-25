@@ -17,6 +17,11 @@ export interface ShippingData {
   olvaMode: 'recojo' | 'domicilio';
   dni: string;
   ciudad: string;
+  // Gifting fields
+  isGifting?: boolean;
+  giftingMensaje?: string;
+  giftingNombreDestinatario?: string;
+  giftingEnviarAlDestinatario?: boolean;
 }
 
 export interface CheckoutPayload {

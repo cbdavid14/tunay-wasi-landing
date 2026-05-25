@@ -335,6 +335,59 @@ function StepDatos({
         />
       </FormField>
 
+      {/* Gifting toggle */}
+      <div style={{
+        padding: '14px 16px', borderRadius: 14,
+        background: data.isGifting ? '#c96e4b14' : '#f2e0cc',
+        border: `1px solid ${data.isGifting ? '#c96e4b55' : '#1f302822'}`,
+        transition: 'all .25s ease',
+      }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={!!data.isGifting}
+            onChange={e => setData(d => ({ ...d, isGifting: e.target.checked }))}
+            style={{ accentColor: '#c96e4b', width: 16, height: 16, flexShrink: 0 }}
+          />
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600, color: '#1f3028' }}>
+            🎁 Es un regalo
+          </span>
+        </label>
+        {data.isGifting && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <FormField label="Mensaje personalizado (aparece en la tarjeta del pedido)">
+              <textarea
+                value={data.giftingMensaje ?? ''}
+                onChange={e => setData(d => ({ ...d, giftingMensaje: e.target.value }))}
+                placeholder="Ej: Para ti, con cariño. Que cada taza te recuerde de dónde viene."
+                rows={3}
+                maxLength={280}
+                style={{ ...inputStyle, resize: 'vertical', minHeight: 70 }}
+              />
+            </FormField>
+            <FormField label="Nombre del destinatario (opcional)">
+              <input
+                value={data.giftingNombreDestinatario ?? ''}
+                onChange={e => setData(d => ({ ...d, giftingNombreDestinatario: e.target.value }))}
+                placeholder="Ej: María García"
+                style={inputStyle}
+              />
+            </FormField>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={!!data.giftingEnviarAlDestinatario}
+                onChange={e => setData(d => ({ ...d, giftingEnviarAlDestinatario: e.target.checked }))}
+                style={{ accentColor: '#c96e4b', width: 16, height: 16, flexShrink: 0 }}
+              />
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#533b22' }}>
+                Enviar directamente al destinatario (usa la dirección de arriba)
+              </span>
+            </label>
+          </div>
+        )}
+      </div>
+
       {/* Nombre + Celular */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <FormField label="Nombre">

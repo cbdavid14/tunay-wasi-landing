@@ -51,6 +51,7 @@ export interface CaficultorDoc {
   fotoPerfilUrl?: string;          // Cloudinary profile photo URL
   fotosUrls?: string[];            // Cloudinary farm/process photo URLs (max 5)
   fotosCount?: number;
+  videoUrl?: string;               // mini-video de finca (15–30s), mp4 Cloudinary URL
 
   // ── Admin metadata ────────────────────────────────────────────────────
   status: 'pendiente' | 'aprobado' | 'rechazado';

@@ -20,6 +20,7 @@ function mapCaficultorDoc(id: string, raw: CaficultorDoc): Caficultor {
     yearsExp: raw.experienciaAnos ? Number(raw.experienciaAnos) : undefined,
     farmHa: raw.hectareas ? Number(raw.hectareas) : undefined,
     photo: raw.fotoPerfilUrl,
+    videoUrl: raw.videoUrl,
     photos: raw.fotosUrls,
     location: `${raw.distrito}, ${raw.provincia}, ${raw.departamento}`,
     status: raw.status,
@@ -41,6 +42,31 @@ const STATIC_PRODUCTS: Producto[] = [
     desc: 'Café de pequeño productor, secado al sol y proceso lavado clásico — el equilibrio andino.',
     photo: '/imgs/geishaBello-HorizonteOxapampa2.png',
     label: 'PREVENTA' as const,
+    roastDate: '~9 jun.',
+    qGraderName: 'M. Quispe',
+    receta: {
+      'V60': {
+        ratio: '1:16 (15 g / 240 ml)',
+        temp: '93 °C',
+        tiempo: '3:00–3:30 min',
+        molienda: 'Medio-fina (similar a sal gruesa)',
+        nota: 'Pre-infusión de 30 s con el doble del peso del café en agua.',
+      },
+      'Chemex': {
+        ratio: '1:17 (15 g / 255 ml)',
+        temp: '92 °C',
+        tiempo: '3:30–4:00 min',
+        molienda: 'Medio-gruesa (similar a azúcar morena gruesa)',
+        nota: 'Vierte en espiral hacia afuera. El filtro Chemex resalta el dulzor y claridad de taza.',
+      },
+      'French Press': {
+        ratio: '1:15 (30 g / 450 ml)',
+        temp: '94 °C',
+        tiempo: '4:00 min',
+        molienda: 'Gruesa (similar a pan rallado grueso)',
+        nota: 'No remuevas al final. Presiona despacio y sirve de inmediato para evitar sobreextracción.',
+      },
+    },
   },
   /*{
     id: 'yanapay-honey', code: '02', name: 'Yanapay Honey', sub: 'Honey naranja · San Martín',
@@ -76,6 +102,7 @@ const STATIC_CAFICULTORES: Caficultor[] = [
     quote: 'Darlyn ha transformado la finca en un laboratorio de alta gama, enfocándose en micro-lotes de puntajes sobresalientes (87.5+ puntos) en lugar de volumen comercial. Maestría en el Proceso Honey: La familia se ha especializado en el proceso Honey, una técnica que requiere un monitoreo minucioso durante el secado para preservar el mucílago (la "miel") del grano, logrando esas notas características a jalea y caramelo que lo llevaron a ganar la subasta.',
     summary: 'El café se siembra con la mano, pero se cuida con el oído — escuchando la lluvia.',
     photo: '/imgs/darlynsanchez.jpg',
+    videoUrl: 'https://videos.pexels.com/video-files/26781179/12006339_960_540_25fps.mp4',
     yearsExp: 8,
     farmHa: 5,
     socialImpact: 'Invertir en camas africanas (secadores elevados) con control de temperatura para perfeccionar sus procesos Honey y evitar que la humedad de la selva afecte los lotes.'
@@ -401,7 +428,7 @@ export interface MicrolotesLandingData {
 
 export const STATIC_MICROLOTES: MicrolotesLandingData = {
   lotes: [
-    { id: 'TW-068', origen: 'Cusco · Quillabamba', finca: 'Finca Quillabamba',  variedad: 'Caturra', proceso: 'Lavado',  altitud: '1,720 m', sca: 87.5, sacos: 12, kg:  552, precio:  62.40, tag: 'washed',  notas: 'Naranja sanguina · chocolate de leche · panela',      tone: 'green', estado: 'disponible',      featured: true },
+    { id: 'TW-068', origen: 'Cusco · Quillabamba', finca: 'Finca Quillabamba',  variedad: 'Caturra', proceso: 'Lavado',  altitud: '1,720 m', sca: 88.5, sacos: 12, kg:  552, precio:  62.40, tag: 'washed',  notas: 'Naranja sanguina · chocolate de leche · panela',      tone: 'green', estado: 'disponible',      featured: true },
    ],
 };
 

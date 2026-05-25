@@ -516,6 +516,29 @@ export default function SupplyForm() {
                     </div>
                   </>
                 )}
+                {values.tipoNegocio === 'hotel-restaurante' && (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{
+                      fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em',
+                      color: '#c4b297', textTransform: 'uppercase', display: 'block', marginBottom: 10,
+                    }}>Propuesta gastronómica (opcional)</label>
+                    <textarea
+                      value={values.mensaje}
+                      onChange={(e) => setValues(v => ({ ...v, mensaje: e.target.value }))}
+                      placeholder="Tipo de cocina, estilo del menú, perfil de sabor que buscas, número de covers… Cuéntanos para personalizar el lote."
+                      style={{
+                        width: '100%', boxSizing: 'border-box',
+                        fontFamily: 'Montserrat, sans-serif', fontSize: 14,
+                        color: '#f2e0cc', background: 'transparent',
+                        border: 'none', borderBottom: '1px solid #f2e0cc33',
+                        padding: '12px 0 10px', outline: 'none',
+                        minHeight: 80, resize: 'vertical',
+                      }}
+                      onFocus={(e) => { e.target.style.borderBottomColor = '#c96e4b'; }}
+                      onBlur={(e) => { e.target.style.borderBottomColor = '#f2e0cc33'; }}
+                    />
+                  </div>
+                )}
                 <SupplySelect name="volumen" label="Volumen requerido" values={values} setVal={setVal as SelectProps['setVal']} options={[
                   ['46', '46 kg · 1 saco'],
                   ['92', '92 kg · 2 sacos'],
@@ -599,11 +622,13 @@ export default function SupplyForm() {
                   fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em',
                   color: '#c4b297', textTransform: 'uppercase',
                   display: 'block', marginBottom: 10,
-                }}>Mensaje (opcional)</label>
+                }}>{values.tipoNegocio === 'hotel-restaurante' ? 'Información adicional (opcional)' : 'Mensaje (opcional)'}</label>
                 <textarea
                   value={values.mensaje}
                   onChange={(e) => setValues(v => ({ ...v, mensaje: e.target.value }))}
-                  placeholder="¿Qué perfil de tueste manejas? ¿Origen preferido? ¿Necesitas muestras antes de cerrar?"
+                  placeholder={values.tipoNegocio === 'hotel-restaurante'
+                    ? '¿Algo más que quieras compartir?'
+                    : '¿Qué perfil de tueste manejas? ¿Origen preferido? ¿Necesitas muestras antes de cerrar?'}
                   style={{
                     width: '100%', boxSizing: 'border-box',
                     fontFamily: 'Montserrat, sans-serif', fontSize: 14,

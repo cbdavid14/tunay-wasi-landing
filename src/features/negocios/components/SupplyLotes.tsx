@@ -196,7 +196,7 @@ export default function SupplyLotes() {
                         transition: 'all .25s ease',
                       }}
                     >
-                      Reservar →
+                      {l.sca >= 88 ? 'Reservar lote exclusivo →' : 'Reservar →'}
                     </a>
                   </div>
                   <a

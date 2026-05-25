@@ -13,7 +13,17 @@ function ProducerCard({ p, idx, total, onOpenProfile }: { p: Caficultor; idx: nu
       style={{ background: '#f2e0cc', border: '1px solid #1f302833', borderRadius: 20, padding: 22, transition: 'all .45s cubic-bezier(.2,.7,.2,1)', transform: hover ? 'translateY(-6px)' : 'translateY(0)', boxShadow: hover ? '0 28px 52px -20px #533b22cc, 0 6px 12px -6px #533b2266' : '0 10px 24px -14px #533b2288', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 16, width: '100%', minWidth: 0 }}
     >
       <div style={{ position: 'relative' }}>
-        {p.photo ? (
+        {p.videoUrl ? (
+          <video
+            src={p.videoUrl}
+            poster={p.photo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            style={{ width: '100%', aspectRatio: '5 / 3', objectFit: 'cover', borderRadius: 16, display: 'block' }}
+          />
+        ) : p.photo ? (
           <img
             src={p.photo}
             alt={p.name}
@@ -21,6 +31,19 @@ function ProducerCard({ p, idx, total, onOpenProfile }: { p: Caficultor; idx: nu
           />
         ) : (
           <ImageSlot label={`retrato · ${(p.name ?? '').split(' ').slice(-1)[0].toLowerCase()}`} tone={p.color ?? 'green'} ratio="4 / 3" />
+        )}
+        {p.videoUrl && (
+          <div style={{
+            position: 'absolute', bottom: 14, left: 14,
+            background: '#1f3028cc', color: '#f2e0cc',
+            padding: '4px 10px', borderRadius: 999,
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.16em',
+            textTransform: 'uppercase', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#c96e4b', animation: 'tw-pulse-mini 2s ease-in-out infinite', display: 'inline-block' }} />
+            Video finca
+          </div>
         )}
         <div style={{ position: 'absolute', top: 14, left: 14, background: '#1f3028', color: '#f2e0cc', padding: '6px 12px', borderRadius: 999, fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
           № 0{idx + 1} / {total}
@@ -198,6 +221,7 @@ export default function Caficultores() {
         @media (max-width: 1040px) { .tw-carousel-page { grid-template-columns: repeat(2, 1fr) !important; } }
         @media (max-width: 640px)  { .tw-carousel-page { grid-template-columns: 1fr !important; } }
         @keyframes tw-skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+        @keyframes tw-pulse-mini { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.85); } }
       `}</style>
 
       {selected && (

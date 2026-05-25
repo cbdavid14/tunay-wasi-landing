@@ -4,6 +4,9 @@ import FilterPanel, { type FilterState } from './FilterPanel';
 import ProductCard from './ProductCard';
 import CostBreakdownModal from './CostBreakdownModal';
 import Resenas from './Resenas';
+import type { Producto } from '@/shared/types/catalog';
+import { useCartActions } from '@/features/cart/useCart';
+import { Money } from '@/shared/money';
 
 const PER_PAGE = 3;
 
@@ -13,18 +16,136 @@ function gridStyle(count: number): React.CSSProperties {
   return { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, width: '100%' };
 }
 
+function FlightBundle({ products }: { products: Producto[] }) {
+  const { add, open: openCart } = useCartActions();
+  const [hover, setHover] = useState(false);
+
+  if (products.length < 3) return null;
+
+  // Tomar los primeros 3 productos, siempre en 250g
+  const flight = products.slice(0, 3);
+  const totalCents = flight.reduce((acc, p) => {
+    const price250 = p.weights.find(([w]) => w === '250g')?.[1] ?? p.weights[0][1];
+    return acc + price250;
+  }, 0);
+  // Descuento del 10% en bundle
+  const discountCents = Math.round(totalCents * 0.1);
+  const finalCents = totalCents - discountCents;
+
+  const handleAddFlight = () => {
+    flight.forEach(p => {
+      const price250 = p.weights.find(([w]) => w === '250g')?.[1] ?? p.weights[0][1];
+      add({
+        id: `flight-${p.code}-250g-Grano`,
+        sku: p.code,
+        productoId: p.id,
+        name: `${p.name} (Flight)`,
+        weight: '250g',
+        grind: 'Grano',
+        unitCents: price250 - Math.round(price250 * 0.1),
+        qty: 1,
+        maxQty: 10,
+        caficultor: p.producer,
+        finca: p.farm,
+        producerPct: p.producerPct,
+        badge: 'Flight',
+      });
+    });
+    openCart();
+  };
+
+  return (
+    <div style={{
+      marginTop: 48, padding: '32px 36px', borderRadius: 20,
+      background: '#1f3028', border: '1px solid #533b22',
+      display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'center',
+    }} className="tw-flight-bundle">
+      <div>
+        <div style={{ fontFamily: 'Bowlby One SC, sans-serif', fontSize: 10, letterSpacing: '0.32em', color: '#c96e4b', textTransform: 'uppercase', marginBottom: 12 }}>
+          Flight de cosecha · 3 lotes
+        </div>
+        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 28, lineHeight: 1.1, color: '#f2e0cc', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
+          Prueba los 3 orígenes de este ciclo
+        </h3>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, lineHeight: 1.6, color: '#c4b297', margin: '0 0 16px' }}>
+          250g de cada lote — un recorrido por tres fincas, tres caficultores, tres perfiles de taza.
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {flight.map(p => (
+            <span key={p.id} style={{
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.16em',
+              padding: '4px 10px', borderRadius: 6,
+              background: '#f2e0cc14', color: '#f2e0cc99', border: '1px solid #f2e0cc22',
+              textTransform: 'uppercase',
+            }}>
+              {p.name.split(' - ')[0]}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div style={{ textAlign: 'center', flexShrink: 0 }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.2em', color: '#8faf8a', textTransform: 'uppercase', marginBottom: 6 }}>
+          10% descuento bundle
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'center', marginBottom: 4 }}>
+          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 36, fontWeight: 700, color: '#f2e0cc', lineHeight: 1 }}>
+            {Money.formatPEN(finalCents)}
+          </span>
+        </div>
+        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 18, color: '#f2e0cc55', textDecoration: 'line-through', marginBottom: 16 }}>
+          {Money.formatPEN(totalCents)}
+        </div>
+        <button
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onClick={handleAddFlight}
+          style={{
+            fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 12,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: '#1f3028', background: hover ? '#e8d2b6' : '#f2e0cc',
+            padding: '12px 24px', borderRadius: 999, border: 'none',
+            cursor: 'pointer', whiteSpace: 'nowrap',
+            boxShadow: '0 12px 24px -10px #00000055',
+            transition: 'all .25s ease',
+          }}
+        >
+          Armar el flight →
+        </button>
+      </div>
+      <style>{`
+        @media (max-width: 640px) { .tw-flight-bundle { grid-template-columns: 1fr !important; } }
+      `}</style>
+    </div>
+  );
+}
+
 export default function Cafe() {
-  const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<FilterState>({
-    brew: ['Todos'], experiencia: ['Todos'], tueste: ['Todos'], intensidad: ['Todos'],
+    brew: ['Todos'], experiencia: ['Todos'], tueste: ['Todos'], intensidad: ['Todos'], sca: ['Todos'],
   });
   const { data: products, isLoading } = useCatalog();
-  const total = products?.length ?? 0;
   const [breakdownData, setBreakdownData] = useState<{ unitCents: number; qty: number; producerPct: number } | null>(null);
   const [page, setPage] = useState(0);
 
-  const useCarousel = total > PER_PAGE;
-  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  function applyFilters(list: Producto[]): Producto[] {
+    return list.filter(p => {
+      const brew = selected.brew ?? ['Todos'];
+      if (!brew.includes('Todos') && !brew.some(b => p.brews.includes(b))) return false;
+      const sca = selected.sca ?? ['Todos'];
+      if (!sca.includes('Todos')) {
+        const minSca = Math.max(...sca.map(s => parseInt(s)));
+        const score = parseFloat(String(p.score));
+        if (!isNaN(minSca) && !isNaN(score) && score < minSca) return false;
+      }
+      return true;
+    });
+  }
+
+  const filtered = products ? applyFilters(products) : [];
+  const filteredTotal = filtered.length;
+
+  const useCarousel = filteredTotal > PER_PAGE;
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / PER_PAGE));
   const canPrev = page > 0;
   const canNext = page < totalPages - 1;
 
@@ -53,7 +174,7 @@ export default function Cafe() {
           </p>
         </div>
 
-        <FilterPanel open={open} setOpen={setOpen} selected={selected} setSelected={setSelected} />
+        <FilterPanel selected={selected} setSelected={setSelected} />
 
         {isLoading ? (
           <div style={gridStyle(3)} className="tw-cafe-grid">
@@ -62,8 +183,8 @@ export default function Cafe() {
             ))}
           </div>
         ) : !useCarousel ? (
-          <div style={gridStyle(total)} className="tw-cafe-grid">
-            {(products ?? []).map(p => (
+          <div style={gridStyle(filteredTotal)} className="tw-cafe-grid">
+            {filtered.map(p => (
               <ProductCard
                 key={p.id}
                 p={p}
@@ -85,7 +206,7 @@ export default function Cafe() {
               >
                 {Array.from({ length: totalPages }).map((_, pageIdx) => (
                   <div key={pageIdx} className="tw-cafe-page" style={{ width: `${100 / totalPages}%` }}>
-                    {(products ?? []).slice(pageIdx * PER_PAGE, (pageIdx + 1) * PER_PAGE).map(p => (
+                    {filtered.slice(pageIdx * PER_PAGE, (pageIdx + 1) * PER_PAGE).map(p => (
                       <ProductCard
                         key={p.id}
                         p={p}
@@ -118,6 +239,8 @@ export default function Cafe() {
             </div>
           </>
         )}
+
+        <FlightBundle products={products ?? []} />
 
         <Resenas />
       </div>

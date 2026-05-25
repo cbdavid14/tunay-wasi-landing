@@ -7,8 +7,27 @@ import { useCartActions } from '@/features/cart/useCart';
 import ImageSlot from '@/components/decor/ImageSlot';
 import { maxQtyForWeight, disponibleKg } from '@/features/catalog/stockUtils';
 
-function RecetaPanel({ receta, nombre }: { receta: NonNullable<Producto['receta']>; nombre: string }) {
+function RecetaPanel({ receta, brews, activeMethod }: {
+  receta: NonNullable<Producto['receta']>;
+  brews: string[];
+  activeMethod: string;
+}) {
   const [open, setOpen] = useState(false);
+  // Métodos disponibles = intersección de brews del producto con claves de receta
+  const methods = brews.filter(b => receta[b]);
+  // Tab seleccionado: si el método activo (molienda seleccionada) tiene receta, úsalo; si no, el primero disponible
+  const defaultTab = receta[activeMethod] ? activeMethod : (methods[0] ?? '');
+  const [tab, setTab] = useState(defaultTab);
+
+  // Sincronizar tab cuando cambia el método activo desde fuera
+  useEffect(() => {
+    if (receta[activeMethod]) setTab(activeMethod);
+  }, [activeMethod, receta]);
+
+  if (methods.length === 0) return null;
+  const r = receta[tab];
+  if (!r) return null;
+
   return (
     <div style={{ borderTop: '1px solid #1f302822', paddingTop: 14 }}>
       <button
@@ -16,18 +35,17 @@ function RecetaPanel({ receta, nombre }: { receta: NonNullable<Producto['receta'
         onClick={() => setOpen(o => !o)}
         style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-          padding: 0,
+          width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
         }}
       >
         <span style={{
           fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.2em',
           color: '#533b22', textTransform: 'uppercase',
-        }}>Receta recomendada · {receta.metodo}</span>
+        }}>Receta recomendada · {tab}</span>
         <span style={{
-          fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
-          color: '#c96e4b', transition: 'transform .25s ease',
+          fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#c96e4b',
           display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none',
+          transition: 'transform .25s ease',
         }}>▾</span>
       </button>
 
@@ -37,19 +55,41 @@ function RecetaPanel({ receta, nombre }: { receta: NonNullable<Producto['receta'
           background: '#1f30280a', border: '1px solid #1f302820', borderRadius: 10,
           animation: 'tw-recipe-in .25s ease',
         }}>
+          {/* Tabs por método */}
+          {methods.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {methods.map(m => (
+                <button
+                  key={m}
+                  onClick={() => setTab(m)}
+                  style={{
+                    padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                    fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 600,
+                    background: tab === m ? '#c96e4b' : '#1f302814',
+                    color: tab === m ? '#f2e0cc' : '#533b22',
+                    transition: 'all .2s ease',
+                  }}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div style={{
             fontFamily: 'Bowlby One SC, sans-serif', fontSize: 9, letterSpacing: '0.24em',
             color: '#c96e4b', textTransform: 'uppercase', marginBottom: 10,
           }}>
-            {nombre} · {receta.metodo}
+            {tab}
           </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
-            {[
-              ['Ratio', receta.ratio],
-              ['Temperatura', receta.temp],
-              ['Tiempo', receta.tiempo],
-              ['Molienda', receta.molienda],
-            ].map(([k, v]) => (
+            {([
+              ['Ratio', r.ratio],
+              ['Temperatura', r.temp],
+              ['Tiempo', r.tiempo],
+              ['Molienda', r.molienda],
+            ] as [string, string][]).map(([k, v]) => (
               <div key={k}>
                 <div style={{
                   fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: '0.18em',
@@ -62,12 +102,13 @@ function RecetaPanel({ receta, nombre }: { receta: NonNullable<Producto['receta'
               </div>
             ))}
           </div>
-          {receta.nota && (
+
+          {r.nota && (
             <div style={{
               marginTop: 10, paddingTop: 10, borderTop: '1px solid #1f302818',
               fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
               fontSize: 13, color: '#533b22', lineHeight: 1.5,
-            }}>{receta.nota}</div>
+            }}>{r.nota}</div>
           )}
         </div>
       )}
@@ -237,6 +278,27 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         ))}
       </div>
 
+      {(() => {
+        const reserved = p.stockReservedKg ?? 0;
+        if (reserved <= 0) return null;
+        // Estimar personas: 250g ≈ 0.25 kg/persona, 1kg ≈ 1 kg/persona — usamos 0.5 kg/promedio
+        const personas = Math.max(1, Math.round(reserved / 0.5));
+        return (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 12px', borderRadius: 10,
+            background: '#c96e4b0d', border: '1px solid #c96e4b33',
+          }}>
+            <span style={{ fontSize: 14 }}>🔥</span>
+            <span style={{
+              fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 500, color: '#533b22',
+            }}>
+              <strong style={{ color: '#c96e4b', fontWeight: 700 }}>{personas} personas</strong> ya reservaron este lote
+            </span>
+          </div>
+        );
+      })()}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: grindMode === 'Molido' ? '#c96e4b18' : '#8faf8a22', border: `1px solid ${grindMode === 'Molido' ? '#c96e4b55' : '#8faf8a66'}`, borderRadius: 12, padding: '10px 14px', transition: 'all .35s ease' }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: grindMode === 'Molido' ? '#c96e4b' : '#8faf8a', animation: 'tw-pulse-mini 2s ease-in-out infinite', display: 'inline-block', transition: 'background .35s ease' }} />
         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 500, color: '#1f3028' }}>
@@ -386,7 +448,7 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         })()}
       </div>
 
-      {p.receta && <RecetaPanel receta={p.receta} nombre={p.name} />}
+      {p.receta && <RecetaPanel receta={p.receta} brews={p.brews} activeMethod={grindMode === 'Molido' ? grindType : (p.brews[0] ?? '')} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
         <div>

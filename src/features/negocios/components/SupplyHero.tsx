@@ -92,7 +92,7 @@ export default function SupplyHero() {
             maxWidth: 520, marginTop: 32,
             ...fade(0.3),
           }}>
-            Abastece tu cafetería, restaurante u operación de tueste con microlotes
+            Abastece tu cafetería, hotel, restaurante de autor u operación de tueste con microlotes
             peruanos trazables — validados por Q‑Grader, embarcados desde finca, llegados
             con su pasaporte de cata.
           </p>
