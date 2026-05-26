@@ -144,7 +144,15 @@ export async function fetchProductos(): Promise<Producto[]> {
   try {
     const snap = await getDocs(collection(db, 'productos'));
     if (snap.empty) return STATIC_PRODUCTS;
-    const mapped = snap.docs.map((d) => mapProductoDoc(d.id, d.data()));
+    const mapped = snap.docs.flatMap((d) => {
+      const raw = d.data();
+      if (!raw.name || !raw.weights) return [];
+      try {
+        return [mapProductoDoc(d.id, raw)];
+      } catch {
+        return [];
+      }
+    });
     const valid = mapped.filter((p) => p.name && p.weights && p.label === 'PREVENTA');
     return valid.length > 0 ? valid : STATIC_PRODUCTS;
   } catch (e) {

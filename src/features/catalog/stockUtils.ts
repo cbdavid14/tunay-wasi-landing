@@ -1,6 +1,7 @@
 import type { WeightLabel } from '@/shared/types/firestore';
 
 export const KG_PER_UNIT: Record<WeightLabel, number> = {
+  '100g': 0.121,
   '250g': 0.301,
   '1kg':  1.205,
   '3kg':  3.614,

@@ -22,8 +22,7 @@ function FlightBundle({ products }: { products: Producto[] }) {
 
   if (products.length < 3) return null;
 
-  // Tomar los primeros 3 productos, siempre en 250g
-  const flight = products.slice(0, 3);
+  const flight = products;
   const totalCents = flight.reduce((acc, p) => {
     const price250 = p.weights.find(([w]) => w === '250g')?.[1] ?? p.weights[0][1];
     return acc + price250;
@@ -240,7 +239,7 @@ export default function Cafe() {
           </>
         )}
 
-        <FlightBundle products={products ?? []} />
+        <FlightBundle products={filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE)} />
 
         <Resenas />
       </div>

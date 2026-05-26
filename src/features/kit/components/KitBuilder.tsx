@@ -9,7 +9,6 @@ import type { GrindOption } from '@/shared/types/cart';
 
 const CAJA_CENTS = 500; // S/5.00 add-on caja premium
 const FLIGHT_SIZE = 3;  // lotes para el flight
-const FLIGHT_WEIGHT_KG = 0.1;
 
 type KitMode = 'bolsa' | 'flight';
 type ForQuien = 'yo' | 'regalo';
@@ -61,34 +60,52 @@ function OptionCard({ selected, onClick, children }: {
   );
 }
 
-function LoteCard({ p, selected, onClick }: { p: Producto; selected: boolean; onClick: () => void }) {
-  const price250 = p.weights.find(([w]) => w === '250g')?.[1] ?? p.weights[0][1];
+function LoteCard({ p, selected, onClick, weightLabel = '250g' }: { p: Producto; selected: boolean; onClick: () => void; weightLabel?: string }) {
+  const price = p.weights.find(([w]) => w === weightLabel)?.[1] ?? p.weights.find(([w]) => w === '250g')?.[1] ?? p.weights[0][1];
   return (
     <button
       onClick={onClick}
       style={{
-        padding: '12px 14px', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-        border: `2px solid ${selected ? '#c96e4b' : '#1f302822'}`,
-        background: selected ? '#c96e4b14' : '#f2e0cc',
-        outline: 'none', transition: 'all .2s ease', width: '100%',
-        boxShadow: selected ? '0 0 0 3px #c96e4b22' : 'none',
+        width: 152, flexShrink: 0, padding: 0, borderRadius: 16, cursor: 'pointer',
+        border: `2px solid ${selected ? '#c96e4b' : '#1f302818'}`,
+        background: selected ? '#1f3028' : '#fff8f0',
+        outline: 'none', transition: 'all .25s ease', textAlign: 'left', overflow: 'hidden',
+        boxShadow: selected ? '0 8px 24px -8px #c96e4b66' : '0 2px 8px -4px #533b2222',
+        transform: selected ? 'translateY(-3px)' : 'none',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-        <div>
-          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 17, color: '#1f3028', lineHeight: 1.1 }}>{p.name}</div>
-          <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#533b22', marginTop: 3 }}>{p.sub} · {p.alt}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-            {p.notes.slice(0, 3).map(n => (
-              <span key={n} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, padding: '2px 7px', borderRadius: 999, background: '#8faf8a33', color: '#1f3028', border: '1px solid #8faf8a66' }}>{n}</span>
-            ))}
-          </div>
+      {/* Foto */}
+      <div style={{ width: '100%', height: 96, overflow: 'hidden', background: selected ? '#2a3f33' : '#e8d5bc', position: 'relative' }}>
+        {p.photo
+          ? <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: selected ? '#c96e4b' : '#c4b29799' }}>☕</div>
+        }
+        <div style={{
+          position: 'absolute', bottom: 6, right: 6,
+          fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: '0.12em',
+          padding: '2px 6px', borderRadius: 5,
+          background: selected ? '#c96e4b' : '#1f3028cc', color: '#f2e0cc',
+        }}>{p.score} pts</div>
+      </div>
+      {/* Info */}
+      <div style={{ padding: '9px 11px 10px' }}>
+        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 13, color: selected ? '#f2e0cc' : '#1f3028', lineHeight: 1.2, marginBottom: 3 }}>{p.name}</div>
+        <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: selected ? '#c4b297' : '#533b22', marginBottom: 5, lineHeight: 1.3 }}>{p.sub}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 7 }}>
+          {p.notes.slice(0, 2).map(n => (
+            <span key={n} style={{
+              fontFamily: 'Montserrat, sans-serif', fontSize: 9, padding: '2px 5px', borderRadius: 999,
+              background: selected ? '#ffffff18' : '#8faf8a33',
+              color: selected ? '#f2e0cc' : '#1f3028',
+              border: `1px solid ${selected ? '#ffffff22' : '#8faf8a55'}`,
+            }}>{n}</span>
+          ))}
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#533b2288', letterSpacing: '0.14em', marginBottom: 2 }}>SCA {p.score}</div>
-          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 18, color: '#c96e4b' }}>{Money.formatPEN(price250)}</div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#533b2266', letterSpacing: '0.1em' }}>250g</div>
-        </div>
+        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 17, color: selected ? '#c96e4b' : '#1f3028', lineHeight: 1 }}>{Money.formatPEN(price)}</div>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: '0.1em', color: selected ? '#c4b29799' : '#533b2266', marginTop: 2 }}>{weightLabel} · inc. IGV</div>
+        {selected && (
+          <div style={{ marginTop: 8, padding: '4px 0', borderRadius: 7, textAlign: 'center', background: '#c96e4b', fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 700, color: '#f2e0cc', letterSpacing: '0.06em' }}>✓ Seleccionado</div>
+        )}
       </div>
     </button>
   );
@@ -152,6 +169,7 @@ export default function KitBuilder() {
   const [mensaje, setMensaje] = useState('');
 
   const lote = lotes.find(p => p.id === selectedLote);
+  const loteWeights = lote?.weights.filter(([w]) => w !== '100g') ?? [];
 
   // Paso activo
   const step = (() => {
@@ -172,15 +190,14 @@ export default function KitBuilder() {
   // Cálculo del total
   const totalCents = (() => {
     if (mode === 'bolsa' && lote) {
-      const base = lote.weights[selectedWeightIdx]?.[1] ?? 0;
+      const base = loteWeights[selectedWeightIdx]?.[1] ?? 0;
       return base + (conCaja ? CAJA_CENTS : 0);
     }
     if (mode === 'flight') {
       const base = flightSelection.reduce((acc, id) => {
         const p = lotes.find(l => l.id === id);
-        // 100g = aprox 40% del precio de 250g
-        const price250 = p?.weights.find(([w]) => w === '250g')?.[1] ?? p?.weights[0][1] ?? 0;
-        return acc + Math.round(price250 * (FLIGHT_WEIGHT_KG / 0.25));
+        const price100 = p?.weights.find(([w]) => w === '100g')?.[1] ?? Math.round((p?.weights.find(([w]) => w === '250g')?.[1] ?? p?.weights[0][1] ?? 0) * 0.4);
+        return acc + price100;
       }, 0);
       return base + (conCaja ? CAJA_CENTS : 0);
     }
@@ -202,13 +219,13 @@ export default function KitBuilder() {
 
   const handleAddToCart = () => {
     if (mode === 'bolsa' && lote) {
-      const [wLabel, unitCents] = lote.weights[selectedWeightIdx];
+      const [wLabel, unitCents] = loteWeights[selectedWeightIdx];
       add({
         id: `kit-${lote.code}-${wLabel}-Grano`,
         sku: lote.code,
         productoId: lote.id,
         name: lote.name,
-        weight: wLabel as '250g' | '1kg' | '3kg',
+        weight: wLabel as '100g' | '250g' | '1kg' | '3kg',
         grind: 'Grano' as GrindOption,
         unitCents: unitCents + (conCaja ? CAJA_CENTS : 0),
         qty: 1,
@@ -221,15 +238,14 @@ export default function KitBuilder() {
     } else if (mode === 'flight') {
       flightSelection.forEach((id, i) => {
         const p = lotes.find(l => l.id === id)!;
-        const price250 = p.weights.find(([w]) => w === '250g')?.[1] ?? p.weights[0][1];
-        const unitCents = Math.round(price250 * (FLIGHT_WEIGHT_KG / 0.25));
+        const unitCents = p.weights.find(([w]) => w === '100g')?.[1] ?? Math.round((p.weights.find(([w]) => w === '250g')?.[1] ?? p.weights[0][1]) * 0.4);
         const cajaShare = i === 0 && conCaja ? CAJA_CENTS : 0;
         add({
           id: `flight-${p.code}-100g-Grano`,
           sku: p.code,
           productoId: p.id,
           name: `${p.name} · 100g`,
-          weight: '250g' as '250g' | '1kg' | '3kg',
+          weight: '100g' as '100g' | '250g' | '1kg' | '3kg',
           grind: 'Grano' as GrindOption,
           unitCents: unitCents + cajaShare,
           qty: 1,
@@ -302,9 +318,11 @@ export default function KitBuilder() {
             <div style={{ padding: '20px 22px', borderRadius: 18, background: '#fff8f0', border: '1px solid #1f302818' }}>
               <StepHeader n={2} label="Elige tu café" active={step === 2} done={step > 2} />
               {step >= 2 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+                <div style={{ display: 'flex', gap: 12, marginTop: 14, overflowX: 'auto', paddingBottom: 6, scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
                   {lotes.map(p => (
-                    <LoteCard key={p.id} p={p} selected={selectedLote === p.id} onClick={() => setSelectedLote(p.id)} />
+                    <div key={p.id} style={{ scrollSnapAlign: 'start', flexShrink: 0 }}>
+                      <LoteCard p={p} selected={selectedLote === p.id} onClick={() => setSelectedLote(p.id)} />
+                    </div>
                   ))}
                 </div>
               )}
@@ -316,18 +334,17 @@ export default function KitBuilder() {
             <div style={{ padding: '20px 22px', borderRadius: 18, background: '#fff8f0', border: '1px solid #1f302818' }}>
               <StepHeader n={2} label={`Elige 3 lotes (${flightSelection.length}/${FLIGHT_SIZE})`} active={step === 2} done={step > 2} />
               {step >= 2 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+                <div style={{ display: 'flex', gap: 12, marginTop: 14, overflowX: 'auto', paddingBottom: 6, scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
                   {lotes.map(p => (
-                    <LoteCard
-                      key={p.id}
-                      p={p}
-                      selected={flightSelection.includes(p.id)}
-                      onClick={() => handleFlightToggle(p.id)}
-                    />
+                    <div key={p.id} style={{ scrollSnapAlign: 'start', flexShrink: 0 }}>
+                      <LoteCard
+                        p={p}
+                        selected={flightSelection.includes(p.id)}
+                        onClick={() => handleFlightToggle(p.id)}
+                        weightLabel="100g"
+                      />
+                    </div>
                   ))}
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#533b2288', letterSpacing: '0.14em', textAlign: 'center', marginTop: 4 }}>
-                    Cada lote: 100g · precio proporcional al de 250g
-                  </div>
                 </div>
               )}
             </div>
@@ -339,7 +356,7 @@ export default function KitBuilder() {
               <StepHeader n={3} label="Tamaño" active={step === 3} done={step > 3} />
               {step >= 3 && (
                 <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                  {lote.weights.map(([wl, cents], i) => (
+                  {loteWeights.map(([wl, cents], i) => (
                     <button
                       key={wl}
                       onClick={() => setSelectedWeightIdx(i)}
