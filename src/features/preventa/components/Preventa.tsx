@@ -21,8 +21,12 @@ export default function Preventa() {
   const deliverLima = cycle?.deliverLima ?? 'primera semana de junio';
   const deliverProv = cycle?.deliverProv ?? 'segunda semana de junio';
 
-  // Minimum price across all products — find cheapest weight entry
-  const minEntry = productos?.flatMap(p => p.weights).reduce<[string, number] | null>(
+  // Minimum price across all products — prefer promo price when active
+  const minEntry = productos?.flatMap(p =>
+    p.promoActivated && Array.isArray(p.weightsPromo) && p.weightsPromo.length > 0
+      ? p.weightsPromo
+      : p.weights
+  ).reduce<[string, number] | null>(
     (min, w) => (min === null || w[1] < min[1] ? w : min),
     null,
   );
