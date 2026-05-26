@@ -9,7 +9,7 @@ import Preventa from '@/features/preventa/components/Preventa';
 import Caficultores from '@/features/catalog/components/Caficultores';
 import Cafe from '@/features/catalog/components/Cafe';
 import Contacto from '@/features/contact/components/Contacto';
-import Checkout from '@/features/checkout/components/Checkout';
+import CheckoutGate from '@/features/checkout/components/CheckoutGate';
 import GrainOverlay from '@/components/decor/GrainOverlay';
 
 export default function App() {
@@ -29,7 +29,7 @@ export default function App() {
       <Footer/>
       <CartButton/>
       <CartDrawer/>
-      <Checkout/>
+      <CheckoutGate/>
     </>
   );
 }
