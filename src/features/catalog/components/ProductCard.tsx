@@ -7,97 +7,128 @@ import { useCartActions } from '@/features/cart/useCart';
 import ImageSlot from '@/components/decor/ImageSlot';
 import { maxQtyForWeight, disponibleKg } from '@/features/catalog/stockUtils';
 
-function RecetaPanel({ receta, brews, activeMethod }: {
+function RecetaModal({ receta, brews, activeMethod, productName, onClose }: {
   receta: NonNullable<Producto['receta']>;
   brews: string[];
   activeMethod: string;
+  productName: string;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  // Métodos disponibles = intersección de brews del producto con claves de receta
   const methods = brews.filter(b => receta[b]);
-  // Tab seleccionado: si el método activo (molienda seleccionada) tiene receta, úsalo; si no, el primero disponible
   const defaultTab = receta[activeMethod] ? activeMethod : (methods[0] ?? '');
   const [tab, setTab] = useState(defaultTab);
 
-  // Sincronizar tab cuando cambia el método activo desde fuera
   useEffect(() => {
     if (receta[activeMethod]) setTab(activeMethod);
   }, [activeMethod, receta]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   if (methods.length === 0) return null;
   const r = receta[tab];
   if (!r) return null;
 
   return (
-    <div style={{ borderTop: '1px solid #1f302822', paddingTop: 14 }}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: '#1f3028cc', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '24px 16px',
+        animation: 'tw-recipe-backdrop-in .2s ease',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
         style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          width: 'min(420px, 100%)', background: '#f2e0cc',
+          borderRadius: 20, border: '1px solid #c96e4b33',
+          boxShadow: '0 40px 80px -30px #000000cc',
+          overflow: 'hidden',
+          animation: 'tw-recipe-in .25s cubic-bezier(.2,.7,.2,1)',
         }}
       >
-        <span style={{
-          fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.2em',
-          color: '#533b22', textTransform: 'uppercase',
-        }}>Receta recomendada · {tab}</span>
-        <span style={{
-          fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#c96e4b',
-          display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none',
-          transition: 'transform .25s ease',
-        }}>▾</span>
-      </button>
-
-      {open && (
+        {/* Header */}
         <div style={{
-          marginTop: 12, padding: '14px 16px',
-          background: '#1f30280a', border: '1px solid #1f302820', borderRadius: 10,
-          animation: 'tw-recipe-in .25s ease',
+          padding: '18px 22px 14px',
+          borderBottom: '1px solid #1f302818',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
         }}>
-          {/* Tabs por método */}
+          <div>
+            <div style={{
+              fontFamily: 'Bowlby One SC, sans-serif', fontSize: 8, letterSpacing: '0.22em',
+              color: '#8faf8a', textTransform: 'uppercase', marginBottom: 4,
+            }}>Receta recomendada</div>
+            <div style={{
+              fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 20,
+              color: '#1f3028', lineHeight: 1.1,
+            }}>{productName}</div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: '#1f302811', border: '1px solid #1f302822',
+              color: '#533b22', cursor: 'pointer', fontSize: 13,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >✕</button>
+        </div>
+
+        {/* Tabs por método */}
+        <div style={{ padding: '14px 22px 0' }}>
           {methods.length > 1 && (
-            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
               {methods.map(m => (
                 <button
                   key={m}
                   onClick={() => setTab(m)}
                   style={{
-                    padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                    fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 600,
+                    padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 600,
                     background: tab === m ? '#c96e4b' : '#1f302814',
                     color: tab === m ? '#f2e0cc' : '#533b22',
                     transition: 'all .2s ease',
                   }}
-                >
-                  {m}
-                </button>
+                >{m}</button>
               ))}
             </div>
           )}
 
-          <div style={{
-            fontFamily: 'Bowlby One SC, sans-serif', fontSize: 9, letterSpacing: '0.24em',
-            color: '#c96e4b', textTransform: 'uppercase', marginBottom: 10,
-          }}>
-            {tab}
-          </div>
+          {methods.length === 1 && (
+            <div style={{
+              fontFamily: 'Bowlby One SC, sans-serif', fontSize: 9, letterSpacing: '0.24em',
+              color: '#c96e4b', textTransform: 'uppercase', marginBottom: 14,
+            }}>{tab}</div>
+          )}
+        </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
+        {/* Parámetros */}
+        <div style={{ padding: '0 22px 22px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px', marginBottom: r.nota ? 16 : 0 }}>
             {([
               ['Ratio', r.ratio],
               ['Temperatura', r.temp],
               ['Tiempo', r.tiempo],
               ['Molienda', r.molienda],
             ] as [string, string][]).map(([k, v]) => (
-              <div key={k}>
+              <div key={k} style={{
+                padding: '10px 12px', borderRadius: 10,
+                background: '#1f30280a', border: '1px solid #1f302818',
+              }}>
                 <div style={{
                   fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: '0.18em',
-                  color: '#533b2288', textTransform: 'uppercase',
+                  color: '#533b2288', textTransform: 'uppercase', marginBottom: 4,
                 }}>{k}</div>
                 <div style={{
-                  fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600,
-                  color: '#1f3028', marginTop: 2,
+                  fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700,
+                  color: '#1f3028',
                 }}>{v}</div>
               </div>
             ))}
@@ -105,16 +136,18 @@ function RecetaPanel({ receta, brews, activeMethod }: {
 
           {r.nota && (
             <div style={{
-              marginTop: 10, paddingTop: 10, borderTop: '1px solid #1f302818',
+              padding: '12px 14px', borderRadius: 10,
+              background: '#8faf8a18', border: '1px solid #8faf8a44',
               fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-              fontSize: 13, color: '#533b22', lineHeight: 1.5,
+              fontSize: 14, color: '#533b22', lineHeight: 1.6,
             }}>{r.nota}</div>
           )}
         </div>
-      )}
+      </div>
 
       <style>{`
-        @keyframes tw-recipe-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes tw-recipe-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes tw-recipe-in { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
       `}</style>
     </div>
   );
@@ -156,6 +189,7 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
   const [qty, setQty] = useState(1);
   const [grindMode, setGrindMode] = useState<GrindMode>('Grano');
   const [grindType, setGrindType] = useState<GrindType>('V60');
+  const [recetaOpen, setRecetaOpen] = useState(false);
   const { add, open: openCart } = useCartActions();
   const tone = TAG_TONES[p.tagTone] ?? TAG_TONES.sage;
   const hasPromo = p.promoActivated === true && Array.isArray(p.weightsPromo) && p.weightsPromo.length > weightIdx;
@@ -247,7 +281,7 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 500, padding: '6px 11px', borderRadius: 8, background: '#c4b297', color: '#1f3028' }}>{p.farm}</span>
       </div>
 
-      {(p.qGraderName || p.roastDate) && (
+      {(p.qGraderName || p.roastDate || p.receta) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {p.qGraderName && (
             <span style={{
@@ -269,6 +303,25 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
               Tueste est. {p.roastDate}
             </span>
           )}
+          {p.receta && (() => {
+            const methods = p.brews.filter(b => p.receta![b]);
+            if (methods.length === 0) return null;
+            const activeMethod = grindMode === 'Molido' ? grindType : (p.brews[0] ?? '');
+            const displayMethod = p.receta[activeMethod] ? activeMethod : methods[0];
+            return (
+              <button
+                onClick={() => setRecetaOpen(true)}
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.16em',
+                  padding: '4px 9px', borderRadius: 6, cursor: 'pointer',
+                  background: '#1f302811', color: '#1f3028', border: '1px solid #1f302833',
+                  textTransform: 'uppercase', transition: 'all .2s ease',
+                }}
+              >
+                Receta · {displayMethod} →
+              </button>
+            );
+          })()}
         </div>
       )}
 
@@ -448,7 +501,15 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         })()}
       </div>
 
-      {p.receta && <RecetaPanel receta={p.receta} brews={p.brews} activeMethod={grindMode === 'Molido' ? grindType : (p.brews[0] ?? '')} />}
+      {p.receta && recetaOpen && (
+        <RecetaModal
+          receta={p.receta}
+          brews={p.brews}
+          activeMethod={grindMode === 'Molido' ? grindType : (p.brews[0] ?? '')}
+          productName={p.name}
+          onClose={() => setRecetaOpen(false)}
+        />
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
         <div>
@@ -497,9 +558,7 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         }}
       >
         {isAgotado ? (
-          <>
-            <span>Agotado para este ciclo</span>
-          </>
+          <span>Agotado para este ciclo</span>
         ) : (
           <>
             <span>Reservar — entrega junio</span>
@@ -507,6 +566,16 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
           </>
         )}
       </button>
+
+      {p.receta && recetaOpen && (
+        <RecetaModal
+          receta={p.receta}
+          brews={p.brews}
+          activeMethod={grindMode === 'Molido' ? grindType : (p.brews[0] ?? '')}
+          productName={p.name}
+          onClose={() => setRecetaOpen(false)}
+        />
+      )}
 
       <style>{`@keyframes tw-pulse-mini { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.85); } }`}</style>
     </article>
