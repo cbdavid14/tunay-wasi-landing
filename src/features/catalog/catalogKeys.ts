@@ -12,5 +12,4 @@ export const catalogKeys = {
   cafiLandingConfig: () => [...catalogKeys.all, 'cafiLandingConfig'] as const,
   supplyLandingConfig: () => [...catalogKeys.all, 'supplyLandingConfig'] as const,
   microlotesLanding: () => [...catalogKeys.all, 'microlotesLanding'] as const,
-  checkoutConfig: () => [...catalogKeys.all, 'checkoutConfig'] as const,
 };

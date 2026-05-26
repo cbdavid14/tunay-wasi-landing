@@ -478,21 +478,3 @@ export async function fetchTransferencia(): Promise<TransferenciaData> {
     return STATIC_TRANSFERENCIA;
   }
 }
-
-// ── Checkout config (feature toggle v1/v2) ───────────────────────────────────
-
-export interface CheckoutConfig {
-  version: 'v1' | 'v2';
-}
-
-const STATIC_CHECKOUT_CONFIG: CheckoutConfig = { version: 'v2' };
-
-export async function fetchCheckoutConfig(): Promise<CheckoutConfig> {
-  try {
-    const snap = await getDoc(doc(db, 'configurations', 'checkoutConfig'));
-    if (!snap.exists()) return STATIC_CHECKOUT_CONFIG;
-    return (snap.data() as CheckoutConfig) ?? STATIC_CHECKOUT_CONFIG;
-  } catch {
-    return STATIC_CHECKOUT_CONFIG;
-  }
-}
