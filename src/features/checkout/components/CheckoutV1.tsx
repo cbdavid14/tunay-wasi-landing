@@ -78,7 +78,15 @@ export default function CheckoutV1() {
   };
 
   const handleConfirmarPago = async () => {
-    await submitPayment('yape');
+    await submitPayment('yape', {
+      nombre: datos.nombre,
+      email: datos.email,
+      telefono: datos.telefono,
+      direccion: datos.direccion,
+      distrito: datos.distrito,
+      referencia: datos.referencia,
+      zone: datos.zona === 'lima' ? 'lima' : 'provincia',
+    });
     if (status !== 'done') setPaso('confirmacion');
   };
 
@@ -278,7 +286,7 @@ export default function CheckoutV1() {
           <div style={{ padding: '12px 28px', borderTop: '1px solid #1f302812', textAlign: 'center' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#c4b297' }}>
               Al completar tu pedido aceptas nuestras{' '}
-              <a href="https://tunay-wasi.web.app/politicas" target="_blank" rel="noopener noreferrer" style={{ color: '#c96e4b', textDecoration: 'underline' }}>
+              <a href="/politicas/index.html" target="_blank" rel="noopener noreferrer" style={{ color: '#c96e4b', textDecoration: 'underline' }}>
                 políticas de compra y privacidad
               </a>
             </span>
