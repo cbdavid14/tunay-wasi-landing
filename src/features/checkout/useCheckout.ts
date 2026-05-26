@@ -57,9 +57,10 @@ export function useCheckout() {
     data.acepta;
 
   const submitPayment = useCallback(
-    async (adapter: AdapterName) => {
+    async (adapter: AdapterName, shippingOverride?: Partial<ShippingData>) => {
       setStatus('paying');
-      const res = await startCheckout(adapter, { cart: { items }, shipping: data, totals });
+      const shipping = shippingOverride ? { ...data, ...shippingOverride } : data;
+      const res = await startCheckout(adapter, { cart: { items }, shipping, totals });
       if (res.ok) {
         clear();
         setOrderId(res.orderId ?? null);

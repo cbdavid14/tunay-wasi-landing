@@ -78,7 +78,15 @@ export default function CheckoutV1() {
   };
 
   const handleConfirmarPago = async () => {
-    await submitPayment('yape');
+    await submitPayment('yape', {
+      nombre: datos.nombre,
+      email: datos.email,
+      telefono: datos.telefono,
+      direccion: datos.direccion,
+      distrito: datos.distrito,
+      referencia: datos.referencia,
+      zone: datos.zona === 'lima' ? 'lima' : 'provincia',
+    });
     if (status !== 'done') setPaso('confirmacion');
   };
 
