@@ -104,9 +104,9 @@ const STATIC_CYCLE: CicloActivo = {
 type WeightEntry = { label: string; cents: number };
 
 function mapProductoDoc(id: string, raw: Record<string, unknown>): Producto {
-  const weights = (raw.weights as WeightEntry[]).map(
-    (w) => [w.label, w.cents] as [string, number],
-  );
+  const weights = Array.isArray(raw.weights)
+    ? (raw.weights as WeightEntry[]).map((w) => [w.label, w.cents] as [string, number])
+    : [];
   const weightsPromo = Array.isArray(raw.weightsPromo)
     ? (raw.weightsPromo as WeightEntry[]).map((w) => [w.label, w.cents] as [string, number])
     : undefined;
