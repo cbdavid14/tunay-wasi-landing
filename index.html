@@ -25,6 +25,23 @@
     })();
   </script>
   <!-- End Meta Pixel -->
+  <!-- Google Analytics 4 — solo activo en dominios de producción Tunay Wasi -->
+  <script>
+    (function() {
+      var ALLOWED = ['tunay-wasi.web.app', 'tunay-wasi-negocios.web.app'];
+      if (ALLOWED.indexOf(window.location.hostname) === -1) return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-BC5W5VY563';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-BC5W5VY563');
+    })();
+  </script>
+  <!-- End Google Analytics 4 -->
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
