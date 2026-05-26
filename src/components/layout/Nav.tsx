@@ -5,6 +5,7 @@ const LINKS: [string, string][] = [
   ['Origen', '#origen'],
   ['Caficultores', '#caficultores'],
   ['Regalar', '#gifting'],
+  ['Arma tu kit', '#kit'],
   ['Café', '#cafe'],
   ['Modelo 50/50', '#modelo'],
   ['Contacto', '#contacto'],
