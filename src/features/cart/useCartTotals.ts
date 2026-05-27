@@ -5,13 +5,14 @@ import { useCartStore } from './cartStore';
 import { SHIPPING_RULES } from './shippingRules';
 import { useComisiones } from '@/features/catalog/useComisiones';
 import { useShipping } from '@/features/catalog/useShipping';
+import type { CuponData } from '@/features/catalog/catalogService';
 
 const IGV_INCLUDED_RATE = 0.18;
 
 export function useCartTotals(
   zone: ShippingZone = 'lima',
   olvaMode: 'recojo' | 'domicilio' = 'domicilio',
-  couponCode: string | null = null,
+  couponData: CuponData | null = null,
 ): CartTotals {
   const subtotalCents = useCartStore((s) => s.subtotalCents);
   const totalQuantity = useCartStore((s) => s.totalQuantity);
@@ -42,13 +43,14 @@ export function useCartTotals(
       return rule.label;
     })();
 
-    const isFree = rule.freeThresholdCents > 0 && subtotalCents >= rule.freeThresholdCents;
+    const cuponFreeShipping = couponData?.freeShipping === true;
+    const isFree = cuponFreeShipping || (rule.freeThresholdCents > 0 && subtotalCents >= rule.freeThresholdCents);
     const shippingCents = isFree ? 0 : effectiveFlatCents;
     const remainingForFree = isFree ? 0 : Math.max(0, rule.freeThresholdCents - subtotalCents);
 
-    let discountCents = 0;
-    if (couponCode === 'PRIMERA10') discountCents = Math.round(subtotalCents * 0.1);
-    if (couponCode === 'CAFICULTOR15') discountCents = Math.round(subtotalCents * 0.15);
+    const discountCents = couponData
+      ? Math.round(subtotalCents * (couponData.discountPct / 100))
+      : 0;
 
     const totalCents = subtotalCents - discountCents + shippingCents;
     const taxIncludedCents = Math.round(subtotalCents - subtotalCents / (1 + IGV_INCLUDED_RATE));
@@ -68,5 +70,5 @@ export function useCartTotals(
       totalQuantity,
       producerShareCents,
     };
-  }, [subtotalCents, totalQuantity, zone, olvaMode, couponCode, comisiones, liveZones]);
+  }, [subtotalCents, totalQuantity, zone, olvaMode, couponData, comisiones, liveZones]);
 }

@@ -479,6 +479,29 @@ export async function fetchTransferencia(): Promise<TransferenciaData> {
   }
 }
 
+// ── Cupones ───────────────────────────────────────────────────────────────────
+
+export interface CuponData {
+  code: string;
+  discountPct: number;       // e.g. 50 → 50%
+  freeShipping: boolean;
+  active: boolean;
+  maxUses: number;           // 0 = ilimitado
+  usedCount: number;
+}
+
+export async function fetchCupon(code: string): Promise<CuponData | null> {
+  if (!code) return null;
+  try {
+    const snap = await getDoc(doc(db, 'configurations', 'cupones'));
+    if (!snap.exists()) return null;
+    const data = snap.data() as Record<string, CuponData>;
+    return data[code.toUpperCase()] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Checkout config (feature toggle v1/v2) ───────────────────────────────────
 
 export interface CheckoutConfig {
