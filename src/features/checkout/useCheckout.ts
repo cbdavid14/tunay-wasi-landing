@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { AdapterName, ShippingData } from '@/shared/types/checkout';
+import type { AdapterName, ShippingData, CheckoutPayload } from '@/shared/types/checkout';
 import { useCartItems, useCartActions } from '@/features/cart/useCart';
 import { useCartTotals } from '@/features/cart/useCartTotals';
 import { startCheckout } from './checkoutService';
@@ -57,10 +57,11 @@ export function useCheckout() {
     data.acepta;
 
   const submitPayment = useCallback(
-    async (adapter: AdapterName, shippingOverride?: Partial<ShippingData>) => {
+    async (adapter: AdapterName, shippingOverride?: Partial<ShippingData>, totalsOverride?: CheckoutPayload['totals']) => {
       setStatus('paying');
       const shipping = shippingOverride ? { ...data, ...shippingOverride } : data;
-      const res = await startCheckout(adapter, { cart: { items }, shipping, totals });
+      const effectiveTotals = totalsOverride ?? totals;
+      const res = await startCheckout(adapter, { cart: { items }, shipping, totals: effectiveTotals });
       if (res.ok) {
         clear();
         setOrderId(res.orderId ?? null);

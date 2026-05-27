@@ -52,7 +52,7 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
   const computedMaxQty = maxQtyForWeight(stockDispo, wLabel as WeightLabel);
   const isAgotado = computedMaxQty === 0;
   const netCents = Math.round(unitCents / 1.18);
-  const caficultorCents = Math.round(netCents * qty * p.producerPct / 100);
+  const caficultorCents = Math.round(netCents * qty * (p.producerPct ?? 0) / 100);
   const effectiveGrind = grindMode === 'Grano' ? 'Grano' : grindType;
   const currentGrindInfo = GRIND_OPTIONS.find(g => g.label === grindType)!;
 
@@ -304,7 +304,7 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.18em', color: '#533b22' }}>
-              {p.producerPct}% al caficultor (sin IGV) · {Money.formatPEN(caficultorCents)}
+              {p.producerPct ?? 0}% al caficultor (sin IGV) · {Money.formatPEN(caficultorCents)}
             </span>
             <button
               onClick={() => onRequestBreakdown(unitCents, qty, p.producerPct)}

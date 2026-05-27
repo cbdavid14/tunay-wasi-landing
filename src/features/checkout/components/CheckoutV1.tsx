@@ -5,6 +5,7 @@ import { useCartIsCheckoutOpen, useCartActions, useCartItems } from '@/features/
 import { useCheckout } from '../useCheckout';
 import { useCartTotals } from '@/features/cart/useCartTotals';
 import { useYapePlin } from '@/features/catalog/useYapePlin';
+import { useCupon } from '@/features/catalog/useCupon';
 
 // ── Tipos locales ────────────────────────────────────────────────────────────
 
@@ -52,10 +53,23 @@ export default function CheckoutV1() {
   const [paso, setPaso] = useState<'resumen' | 'datos' | 'pago' | 'confirmacion'>('resumen');
   const [datos, setDatos] = useState<DatosEnvio>(EMPTY);
   const [errors, setErrors] = useState<Partial<DatosEnvio>>({});
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplied, setCouponApplied] = useState<string | null>(null);
 
-  const totals = useCartTotals(datos.zona === 'lima' ? 'lima' : 'provincia');
-  const totalsLima = useCartTotals('lima');
-  const totalsProvincia = useCartTotals('provincia');
+  const { data: cuponData, isFetching: cuponLoading } = useCupon(couponApplied);
+
+  const isCuponValid = Boolean(
+    cuponData?.active &&
+    (cuponData.maxUses === 0 || cuponData.usedCount < cuponData.maxUses)
+  );
+  const isCuponExhausted = Boolean(cuponData && cuponData.active && cuponData.maxUses > 0 && cuponData.usedCount >= cuponData.maxUses);
+  const isCuponInvalid = couponApplied !== null && !cuponLoading && !cuponData;
+
+  const activeCupon = isCuponValid ? cuponData! : null;
+
+  const totals = useCartTotals(datos.zona === 'lima' ? 'lima' : 'provincia', 'domicilio', activeCupon);
+  const totalsLima = useCartTotals('lima', 'domicilio', activeCupon);
+  const totalsProvincia = useCartTotals('provincia', 'domicilio', activeCupon);
 
   if (!isOpen) return null;
 
@@ -86,7 +100,7 @@ export default function CheckoutV1() {
       distrito: datos.distrito,
       referencia: datos.referencia,
       zone: datos.zona === 'lima' ? 'lima' : 'provincia',
-    });
+    }, totals);
     if (status !== 'done') setPaso('confirmacion');
   };
 
@@ -94,6 +108,8 @@ export default function CheckoutV1() {
     reset();
     setDatos(EMPTY);
     setErrors({});
+    setCouponInput('');
+    setCouponApplied(null);
     setPaso('resumen');
   };
 
@@ -177,10 +193,16 @@ export default function CheckoutV1() {
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#7a6850' }}>Subtotal</span>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#1f3028' }}>{Money.formatPEN(totals.subtotalCents)}</span>
                 </div>
+                {totals.discountCents > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#8faf8a' }}>Descuento cupón ({cuponData?.discountPct}%)</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#8faf8a' }}>-{Money.formatPEN(totals.discountCents)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#7a6850' }}>Envío</span>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: totals.isFreeShipping ? '#8faf8a' : '#1f3028' }}>
-                    {totals.isFreeShipping ? 'Gratis 🎉' : Money.formatPEN(totals.shippingCents)}
+                    {totals.isFreeShipping ? 'Gratis' : Money.formatPEN(totals.shippingCents)}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid #1f302814' }}>
@@ -188,6 +210,49 @@ export default function CheckoutV1() {
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 22, fontWeight: 700, color: '#c96e4b' }}>{Money.formatPEN(totals.totalCents)}</span>
                 </div>
               </div>
+
+              {/* Cupón */}
+              {isCuponValid ? (
+                <div style={{ padding: '10px 14px', background: '#8faf8a22', border: '1px solid #8faf8a66', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#1f3028' }}>
+                    ✓ Cupón <strong>{couponApplied}</strong> aplicado · {cuponData?.discountPct}% off{cuponData?.freeShipping ? ' + envío gratis' : ''}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setCouponApplied(null); setCouponInput(''); }}
+                    style={{ background: 'none', border: 'none', color: '#947a5e', cursor: 'pointer', fontSize: 12, padding: 0 }}
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={couponInput}
+                    onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                    placeholder="Código de cupón"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    disabled={cuponLoading || !couponInput.trim()}
+                    onClick={() => setCouponApplied(couponInput.trim())}
+                    style={{ padding: '10px 16px', background: '#1f3028', color: '#f2e0cc', border: 'none', borderRadius: 10, cursor: couponInput.trim() ? 'pointer' : 'not-allowed', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', opacity: couponInput.trim() ? 1 : 0.5 }}
+                  >
+                    {cuponLoading ? '...' : 'Aplicar'}
+                  </button>
+                </div>
+              )}
+              {isCuponInvalid && (
+                <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#c96e4b' }}>
+                  Cupón no válido o no encontrado.
+                </p>
+              )}
+              {isCuponExhausted && (
+                <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#c96e4b' }}>
+                  Este cupón ya fue utilizado el número máximo de veces.
+                </p>
+              )}
 
               <button onClick={handleContinuarDatos} style={{ padding: '16px', background: 'linear-gradient(135deg, #c96e4b 0%, #d68863 100%)', color: '#1f3028', border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Continuar con datos de envío →
