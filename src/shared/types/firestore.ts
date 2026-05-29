@@ -465,6 +465,64 @@ export interface CafiAcopiadorRange {
 export type LoteTag   = 'washed' | 'honey' | 'natural';
 export type LoteTone  = 'green' | 'terra' | 'gold' | 'cream';
 
+// Ficha sensorial SCA — resultado completo de la evaluación Q Grader.
+// Todos los campos son opcionales: el lote puede publicarse sin ficha,
+// pero la ficha activa el badge "Ficha SCA" y el PDF descargable en la UI B2B.
+export interface FichaCataDoc {
+  // ── Evaluador ───────────────────────────────────────────────────────────
+  qGraderNombre: string;      // "Violeta Mayhuasca Barrientos"
+  qGraderCredencial: string;  // "Q Grader | CVA | SCA Roasting & Sensory"
+  laboratorio: string;        // "Violet Roastery Lab"
+  fechaCata: string;          // "2026-04-24"  ISO 8601 date
+
+  // ── Puntaje final ───────────────────────────────────────────────────────
+  puntajeFinal: number;       // 82.50
+
+  // ── Distribución de puntaje SCA (escala 6–10 por atributo) ─────────────
+  distribucion: {
+    fraganciAroma: number;    // 7.75
+    acidez: number;           // 7.50
+    cuerpo: number;           // 7.50
+    sabor: number;            // 7.00
+    postgusto: number;        // 7.75
+    balance: number;          // 7.50
+    uniformidad: number;      // 10.00
+    limpieza: number;         // 10.00
+    dulzura: number;          // 10.00
+    puntajeCatador: number;   // 7.50
+  };
+
+  // ── Defectos ─────────────────────────────────────────────────────────────
+  defectos: {
+    exportable: number;       // 0.00
+    defectos: number;         // 0.00
+    pajilla: number;          // 0  (unidades)
+    suciedad: number;         // 0  (unidades)
+  };
+
+  // ── Notas de cata ────────────────────────────────────────────────────────
+  aromaFragancia: string;     // "Frutos secos, frutal, panela"
+  saborBoca: string;          // "Cacao, malta, azúcar morena, chocolate"
+  acidezResidual: string;     // "Cítrico fugaz"
+
+  // ── Datos técnicos del grano ─────────────────────────────────────────────
+  datosTecnicos: {
+    humedad: string;          // "12.4%"
+    actividadAgua: number;    // 0.65
+    densidad: string;         // "711 g/L"
+    color: string;            // "Verdoso"
+    olor: string;             // "Fresco"
+    rendimiento?: string;     // "350 g / 78%"
+  };
+
+  // ── Observación libre del Q Grader ───────────────────────────────────────
+  observacion?: string;       // "Se percibe notas verdosas. Café con notas acartonadas (vejez) por posible mal almacenamiento."
+
+  // ── Documento PDF adjunto ────────────────────────────────────────────────
+  // URL de Firebase Storage — subir con scripts/upload_ficha_cata.py
+  pdfUrl?: string;            // "https://storage.googleapis.com/.../ficha_cata_TW-068.pdf"
+}
+
 export interface MicroloteLandingDoc {
   id: string;         // "TW-068" — lot reference number (display)
   origen: string;     // "Cusco · Quillabamba"
@@ -481,6 +539,13 @@ export interface MicroloteLandingDoc {
   tone: LoteTone;     // drives accent color in card
   estado: string;     // "disponible" | "edición limitada" | "agotado"
   featured?: boolean; // true on the single lot spotlighted in SupplyHero spec card
+
+  // ── Ficha de cata SCA (opcional) ─────────────────────────────────────────
+  // Si está presente: activa badge "Ficha SCA verificada" en la tarjeta B2B
+  // y muestra el botón "Descargar ficha PDF" cuando pdfUrl está definido.
+  // DISCLAIMER: los datos reflejan el análisis en la fecha indicada. La
+  // calidad final del tueste puede variar según perfil y tiempo de reposo.
+  fichaCata?: FichaCataDoc;
 }
 
 

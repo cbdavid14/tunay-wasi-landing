@@ -7,7 +7,7 @@ import WaitlistForm from '@/components/WaitlistForm';
 const features = [
   ['Trazabilidad', 'Finca · lote · cosecha verificados.'],
   ['Q-Grader', 'Cata SCA con puntaje certificado.'],
-  ['Sacos 46 / 69 kg', 'Yute orgánico, ready to roast.'],
+  ['GrainPro', 'Bolsas herméticas — humedad y aromas intactos al llegar.'],
 ] as const;
 
 export default function SupplyHero() {
@@ -80,7 +80,7 @@ export default function SupplyHero() {
           }}>
             Café verde,
             <br />
-            <span style={{ fontStyle: 'italic', fontWeight: 500, color: '#c96e4b' }}>directo del origen</span>
+            <span style={{ fontStyle: 'italic', fontWeight: 500, color: '#c96e4b' }}>directo del caficultor</span>
             <br />
             para tu <span style={{ fontStyle: 'italic', fontWeight: 500, color: '#8faf8a' }}>negocio</span>.
           </h1>
@@ -93,8 +93,8 @@ export default function SupplyHero() {
             ...fade(0.3),
           }}>
             Abastece tu cafetería, restaurante u operación de tueste con microlotes
-            peruanos trazables — validados por Q‑Grader, embarcados desde finca, llegados
-            con su pasaporte de cata.
+            peruanos trazables — validados por Q‑Grader, directos del caficultor,
+            con su pasaporte de cata. Somos la plataforma que conecta la finca con tu negocio.
           </p>
 
           <div style={{ display: 'flex', gap: 16, marginTop: 40, alignItems: 'center', flexWrap: 'wrap', ...fade(0.45) }}>
