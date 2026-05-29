@@ -284,29 +284,38 @@ export default function SupplyLotes() {
                           fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.20em',
                           color: '#533b22aa', textTransform: 'uppercase',
                         }}>Lote {activeLabel} · grano verde</div>
-                        <div style={{
-                          fontFamily: 'Cormorant Garamond, serif', fontSize: 32, fontWeight: 600,
-                          color: '#1f3028', lineHeight: 1, marginTop: 4,
-                        }}>
-                          S/ {precioLote.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </div>
-                        {l.b2bDiscount && (
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                          {l.b2bDiscount && (
+                            <div style={{
+                              fontFamily: 'Cormorant Garamond, serif', fontSize: 20, fontWeight: 500,
+                              color: '#533b2266', lineHeight: 1,
+                              textDecoration: 'line-through',
+                            }}>
+                              S/ {Math.round(precioLote / (1 - l.b2bDiscount / 100)).toLocaleString('es-PE')}
+                            </div>
+                          )}
                           <div style={{
-                            fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.12em',
-                            color: '#8faf8a', marginTop: 3,
-                          }}>{l.b2bDiscount}% descuento B2B incluido</div>
-                        )}
+                            fontFamily: 'Cormorant Garamond, serif', fontSize: 32, fontWeight: 600,
+                            color: '#1f3028', lineHeight: 1,
+                          }}>
+                            S/ {precioLote.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </div>
+                        </div>
+                        <div style={{
+                          fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.12em',
+                          color: '#533b22aa', marginTop: 3,
+                        }}>S/ {(precioLote / parseInt(activeLabel!)).toFixed(2)} / kg{l.b2bDiscount ? ` · ${l.b2bDiscount}% dcto B2B` : ''}</div>
                       </>
                     ) : (
                       <>
                         <div style={{
                           fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.20em',
                           color: '#533b22aa', textTransform: 'uppercase',
-                        }}>FOB Lima / kg</div>
+                        }}>Precio</div>
                         <div style={{
-                          fontFamily: 'Cormorant Garamond, serif', fontSize: 32, fontWeight: 600,
-                          color: '#1f3028', lineHeight: 1, marginTop: 4,
-                        }}>S/ {l.precio.toFixed(2)}</div>
+                          fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 600,
+                          color: '#1f3028', lineHeight: 1, marginTop: 4, fontStyle: 'italic',
+                        }}>A coordinar</div>
                       </>
                     )}
                   </div>
