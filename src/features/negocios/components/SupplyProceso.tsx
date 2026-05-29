@@ -5,20 +5,20 @@ const pasos = [
   {
     n: '01', titulo: 'Eliges el lote',
     sub: 'Trazado en finca',
-    desc: 'Revisas la ficha técnica, notas de cata y precio FOB Lima. Pides muestra de 150 g si necesitas catar antes de cerrar.',
+    desc: 'Revisas la ficha técnica, notas de cata y precio FOB Lima. Reservas el lote — o pides muestra de 150 g si necesitas catar antes de cerrar.',
     meta: 'Día 0',
   },
   {
-    n: '02', titulo: 'Coordinamos el flete',
-    sub: 'Finca → Laboratorio → tu tienda',
-    desc: 'El café viaja en bolsas GrainPro herméticas — el mismo estándar de los mejores roasters del mundo. Humedad, aromas y puntaje SCA llegan intactos a tu mesa de tueste.',
-    meta: 'Día 3 — 7',
+    n: '02', titulo: 'Verificamos el lote en origen',
+    sub: 'Laboratorio · Cata · Precio confirmado',
+    desc: 'Notificamos al caficultor. Lleva el microlote al laboratorio, confirmamos que la cata de recepción coincide con la ficha previa, y el caficultor acepta el precio según puntaje y defectos reales. Sin sorpresas en destino.',
+    meta: 'Día 1 — 5',
   },
   {
     n: '03', titulo: 'Recibes el lote certificado',
-    sub: 'Pasaporte de cata incluido',
-    desc: 'Cada saco llega con su certificado Q‑Grader, ficha de trazabilidad, datos del caficultor y nota de cata. Listo para tu mesa de tueste.',
-    meta: 'Día 7 — 10',
+    sub: 'Directo a tu tienda',
+    desc: 'El lote sale en bolsas GrainPro herméticas directo a tu tienda. Llega con certificado Q‑Grader, ficha de trazabilidad y datos del caficultor. Listo para tu mesa de tueste.',
+    meta: 'Día 5 — 10',
   },
 ] as const;
 
@@ -160,13 +160,6 @@ export default function SupplyProceso() {
           ))}
         </div>
 
-        <div style={{
-          marginTop: 12,
-          fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.16em',
-          color: '#8faf8a66', textTransform: 'uppercase',
-        }}>
-          * Plazos sujetos a entrega oportuna desde origen (caficultor)
-        </div>
       </div>
 
       <style>{`

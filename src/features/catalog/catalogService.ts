@@ -430,7 +430,7 @@ export const STATIC_SUPPLY_LANDING: SupplyLandingConfigData = {
   logistics: [
     { key: 'MOQ',        value: 'Microlote desde 8 kg' },
     { key: 'GrainPro',   value: 'Bolsas herméticas en cada lote' },
-    { key: 'Plazos',     value: 'Lima 3–5 días · Provincias 5–10 días*' },
+    { key: 'Plazos',     value: 'Lima 5–8 días · Provincias 7–10 días' },
     { key: 'Provincias', value: 'Olva · Shalom · transporte privado' },
   ],
   contactB2B: {
