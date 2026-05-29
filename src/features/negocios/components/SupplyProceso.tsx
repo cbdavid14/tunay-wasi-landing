@@ -5,13 +5,13 @@ const pasos = [
   {
     n: '01', titulo: 'Eliges el lote',
     sub: 'Trazado en finca',
-    desc: 'Revisas la ficha técnica, notas de cata y precio FOB Lima. Pides muestra de 200 g si necesitas catar antes de cerrar.',
+    desc: 'Revisas la ficha técnica, notas de cata y precio FOB Lima. Pides muestra de 150 g si necesitas catar antes de cerrar.',
     meta: 'Día 0',
   },
   {
     n: '02', titulo: 'Coordinamos el flete',
-    sub: 'Finca → Lima → tu tostadora',
-    desc: 'Gestionamos el transporte desde la chacra hasta tu local, en Lima o provincias. Sacos sellados, control de humedad y temperatura.',
+    sub: 'Finca → Laboratorio → tu tienda',
+    desc: 'El café viaja en bolsas GrainPro herméticas — el mismo estándar de los mejores roasters del mundo. Humedad, aromas y puntaje SCA llegan intactos a tu mesa de tueste.',
     meta: 'Día 3 — 7',
   },
   {
@@ -58,14 +58,14 @@ export default function SupplyProceso() {
             <br />
             <span style={{ fontStyle: 'italic', fontWeight: 500, color: '#8faf8a' }}>Una semana.</span>
             <br />
-            Cero intermediarios.
+            Tú y el caficultor.
           </h2>
           <p style={{
             fontFamily: 'Montserrat, sans-serif', fontSize: 15, lineHeight: 1.65,
             color: '#c4b297', maxWidth: 540, margin: '0 auto',
           }}>
-            Trabajamos con tu calendario de tueste. El primer pedido suele coordinarse
-            en 24 horas desde la solicitud.
+            Somos la plataforma que conecta directamente al caficultor con tu negocio —
+            precio justo en origen, calidad certificada en destino. Coordinamos el primer pedido en 24 horas.
           </p>
         </div>
 
@@ -158,6 +158,14 @@ export default function SupplyProceso() {
               }}>{v}</span>
             </div>
           ))}
+        </div>
+
+        <div style={{
+          marginTop: 12,
+          fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.16em',
+          color: '#8faf8a66', textTransform: 'uppercase',
+        }}>
+          * Plazos sujetos a entrega oportuna desde origen (caficultor)
         </div>
       </div>
 
