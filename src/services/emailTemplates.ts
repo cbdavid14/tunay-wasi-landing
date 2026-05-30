@@ -579,6 +579,121 @@ export function emailPedidoRecibido(data: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 4b. Pago confirmado — aviso al cliente cuando admin confirma el pago
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function emailPagoConfirmado(data: {
+  nombre: string
+  orderId: string
+  items: Array<{ name: string; weight: string; grind: string; qty: number; unitCents: number }>
+  totalCents: number
+  deliverEstimate: string
+  adapter: AdapterName
+}): { subject: string; html: string } {
+  const itemRows = data.items.map(item => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #1f302812;">
+        <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:13px;color:#1f3028;font-weight:600;">${item.name}</p>
+        <p style="margin:3px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:10px;color:#c4b297;letter-spacing:1px;">${item.weight} &middot; ${item.grind}</p>
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid #1f302812;text-align:center;vertical-align:top;">
+        <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:13px;color:#533b22;">&times;${item.qty}</p>
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid #1f302812;text-align:right;vertical-align:top;">
+        <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;font-weight:600;color:#1f3028;">${pen(item.unitCents * item.qty)}</p>
+      </td>
+    </tr>`).join('')
+
+  return {
+    subject: `Tunay Wasi — Pago confirmado · Pedido ${data.orderId}`,
+    html: layout(`
+      ${pill('Pago confirmado', '#8faf8a22', '#8faf8a')}
+
+      <h2 style="font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:600;color:#1f3028;margin:16px 0 6px;line-height:1.15;">
+        ¡Tu pago fue confirmado,&nbsp;${data.nombre}!
+      </h2>
+      <p style="font-family:'Montserrat',Arial,sans-serif;font-size:13px;color:#533b22;margin:0;line-height:1.75;">
+        Verificamos tu comprobante correctamente. Tu pedido ya está
+        <strong style="color:#1f3028;">en preparación</strong> — tostamos y empacamos para ti.
+      </p>
+
+      ${divider()}
+
+      <!-- Orden + entrega -->
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+        <tr>
+          <td width="50%" style="padding-right:8px;">
+            <div style="background:#1f302808;border-radius:10px;padding:14px 16px;border-left:3px solid #8faf8a;">
+              <p style="margin:0 0 3px;font-family:'Montserrat',Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c4b297;">N° Pedido</p>
+              <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:600;color:#8faf8a;letter-spacing:1px;">${data.orderId}</p>
+            </div>
+          </td>
+          <td width="50%" style="padding-left:8px;">
+            <div style="background:#1f302808;border-radius:10px;padding:14px 16px;border-left:3px solid #c96e4b;">
+              <p style="margin:0 0 3px;font-family:'Montserrat',Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c4b297;">Entrega estimada</p>
+              <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:13px;font-weight:600;color:#533b22;">${data.deliverEstimate}</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items -->
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+        <thead>
+          <tr>
+            <th style="padding:0 0 10px;text-align:left;font-family:'Montserrat',Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c4b297;border-bottom:1px solid #1f302820;">Producto</th>
+            <th style="padding:0 0 10px;text-align:center;font-family:'Montserrat',Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c4b297;border-bottom:1px solid #1f302820;">Cant.</th>
+            <th style="padding:0 0 10px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c4b297;border-bottom:1px solid #1f302820;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding:14px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#533b22;">Total pagado</td>
+            <td style="padding:14px 0 0;text-align:right;">
+              <span style="font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:700;color:#8faf8a;">${pen(data.totalCents)}</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      ${divider()}
+
+      <!-- Próximos pasos -->
+      <p style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c4b297;margin:0 0 12px;">¿Qué sigue?</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding:0 12px 12px 0;vertical-align:top;width:20px;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#8faf8a;color:#1f3028;font-family:'Montserrat',Arial,sans-serif;font-size:10px;font-weight:700;text-align:center;line-height:20px;">1</div>
+          </td>
+          <td style="padding-bottom:12px;">
+            <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:12px;color:#533b22;line-height:1.6;">Tostamos tu café en <strong style="color:#1f3028;">pequeños lotes</strong> para máxima frescura</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 12px 12px 0;vertical-align:top;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#c96e4b;color:#f2e0cc;font-family:'Montserrat',Arial,sans-serif;font-size:10px;font-weight:700;text-align:center;line-height:20px;">2</div>
+          </td>
+          <td style="padding-bottom:12px;">
+            <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:12px;color:#533b22;line-height:1.6;">Empacamos y despachamos — recibirás el <strong style="color:#1f3028;">código de seguimiento</strong> por WhatsApp</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 12px 0 0;vertical-align:top;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#1f302822;color:#533b22;font-family:'Montserrat',Arial,sans-serif;font-size:10px;font-weight:700;text-align:center;line-height:20px;">3</div>
+          </td>
+          <td>
+            <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:12px;color:#533b22;line-height:1.6;">Entrega estimada: <strong style="color:#1f3028;">${data.deliverEstimate}</strong></p>
+          </td>
+        </tr>
+      </table>
+
+      ${ctaButton('¿Preguntas? Escríbenos →', `https://wa.me/51917959370?text=Hola%2C+mi+pedido+es+${encodeURIComponent(data.orderId)}`)}
+    `, `Pago confirmado · Pedido ${data.orderId} — en preparación`),
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 5. B2B mayorista — confirmación al comprador
 // ─────────────────────────────────────────────────────────────────────────────
 

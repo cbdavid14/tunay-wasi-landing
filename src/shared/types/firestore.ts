@@ -354,6 +354,7 @@ export interface PedidoItem {
 // ShippingData snapshot — matches ShippingData in checkout.ts
 export interface PedidoShipping {
   nombre: string;
+  email?: string;
   telefono: string;
   departamento: string;
   distrito: string;
