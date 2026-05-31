@@ -13,6 +13,8 @@
 // Layout: table-based for email client compatibility
 // ─────────────────────────────────────────────────────────────────────────────
 
+const BRAND = import.meta.env.VITE_BRAND_NAME ?? 'Tunay Wasi'
+const BRAND_SHORT = BRAND === 'Tunay Wasi' ? 'TW' : 'AA'
 const APP_URL = 'https://tunay-wasi.web.app'
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
@@ -66,7 +68,7 @@ function layout(content: string, preheader = ''): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Tunay Wasi</title>
+  <title>${BRAND}</title>
   ${FONTS_LINK}
 </head>
 <body style="margin:0;padding:0;background-color:#1f3028;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
@@ -90,7 +92,7 @@ ${preheader ? `<div style="display:none;font-size:1px;color:#1f3028;line-height:
               </tr>
             </table>
 
-            <h1 style="font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:300;letter-spacing:10px;color:#f2e0cc;margin:0 0 8px;text-transform:uppercase;line-height:1;">TUNAY WASI</h1>
+            <h1 style="font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:300;letter-spacing:10px;color:#f2e0cc;margin:0 0 8px;text-transform:uppercase;line-height:1;">${BRAND.toUpperCase()}</h1>
             <p style="font-family:'Montserrat',Arial,sans-serif;font-size:9px;color:#8faf8a;letter-spacing:3px;margin:0;text-transform:uppercase;">Café de especialidad &middot; Desde el origen</p>
 
             <!-- Bottom ornament -->
@@ -136,12 +138,12 @@ ${preheader ? `<div style="display:none;font-size:1px;color:#1f3028;line-height:
               </tr>
             </table>
 
-            <p style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;color:#8faf8a;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">Tunay Wasi &mdash; Café de especialidad</p>
+            <p style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;color:#8faf8a;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">${BRAND} &mdash; Café de especialidad</p>
             <p style="margin:0 0 14px;">
               <a href="${APP_URL}" style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;color:#c4b297;text-decoration:none;letter-spacing:1px;">${APP_URL.replace('https://', '')}</a>
             </p>
             <p style="font-family:'Montserrat',Arial,sans-serif;font-size:9px;color:#533b2255;margin:0;letter-spacing:0.5px;">
-              Recibiste este correo porque interactuaste con Tunay Wasi
+              Recibiste este correo porque interactuaste con ${BRAND}
             </p>
 
           </td>
@@ -178,7 +180,7 @@ export function emailContactoCliente(data: {
   }
 
   return {
-    subject: `Tunay Wasi — Recibimos tu mensaje, ${data.nombre}`,
+    subject: `${BRAND} — Recibimos tu mensaje, ${data.nombre}`,
     html: layout(`
       ${pill('Mensaje recibido', '#8faf8a22', '#8faf8a')}
 
@@ -232,7 +234,7 @@ export function emailContactoAdmin(data: {
   }
 
   return {
-    subject: `[TW] Contacto — ${data.nombre} · ${temaLabels[data.tema] ?? data.tema}`,
+    subject: `[${BRAND_SHORT}] Contacto — ${data.nombre} · ${temaLabels[data.tema] ?? data.tema}`,
     html: layout(`
       ${pill('Admin · Formulario de contacto', '#1f302814', '#533b22')}
 
@@ -287,7 +289,7 @@ export function emailConfirmacionCompraCliente(data: {
     </tr>`).join('')
 
   return {
-    subject: `Pedido ${data.numeroOrden} registrado — Tunay Wasi`,
+    subject: `Pedido ${data.numeroOrden} registrado — ${BRAND}`,
     html: layout(`
       ${pill('Pedido registrado', '#8faf8a22', '#8faf8a')}
 
@@ -367,7 +369,7 @@ export function emailBienvenidaCaficultorWaitlist(data: {
   sca: string
 }): { subject: string; html: string } {
   return {
-    subject: `Tunay Wasi — Estás en la lista, ${data.nombre}`,
+    subject: `${BRAND} — Estás en la lista, ${data.nombre}`,
     html: layout(`
       ${pill('Lista de espera · Caficultores', '#8faf8a22', '#8faf8a')}
 
@@ -436,7 +438,7 @@ export function emailAlertaAdminCaficultor(data: {
   sca: string
 }): { subject: string; html: string } {
   return {
-    subject: `[TW] Nuevo caficultor — ${data.nombre || data.email}`,
+    subject: `[${BRAND_SHORT}] Nuevo caficultor — ${data.nombre || data.email}`,
     html: layout(`
       ${pill('Admin · Lista de espera caficultores', '#1f302814', '#533b22')}
 
@@ -490,7 +492,7 @@ export function emailPedidoRecibido(data: {
     </tr>`).join('')
 
   return {
-    subject: `Tunay Wasi — Pedido ${data.orderId} recibido`,
+    subject: `${BRAND} — Pedido ${data.orderId} recibido`,
     html: layout(`
       ${pill('Pedido recibido', '#c96e4b18', '#c96e4b')}
 
@@ -605,7 +607,7 @@ export function emailPagoConfirmado(data: {
     </tr>`).join('')
 
   return {
-    subject: `Tunay Wasi — Pago confirmado · Pedido ${data.orderId}`,
+    subject: `${BRAND} — Pago confirmado · Pedido ${data.orderId}`,
     html: layout(`
       ${pill('Pago confirmado', '#8faf8a22', '#8faf8a')}
 
@@ -715,7 +717,7 @@ export function emailBienvenidaMayoristaB2B(data: {
     : ''
 
   return {
-    subject: 'Tunay Wasi — Recibimos tu solicitud B2B',
+    subject: `${BRAND} — Recibimos tu solicitud B2B`,
     html: layout(`
       ${pill('Solicitud B2B recibida', '#c96e4b18', '#c96e4b')}
 
@@ -764,7 +766,7 @@ export function emailAlertaAdminMayoristaB2B(data: {
   loteReservado?: { id: string; variedad: string; origen: string; sca: number; precioKg: number }
 }): { subject: string; html: string } {
   return {
-    subject: `[TW] Nueva solicitud B2B — ${data.empresa}`,
+    subject: `[${BRAND_SHORT}] Nueva solicitud B2B — ${data.empresa}`,
     html: layout(`
       ${pill('Admin · Nueva solicitud mayorista', '#1f302814', '#533b22')}
 

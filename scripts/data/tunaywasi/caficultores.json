@@ -13,10 +13,8 @@
     ],
     "resumen": "Productora de microlotes de especialidad en las alturas de Jaén. Aydee trabaja con proceso Honey y Natural, obteniendo perfiles frutales y florales únicos en su finca familiar.",
     "historia": "Aydee Rojas Saldivar es una caficultora de la provincia de Jaén, Cajamarca. Su finca Vista Hermosa, situada a 1500 msnm, produce microlotes de alta calidad gracias a la dedicación familiar y un terroir privilegiado.",
-    "impactoSocial": "El 38.6% del precio neto de cada bolsa vendida va directo a Aydee, por encima del promedio de comercio justo, permitiéndole reinvertir en su finca y su familia.",
     "experienciaAnos": "10",
     "hectareas": "3",
-    "status": "activo",
     "fotoPerfilUrl": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767831/aydeFinca_rm5arr.jpg",
     "fotosUrls": [
       "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767976/AydeFinca_lgry4p.jpg",
@@ -25,7 +23,9 @@
     ],
     "variedad": "Caturra · Geisha",
     "proceso": "Lavado",
-    "puntajeSCA": "82.5 · Cata lote 2025"
+    "puntajeSCA": "82.5 · Cata lote 2025",
+    "status": "aprobado",
+    "impactoSocial": "Hasta el 50% del precio neto de cada bolsa vendida va directo a Aydee, por encima del promedio de comercio justo, permitiéndole reinvertir en su finca y su familia."
   },
   {
     "id": "1cbeBA81OevZYNGSM94J",

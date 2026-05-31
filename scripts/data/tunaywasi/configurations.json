@@ -1,4 +1,23 @@
 {
+  "shipping": {
+    "zones": [
+      {
+        "freeThresholdCents": 0,
+        "flatCents": 800,
+        "key": "lima",
+        "label": "Delivery a domicilio"
+      },
+      {
+        "freeThresholdCents": 0,
+        "key": "provincia",
+        "flatCents": 1200,
+        "label": "Delivery en agencia"
+      }
+    ]
+  },
+  "checkoutConfig": {
+    "version": "v1"
+  },
   "pricing_tiers": {
     "version": "2.0",
     "updatedAt": "2026-05",
@@ -114,6 +133,16 @@
     "deliverLima": "jun. (1a semana)",
     "deliverProv": "jun. (2a semana)",
     "cutoffTimestamp": 1780289999000
+  },
+  "cupones": {
+    "LISTA15": {
+      "maxUses": 15,
+      "active": true,
+      "discountPct": 50,
+      "usedCount": 0,
+      "code": "LISTA15",
+      "freeShipping": true
+    }
   },
   "pricing_rules": {
     "updatedAt": "2026-05",

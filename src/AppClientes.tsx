@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/sections/Hero';
@@ -12,8 +13,18 @@ import Cafe from '@/features/catalog/components/Cafe';
 import Contacto from '@/features/contact/components/Contacto';
 import CheckoutGate from '@/features/checkout/components/CheckoutGate';
 import GrainOverlay from '@/components/decor/GrainOverlay';
+import { AdminPedidos } from '@/features/admin/AdminPedidos';
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/admin" element={<AdminPedidos />} />
+      <Route path="*" element={<Landing />} />
+    </Routes>
+  );
+}
+
+function Landing() {
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (!hash) return;
@@ -22,7 +33,6 @@ export default function App() {
       el.scrollIntoView({ behavior: 'smooth' });
       return;
     }
-    // Si el elemento aún no existe, reintenta hasta que aparezca
     const observer = new MutationObserver(() => {
       const target = document.getElementById(hash);
       if (target) {

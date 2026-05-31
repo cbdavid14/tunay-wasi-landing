@@ -132,3 +132,32 @@ export async function confirmPayment(pedidoId: string): Promise<void> {
     await sendMail({ to: email, subject, html });
   }
 }
+
+export async function cancelOrder(pedidoId: string): Promise<void> {
+  const pedidoRef = doc(db, 'pedidos', pedidoId);
+  const snap = await getDoc(pedidoRef);
+  if (!snap.exists()) throw new Error(`Pedido ${pedidoId} no encontrado`);
+
+  const pedido = snap.data() as PedidoDoc;
+  if (pedido.status !== 'pendiente_pago') {
+    throw new Error('Solo se pueden cancelar pedidos con estado "pendiente_pago"');
+  }
+
+  const now = new Date().toISOString();
+
+  await runTransaction(db, async (tx) => {
+    tx.update(pedidoRef, {
+      status: 'cancelado',
+      cancelledAt: now,
+      updatedAt: now,
+    });
+
+    for (const item of pedido.items) {
+      const prodRef = doc(db, 'productos', item.productoId);
+      const kgNeeded = KG_PER_UNIT[item.weight as WeightLabel] * item.qty;
+      tx.update(prodRef, {
+        stockReservedKg: increment(-kgNeeded),
+      });
+    }
+  });
+}

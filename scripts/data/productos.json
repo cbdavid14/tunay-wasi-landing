@@ -9,15 +9,32 @@
     "alt": "1800 m",
     "farm": "Finca Bello Horizonte",
     "producer": "Darlyn Sánchez Hilario",
-    "notes": ["Caramelo", "Naranja sanguina", "Cacao"],
+    "notes": [
+      "Caramelo",
+      "Naranja sanguina",
+      "Cacao"
+    ],
     "body": "Medio",
     "acidity": "Cítrica brillante",
     "score": "87.5",
-    "brews": ["V60", "Chemex", "French Press"],
+    "brews": [
+      "V60",
+      "Chemex",
+      "French Press"
+    ],
     "weights": [
-      { "label": "250g", "cents": 3900 },
-      { "label": "1kg",  "cents": 15000 },
-      { "label": "3kg",  "cents": 46000 }
+      {
+        "label": "250g",
+        "cents": 3900
+      },
+      {
+        "label": "1kg",
+        "cents": 15000
+      },
+      {
+        "label": "3kg",
+        "cents": 46000
+      }
     ],
     "producerPct": 42,
     "tag": "Versátil",
@@ -27,7 +44,61 @@
     "photo": "/imgs/geishaBello-HorizonteOxapampa2.png",
     "label": "PREVENTA",
     "stockKg": 9.2,
-    "stockReservedKg": 0
+    "stockReservedKg": 0,
+    "comisiones": {
+      "b2c": {
+        "producerShareFactor": 0.386,
+        "breakdown": [
+          {
+            "key": "tostador",
+            "label": "Tueste + Cata Q-Grader",
+            "pct": 14,
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "color": "#8faf8a"
+          },
+          {
+            "key": "logistica",
+            "pct": 22.4,
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "label": "Packaging y Envío",
+            "color": "#c4b297"
+          },
+          {
+            "key": "plataforma",
+            "pct": 19,
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "label": "Tunay Wasi",
+            "color": "#1f3028"
+          }
+        ]
+      }
+    },
+    "tier": "clásico",
+    "weightsPromo": [
+      {
+        "label": "250g",
+        "cents": 1950
+      },
+      {
+        "label": "1kg",
+        "cents": 7500
+      },
+      {
+        "label": "3kg",
+        "cents": 23000
+      }
+    ],
+    "receta": {
+      "temp": "92 °C",
+      "molienda": "Media",
+      "tiempo": "3:00–3:30 min",
+      "metodo": "V60",
+      "nota": "Pre-infusión de 30 s con el doble del peso del café.",
+      "ratio": "1:16 (15 g / 240 ml)"
+    },
+    "qGraderName": "",
+    "roastDate": "",
+    "promoActivated": false
   },
   {
     "id": "a2b3c4d5-6789-0abc-def1-234567890123",
@@ -39,15 +110,32 @@
     "alt": "1650 m",
     "farm": "Finca La Esperanza",
     "producer": "Margarita Flores Quispe",
-    "notes": ["Frutas maduras", "Chocolate oscuro", "Vainilla"],
+    "notes": [
+      "Frutas maduras",
+      "Chocolate oscuro",
+      "Vainilla"
+    ],
     "body": "Lleno",
     "acidity": "Baja, dulce",
     "score": "85.0",
-    "brews": ["French Press", "AeroPress", "Cold Brew"],
+    "brews": [
+      "French Press",
+      "AeroPress",
+      "Cold Brew"
+    ],
     "weights": [
-      { "label": "250g", "cents": 3500 },
-      { "label": "1kg",  "cents": 13500 },
-      { "label": "3kg",  "cents": 40000 }
+      {
+        "label": "250g",
+        "cents": 3500
+      },
+      {
+        "label": "1kg",
+        "cents": 13500
+      },
+      {
+        "label": "3kg",
+        "cents": 40000
+      }
     ],
     "producerPct": 42,
     "tag": "Cuerpo Lleno",
@@ -57,7 +145,61 @@
     "photo": "/imgs/geishaBello-HorizonteOxapampa2.png",
     "label": "PREVENTA",
     "stockKg": 6.5,
-    "stockReservedKg": 0
+    "stockReservedKg": 0,
+    "comisiones": {
+      "b2c": {
+        "producerShareFactor": 0.386,
+        "breakdown": [
+          {
+            "key": "tostador",
+            "label": "Tueste + Cata Q-Grader",
+            "pct": 14,
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "color": "#8faf8a"
+          },
+          {
+            "key": "logistica",
+            "pct": 22.4,
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "label": "Packaging y Envío",
+            "color": "#c4b297"
+          },
+          {
+            "key": "plataforma",
+            "pct": 19,
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "label": "Tunay Wasi",
+            "color": "#1f3028"
+          }
+        ]
+      }
+    },
+    "tier": "clásico",
+    "weightsPromo": [
+      {
+        "label": "250g",
+        "cents": 1750
+      },
+      {
+        "label": "1kg",
+        "cents": 6750
+      },
+      {
+        "label": "3kg",
+        "cents": 20000
+      }
+    ],
+    "receta": {
+      "temp": "92 °C",
+      "molienda": "Media",
+      "tiempo": "3:00–3:30 min",
+      "metodo": "French Press",
+      "nota": "Pre-infusión de 30 s con el doble del peso del café.",
+      "ratio": "1:16 (15 g / 240 ml)"
+    },
+    "qGraderName": "",
+    "roastDate": "",
+    "promoActivated": false
   },
   {
     "id": "b3c4d5e6-7890-1abc-ef23-345678901234",
@@ -69,15 +211,32 @@
     "alt": "1950 m",
     "farm": "Finca El Palomar",
     "producer": "Roberto Carlos Mamani Condori",
-    "notes": ["Cítrico", "Floral", "Té negro"],
+    "notes": [
+      "Cítrico",
+      "Floral",
+      "Té negro"
+    ],
     "body": "Limpio",
     "acidity": "Brillante",
     "score": "86.5",
-    "brews": ["V60", "Kalita Wave", "Espresso"],
+    "brews": [
+      "V60",
+      "Kalita Wave",
+      "Espresso"
+    ],
     "weights": [
-      { "label": "250g", "cents": 3700 },
-      { "label": "1kg",  "cents": 14200 },
-      { "label": "3kg",  "cents": 42000 }
+      {
+        "label": "250g",
+        "cents": 3700
+      },
+      {
+        "label": "1kg",
+        "cents": 14200
+      },
+      {
+        "label": "3kg",
+        "cents": 42000
+      }
     ],
     "producerPct": 42,
     "tag": "Limpio",
@@ -86,8 +245,62 @@
     "desc": "Variedad Typica lavada de cuarta generación, reconocida por su limpieza en taza y acidez brillante.",
     "photo": "/imgs/geishaBello-HorizonteOxapampa2.png",
     "label": "PREVENTA",
-    "stockKg": 8.0,
-    "stockReservedKg": 0
+    "stockKg": 8,
+    "stockReservedKg": 0,
+    "comisiones": {
+      "b2c": {
+        "producerShareFactor": 0.386,
+        "breakdown": [
+          {
+            "key": "tostador",
+            "label": "Tueste + Cata Q-Grader",
+            "pct": 14,
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "color": "#8faf8a"
+          },
+          {
+            "key": "logistica",
+            "pct": 22.4,
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "label": "Packaging y Envío",
+            "color": "#c4b297"
+          },
+          {
+            "key": "plataforma",
+            "pct": 19,
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "label": "Tunay Wasi",
+            "color": "#1f3028"
+          }
+        ]
+      }
+    },
+    "tier": "clásico",
+    "weightsPromo": [
+      {
+        "label": "250g",
+        "cents": 1850
+      },
+      {
+        "label": "1kg",
+        "cents": 7100
+      },
+      {
+        "label": "3kg",
+        "cents": 21000
+      }
+    ],
+    "receta": {
+      "temp": "92 °C",
+      "molienda": "Fina",
+      "tiempo": "3:00–3:30 min",
+      "metodo": "V60",
+      "nota": "Pre-infusión de 30 s con el doble del peso del café.",
+      "ratio": "1:16 (15 g / 240 ml)"
+    },
+    "qGraderName": "",
+    "roastDate": "",
+    "promoActivated": false
   },
   {
     "id": "c4d5e6f7-8901-2abc-f234-456789012345",
@@ -99,15 +312,32 @@
     "alt": "1700 m",
     "farm": "Finca Los Arrayanes",
     "producer": "Lucía Mercedes Huamán Torres",
-    "notes": ["Miel", "Albaricoque", "Canela"],
+    "notes": [
+      "Miel",
+      "Albaricoque",
+      "Canela"
+    ],
     "body": "Medio-pleno",
     "acidity": "Suave",
     "score": "84.0",
-    "brews": ["V60", "Chemex", "Moka"],
+    "brews": [
+      "V60",
+      "Chemex",
+      "Moka"
+    ],
     "weights": [
-      { "label": "250g", "cents": 3200 },
-      { "label": "1kg",  "cents": 12500 },
-      { "label": "3kg",  "cents": 37000 }
+      {
+        "label": "250g",
+        "cents": 3200
+      },
+      {
+        "label": "1kg",
+        "cents": 12500
+      },
+      {
+        "label": "3kg",
+        "cents": 37000
+      }
     ],
     "producerPct": 42,
     "tag": "Dulce",
@@ -117,7 +347,61 @@
     "photo": "/imgs/geishaBello-HorizonteOxapampa2.png",
     "label": "PREVENTA",
     "stockKg": 5.5,
-    "stockReservedKg": 0
+    "stockReservedKg": 0,
+    "comisiones": {
+      "b2c": {
+        "producerShareFactor": 0.386,
+        "breakdown": [
+          {
+            "key": "tostador",
+            "label": "Tueste + Cata Q-Grader",
+            "pct": 14,
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "color": "#8faf8a"
+          },
+          {
+            "key": "logistica",
+            "pct": 22.4,
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "label": "Packaging y Envío",
+            "color": "#c4b297"
+          },
+          {
+            "key": "plataforma",
+            "pct": 19,
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "label": "Tunay Wasi",
+            "color": "#1f3028"
+          }
+        ]
+      }
+    },
+    "tier": "clásico",
+    "weightsPromo": [
+      {
+        "label": "250g",
+        "cents": 1600
+      },
+      {
+        "label": "1kg",
+        "cents": 6250
+      },
+      {
+        "label": "3kg",
+        "cents": 18500
+      }
+    ],
+    "receta": {
+      "temp": "92 °C",
+      "molienda": "Media",
+      "tiempo": "3:00–3:30 min",
+      "metodo": "V60",
+      "nota": "Pre-infusión de 30 s con el doble del peso del café.",
+      "ratio": "1:16 (15 g / 240 ml)"
+    },
+    "qGraderName": "",
+    "roastDate": "",
+    "promoActivated": false
   },
   {
     "id": "d5e6f7a8-9012-3bcd-0123-567890123456",
@@ -129,15 +413,32 @@
     "alt": "1850 m",
     "farm": "Finca Alto Andino",
     "producer": "José Luis Vilca Quispe",
-    "notes": ["Bergamota", "Floral blanco", "Néctar de abeja"],
+    "notes": [
+      "Bergamota",
+      "Floral blanco",
+      "Néctar de abeja"
+    ],
     "body": "Delicado",
     "acidity": "Elegante",
     "score": "88.0",
-    "brews": ["V60", "Origami", "Cupping"],
+    "brews": [
+      "V60",
+      "Origami",
+      "Cupping"
+    ],
     "weights": [
-      { "label": "250g", "cents": 4200 },
-      { "label": "1kg",  "cents": 16500 },
-      { "label": "3kg",  "cents": 48000 }
+      {
+        "label": "250g",
+        "cents": 4200
+      },
+      {
+        "label": "1kg",
+        "cents": 16500
+      },
+      {
+        "label": "3kg",
+        "cents": 48000
+      }
     ],
     "producerPct": 42,
     "tag": "Premium",
@@ -146,8 +447,62 @@
     "desc": "Geisha lavado de alta puntuación (88+), producido por joven barista que regresó al campo con innovación.",
     "photo": "/imgs/geishaBello-HorizonteOxapampa2.png",
     "label": "PREVENTA",
-    "stockKg": 10.0,
-    "stockReservedKg": 0
+    "stockKg": 10,
+    "stockReservedKg": 0,
+    "comisiones": {
+      "b2c": {
+        "producerShareFactor": 0.386,
+        "breakdown": [
+          {
+            "key": "tostador",
+            "label": "Tueste + Cata Q-Grader",
+            "pct": 14,
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "color": "#8faf8a"
+          },
+          {
+            "key": "logistica",
+            "pct": 22.4,
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "label": "Packaging y Envío",
+            "color": "#c4b297"
+          },
+          {
+            "key": "plataforma",
+            "pct": 19,
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "label": "Tunay Wasi",
+            "color": "#1f3028"
+          }
+        ]
+      }
+    },
+    "tier": "clásico",
+    "weightsPromo": [
+      {
+        "label": "250g",
+        "cents": 2100
+      },
+      {
+        "label": "1kg",
+        "cents": 8250
+      },
+      {
+        "label": "3kg",
+        "cents": 24000
+      }
+    ],
+    "receta": {
+      "temp": "92 °C",
+      "molienda": "Media",
+      "tiempo": "3:00–3:30 min",
+      "metodo": "V60",
+      "nota": "Pre-infusión de 30 s con el doble del peso del café.",
+      "ratio": "1:16 (15 g / 240 ml)"
+    },
+    "qGraderName": "",
+    "roastDate": "",
+    "promoActivated": false
   },
   {
     "id": "e6f7a8b9-0123-4cde-1234-678901234567",
@@ -159,15 +514,32 @@
     "alt": "1200 m",
     "farm": "Finca Las Terrazas",
     "producer": "Ana María Condori Mamani",
-    "notes": ["Panela", "Higo", "Cacao oscuro"],
+    "notes": [
+      "Panela",
+      "Higo",
+      "Cacao oscuro"
+    ],
     "body": "Lleno y denso",
     "acidity": "Moderada",
     "score": "85.5",
-    "brews": ["French Press", "Espresso", "Moka"],
+    "brews": [
+      "French Press",
+      "Espresso",
+      "Moka"
+    ],
     "weights": [
-      { "label": "250g", "cents": 3400 },
-      { "label": "1kg",  "cents": 13000 },
-      { "label": "3kg",  "cents": 39000 }
+      {
+        "label": "250g",
+        "cents": 3400
+      },
+      {
+        "label": "1kg",
+        "cents": 13000
+      },
+      {
+        "label": "3kg",
+        "cents": 39000
+      }
     ],
     "producerPct": 42,
     "tag": "Export",
@@ -177,6 +549,60 @@
     "photo": "/imgs/geishaBello-HorizonteOxapampa2.png",
     "label": "PREVENTA",
     "stockKg": 7.5,
-    "stockReservedKg": 0
+    "stockReservedKg": 0,
+    "comisiones": {
+      "b2c": {
+        "producerShareFactor": 0.386,
+        "breakdown": [
+          {
+            "key": "tostador",
+            "label": "Tueste + Cata Q-Grader",
+            "pct": 14,
+            "detail": "Tostado artesanal y certificación de calidad SCA.",
+            "color": "#8faf8a"
+          },
+          {
+            "key": "logistica",
+            "pct": 22.4,
+            "detail": "Bolsa trilaminada, caja kraft, tissue, sticker, tarjeta de trazabilidad, mailer y flete desde origen.",
+            "label": "Packaging y Envío",
+            "color": "#c4b297"
+          },
+          {
+            "key": "plataforma",
+            "pct": 19,
+            "detail": "Plataforma, tecnología y operación del marketplace.",
+            "label": "Tunay Wasi",
+            "color": "#1f3028"
+          }
+        ]
+      }
+    },
+    "tier": "clásico",
+    "weightsPromo": [
+      {
+        "label": "250g",
+        "cents": 1700
+      },
+      {
+        "label": "1kg",
+        "cents": 6500
+      },
+      {
+        "label": "3kg",
+        "cents": 19500
+      }
+    ],
+    "receta": {
+      "temp": "92 °C",
+      "molienda": "Fina",
+      "tiempo": "3:00–3:30 min",
+      "metodo": "French Press",
+      "nota": "Pre-infusión de 30 s con el doble del peso del café.",
+      "ratio": "1:16 (15 g / 240 ml)"
+    },
+    "qGraderName": "",
+    "roastDate": "",
+    "promoActivated": false
   }
 ]
