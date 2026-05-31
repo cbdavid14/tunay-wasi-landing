@@ -200,7 +200,6 @@
     "tone": "green",
     "label": "PREVENTA",
     "photo": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767831/aydeFinca_rm5arr.jpg",
-    "stockKg": 12,
     "desc": "Microlote Geisha proceso Honey de Aydee Rojas, en secado. Cosecha 2026. Cantidad limitada: 12 kg.",
     "comisiones": {
       "b2c": {
@@ -263,6 +262,7 @@
     "qGraderName": "M. Quispe",
     "roastDate": "~9 jun.",
     "promoActivated": false,
-    "stockReservedKg": 1.506
+    "stockKg": 11.097,
+    "stockReservedKg": 0.3020000000000002
   }
 ]

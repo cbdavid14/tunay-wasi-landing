@@ -61,7 +61,7 @@ function buildCollections(): CollectionDef[] {
     {
       name: 'microlotesLanding',
       mode: 'array',
-      docs: loadJson<{ lotes: DocWithId[] }>('microlotesLanding.json').lotes,
+      docs: loadJson<DocWithId[]>('microlotesLanding.json'),
     },
     {
       name: 'caficultores',
