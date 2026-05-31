@@ -1,8 +1,12 @@
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/shared/firebase';
 import type { PedidoDoc, PedidoItem, PedidoShipping, PedidoTotals } from '@/shared/types/firestore';
 import type { AdapterName, CheckoutPayload } from '@/shared/types/checkout';
 import type { CartItem } from '@/shared/types/cart';
+import { KG_PER_UNIT } from '@/features/catalog/stockUtils';
+import type { WeightLabel } from '@/shared/types/firestore';
+import { sendMail } from '@/services/mailService';
+import { emailPagoConfirmado } from '@/services/emailTemplates';
 
 // Firestore rejects undefined values — strip them before write.
 function stripUndefined<T>(obj: T): T {
@@ -43,6 +47,7 @@ export async function saveOrder(
 
   const pedidoShipping: PedidoShipping = {
     nombre: shipping.nombre,
+    email: shipping.email || undefined,
     telefono: shipping.telefono,
     departamento: shipping.departamento,
     distrito: shipping.distrito,
@@ -80,4 +85,79 @@ export async function saveOrder(
 
   await setDoc(doc(db, 'pedidos', id), stripUndefined(pedido));
   return orderId;
+}
+
+export async function confirmPayment(pedidoId: string): Promise<void> {
+  const pedidoRef = doc(db, 'pedidos', pedidoId);
+  const snap = await getDoc(pedidoRef);
+  if (!snap.exists()) throw new Error(`Pedido ${pedidoId} not found`);
+
+  const pedido = snap.data() as PedidoDoc;
+  if (pedido.status !== 'pendiente_pago') {
+    throw new Error(`Pedido ${pedido.orderId} status is already "${pedido.status}"`);
+  }
+
+  const now = new Date().toISOString();
+
+  await runTransaction(db, async (tx) => {
+    tx.update(pedidoRef, {
+      status: 'pago_confirmado',
+      confirmedAt: now,
+      updatedAt: now,
+    });
+
+    for (const item of pedido.items) {
+      const prodRef = doc(db, 'productos', item.productoId);
+      const kgNeeded = KG_PER_UNIT[item.weight as WeightLabel] * item.qty;
+      tx.update(prodRef, {
+        stockKg: increment(-kgNeeded),
+        stockReservedKg: increment(-kgNeeded),
+      });
+    }
+  });
+
+  const email = pedido.shipping.email;
+  if (email) {
+    const { subject, html } = emailPagoConfirmado({
+      nombre: pedido.shipping.nombre,
+      orderId: pedido.orderId,
+      items: pedido.items.map(i => ({
+        name: i.name, weight: i.weight, grind: i.grind,
+        qty: i.qty, unitCents: i.unitCents,
+      })),
+      totalCents: pedido.totals.totalCents,
+      deliverEstimate: pedido.deliverEstimate,
+      adapter: pedido.adapter,
+    });
+    await sendMail({ to: email, subject, html });
+  }
+}
+
+export async function cancelOrder(pedidoId: string): Promise<void> {
+  const pedidoRef = doc(db, 'pedidos', pedidoId);
+  const snap = await getDoc(pedidoRef);
+  if (!snap.exists()) throw new Error(`Pedido ${pedidoId} no encontrado`);
+
+  const pedido = snap.data() as PedidoDoc;
+  if (pedido.status !== 'pendiente_pago') {
+    throw new Error('Solo se pueden cancelar pedidos con estado "pendiente_pago"');
+  }
+
+  const now = new Date().toISOString();
+
+  await runTransaction(db, async (tx) => {
+    tx.update(pedidoRef, {
+      status: 'cancelado',
+      cancelledAt: now,
+      updatedAt: now,
+    });
+
+    for (const item of pedido.items) {
+      const prodRef = doc(db, 'productos', item.productoId);
+      const kgNeeded = KG_PER_UNIT[item.weight as WeightLabel] * item.qty;
+      tx.update(prodRef, {
+        stockReservedKg: increment(-kgNeeded),
+      });
+    }
+  });
 }
