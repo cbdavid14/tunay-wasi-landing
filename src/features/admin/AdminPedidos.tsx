@@ -225,6 +225,11 @@ function PedidoRow({
         </div>
       </td>
 
+      {/* EMAIL */}
+      <td style={s.td}>
+        <div style={s.bodyText}>{pedido.shipping.email}</div>
+      </td>
+
       {/* PRODUCTOS */}
       <td style={s.td}>
         <div style={s.bodyText}>{totalBags} bolsa(s)</div>
@@ -401,7 +406,7 @@ function PedidosList() {
           <table style={s.table}>
             <thead>
               <tr>
-                {['Orden', 'Cliente', 'Productos', 'Método / Op.', 'Total', 'Estado', 'Acciones'].map(h => (
+                {['Orden', 'Cliente', 'Email', 'Productos', 'Método / Op.', 'Total', 'Estado', 'Acciones'].map(h => (
                   <th key={h} style={s.th}>{h}</th>
                 ))}
               </tr>

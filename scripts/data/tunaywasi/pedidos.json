@@ -42,6 +42,50 @@
     "updatedAt": "2026-05-27T20:30:29.641Z"
   },
   {
+    "id": "65679e05-37bd-461b-b107-9047747ba39b",
+    "orderId": "TW-MPT342YT-65679E05",
+    "adapter": "yape",
+    "items": [
+      {
+        "productoId": "geisha-honey-aydee-2026",
+        "caficultorId": "Aydee Rojas Saldivar",
+        "sku": "01",
+        "name": "Aydee Rojas - Geisha Honey",
+        "weight": "250g",
+        "grind": "Grano",
+        "unitCents": 5410,
+        "qty": 1,
+        "caficultor": "Aydee Rojas Saldivar",
+        "finca": "Finca Vista Hermosa",
+        "producerPct": 42
+      }
+    ],
+    "shipping": {
+      "nombre": "David Prueba",
+      "telefono": "961005749",
+      "departamento": "Lima Metropolitana",
+      "distrito": "lima",
+      "direccion": "jr. el greco 223",
+      "referencia": "Prueba",
+      "zone": "lima"
+    },
+    "totals": {
+      "subtotalCents": 5410,
+      "shippingCents": 800,
+      "discountCents": 0,
+      "taxIncludedCents": 825,
+      "totalCents": 6210,
+      "producerShareCents": 2278
+    },
+    "cicloCloseAt": "31 may.",
+    "deliverEstimate": "ago. (1a semana)",
+    "createdAt": "2026-05-31T01:11:56.933Z",
+    "confirmedAt": "2026-05-31T01:22:43.657Z",
+    "cancelledAt": "2026-05-31T01:34:45.054Z",
+    "status": "cancelado",
+    "updatedAt": "2026-05-31T01:34:45.054Z"
+  },
+  {
     "id": "dd122101-0f67-4a43-910e-068f4c942473",
     "orderId": "TW-MPO1SF1W-DD122101",
     "status": "pendiente_pago",

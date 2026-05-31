@@ -312,5 +312,25 @@
       "altitudMedia": "1,500 m",
       "producerPctDisplay": 50
     }
+  },
+  "yapePlin": {
+    "enabled": true,
+    "yape": {
+      "phone": "+51917959370",
+      "accountName": "Tunay Wasi",
+      "qrImageUrl": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1777490714/tunaywasi/pagos/yape_qr.jpg"
+    },
+    "plin": {
+      "phone": "+51917959370",
+      "accountName": "Tunay Wasi",
+      "qrImageUrl": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1777489890/tunaywasi/pagos/plin_qr.jpg"
+    },
+    "instructions": [
+      "Abre Yape o tu app bancaria",
+      "Escanea el QR o busca el número",
+      "Confirma el monto exacto",
+      "Sube la captura del comprobante"
+    ],
+    "voucherStoragePath": "pedidos/vouchers"
   }
 }
