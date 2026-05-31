@@ -1,7 +1,6 @@
 [
   {
     "id": "caturra-honey-aydee-2026",
-    "estado": "preventa",
     "featured": true,
     "variedad": "Caturra",
     "tone": "green",
@@ -15,12 +14,32 @@
     "sacos": 1,
     "tag": "honey",
     "kg": 12,
-    "activo": true
+    "activo": true,
+    "estado": "proximamente",
+    "catado": false,
+    "cosecha": "2026",
+    "b2bDiscount": 15,
+    "weightsB2b": [
+      {
+        "label": "8kg",
+        "cents": 61200
+      },
+      {
+        "cents": 76330,
+        "label": "10kg"
+      },
+      {
+        "cents": 91500,
+        "label": "12kg"
+      },
+      {
+        "cents": 114495,
+        "label": "15kg"
+      }
+    ]
   },
   {
     "id": "geisha-honey-aydee-2026",
-    "estado": "preventa",
-    "featured": false,
     "variedad": "Geisha",
     "tone": "green",
     "proceso": "Honey",
@@ -33,6 +52,109 @@
     "tag": "honey",
     "kg": 12,
     "altitud": "1,500 m",
-    "activo": true
+    "activo": true,
+    "estado": "proximamente",
+    "catado": false,
+    "featured": true,
+    "cosecha": "2026",
+    "b2bDiscount": 15,
+    "weightsB2b": [
+      {
+        "label": "8kg",
+        "cents": 61200
+      },
+      {
+        "label": "10kg",
+        "cents": 76330
+      },
+      {
+        "label": "12kg",
+        "cents": 91500
+      },
+      {
+        "label": "15kg",
+        "cents": 114495
+      }
+    ]
+  },
+  {
+    "id": "blend-caturra-aydee-2025",
+    "altitud": "1,500 m",
+    "featured": true,
+    "finca": "Finca Vista Hermosa",
+    "kg": 4,
+    "origen": "Cajamarca · Jaén",
+    "precio": 194,
+    "proceso": "Lavado",
+    "sacos": "1",
+    "sca": 82.5,
+    "tone": "green",
+    "activo": true,
+    "catado": true,
+    "estado": "liquidacion",
+    "variedad": "Blend Caturra",
+    "notas": "Frutos secos · Frutal · Panela · Cacao · Chocolate",
+    "cosecha": "2025",
+    "b2bDiscount": 15,
+    "tag": "washed",
+    "weightsB2b": [
+      {
+        "label": "4kg",
+        "cents": 12750
+      },
+      {
+        "label": "8kg",
+        "cents": 61200
+      },
+      {
+        "cents": 76330,
+        "label": "10kg"
+      },
+      {
+        "label": "12kg",
+        "cents": 91500
+      },
+      {
+        "label": "15kg",
+        "cents": 114495
+      }
+    ],
+    "fichaCata": {
+      "aromaFragancia": "Frutos secos, frutal, panela",
+      "qGraderCredencial": "Q Grader | CVA | SCA Roasting & Sensory",
+      "puntajeFinal": 82.5,
+      "distribucion": {
+        "dulzura": 10,
+        "sabor": 7,
+        "acidez": 7.5,
+        "limpieza": 10,
+        "postgusto": 7.75,
+        "cuerpo": 7.5,
+        "balance": 7.5,
+        "uniformidad": 10,
+        "puntajeCatador": 7.5,
+        "fraganciAroma": 7.75
+      },
+      "acidezResidual": "Cítrico fugaz",
+      "observacion": "",
+      "fechaCata": "2026-04-24",
+      "datosTecnicos": {
+        "rendimiento": "350 g / 78%",
+        "color": "Verdoso",
+        "actividadAgua": 0.65,
+        "densidad": "711 g/L",
+        "olor": "Fresco",
+        "humedad": "12.4%"
+      },
+      "qGraderNombre": "Violeta Mayhuasca Barrientos",
+      "saborBoca": "Cacao, malta, azúcar morena, chocolate",
+      "laboratorio": "Violet Roastery Lab",
+      "defectos": {
+        "pajilla": 0,
+        "suciedad": 0,
+        "exportable": 0,
+        "defectos": 0
+      }
+    }
   }
 ]

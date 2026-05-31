@@ -24,6 +24,39 @@ export interface SolicitudSupply {
   loteOrigen?: string;
   loteSca?: number;
   lotePrecioKg?: number;
+  quieroMuestra?: boolean;
+  necesitaRuc?: boolean;
+}
+
+export interface SolicitudMuestra {
+  email: string;
+  telefono: string;
+  loteId: string;
+  loteVariedad: string;
+  loteOrigen: string;
+  loteSca: number;
+}
+
+export async function saveSolicitudMuestra(data: SolicitudMuestra): Promise<void> {
+  const normalizedEmail = data.email.toLowerCase().trim();
+  await addDoc(collection(db, COLLECTION), {
+    ...data,
+    email: normalizedEmail,
+    quieroMuestra: true,
+    status: 'nuevo',
+    source: 'negocios-muestra',
+    createdAt: serverTimestamp(),
+  });
+  sendMail({
+    to: normalizedEmail,
+    subject: `Tunay Wasi · Muestra en camino — ${data.loteVariedad}`,
+    html: `<p>Hola,</p><p>Recibimos tu solicitud de muestra de <strong>${data.loteVariedad}</strong> (${data.loteOrigen} · SCA ${data.loteSca}). Nos ponemos en contacto en menos de 24h para coordinar el envío.</p><p>— Equipo Tunay Wasi</p>`,
+  }).catch(console.warn);
+  sendMail({
+    to: ADMIN_EMAIL,
+    subject: `[Muestra B2B] ${data.loteId} — ${normalizedEmail}`,
+    html: `<p>Solicitud de muestra 150g:</p><ul><li>Lote: ${data.loteId} · ${data.loteVariedad}</li><li>Email: ${normalizedEmail}</li><li>Tel: ${data.telefono}</li></ul>`,
+  }).catch(console.warn);
 }
 
 export async function saveSolicitudSupply(data: SolicitudSupply): Promise<void> {

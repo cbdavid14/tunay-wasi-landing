@@ -6,6 +6,10 @@ export interface LoteReservado {
   origen: string;
   sca: number;
   precioKg: number;
+  // B2B: volumen y precio total del lote seleccionado
+  kgSeleccionado?: string;   // "8kg" | "10kg" | "12kg" | "15kg"
+  precioLote?: number;       // S/ precio total del lote (cents / 100)
+  quieroMuestra?: boolean;   // true cuando viene del botón "Pedir muestra 200g"
 }
 
 let _current: LoteReservado | null = null;

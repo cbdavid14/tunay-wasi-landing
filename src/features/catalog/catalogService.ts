@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/shared/firebase';
 import type { Caficultor, CaficultorDoc, CicloActivo, Producto } from '@/shared/types/catalog';
+import type { FichaCataDoc } from '@/shared/types/firestore';
 
 function mapCaficultorDoc(id: string, raw: CaficultorDoc): Caficultor {
   return {
@@ -104,9 +105,9 @@ const STATIC_CYCLE: CicloActivo = {
 type WeightEntry = { label: string; cents: number };
 
 function mapProductoDoc(id: string, raw: Record<string, unknown>): Producto {
-  const weights = (raw.weights as WeightEntry[]).map(
-    (w) => [w.label, w.cents] as [string, number],
-  );
+  const weights = Array.isArray(raw.weights)
+    ? (raw.weights as WeightEntry[]).map((w) => [w.label, w.cents] as [string, number])
+    : [];
   const weightsPromo = Array.isArray(raw.weightsPromo)
     ? (raw.weightsPromo as WeightEntry[]).map((w) => [w.label, w.cents] as [string, number])
     : undefined;
@@ -376,6 +377,14 @@ export interface SupplyLote {
   estado: string;
   featured?: boolean;
   activo?: boolean;
+  catado?: boolean;  // false = pendiente de evaluación SCA
+  cosecha?: string;  // año de cosecha, e.g. "2025" — usado para filtros en la UI B2B
+  // Precios B2B por volumen — [ { label: "8kg", cents: 61200 }, ... ]
+  // Mismo patrón que weights en B2C. Calculados al crear/actualizar el lote
+  // desde PRICING_RULES §9.1 con el b2bDiscount activo en ese momento.
+  weightsB2b?: { label: string; cents: number }[];
+  b2bDiscount?: number;  // % de descuento aplicado — 10 | 15 | 20 | 25 | 30
+  fichaCata?: FichaCataDoc;
 }
 
 export interface SupplyLogisticsItem { key: string; value: string }
@@ -401,7 +410,7 @@ export interface MicrolotesLandingData {
 
 export const STATIC_MICROLOTES: MicrolotesLandingData = {
   lotes: [
-    { id: 'TW-068', origen: 'Cusco · Quillabamba', finca: 'Finca Quillabamba',  variedad: 'Caturra', proceso: 'Lavado',  altitud: '1,720 m', sca: 87.5, sacos: 12, kg:  552, precio:  62.40, tag: 'washed',  notas: 'Naranja sanguina · chocolate de leche · panela',      tone: 'green', estado: 'disponible',      featured: true },
+    { id: 'TW-068', origen: 'Cusco · Quillabamba', finca: 'Finca Quillabamba',  variedad: 'Caturra', proceso: 'Lavado',  altitud: '1,720 m', sca: 87.5, sacos: 12, kg:  552, precio:  62.40, tag: 'washed',  notas: 'Naranja sanguina · chocolate de leche · panela',      tone: 'green', estado: 'disponible',      featured: true, cosecha: '2025' },
    ],
 };
 
@@ -417,11 +426,11 @@ export async function fetchMicrolotesLanding(): Promise<MicrolotesLandingData> {
 }
 
 export const STATIC_SUPPLY_LANDING: SupplyLandingConfigData = {
-  cosechaLabel: 'abril 2026',
+  cosechaLabel: '2025',
   logistics: [
-    { key: 'MOQ',        value: '1 saco (46 kg)' },
-    { key: 'Pago',       value: '50 % anticipo · 50 % entrega' },
-    { key: 'Plazos',     value: '7 — 10 días en Lima' },
+    { key: 'MOQ',        value: 'Microlote desde 8 kg' },
+    { key: 'GrainPro',   value: 'Bolsas herméticas en cada lote' },
+    { key: 'Plazos',     value: 'Lima 5–8 días · Provincias 7–10 días' },
     { key: 'Provincias', value: 'Olva · Shalom · transporte privado' },
   ],
   contactB2B: {
@@ -476,5 +485,46 @@ export async function fetchTransferencia(): Promise<TransferenciaData> {
     return snap.data() as TransferenciaData;
   } catch {
     return STATIC_TRANSFERENCIA;
+  }
+}
+
+// ── Cupones ───────────────────────────────────────────────────────────────────
+
+export interface CuponData {
+  code: string;
+  discountPct: number;       // e.g. 50 → 50%
+  freeShipping: boolean;
+  active: boolean;
+  maxUses: number;           // 0 = ilimitado
+  usedCount: number;
+}
+
+export async function fetchCupon(code: string): Promise<CuponData | null> {
+  if (!code) return null;
+  try {
+    const snap = await getDoc(doc(db, 'configurations', 'cupones'));
+    if (!snap.exists()) return null;
+    const data = snap.data() as Record<string, CuponData>;
+    return data[code.toUpperCase()] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Checkout config (feature toggle v1/v2) ───────────────────────────────────
+
+export interface CheckoutConfig {
+  version: 'v1' | 'v2';
+}
+
+const STATIC_CHECKOUT_CONFIG: CheckoutConfig = { version: 'v2' };
+
+export async function fetchCheckoutConfig(): Promise<CheckoutConfig> {
+  try {
+    const snap = await getDoc(doc(db, 'configurations', 'checkoutConfig'));
+    if (!snap.exists()) return STATIC_CHECKOUT_CONFIG;
+    return (snap.data() as CheckoutConfig) ?? STATIC_CHECKOUT_CONFIG;
+  } catch {
+    return STATIC_CHECKOUT_CONFIG;
   }
 }

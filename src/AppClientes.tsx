@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/sections/Hero';
@@ -9,10 +11,39 @@ import Preventa from '@/features/preventa/components/Preventa';
 import Caficultores from '@/features/catalog/components/Caficultores';
 import Cafe from '@/features/catalog/components/Cafe';
 import Contacto from '@/features/contact/components/Contacto';
-import Checkout from '@/features/checkout/components/Checkout';
+import CheckoutGate from '@/features/checkout/components/CheckoutGate';
 import GrainOverlay from '@/components/decor/GrainOverlay';
+import { AdminPedidos } from '@/features/admin/AdminPedidos';
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/admin" element={<AdminPedidos />} />
+      <Route path="*" element={<Landing />} />
+    </Routes>
+  );
+}
+
+function Landing() {
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const el = document.getElementById(hash);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      const target = document.getElementById(hash);
+      if (target) {
+        observer.disconnect();
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <GrainOverlay/>
@@ -29,7 +60,7 @@ export default function App() {
       <Footer/>
       <CartButton/>
       <CartDrawer/>
-      <Checkout/>
+      <CheckoutGate/>
     </>
   );
 }

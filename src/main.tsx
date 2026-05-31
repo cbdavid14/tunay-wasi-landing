@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter } from 'react-router-dom';
 import { queryClient } from '@/shared/queryClient';
 import './index.css';
 
@@ -33,7 +34,9 @@ async function bootstrap() {
     createRoot(root!).render(
       <StrictMode>
         <QueryClientProvider client={queryClient}>
-          <AppClientes />
+          <BrowserRouter>
+            <AppClientes />
+          </BrowserRouter>
         </QueryClientProvider>
       </StrictMode>,
     );

@@ -5,20 +5,20 @@ const pasos = [
   {
     n: '01', titulo: 'Eliges el lote',
     sub: 'Trazado en finca',
-    desc: 'Revisas la ficha técnica, notas de cata y precio FOB Lima. Pides muestra de 200 g si necesitas catar antes de cerrar.',
+    desc: 'Revisas la ficha técnica, notas de cata y precio FOB Lima. Reservas el lote — o pides muestra de 150 g si necesitas catar antes de cerrar.',
     meta: 'Día 0',
   },
   {
-    n: '02', titulo: 'Coordinamos el flete',
-    sub: 'Finca → Lima → tu tostadora',
-    desc: 'Gestionamos el transporte desde la chacra hasta tu local, en Lima o provincias. Sacos sellados, control de humedad y temperatura.',
-    meta: 'Día 3 — 7',
+    n: '02', titulo: 'Verificamos el lote en origen',
+    sub: 'Laboratorio · Cata · Precio confirmado',
+    desc: 'Notificamos al caficultor. Lleva el microlote al laboratorio, confirmamos que la cata de recepción coincide con la ficha previa, y el caficultor acepta el precio según puntaje y defectos reales. Sin sorpresas en destino.',
+    meta: 'Día 1 — 5',
   },
   {
     n: '03', titulo: 'Recibes el lote certificado',
-    sub: 'Pasaporte de cata incluido',
-    desc: 'Cada saco llega con su certificado Q‑Grader, ficha de trazabilidad, datos del caficultor y nota de cata. Listo para tu mesa de tueste.',
-    meta: 'Día 7 — 10',
+    sub: 'Directo a tu tienda',
+    desc: 'El lote sale en bolsas GrainPro herméticas directo a tu tienda. Llega con certificado Q‑Grader, ficha de trazabilidad y datos del caficultor. Listo para tu mesa de tueste.',
+    meta: 'Día 5 — 10',
   },
 ] as const;
 
@@ -58,14 +58,14 @@ export default function SupplyProceso() {
             <br />
             <span style={{ fontStyle: 'italic', fontWeight: 500, color: '#8faf8a' }}>Una semana.</span>
             <br />
-            Cero intermediarios.
+            Tú y el caficultor.
           </h2>
           <p style={{
             fontFamily: 'Montserrat, sans-serif', fontSize: 15, lineHeight: 1.65,
             color: '#c4b297', maxWidth: 540, margin: '0 auto',
           }}>
-            Trabajamos con tu calendario de tueste. El primer pedido suele coordinarse
-            en 24 horas desde la solicitud.
+            Somos la plataforma que conecta directamente al caficultor con tu negocio —
+            precio justo en origen, calidad certificada en destino. Coordinamos el primer pedido en 24 horas.
           </p>
         </div>
 
@@ -159,6 +159,7 @@ export default function SupplyProceso() {
             </div>
           ))}
         </div>
+
       </div>
 
       <style>{`

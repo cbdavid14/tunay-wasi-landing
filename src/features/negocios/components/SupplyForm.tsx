@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
 import { useSupplyLandingConfig } from '@/features/negocios/useSupplyLandingConfig';
 import { STATIC_SUPPLY_LANDING } from '@/features/catalog/catalogService';
@@ -17,6 +17,8 @@ interface FormValues {
   sca: string;
   variedad: string[];
   mensaje: string;
+  quieroMuestra: boolean;
+  necesitaRuc: boolean;
 }
 
 const VARIEDADES = [
@@ -180,6 +182,13 @@ export default function SupplyForm() {
   const { data = STATIC_SUPPLY_LANDING } = useSupplyLandingConfig();
   const { email: b2bEmail, whatsapp: b2bWhatsapp, bodega: b2bBodega } = data.contactB2B;
   const loteReservado = useLoteReservado();
+
+  // Pre-marcar muestra si viene del botón "Pedir muestra 150g"
+  useEffect(() => {
+    if (loteReservado?.quieroMuestra) {
+      setValues(v => ({ ...v, quieroMuestra: true }));
+    }
+  }, [loteReservado?.quieroMuestra]);
   const contacts: [string, string][] = [
     ['Ventas B2B', b2bEmail],
     ['WhatsApp',   b2bWhatsapp],
@@ -187,8 +196,9 @@ export default function SupplyForm() {
   ];
   const [values, setValues] = useState<FormValues>({
     empresa: '', nombre: '', email: '', telefono: '',
-    volumen: '46', frecuencia: 'mensual',
+    volumen: '8', frecuencia: 'mensual',
     sca: '84', variedad: [], mensaje: '',
+    quieroMuestra: false, necesitaRuc: false,
   });
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [status, setStatus] = useState<Status>('idle');
@@ -248,6 +258,8 @@ export default function SupplyForm() {
         loteOrigen: loteReservado?.origen,
         loteSca: loteReservado?.sca,
         lotePrecioKg: loteReservado?.precioKg,
+        quieroMuestra: values.quieroMuestra || undefined,
+        necesitaRuc: values.necesitaRuc || undefined,
       });
       setStatus('sent');
     } catch (err) {
@@ -296,9 +308,9 @@ export default function SupplyForm() {
             fontFamily: 'Montserrat, sans-serif', fontSize: 15, lineHeight: 1.7,
             color: '#533b22', maxWidth: 460, margin: 0,
           }}>
-            Cafeterías, tostadoras, hoteles, distribuidores. Si compras desde
-            46 kg al mes, te enviamos una propuesta a medida con el lote que
-            mejor calce con tu perfil de tueste.
+            Cafeterías, tostadoras, hoteles, distribuidores. Elige tu microlote
+            desde 8 kg — el café sale directo de la finca al despacho, sin
+            almacenamiento intermedio.
           </p>
 
           <div style={{ marginTop: 44, display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -435,11 +447,13 @@ export default function SupplyForm() {
                 <SupplyInput name="email" label="Email" type="email" placeholder="hola@negocio.pe" {...inputProps} />
                 <SupplyInput name="telefono" label="Teléfono" placeholder="+51 987 654 321" {...inputProps} />
                 <SupplySelect name="volumen" label="Volumen requerido" values={values} setVal={setVal as SelectProps['setVal']} options={[
-                  ['46', '46 kg · 1 saco'],
-                  ['92', '92 kg · 2 sacos'],
-                  ['138', '138 kg · 3 sacos'],
-                  ['276', '276 kg · 6 sacos'],
-                  ['500', '500+ kg · contenedor parcial'],
+                  ['8',   '8 kg  · microlote'],
+                  ['10',  '10 kg · microlote'],
+                  ['12',  '12 kg · microlote'],
+                  ['15',  '15 kg · microlote'],
+                  ['30',  '30 kg · 2 microlotes'],
+                  ['60',  '60 kg · 4+ microlotes'],
+                  ['138', '138 kg · volumen mensual'],
                 ]} />
                 <SupplySelect name="frecuencia" label="Frecuencia de compra" values={values} setVal={setVal as SelectProps['setVal']} options={[
                   ['unico', 'Pedido único'],
@@ -496,6 +510,21 @@ export default function SupplyForm() {
                   {serverError}
                 </div>
               )}
+
+              {/* Checkbox RUC */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={values.necesitaRuc}
+                    onChange={e => setValues(v => ({ ...v, necesitaRuc: e.target.checked }))}
+                    style={{ marginTop: 2, accentColor: '#c96e4b', width: 14, height: 14, flexShrink: 0 }}
+                  />
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, lineHeight: 1.5, color: '#c4b297' }}>
+                    Necesito factura con RUC
+                  </span>
+                </label>
+              </div>
 
               <button type="submit" disabled={status === 'sending'} className="tw-sup-submit" style={{
                 marginTop: 8,

@@ -110,7 +110,6 @@
     "label": "PREVENTA",
     "photo": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767831/aydeFinca_rm5arr.jpg",
     "desc": "Microlote Caturra Honey de Aydee Rojas, Jaén. 12 kg disponibles. ",
-    "stockReservedKg": 4.216,
     "comisiones": {
       "b2c": {
         "producerShareFactor": 0.386,
@@ -140,7 +139,6 @@
       }
     },
     "tier": "selecto",
-    "promoActivated": true,
     "weightsPromo": [
       {
         "cents": 2705,
@@ -161,7 +159,19 @@
         "label": "1kg"
       }
     ],
-    "producerPct": 42
+    "producerPct": 42,
+    "receta": {
+      "temp": "92 °C",
+      "molienda": "Medio-fina (similar a sal gruesa)",
+      "tiempo": "3:00–3:30 min",
+      "metodo": "V60",
+      "nota": "Pre-infusión de 30 s con el doble del peso del café. Las notas de caramelo se intensifican dejando enfriar levemente.",
+      "ratio": "1:15 (15 g / 225 ml)"
+    },
+    "qGraderName": "M. Quispe",
+    "roastDate": "~9 jun.",
+    "promoActivated": false,
+    "stockReservedKg": 4.8180000000000005
   },
   {
     "id": "geisha-honey-aydee-2026",
@@ -191,7 +201,6 @@
     "label": "PREVENTA",
     "photo": "https://res.cloudinary.com/dtc9meqbc/image/upload/v1778767831/aydeFinca_rm5arr.jpg",
     "stockKg": 12,
-    "stockReservedKg": 0.301,
     "desc": "Microlote Geisha proceso Honey de Aydee Rojas, en secado. Cosecha 2026. Cantidad limitada: 12 kg.",
     "comisiones": {
       "b2c": {
@@ -222,7 +231,6 @@
       }
     },
     "tier": "selecto",
-    "promoActivated": true,
     "weightsPromo": [
       {
         "label": "250g",
@@ -243,6 +251,18 @@
         "cents": 19400
       }
     ],
-    "producerPct": 42
+    "producerPct": 42,
+    "receta": {
+      "temp": "93 °C",
+      "molienda": "Fina-media (entre sal gruesa y azúcar)",
+      "tiempo": "2:45–3:15 min",
+      "metodo": "V60",
+      "nota": "Las notas florales se expresan mejor entre 70–75 °C. Deja reposar 1 min antes de servir.",
+      "ratio": "1:16 (15 g / 240 ml)"
+    },
+    "qGraderName": "M. Quispe",
+    "roastDate": "~9 jun.",
+    "promoActivated": false,
+    "stockReservedKg": 1.506
   }
 ]

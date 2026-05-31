@@ -5,8 +5,11 @@ service cloud.firestore {
     // Lectura pública para catálogo y configuraciones
     match /productos/{id} {
       allow read: if true;
-      // Solo permite incrementar stockReservedKg (reserva de stock en checkout)
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stockReservedKg']);
+      // Checkout (no auth): solo reservar stock
+      // Admin (auth): confirmar pago → decrementar stockKg + stockReservedKg
+      allow update: if request.auth != null
+        ? request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stockKg', 'stockReservedKg'])
+        : request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stockReservedKg']);
       allow create, delete: if false;
     }
     match /caficultores/{id} {
@@ -18,11 +21,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Pedidos: solo crear (cliente hace checkout)
+    // Pedidos: crear (checkout), leer/actualizar (admin)
     match /pedidos/{id} {
-      allow read: if false;
+      allow read: if request.auth != null;
       allow create: if true;
-      allow update, delete: if false;
+      allow update: if request.auth != null;
+      allow delete: if false;
     }
 
     // Waitlist caficultores

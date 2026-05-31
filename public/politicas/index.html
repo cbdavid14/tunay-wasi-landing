@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Políticas de Compra · Tunay Wasi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@400;500;600;700&family=Bowlby+One+SC&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #f2e0cc; color: #1f3028; }
+    body { font-family: 'Montserrat', sans-serif; -webkit-font-smoothing: antialiased; }
+
+    .page { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+
+    .header { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #1f302818; }
+    .header a { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: #7a6850; text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; }
+    .header a:hover { color: #c96e4b; }
+    .header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 700; color: #1f3028; margin: 0 0 6px; line-height: 1.1; }
+    .header h1 span { color: #c96e4b; font-style: italic; }
+    .header .meta { font-size: 11px; color: #7a6850; }
+
+    .section { margin-bottom: 36px; }
+    .section-title { font-family: 'Bowlby One SC', sans-serif; font-size: 10px; letter-spacing: 0.2em; color: #c96e4b; text-transform: uppercase; margin-bottom: 14px; }
+
+    p { font-size: 13px; color: #533b22; line-height: 1.7; margin: 0 0 8px; }
+    strong { color: #1f3028; }
+
+    .item { display: flex; gap: 10px; margin-bottom: 8px; }
+    .item-dot { color: #c96e4b; flex-shrink: 0; font-size: 13px; line-height: 1.7; }
+    .item-text { font-size: 13px; color: #533b22; line-height: 1.7; }
+
+    .table-wrap { border-radius: 12px; overflow: hidden; border: 1px solid #1f302818; margin-bottom: 14px; }
+    .table-head { background: #e8d5bc; padding: 10px 16px; display: grid; gap: 8px; }
+    .table-head span { font-family: 'Bowlby One SC', sans-serif; font-size: 8px; letter-spacing: 0.15em; color: #7a6850; text-transform: uppercase; }
+    .table-row { display: grid; gap: 8px; padding: 10px 16px; border-top: 1px solid #1f302812; }
+    .table-row .col-zona { font-size: 12px; color: #1f3028; font-weight: 600; }
+    .table-row .col-val { font-size: 12px; color: #533b22; }
+    .table-row .col-free { font-size: 12px; color: #8faf8a; font-weight: 700; }
+    .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .cols-2 { grid-template-columns: 1fr auto; }
+
+    .row-simple { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #1f302812; }
+    .row-simple:last-child { border-bottom: none; }
+    .row-label { font-size: 12px; color: #7a6850; }
+    .row-value { font-size: 13px; font-weight: 700; color: #1f3028; }
+    .rows-box { border-radius: 12px; border: 1px solid #1f302818; padding: 0 16px; margin-bottom: 10px; }
+
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 40px; padding: 12px 24px; background: linear-gradient(135deg, #c96e4b, #d68863); color: #1f3028; border: none; border-radius: 999px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; text-decoration: none; }
+
+    @media (max-width: 480px) {
+      .cols-4 { grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr; }
+      .header h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="header">
+      <a href="https://tunay-wasi.web.app">← Volver a Tunay Wasi</a>
+      <h1>Políticas de <span>Compra</span></h1>
+      <div class="meta">Tunay Wasi / Alpaso Live Commerce SAC · Mayo 2026</div>
+    </div>
+
+    <!-- 1. Precios y Stock -->
+    <div class="section">
+      <div class="section-title">1. Precios y Stock</div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Todos los precios están en <strong>soles peruanos (S/)</strong> e incluyen IGV (18%).</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">El stock es limitado por lote. Una vez agotado un café, no hay reposición del mismo.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">La disponibilidad mostrada es en tiempo real. Si puedes agregarlo al carrito, hay stock.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Al confirmar tu pago, el sistema <strong>reserva el stock</strong> para tu pedido. Si otro comprador agotó el producto antes, recibirás aviso y se anulará el cobro.</span></div>
+    </div>
+
+    <!-- 2. Proceso de Compra -->
+    <div class="section">
+      <div class="section-title">2. Proceso de Compra</div>
+      <p><strong>Paso 1 — Datos de envío</strong></p>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Ingresa tu nombre, celular, correo y dirección.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">La zona de envío (Lima / Provincia) determina el costo de despacho.</span></div>
+      <p style="margin-top:10px"><strong>Paso 2 — Pago</strong></p>
+      <div class="item"><span class="item-dot">·</span><span class="item-text"><strong>Yape:</strong> escanea el QR o ingresa el número, paga el monto exacto y presiona "Ya pagué".</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text"><strong>Transferencia bancaria / Plin</strong> disponibles en el checkout completo.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Tu pedido se registra al confirmar el pago. Te avisamos por WhatsApp en las próximas horas.</span></div>
+    </div>
+
+    <!-- 3. Confirmación -->
+    <div class="section">
+      <div class="section-title">3. Confirmación del Pedido</div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Tu pedido queda registrado al presionar "Ya pagué".</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Te confirmamos por <strong>WhatsApp</strong> en las próximas horas.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Si no recibes confirmación en 24 horas hábiles, escríbenos por WhatsApp antes de volver a pagar.</span></div>
+    </div>
+
+    <!-- 4. Envíos -->
+    <div class="section">
+      <div class="section-title">4. Envíos</div>
+      <div class="table-wrap">
+        <div class="table-head cols-2">
+          <span>Zona</span><span>Costo</span>
+        </div>
+        <div class="table-row cols-2">
+          <span class="col-zona">Lima</span><span class="col-val">S/8.00</span>
+        </div>
+        <div class="table-row cols-2">
+          <span class="col-zona">Provincias</span><span class="col-val">S/15.00</span>
+        </div>
+      </div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Pedidos confirmados antes de las <strong>3:00 pm</strong> se preparan el mismo día.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Una vez despachado, recibirás el número de guía por WhatsApp.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Si el pedido no puede entregarse por datos incorrectos, el costo del reenvío corre por tu cuenta.</span></div>
+    </div>
+
+    <!-- 5. Cancelaciones -->
+    <div class="section">
+      <div class="section-title">5. Cancelaciones</div>
+      <div class="rows-box">
+        <div class="row-simple"><span class="row-label">Antes de confirmar el pago</span><span class="row-value">Sin cargo — cierra el checkout</span></div>
+        <div class="row-simple"><span class="row-label">Confirmado, antes del despacho</span><span class="row-value">Reembolso 100% por WhatsApp</span></div>
+        <div class="row-simple"><span class="row-label">Una vez despachado</span><span class="row-value">No se aceptan cancelaciones</span></div>
+      </div>
+    </div>
+
+    <!-- 6. Devoluciones -->
+    <div class="section">
+      <div class="section-title">6. Devoluciones y Garantía</div>
+      <p><strong>Aceptamos devolución si:</strong></p>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">El producto llega <strong>físicamente dañado</strong> (bolsa rota, café derramado).</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">El producto llega <strong>vencido</strong> (fecha de tueste incorrecta).</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">El pedido contiene un <strong>producto diferente</strong> al que compraste.</span></div>
+      <p style="margin-top:10px"><strong>No aceptamos devolución por:</strong></p>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Preferencia de sabor. El café de especialidad tiene perfiles complejos (acidez brillante, notas frutales) distintos al café comercial.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Error en el tipo de molienda elegido por el cliente.</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text">Demoras del courier fuera del control de Tunay Wasi.</span></div>
+      <p style="margin-top:10px">Para iniciar una devolución, envía foto del producto por WhatsApp al <strong>+51 917 959 370</strong> dentro de las <strong>48 horas</strong> de recibido. Los reembolsos aprobados se procesan por Yape o Plin en 48 horas.</p>
+    </div>
+
+    <!-- 7. Métodos de Pago -->
+    <div class="section">
+      <div class="section-title">7. Métodos de Pago</div>
+      <div class="rows-box">
+        <div class="row-simple"><span class="row-label">Yape — 917 959 370</span><span class="row-value">Danny Santa Cruz Rojas</span></div>
+      </div>
+      <p>No aceptamos tarjetas de crédito, débito ni efectivo en esta fase.</p>
+    </div>
+
+    <!-- 8. Privacidad -->
+    <div class="section">
+      <div class="section-title">8. Privacidad</div>
+      <p>Al completar el checkout recopilamos: nombre, correo y celular. Usamos estos datos únicamente para procesar tu pedido y notificarte sobre nuevos lotes (si aceptas).</p>
+      <p><strong>No vendemos ni compartimos tus datos</strong> con terceros. Se almacenan en Firebase Firestore (Google Cloud, ISO 27001). Conforme a la Ley N° 29733 puedes acceder, rectificar o eliminar tus datos escribiendo a <strong>tunaywasi@gmail.com</strong>.</p>
+    </div>
+
+    <!-- 9. Contacto -->
+    <div class="section">
+      <div class="section-title">9. Contacto</div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text"><strong>WhatsApp:</strong> +51 917 959 370</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text"><strong>Email:</strong> tunaywasi@gmail.com</span></div>
+      <div class="item"><span class="item-dot">·</span><span class="item-text"><strong>Horario:</strong> Lunes a viernes, 9:00 am – 6:00 pm (Lima)</span></div>
+    </div>
+
+    <a href="https://tunay-wasi.web.app" class="back-btn">← Volver a Tunay Wasi</a>
+
+  </div>
+</body>
+</html>

@@ -1,9 +1,9 @@
 [
   {
-    "id": "f194e675-e09b-40d6-8403-2ae4f51d5985",
-    "orderId": "TW-MPGD21W0-F194E675",
+    "id": "cacdfd22-77c6-4b21-a61f-c2cbce0e1d38",
+    "orderId": "TW-MPOIQKNE-CACDFD22",
     "status": "pendiente_pago",
-    "adapter": "transferencia",
+    "adapter": "yape",
     "items": [
       {
         "productoId": "caturra-honey-aydee-2026",
@@ -12,46 +12,75 @@
         "name": "Aydee Rojas - Caturra Honey",
         "weight": "250g",
         "grind": "Grano",
-        "unitCents": 2705,
-        "qty": 2,
+        "unitCents": 5410,
+        "qty": 1,
         "caficultor": "Aydee Rojas Saldivar",
         "finca": "Finca Vista Hermosa",
-        "producerPct": 38.6
-      },
-      {
-        "productoId": "caturra-honey-aydee-2026",
-        "caficultorId": "Aydee Rojas Saldivar",
-        "sku": "02",
-        "name": "Aydee Rojas - Caturra Honey",
-        "weight": "1kg",
-        "grind": "Grano",
-        "unitCents": 9700,
-        "qty": 2,
-        "caficultor": "Aydee Rojas Saldivar",
-        "finca": "Finca Vista Hermosa",
-        "producerPct": 38.6
+        "producerPct": 42
       }
     ],
     "shipping": {
-      "nombre": "sdfsdfsdf",
-      "telefono": "911232322",
+      "nombre": "JOSÉ LUIS CHUMBE CASAS",
+      "telefono": "966418830",
       "departamento": "Lima Metropolitana",
-      "distrito": "Miraflores",
-      "direccion": "av brasi l123",
-      "referencia": "",
+      "distrito": "La Victoria",
+      "direccion": "Jirón Los Brillantes 550",
+      "referencia": "Edificio Elant",
       "zone": "lima"
     },
     "totals": {
-      "subtotalCents": 24810,
+      "subtotalCents": 5410,
       "shippingCents": 0,
-      "discountCents": 0,
-      "taxIncludedCents": 3785,
-      "totalCents": 24810,
-      "producerShareCents": 9577
+      "discountCents": 2705,
+      "taxIncludedCents": 825,
+      "totalCents": 2705,
+      "producerShareCents": 1139
     },
     "cicloCloseAt": "31 may.",
     "deliverEstimate": "ago. (1a semana)",
-    "createdAt": "2026-05-22T03:29:18.096Z",
-    "updatedAt": "2026-05-22T03:29:18.096Z"
+    "createdAt": "2026-05-27T20:30:29.641Z",
+    "updatedAt": "2026-05-27T20:30:29.641Z"
+  },
+  {
+    "id": "dd122101-0f67-4a43-910e-068f4c942473",
+    "orderId": "TW-MPO1SF1W-DD122101",
+    "status": "pendiente_pago",
+    "adapter": "yape",
+    "items": [
+      {
+        "productoId": "geisha-honey-aydee-2026",
+        "caficultorId": "Aydee Rojas Saldivar",
+        "sku": "01",
+        "name": "Aydee Rojas - Geisha Honey",
+        "weight": "1kg",
+        "grind": "Grano",
+        "unitCents": 19400,
+        "qty": 1,
+        "caficultor": "Aydee Rojas Saldivar",
+        "finca": "Finca Vista Hermosa",
+        "producerPct": 42
+      }
+    ],
+    "shipping": {
+      "nombre": "Jose Clemente ",
+      "telefono": "926622511",
+      "departamento": "Lima Metropolitana",
+      "distrito": "Chorrillos  Lima",
+      "direccion": "181 Los Asteroides, Chorrillos PE",
+      "referencia": "Residencial Toscana ",
+      "zone": "lima"
+    },
+    "totals": {
+      "subtotalCents": 19400,
+      "shippingCents": 0,
+      "discountCents": 9700,
+      "taxIncludedCents": 2959,
+      "totalCents": 9700,
+      "producerShareCents": 4084
+    },
+    "cicloCloseAt": "31 may.",
+    "deliverEstimate": "ago. (1a semana)",
+    "createdAt": "2026-05-27T12:36:02.228Z",
+    "updatedAt": "2026-05-27T12:36:02.228Z"
   }
 ]
