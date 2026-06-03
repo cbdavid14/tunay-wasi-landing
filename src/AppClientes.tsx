@@ -1,5 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/shared/firebase';
+import { ensurePortalUserProfile, getPortalAuthUser, isRegistering, type PortalAuthUser } from '@/features/portal/portalAuthService';
 import Nav from '@/components/layout/Nav';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/sections/Hero';
@@ -27,6 +30,29 @@ export default function App() {
 }
 
 function Landing() {
+  const [authUser, setAuthUser] = useState<PortalAuthUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (!firebaseUser) {
+          setAuthUser(null);
+          return;
+        }
+        if (isRegistering()) return;
+        await ensurePortalUserProfile(firebaseUser);
+        setAuthUser(await getPortalAuthUser(firebaseUser));
+      } catch (err) {
+        console.error('[Landing] auth error:', err);
+        setAuthUser(null);
+      } finally {
+        setAuthReady(true);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (!hash) return;
@@ -49,7 +75,7 @@ function Landing() {
   return (
     <>
       <GrainOverlay/>
-      <Nav/>
+      <Nav user={authReady ? authUser : undefined} onAuthChange={setAuthUser}/>
       <main>
         <Hero/>
         <Preventa/>
