@@ -1,56 +1,96 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-    // Lectura pública para catálogo y configuraciones
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function clienteCreateKeys() {
+      return ['uid','nombre','displayName','email','telefono','codigoReferidoUsado',
+              'emailVerified','rol','estado','puntos','nivel','pedidosTotales',
+              'createdAt','updatedAt','lastLoginAt'];
+    }
+
+    function clienteUpdateKeys() {
+      return ['nombre','displayName','email','telefono','codigoReferidoUsado',
+              'emailVerified','estado','updatedAt','lastLoginAt'];
+    }
+
     match /productos/{id} {
       allow read: if true;
-      // Checkout (no auth): solo reservar stock
-      // Admin (auth): confirmar pago → decrementar stockKg + stockReservedKg
-      allow update: if request.auth != null
-        ? request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stockKg', 'stockReservedKg'])
-        : request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stockReservedKg']);
-      allow create, delete: if false;
+      allow update: if true;
+      allow create, delete: if true;
     }
     match /caficultores/{id} {
       allow read: if true;
-      allow write: if false;
+      allow write: if true;
     }
     match /configurations/{id} {
       allow read: if true;
-      allow write: if false;
+      allow write: if true;
     }
-
-    // Pedidos: crear (checkout), leer/actualizar (admin)
+    match /clientes/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(clienteCreateKeys())
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.rol == 'cliente';
+      allow update: if isOwner(uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.rol == resource.data.rol
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(clienteUpdateKeys());
+      allow delete: if false;
+    }
     match /pedidos/{id} {
       allow read: if request.auth != null;
       allow create: if true;
       allow update: if request.auth != null;
       allow delete: if false;
     }
-
-    // Waitlist caficultores
     match /waitlist-caficultores/{id} {
-      allow read: if false;
+      allow read: if true;
       allow create: if true;
       allow update, delete: if false;
     }
-
-    // Waitlist B2C (lista prioritaria — web + lead form Facebook)
     match /waitlist-b2c/{id} {
       allow read: if true;
       allow create: if true;
       allow update, delete: if false;
     }
-
-    // Waitlist B2B (negocios — tostadoras, cafeterías, mayoristas)
     match /waitlist-b2b/{id} {
       allow read: if true;
       allow create: if true;
       allow update, delete: if false;
     }
-
-    // Todo lo demás bloqueado
+    match /waitlist-b2b-tunay-wasi/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+    match /waitlist-b2c-tunay-wasi/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+    match /solicitudes_b2b/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+    match /contactos/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+    match /microlotesLanding/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
     match /{document=**} {
       allow read, write: if false;
     }

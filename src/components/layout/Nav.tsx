@@ -74,6 +74,18 @@ export default function Nav() {
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f2e0cc', animation: 'tw-pulse-dot 2s ease-in-out infinite' }} />
             Reservar mi café
           </a>
+          <a href="/portal" className="tw-loginlink" style={{
+            fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 600,
+            color: '#1f3028', textDecoration: 'none', letterSpacing: '0.04em',
+            padding: '10px 18px', borderRadius: 999, border: '1px solid #1f302833',
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            transition: 'all .25s ease',
+          }}
+          onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#c96e4b'; el.style.color = '#c96e4b'; }}
+          onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#1f302833'; el.style.color = '#1f3028'; }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c1.5-4 12.5-4 16 0" /></svg>
+            Iniciar sesión
+          </a>
 
           {/* Hamburger — visible ≤880px */}
           <button
@@ -117,6 +129,20 @@ export default function Nav() {
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f2e0cc' }} />
             Reservar mi café
           </a>
+          <a
+            href="/portal"
+            onClick={closeMenu}
+            style={{
+              fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 600,
+              color: '#1f3028', textDecoration: 'none', letterSpacing: '0.04em',
+              padding: '10px 18px', borderRadius: 999, marginTop: 8,
+              border: '1px solid #1f302833',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c1.5-4 12.5-4 16 0" /></svg>
+            Iniciar sesión
+          </a>
         </div>
       )}
 
@@ -128,6 +154,7 @@ export default function Nav() {
         @media (max-width: 880px) {
           .tw-navlink { display: none; }
           .tw-cta-btn { display: none; }
+          .tw-loginlink { display: none; }
           .tw-hamburger { display: flex !important; }
           .tw-mobile-nav {
             padding: 20px 24px 28px;

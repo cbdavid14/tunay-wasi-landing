@@ -14,11 +14,13 @@ import Contacto from '@/features/contact/components/Contacto';
 import CheckoutGate from '@/features/checkout/components/CheckoutGate';
 import GrainOverlay from '@/components/decor/GrainOverlay';
 import { AdminPedidos } from '@/features/admin/AdminPedidos';
+import PortalShell from '@/features/portal/PortalShell';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/admin" element={<AdminPedidos />} />
+      <Route path="/portal/*" element={<PortalShell />} />
       <Route path="*" element={<Landing />} />
     </Routes>
   );

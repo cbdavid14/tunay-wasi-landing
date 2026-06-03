@@ -106,6 +106,36 @@ B2B calculator (`CafiCalculator.tsx`) uses hardcoded tiers. Live tiers live in F
 
 Fonts: Cormorant Garamond, Montserrat, Mulish, Bowlby One SC, JetBrains Mono — all loaded via Google Fonts in `index.html`.
 
+## Portal — sync status with prototypes/tunaywasi/portal/
+
+**Last sync: Jun 2026 — all views aligned.**
+
+| View | Status | Notes |
+|------|--------|-------|
+| Shell (layout + sidebar + mobile nav) | ✅ Synced | Collapsible sidebar, edge toggle, mobile Más drawer, panelStyle |
+| Dashboard | ✅ Synced | — |
+| Catálogo | ✅ Synced | +activeOrder KPI bar |
+| Pedidos | ✅ Synced | — |
+| Carrito | ✅ Synced | — |
+| Tracking | ✅ Synced | — |
+| Recompensas | ✅ Synced | — |
+| Cupones | ✅ Synced | Urgency badge, fold/ticket cards |
+| Suscripción | ✅ Synced | Pausa, producto picker, cancelar flow |
+| Referidos | ✅ Synced | WhatsApp/Facebook/Copy share, icons |
+| Perfil | ✅ Synced | Dirección + preferencias collapsibles |
+| Configuración | ✅ Synced | Notificaciones, idioma, pago, privacidad |
+| Auth | ✅ Synced | — |
+| Icons | ✅ Synced | All prototype icons present (IconSettings, IconChat, IconShare, IconLink, etc.) |
+| mockData | ✅ Synced | `sub` config added |
+| constants | ✅ Synced | btnSoft, btnDanger added |
+| shared | ✅ Synced | PageHead with sub prop |
+
+### Known gaps (production)
+- `onGoCart` prop wired in PortalCatalogo but button not rendered yet
+- PSelect uses `appearance: 'none'` inline — add CSS reset
+- SaveBtn, Switch handlers are client-only (no backend)
+- Cerrar sesión in ConfigView is client-side state reset only
+
 ## Pre-launch items
 
 ### B2C
