@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { TW } from './constants';
 import { Colibri, IconArrowR, IconUser, IconMail, IconPhone, IconGift, IconLock, IconEye, IconEyeOff, IconCheck, IconChevL } from './icons';
-import { loginPortalUser, loginWithGoogle, registerPortalUser, resetPortalPassword, type PortalAuthUser } from './portalAuthService';
+import { loginPortalUser, loginWithGoogle, registerPortalUser, resetPortalPassword } from './portalAuthService';
 
-export default function PortalAuth({ onAuth }: { onAuth: (u: PortalAuthUser) => void }) {
+export default function PortalAuth() {
   const [mode, setMode] = useState<'login' | 'registro'>('login');
   const [show, setShow] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -45,8 +45,8 @@ export default function PortalAuth({ onAuth }: { onAuth: (u: PortalAuthUser) => 
         setMode('login');
         return;
       } else {
-        const user = await loginPortalUser(f.correo, f.pass);
-        onAuth(user);
+        await loginPortalUser(f.correo, f.pass);
+        window.location.href = '/';
       }
     } catch (err) {
       console.error('[PortalAuth] submit error:', err);
@@ -69,8 +69,8 @@ export default function PortalAuth({ onAuth }: { onAuth: (u: PortalAuthUser) => 
     setError('');
     setLoading(true);
     try {
-      const user = await loginWithGoogle();
-      onAuth(user);
+      await loginWithGoogle();
+      window.location.href = '/';
     } catch (err) {
       console.error('[PortalAuth] google error:', err);
       if ((err as { code?: string })?.code !== 'auth/popup-closed-by-user') {

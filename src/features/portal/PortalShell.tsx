@@ -80,8 +80,6 @@ export default function PortalShell() {
     }
   };
 
-  const login = (u: PortalAuthUser) => setAuthUser(u);
-
   const logout = async () => {
     await logoutPortalUser();
     setAuthUser(null);
@@ -143,7 +141,7 @@ export default function PortalShell() {
     );
   }
 
-  if (!authUser) return <PortalAuth onAuth={login} />;
+  if (!authUser) return <PortalAuth />;
 
   const bottomViews = bottomNav.map(n => n[0]);
   const drawerItems = nav.filter(n => !bottomViews.includes(n[0]));
