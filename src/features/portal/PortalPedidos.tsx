@@ -15,7 +15,7 @@ interface Props {
   orders: Order[];
   products: PortalProduct[];
   onReorder: (order: Order) => void;
-  go: (v: string) => void;
+  onTrack: (orderId: string) => void;
 }
 
 function pedidoToOrder(p: PedidoDoc): Order {
@@ -32,6 +32,7 @@ function pedidoToOrder(p: PedidoDoc): Order {
   };
   return {
     id: p.orderId,
+    firestoreId: p.id,
     fecha: new Date(p.createdAt).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }),
     total: p.totals.totalCents / 100,
     estado: statusMap[p.status] || 'por_verificar',
@@ -46,18 +47,21 @@ function pedidoToOrder(p: PedidoDoc): Order {
   };
 }
 
-export default function PortalPedidos({ user, orders, products, onReorder, go }: Props) {
+export default function PortalPedidos({ user, orders, products, onReorder, onTrack }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<any>(null);
   const [fireOrders, setFireOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.uid) {
       setFireOrders([]);
+      setError(null);
       return;
     }
     setLoading(true);
+    setError(null);
     const q = query(
       collection(db, 'pedidos'),
       where('clienteUid', '==', user.uid),
@@ -71,8 +75,11 @@ export default function PortalPedidos({ user, orders, products, onReorder, go }:
       });
       setFireOrders(list);
       setLoading(false);
-    }, (err) => {
-      console.error('[PortalPedidos] snapshot error:', err);
+    }, (err: any) => {
+      const msg = err?.code === 'failed-precondition'
+        ? 'El índice de la base de datos aún no está listo. Intenta de nuevo en unos minutos.'
+        : 'No pudimos cargar tus pedidos. Verifica tu conexión e intenta de nuevo.';
+      setError(msg);
       setLoading(false);
     });
     return unsub;
@@ -95,12 +102,17 @@ export default function PortalPedidos({ user, orders, products, onReorder, go }:
             Cargando tus pedidos...
           </div>
         )}
-        {!loading && displayOrders.length === 0 && (
+        {error && (
+          <div style={{ textAlign: 'center', padding: 40, fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#ba4a2e' }}>
+            {error}
+          </div>
+        )}
+        {!error && !loading && displayOrders.length === 0 && (
           <div style={{ textAlign: 'center', padding: 40, fontFamily: 'Montserrat, sans-serif', fontSize: 14, color: TW.sub }}>
             Aún no tienes pedidos.
           </div>
         )}
-        {displayOrders.map((o) => {
+        {!error && displayOrders.map((o) => {
           const open = openId === o.id;
           const entregado = o.estado === 'entregado';
           const caf = (PORTAL_DATA.caficultores as any)[o.caficultorId];
@@ -157,7 +169,7 @@ export default function PortalPedidos({ user, orders, products, onReorder, go }:
                       display: 'inline-flex', alignItems: 'center', gap: 8, transition: 'all .2s',
                     }}><IconRepeat size={16} /> Recomprar</button>
                     {o.estado !== 'entregado' && (
-                      <button onClick={() => go('tracking')} style={{
+                      <button onClick={() => onTrack(o.firestoreId || o.id)} style={{
                         fontFamily: 'Montserrat, sans-serif', fontSize: 13.5, fontWeight: 600, color: TW.ink, background: '#fdf8ef',
                         border: `1px solid ${TW.line}`, borderRadius: 11, padding: '12px 18px', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 7, transition: 'all .2s',

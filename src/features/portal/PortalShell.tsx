@@ -9,7 +9,9 @@ import PortalDashboard from './PortalDashboard';
 import PortalCatalogo from './PortalCatalogo';
 import PortalPedidos from './PortalPedidos';
 import PortalCarrito from './PortalCarrito';
-import { auth } from '@/shared/firebase';
+import { auth, db } from '@/shared/firebase';
+import { doc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
+import type { PedidoDoc } from '@/shared/types/firestore';
 import { ensurePortalUserProfile, getPortalAuthUser, isRegistering, logoutPortalUser, type PortalAuthUser } from './portalAuthService';
 
 type View = 'inicio' | 'catalogo' | 'pedidos' | 'tracking' | 'suscripcion' | 'recompensas' | 'referidos' | 'cupones' | 'perfil' | 'config' | 'carrito';
@@ -17,7 +19,7 @@ type View = 'inicio' | 'catalogo' | 'pedidos' | 'tracking' | 'suscripcion' | 're
 const nav: [View, string, typeof IconGrid][] = [
   ['inicio', 'Inicio', IconGrid],
   ['pedidos', 'Mis Pedidos', IconPackage],
-  ['tracking', 'Tracking', IconMapPin],
+  // ['tracking', 'Tracking', IconMapPin],
   ['suscripcion', 'Suscripciones', IconRepeat],
   ['recompensas', 'Recompensas', IconStar],
   ['referidos', 'Referidos', IconUsers],
@@ -41,8 +43,25 @@ export default function PortalShell() {
   const [authUser, setAuthUser] = useState<PortalAuthUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [resending, setResending] = useState(false);
+  const [trackOrderId, setTrackOrderId] = useState<string | null>(null);
+  const [latestFireOrder, setLatestFireOrder] = useState<PedidoDoc | null>(null);
 
   useEffect(() => { document.body.style.background = TW.bg; }, []);
+
+  useEffect(() => {
+    if (!authUser?.uid) { setLatestFireOrder(null); return; }
+    const q = query(
+      collection(db, 'pedidos'),
+      where('clienteUid', '==', authUser.uid),
+      orderBy('createdAt', 'desc'),
+      limit(1),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const doc = snap.docs[0]?.data() as PedidoDoc | undefined;
+      if (doc?.orderId) setLatestFireOrder(doc);
+    });
+    return unsub;
+  }, [authUser?.uid]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -101,7 +120,38 @@ export default function PortalShell() {
   const products = PORTAL_DATA.products;
   const orders = PORTAL_DATA.orders as Order[];
 
-  const activeOrder = orders.find(o => o.estado === 'en_ruta' || o.estado === 'preparando');
+  const activeOrder: Order | undefined = (() => {
+    if (authUser?.uid && latestFireOrder) {
+      const d = latestFireOrder;
+      const statusMap: Record<string, Order['estado']> = {
+        pendiente_pago: 'por_verificar',
+        pago_confirmado: 'preparando',
+        en_preparacion: 'preparando',
+        despachado: 'en_ruta',
+        entregado: 'entregado',
+        cancelado: 'entregado',
+        reembolsado: 'entregado',
+        confirmado: 'preparando',
+        enviado: 'en_ruta',
+      };
+      return {
+        id: d.orderId,
+        firestoreId: d.id,
+        fecha: '',
+        total: 0,
+        estado: statusMap[d.status] || 'por_verificar',
+        items: d.items.map(i => ({
+          productId: i.productoId,
+          nombre: i.name,
+          molienda: i.grind,
+          cantidad: i.qty,
+          precio: i.unitCents / 100,
+        })),
+        caficultorId: d.items[0]?.caficultorId || '',
+      };
+    }
+    return orders.find(o => o.estado !== 'entregado');
+  })();
 
   const addToCart = (item: any) => {
     setCart(prev => {
@@ -269,8 +319,8 @@ export default function PortalShell() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {activeOrder && (
-              <button onClick={() => go('tracking')} className="tw-topchip" style={{ border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, background: '#fbf1df', color: '#8a5a16', fontFamily: 'Montserrat, sans-serif', fontSize: 12.5, fontWeight: 600 }}>
-                <IconTruck size={16} /> {activeOrder.id} en ruta
+              <button onClick={() => { setTrackOrderId(activeOrder.firestoreId || activeOrder.id); go('tracking'); }} className="tw-topchip" style={{ border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, background: '#fbf1df', color: '#8a5a16', fontFamily: 'Montserrat, sans-serif', fontSize: 12.5, fontWeight: 600 }}>
+                <IconTruck size={16} /> {activeOrder.id}
               </button>
             )}
           </div>
@@ -295,15 +345,15 @@ export default function PortalShell() {
         {/* view */}
         <main className="tw-main-pad" style={{ padding: '34px 28px 60px', flex: 1 }}>
           {view === 'inicio' && (
-            <PortalDashboard user={user} products={products} sub={PORTAL_DATA.activeSub} go={go} onAdd={addToCart} />
+            <PortalDashboard user={user} sub={PORTAL_DATA.activeSub} go={go} activeOrder={activeOrder} userUid={authUser?.uid} />
           )}
           {view === 'catalogo' && (
             <PortalCatalogo user={user} products={products} activeOrder={activeOrder} onAdd={addToCart} onGoCart={() => go('carrito')} />
           )}
           {view === 'pedidos' && (
-            <PortalPedidos user={authUser} orders={orders} products={products} onReorder={reorder} go={go} />
+            <PortalPedidos user={authUser} orders={orders} products={products} onReorder={reorder} onTrack={(id) => { setTrackOrderId(id); go('tracking'); }} />
           )}
-          {view === 'tracking' && <TrackingView go={go} />}
+          {view === 'tracking' && <TrackingView go={go} orderId={trackOrderId} />}
           {view === 'suscripcion' && <SuscripcionView />}
           {view === 'recompensas' && <RecompensasView user={user} />}
           {view === 'referidos' && <ReferidosView user={user} />}
@@ -386,10 +436,64 @@ export default function PortalShell() {
   );
 }
 
-function TrackingView({ go }: { go: (v: View) => void }) {
-  const t = PORTAL_DATA.tracking;
+function TrackingView({ go, orderId }: { go: (v: View) => void; orderId?: string | null }) {
+  const [orderDoc, setOrderDoc] = useState<PedidoDoc | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!orderId) { setOrderDoc(null); return; }
+    setLoading(true);
+    setError(null);
+    const unsub = onSnapshot(doc(db, 'pedidos', orderId), (snap) => {
+      const data = snap.data() as PedidoDoc | undefined;
+      if (data?.orderId) setOrderDoc(data);
+      setLoading(false);
+    }, () => {
+      setError('No pudimos cargar el seguimiento. Intenta de nuevo.');
+      setLoading(false);
+    });
+    return unsub;
+  }, [orderId]);
+
+  const stepsFromDoc = (d: PedidoDoc) => {
+    const fmt = (iso?: string) => {
+      if (!iso) return '';
+      const d2 = new Date(iso);
+      const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return `${d2.getDate()} ${meses[d2.getMonth()]} · ${String(d2.getHours()).padStart(2, '0')}:${String(d2.getMinutes()).padStart(2, '0')}`;
+    };
+
+    let pasoActual = 1;
+    if (d.status !== 'pendiente_pago' && d.status !== 'cancelado' && d.status !== 'reembolsado') pasoActual = 2;
+    if (d.status === 'en_preparacion' || d.status === 'despachado' || d.status === 'entregado' || d.status === 'enviado') pasoActual = 3;
+    if (d.status === 'despachado' || d.status === 'entregado' || d.status === 'enviado') pasoActual = 4;
+    if (d.status === 'entregado') pasoActual = 5;
+
+    const steps = [
+      { n: 1, label: 'Recibido',   desc: 'Pedido registrado',                             hora: fmt(d.createdAt) },
+      { n: 2, label: 'Preparando', desc: 'Tostado y molienda',                            hora: pasoActual >= 2 ? fmt(d.confirmedAt || d.updatedAt) : '' },
+      { n: 3, label: 'Empacado',   desc: 'Sellado al vacío',                              hora: pasoActual >= 3 ? fmt(d.updatedAt) : '' },
+      { n: 4, label: 'Enviado',    desc: d.trackingUrl ? 'En ruta con el courier' : 'En ruta', hora: pasoActual >= 4 ? fmt(d.shippedAt || d.updatedAt) : '' },
+      { n: 5, label: 'Entregado',  desc: 'Llega a tu dirección',                           hora: pasoActual >= 5 ? fmt(d.deliveredAt || d.updatedAt) : '' },
+    ];
+
+    return { steps, pasoActual };
+  };
+
+  const t = orderId && orderDoc ? (() => {
+    const { steps, pasoActual } = stepsFromDoc(orderDoc);
+    return {
+      pedido: orderDoc.orderId,
+      estimada: orderDoc.deliverEstimate,
+      courier: orderDoc.shipping.zone === 'provincia' ? 'Olva Courier · Provincia' : 'Mensajería · Lima',
+      pasos: steps,
+      pasoActual,
+    };
+  })() : PORTAL_DATA.tracking;
+
   const total = t.pasos.length;
-  const pct = ((t.pasoActual - 1) / (total - 1)) * 100;
+  const pct = total > 1 ? ((t.pasoActual - 1) / (total - 1)) * 100 : 100;
   const panelStyle = { background: '#fdf8ef', border: `1px solid ${TW.line}`, borderRadius: 18, boxShadow: '0 1px 2px #533b2212' };
 
   return (
@@ -401,7 +505,19 @@ function TrackingView({ go }: { go: (v: View) => void }) {
         sub="Tostamos el día del envío para que llegue ultra fresco. Sigue cada etapa hasta tu puerta."
       />
 
-      <div style={{ marginTop: 26, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+      {loading && (
+        <div style={{ textAlign: 'center', padding: 40, fontFamily: 'Montserrat, sans-serif', fontSize: 14, color: TW.sub }}>
+          Cargando seguimiento...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ textAlign: 'center', padding: 40, fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#ba4a2e' }}>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && <><div style={{ marginTop: 26, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
         {[
           { Icon: IconPackage, k: 'Pedido', v: t.pedido },
           { Icon: IconClock, k: 'Entrega estimada', v: t.estimada },
@@ -466,6 +582,7 @@ function TrackingView({ go }: { go: (v: View) => void }) {
         <button onClick={() => go('pedidos')} style={btnGhost}><IconChevL size={16} /> Volver a pedidos</button>
         <button onClick={() => go('catalogo')} style={btnSoft}><IconBag size={16} /> Seguir comprando</button>
       </div>
+      </>}
     </div>
   );
 }

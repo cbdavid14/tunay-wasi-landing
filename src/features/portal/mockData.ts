@@ -42,6 +42,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  firestoreId?: string;
   fecha: string;
   total: number;
   estado: OrderEstado;

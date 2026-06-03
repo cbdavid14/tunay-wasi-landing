@@ -1,26 +1,68 @@
-import { useState } from 'react';
-import { TW, soles, toneMap, panel } from './constants';
+import { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { db } from '@/shared/firebase';
+import { TW, toneMap, panel } from './constants';
 import { PageHead, MonoCap, SectionTitle } from './shared';
-import { IconStar, IconTrophy, IconRepeat, IconPackage, IconTruck, IconUsers, IconCoffee, IconCheck, IconPlus, IconMapPin, IconArrowR, IconChevR } from './icons';
-import type { User, PortalProduct } from './mockData';
+import { IconStar, IconTrophy, IconRepeat, IconPackage, IconChevR } from './icons';
+import type { User, Order } from './mockData';
+import type { PedidoDoc } from '@/shared/types/firestore';
 
 interface Props {
   user: User;
-  products: PortalProduct[];
   sub: { proximoEnvio: string };
   go: (v: string) => void;
-  onAdd: (item: any) => void;
+  activeOrder?: Order | null;
+  userUid?: string;
 }
 
-export default function PortalDashboard({ user, products, sub, go, onAdd }: Props) {
-  const actions = [
-    { label: 'Recomprar', Icon: IconRepeat, go: () => go('pedidos') },
-    { label: 'Ver pedido', Icon: IconTruck, go: () => go('tracking') },
-    { label: 'Invitar amigo', Icon: IconUsers, go: () => go('referidos') },
-    { label: 'Mi suscripción', Icon: IconCoffee, go: () => go('suscripcion') },
-  ];
+function pedidoToDisplay(p: PedidoDoc): Order {
+  const statusMap: Record<string, Order['estado']> = {
+    pendiente_pago: 'por_verificar',
+    pago_confirmado: 'preparando',
+    en_preparacion: 'preparando',
+    despachado: 'en_ruta',
+    entregado: 'entregado',
+    cancelado: 'entregado',
+    reembolsado: 'entregado',
+    confirmado: 'preparando',
+    enviado: 'en_ruta',
+  };
+  return {
+    id: p.orderId,
+    firestoreId: p.id,
+    fecha: '',
+    total: 0,
+    estado: statusMap[p.status] || 'por_verificar',
+    items: p.items.map(i => ({
+      productId: i.productoId,
+      nombre: i.name,
+      molienda: i.grind,
+      cantidad: i.qty,
+      precio: i.unitCents / 100,
+    })),
+    caficultorId: p.items[0]?.caficultorId || '',
+  };
+}
 
-  const recomendados = products.slice(0, 3);
+export default function PortalDashboard({ user, sub, go, activeOrder, userUid }: Props) {
+  const [fireOrder, setFireOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    if (!userUid) { setFireOrder(null); return; }
+    const q = query(
+      collection(db, 'pedidos'),
+      where('clienteUid', '==', userUid),
+      orderBy('createdAt', 'desc'),
+      limit(1),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const doc = snap.docs[0]?.data() as PedidoDoc | undefined;
+      if (doc?.orderId) setFireOrder(pedidoToDisplay(doc));
+    });
+    return unsub;
+  }, [userUid]);
+
+  const o = fireOrder || activeOrder || null;
 
   const metrics = [
     { label: 'Puntos acumulados', value: user.puntos.toLocaleString('es-PE'), unit: 'pts', Icon: IconStar, tone: 'gold', onClick: () => go('recompensas') },
@@ -28,6 +70,23 @@ export default function PortalDashboard({ user, products, sub, go, onAdd }: Prop
     { label: 'Próximo envío', value: 'en 5 días', unit: sub.proximoEnvio, Icon: IconRepeat, tone: 'cacao', onClick: () => go('suscripcion') },
     { label: 'Pedidos totales', value: user.pedidosTotales, unit: 'históricos', Icon: IconPackage, tone: 'green', onClick: () => go('pedidos') },
   ];
+
+  const statusLabel: Record<string, string> = {
+    por_verificar: 'Pendiente de pago',
+    preparando: 'En preparación',
+    en_ruta: 'En camino',
+    entregado: 'Entregado',
+  };
+
+  const statusStep: Record<string, number> = {
+    por_verificar: 1,
+    preparando: 2,
+    en_ruta: 3,
+    entregado: 5,
+  };
+
+  const trackingSteps = ['Recibido', 'Preparando', 'Empacado', 'Enviado', 'Entregado'];
+  const paso = o ? statusStep[o.estado] || 1 : 1;
 
   return (
     <div style={{ maxWidth: 1080, margin: '0 auto' }}>
@@ -58,70 +117,65 @@ export default function PortalDashboard({ user, products, sub, go, onAdd }: Prop
         })}
       </div>
 
-      <div style={{ marginTop: 30 }}>
-        <SectionTitle>Acciones rápidas</SectionTitle>
-        <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-          {actions.map((a) => (
-            <button key={a.label} onClick={a.go} className="tw-qaction" style={{
-              ...panel, padding: '16px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 13, textAlign: 'left',
-            }}>
-              <span style={{ width: 40, height: 40, borderRadius: 11, background: '#e7ecdd', color: TW.green, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <a.Icon size={20} />
-              </span>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 14, fontWeight: 600, color: TW.ink }}>{a.label}</span>
-              <IconChevR size={16} style={{ marginLeft: 'auto', color: TW.sub }} />
-            </button>
-          ))}
-        </div>
-      </div>
+      {o && (
+        <div style={{ marginTop: 30 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+            <SectionTitle>Tu pedido activo</SectionTitle>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, color: TW.sub, letterSpacing: '0.04em' }}>{o.id}</span>
+          </div>
+          <div style={{ ...panel, marginTop: 14, padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '20px 22px 0' }}>
+              <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: TW.sub, marginTop: 2 }}>
+                {statusLabel[o.estado] || o.estado} · {o.items.map(it => it.nombre).join(' · ')}
+              </div>
+            </div>
 
-      <div style={{ marginTop: 34, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-        <SectionTitle>Recomendado para ti</SectionTitle>
-        <button onClick={() => go('catalogo')} style={{ all: 'unset', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 600, color: TW.gold, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          Ver todos los microlotes <IconArrowR size={15} />
-        </button>
-      </div>
-      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-        {recomendados.map((p) => <RecoCard key={p.id} p={p} onAdd={onAdd} />)}
-      </div>
-    </div>
-  );
-}
+            <div style={{ padding: '18px 22px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                {trackingSteps.map((label, i) => {
+                  const n = i + 1;
+                  const done = n < paso;
+                  const current = n === paso;
+                  return (
+                    <div key={n} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                      <div style={{
+                        width: 24, height: 24, borderRadius: '50%',
+                        background: current ? TW.gold : done ? TW.green : '#e9ddc9',
+                        color: current || done ? '#fff' : TW.sub,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10.5, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
+                        boxShadow: current ? `0 0 0 4px ${TW.gold}22` : 'none',
+                        transition: 'all .2s',
+                      }}>
+                        {done ? '✓' : n}
+                      </div>
+                      <span style={{
+                        fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: current ? 700 : 500,
+                        color: current || done ? TW.ink : '#b3a489', textAlign: 'center', lineHeight: 1.2,
+                      }}>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
 
-function RecoCard({ p, onAdd }: { p: PortalProduct; onAdd: (item: any) => void }) {
-  const t = toneMap[p.tone] || toneMap.green;
-  const [added, setAdded] = useState(false);
-  const preventa = p.status === 'pre_venta';
-  const add = () => {
-    if (preventa) return;
-    onAdd({ ...p, molienda: 'En Grano', cantidad: 1 });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1400);
-  };
+              <div style={{ position: 'relative', height: 5, borderRadius: 999, background: '#e3d6bf', overflow: 'hidden', marginTop: 4 }}>
+                <div style={{
+                  position: 'absolute', inset: 0, width: `${((paso - 1) / (trackingSteps.length - 1)) * 100}%`,
+                  background: `linear-gradient(90deg, ${TW.green}, #2d5a3d)`, borderRadius: 999, transition: 'width .5s',
+                }} />
+              </div>
 
-  return (
-    <div style={{ ...panel, overflow: 'hidden', display: 'flex', flexDirection: 'column' }} className="tw-pcard">
-      <div style={{ height: 120, background: `linear-gradient(135deg, ${t.bg}, ${t.ring})`, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.fg }}>
-        <IconCoffee size={42} />
-        <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(252,246,234,.92)', color: t.fg, fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999 }}>{p.variedad}</span>
-      </div>
-      <div style={{ padding: '15px 17px 17px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 21, fontWeight: 600, color: TW.ink, margin: 0, lineHeight: 1 }}>{p.caficultor}</h3>
-        <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: TW.sub, marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          <IconMapPin size={13} /> {p.origen}, {p.region}
+              <button onClick={() => go('tracking')} style={{
+                marginTop: 16, fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700,
+                color: TW.green, background: '#e7ecdd', border: 'none', borderRadius: 10,
+                padding: '10px 16px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7,
+              }}>
+                Ver seguimiento completo <IconChevR size={15} />
+              </button>
+            </div>
+          </div>
         </div>
-        <div style={{ marginTop: 'auto', paddingTop: 14, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
-          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 26, fontWeight: 600, color: TW.ink, lineHeight: 1 }}>{soles(p.precio)}</div>
-          <button onClick={add} disabled={preventa} className="tw-add-btn" style={{
-            fontFamily: 'Montserrat, sans-serif', fontSize: 12.5, fontWeight: 700, padding: '9px 14px', borderRadius: 10,
-            border: 'none', cursor: preventa ? 'not-allowed' : 'pointer', color: '#fff',
-            background: preventa ? '#d8c6a4' : (added ? '#2d5a3d' : TW.green),
-            display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'all .2s',
-          }}>
-            {preventa ? 'Pre-venta' : added ? <><IconCheck size={15} /> Listo</> : <><IconPlus size={15} /> Agregar</>}
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
