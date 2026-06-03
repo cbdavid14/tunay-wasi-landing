@@ -1,21 +1,84 @@
 import { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '@/shared/firebase';
 import { TW, soles, toneMap, panel } from './constants';
 import { PageHead, EstadoBadge, MonoCap } from './shared';
 import { IconChevD, IconCoffee, IconRepeat, IconTruck, IconQr, IconX, IconMapPin, IconHeart } from './icons';
 import { Colibri } from './icons';
 import type { Order, PortalProduct } from './mockData';
 import { PORTAL_DATA } from './mockData';
+import type { PedidoDoc } from '@/shared/types/firestore';
+import type { PortalAuthUser } from './portalAuthService';
 
 interface Props {
+  user?: PortalAuthUser | null;
   orders: Order[];
   products: PortalProduct[];
   onReorder: (order: Order) => void;
   go: (v: string) => void;
 }
 
-export default function PortalPedidos({ orders, products, onReorder, go }: Props) {
+function pedidoToOrder(p: PedidoDoc): Order {
+  const statusMap: Record<string, Order['estado']> = {
+    pendiente_pago: 'por_verificar',
+    pago_confirmado: 'preparando',
+    en_preparacion: 'preparando',
+    despachado: 'en_ruta',
+    entregado: 'entregado',
+    cancelado: 'entregado',
+    reembolsado: 'entregado',
+    confirmado: 'preparando',
+    enviado: 'en_ruta',
+  };
+  return {
+    id: p.orderId,
+    fecha: new Date(p.createdAt).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }),
+    total: p.totals.totalCents / 100,
+    estado: statusMap[p.status] || 'por_verificar',
+    items: p.items.map(i => ({
+      productId: i.productoId,
+      nombre: i.name,
+      molienda: i.grind,
+      cantidad: i.qty,
+      precio: i.unitCents / 100,
+    })),
+    caficultorId: p.items[0]?.caficultorId || '',
+  };
+}
+
+export default function PortalPedidos({ user, orders, products, onReorder, go }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<any>(null);
+  const [fireOrders, setFireOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setFireOrders([]);
+      return;
+    }
+    setLoading(true);
+    const q = query(
+      collection(db, 'pedidos'),
+      where('clienteUid', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const list: Order[] = [];
+      snap.forEach(d => {
+        const data = d.data() as PedidoDoc;
+        if (data.orderId) list.push(pedidoToOrder(data));
+      });
+      setFireOrders(list);
+      setLoading(false);
+    }, (err) => {
+      console.error('[PortalPedidos] snapshot error:', err);
+      setLoading(false);
+    });
+    return unsub;
+  }, [user?.uid]);
+
+  const displayOrders = user?.uid ? fireOrders : orders;
 
   return (
     <div style={{ maxWidth: 980, margin: '0 auto' }}>
@@ -27,7 +90,17 @@ export default function PortalPedidos({ orders, products, onReorder, go }: Props
       />
 
       <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {orders.map((o) => {
+        {loading && (
+          <div style={{ textAlign: 'center', padding: 40, fontFamily: 'Montserrat, sans-serif', fontSize: 14, color: TW.sub }}>
+            Cargando tus pedidos...
+          </div>
+        )}
+        {!loading && displayOrders.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 40, fontFamily: 'Montserrat, sans-serif', fontSize: 14, color: TW.sub }}>
+            Aún no tienes pedidos.
+          </div>
+        )}
+        {displayOrders.map((o) => {
           const open = openId === o.id;
           const entregado = o.estado === 'entregado';
           const caf = (PORTAL_DATA.caficultores as any)[o.caficultorId];

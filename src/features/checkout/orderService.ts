@@ -1,5 +1,6 @@
 import { doc, setDoc, getDoc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '@/shared/firebase';
+import { auth } from '@/shared/firebase';
 import type { PedidoDoc, PedidoItem, PedidoShipping, PedidoTotals } from '@/shared/types/firestore';
 import type { AdapterName, CheckoutPayload } from '@/shared/types/checkout';
 import type { CartItem } from '@/shared/types/cart';
@@ -74,6 +75,7 @@ export async function saveOrder(
     orderId,
     status: 'pendiente_pago',
     adapter,
+    clienteUid: auth.currentUser?.uid || undefined,
     items: cart.items.map(toItem),
     shipping: pedidoShipping,
     totals: pedidoTotals,

@@ -12,10 +12,11 @@ const LINKS: [string, string][] = [
 
 interface NavProps {
   user?: PortalAuthUser | null;
+  authReady?: boolean;
   onAuthChange?: (u: PortalAuthUser | null) => void;
 }
 
-export default function Nav({ user, onAuthChange }: NavProps) {
+export default function Nav({ user, authReady, onAuthChange }: NavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -61,7 +62,9 @@ export default function Nav({ user, onAuthChange }: NavProps) {
 
   const avatarInitial = user?.nombre?.charAt(0).toUpperCase() || user?.displayName?.charAt(0).toUpperCase() || '?';
 
-  const userNav = user ? (
+  const userNav = !authReady ? (
+    <div style={{ width: 36, height: 36 }} />
+  ) : user ? (
     <>
       <button
         ref={avatarRef}

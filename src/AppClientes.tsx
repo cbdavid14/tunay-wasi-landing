@@ -75,7 +75,7 @@ function Landing() {
   return (
     <>
       <GrainOverlay/>
-      <Nav user={authReady ? authUser : undefined} onAuthChange={setAuthUser}/>
+      <Nav user={authUser} authReady={authReady} onAuthChange={setAuthUser}/>
       <main>
         <Hero/>
         <Preventa/>

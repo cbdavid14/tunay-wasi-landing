@@ -378,6 +378,7 @@ export interface PedidoDoc {
   orderId: string;             // "TW-4281" — human-readable display reference
   status: PedidoStatus;
   adapter: PaymentAdapter;
+  clienteUid?: string;         // FK → /clientes/{uid} — set when user is logged in at purchase
 
   items: PedidoItem[];
   shipping: PedidoShipping;

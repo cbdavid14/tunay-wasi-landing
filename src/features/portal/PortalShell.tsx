@@ -301,7 +301,7 @@ export default function PortalShell() {
             <PortalCatalogo user={user} products={products} activeOrder={activeOrder} onAdd={addToCart} onGoCart={() => go('carrito')} />
           )}
           {view === 'pedidos' && (
-            <PortalPedidos orders={orders} products={products} onReorder={reorder} go={go} />
+            <PortalPedidos user={authUser} orders={orders} products={products} onReorder={reorder} go={go} />
           )}
           {view === 'tracking' && <TrackingView go={go} />}
           {view === 'suscripcion' && <SuscripcionView />}
