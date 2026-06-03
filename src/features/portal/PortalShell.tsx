@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, sendEmailVerification } from 'firebase/auth';
 import { TW, soles as solesFn, toneMap, btnSolid, btnGhost, btnSoft, btnDanger } from './constants';
-import { Colibri, IconGrid, IconPackage, IconTruck, IconRepeat, IconTrophy, IconUser, IconBag, IconMenu, IconLogout, IconUsers, IconTag, IconTicket, IconCoffee, IconChevR, IconChevL, IconChevD, IconCheck, IconMapPin, IconX, IconCopy, IconGlobe, IconShield, IconCard, IconBell, IconLock, IconEdit, IconTrash, IconPause, IconPlay, IconSparkle, IconSettings, IconMore, IconClock, IconStar, IconArrowR, IconChat, IconShare, IconLink, IconMail } from './icons';
+import { IconGrid, IconPackage, IconTruck, IconRepeat, IconTrophy, IconUser, IconBag, IconMenu, IconLogout, IconUsers, IconTag, IconTicket, IconCoffee, IconChevR, IconChevL, IconChevD, IconCheck, IconMapPin, IconX, IconCopy, IconGlobe, IconShield, IconCard, IconBell, IconLock, IconEdit, IconTrash, IconPause, IconPlay, IconSparkle, IconSettings, IconMore, IconClock, IconStar, IconArrowR, IconChat, IconShare, IconLink, IconMail } from './icons';
 import { PageHead, SectionTitle, MonoCap } from './shared';
 import { PORTAL_DATA, type User, type Order, type CartItem } from './mockData';
 import PortalAuth from './PortalAuth';
@@ -176,13 +176,22 @@ export default function PortalShell() {
         transition: 'width .25s cubic-bezier(.4,0,.2,1)', zIndex: 30,
       }}>
         <div style={{ padding: collapsed ? '22px 0 16px' : '22px 20px 16px', display: 'flex', alignItems: 'center', gap: 11, justifyContent: collapsed ? 'center' : 'flex-start' }}>
-          <Colibri size={collapsed ? 30 : 34} accent={TW.gold} />
-          {!collapsed && (
-            <div style={{ lineHeight: 1, whiteSpace: 'nowrap' }}>
-              <div style={{ fontFamily: 'Mulish, sans-serif', fontWeight: 800, fontSize: 17, color: TW.ink, letterSpacing: '0.01em' }}>Tunay Wasi</div>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8.5, letterSpacing: '0.24em', color: TW.gold, marginTop: 4, textTransform: 'uppercase' }}>Mi cuenta · B2C</div>
+          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 11, textDecoration: 'none', justifyContent: collapsed ? 'center' : 'flex-start' }}>
+            <div className="tw-logo-pulse" style={{ width: collapsed ? 34 : 40, height: collapsed ? 34 : 40, flexShrink: 0 }}>
+              <style>{`
+                @keyframes tw-logo-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+                .tw-logo-pulse { animation: tw-logo-pulse 2.8s ease-in-out infinite; }
+                .tw-logo-pulse img { width: 100%; height: 100%; object-fit: contain; }
+              `}</style>
+              <img src="/brand/logo.png" alt="Tunay Wasi" />
             </div>
-          )}
+            {!collapsed && (
+              <div style={{ lineHeight: 1, whiteSpace: 'nowrap' }}>
+                <div style={{ fontFamily: 'Mulish, sans-serif', fontWeight: 700, fontSize: 17, color: TW.ink, letterSpacing: '0.005em' }}>Tunay Wasi</div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8.5, letterSpacing: '0.32em', color: '#533b22', marginTop: 4, textTransform: 'uppercase' }}>Verdadera · Casa</div>
+              </div>
+            )}
+          </a>
         </div>
 
         <nav style={{ padding: collapsed ? '8px 12px' : '8px 12px', display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto', overflowX: 'visible' }}>
@@ -236,10 +245,10 @@ export default function PortalShell() {
           borderBottom: `1px solid ${TW.line}`, padding: '12px 16px', alignItems: 'center', justifyContent: 'space-between', gap: 12,
         }}>
           <button onClick={() => setDrawer(true)} style={{ border: 'none', background: 'transparent', color: TW.ink, cursor: 'pointer', display: 'flex', padding: 4, width: 40 }}><IconMenu size={24} /></button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Colibri size={26} accent={TW.gold} />
-            <span style={{ fontFamily: 'Mulish, sans-serif', fontWeight: 800, fontSize: 16, color: TW.ink }}>Tunay Wasi</span>
-          </div>
+          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <img src="/brand/logo.png" alt="Tunay Wasi" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+            <span style={{ fontFamily: 'Mulish, sans-serif', fontWeight: 700, fontSize: 16, color: TW.ink }}>Tunay Wasi</span>
+          </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: 40, justifyContent: 'flex-end' }}>
             <button onClick={() => go('carrito')} style={{ position: 'relative', border: 'none', background: 'transparent', color: TW.ink, cursor: 'pointer', display: 'flex', padding: 4 }}>
               <IconBag size={22} />
