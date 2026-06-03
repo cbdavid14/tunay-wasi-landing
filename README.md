@@ -15,14 +15,16 @@ E-commerce and producer acquisition landing for **Tunay Wasi**, a Peruvian speci
 | Database | Firebase Firestore |
 | Email | EmailJS |
 
-## Two Apps, One Repository
+## Three Apps, One Repository
 
-This repo builds two separate single-page apps from the same codebase, selected at build time via `VITE_APP_TARGET`:
+This repo builds two separate single-page apps (plus a portal route) from the same codebase, selected at build time via `VITE_APP_TARGET`:
 
-| App | Target | URL |
-|-----|--------|-----|
-| **B2C** — consumer landing + cart + checkout | `clientes` (default) | tunaywasi.pe |
-| **B2B** — caficultores producer waitlist | `caficultores` | caficultores.tunaywasi.pe |
+| App | Target | URL | Routes |
+|-----|--------|-----|--------|
+| **B2C** — consumer landing + cart + checkout | `clientes` (default) | tunaywasi.pe | `/` landing, `/portal/*` customer portal |
+| **B2B** — caficultores producer waitlist | `caficultores` | caficultores.tunaywasi.pe | `/` landing |
+
+The portal route (`/portal/*`) is rendered inside the B2C app. It includes authentication (login/register), order tracking, catalog, cart, subscription, rewards, referrals, profile, and configuration views.
 
 Rollup tree-shakes the unused app at build time — consumers never download producer code and vice versa.
 
@@ -84,6 +86,9 @@ src/
 │   ├── cart/                # Cart store (Zustand), schema, totals, shipping
 │   ├── checkout/            # Checkout modal + payment adapters
 │   ├── contact/             # Contact form (EmailJS + WhatsApp fallback)
+│   ├── portal/              # Customer portal (auth, orders, catalog,
+│   │                        #   cart, subscription, rewards, referrals,
+│   │                        #   profile, config)
 │   └── preventa/            # Pre-sale countdown
 ├── shared/
 │   ├── firebase.ts          # Firebase config
@@ -138,6 +143,7 @@ EmailJS template variables required: `to_email`, `subject`, `html_content`. On f
 
 | Collection | Path | Description |
 |------------|------|-------------|
+| `clientes` | `/clientes/{uid}` | Customer profiles (Firebase Auth linked) |
 | `caficultores` | `/caficultores/{id}` | Coffee producers |
 | `productos` | `/productos/{id}` | Coffee products (linked to caficultores) |
 | `pedidos` | `/pedidos/{id}` | Orders created on checkout |
@@ -164,7 +170,8 @@ CaficultorDoc ←── ProductoDoc ←── PedidoItem ──→ PedidoDoc
 
 | Service | Purpose |
 |---------|---------|
-| Firebase Firestore | Catalog, orders, configuration |
+| Firebase Authentication | Customer portal login/register, password reset, email verification |
+| Firebase Firestore | Catalog, orders, customer profiles, configuration |
 | Firebase Storage | Producer photos, Yape/Plin vouchers |
 | EmailJS | Contact form → admin email notification |
 | Yape / Plin | QR manual transfer with voucher upload |
@@ -188,6 +195,11 @@ CaficultorDoc ←── ProductoDoc ←── PedidoItem ──→ PedidoDoc
 - [x] Landing configuration (hero metrics, grind options)
 - [x] Comisiones calculation
 - [ ] Update hardcoded May 2026 delivery dates
+
+### Portal
+- [ ] Deploy `firestore.rules` to Firebase Console or via CLI
+- [ ] Configure SMTP sender identity in Firebase Console (Authentication → Templates → Sender identity)
+- [ ] Wire portal views to real Firestore data (orders, catalog, subscription)
 
 ### B2B caficultores
 - [ ] Wire `CafiLista` form to `POST /api/caficultores/waitlist`

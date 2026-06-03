@@ -42,6 +42,8 @@ src/
 │   ├── cart/          cartStore.ts (Zustand), cartSchema.ts, useCart.ts, shippingRules.ts
 │   ├── checkout/      Checkout.tsx, adapters/, orderService.ts, checkoutService.ts
 │   ├── contact/       Contacto.tsx
+│   ├── portal/        PortalShell.tsx, PortalAuth.tsx, portalAuthService.ts,
+│   │                  constants.ts, icons.tsx, mockData.ts, shared.tsx
 │   └── preventa/      Preventa.tsx, useCountdown.ts
 ├── shared/
 │   ├── firebase.ts    Firebase config (reads VITE_FIREBASE_* env vars)
@@ -90,6 +92,41 @@ Firestore data fetched via TanStack Query hooks in `src/features/catalog/`:
 ### SCA pricing
 B2B calculator (`CafiCalculator.tsx`) uses hardcoded tiers. Live tiers live in Firestore `configuration/pricing` — wire via a new hook when ready.
 
+### Portal auth
+Firebase Auth + Firestore `clientes/{uid}` for customer identity:
+
+```ts
+import {
+  registerPortalUser,    // create + Firestore doc + send email verification + signOut
+  loginPortalUser,       // signIn + upsert profile → returns PortalAuthUser
+  logoutPortalUser,      // signOut
+  resetPortalPassword,   // sendPasswordResetEmail
+  resendVerificationEmail, // re-send verification link
+  isRegistering,         // flag used by PortalShell to ignore transient auth state
+} from '@/features/portal/portalAuthService';
+```
+
+- Registration flow: `registerPortalUser` → `signOut` → `onAuthStateChanged(null)` → login screen with success message
+- Login allows unverified users (verification banner shown in PortalShell instead of blocking)
+- `_isRegistering` flag prevents portal flash during the create → signOut transition
+
+### Portal views
+All views live inline in `PortalShell.tsx` (no React Router nesting). View state is a single `useState<View>`:
+- `PortalAuth` — login/register form (outside the shell layout)
+- `PortalDashboard` — orders KPI, recent activity
+- `PortalCatalogo` — product catalog with `onGoCart` prop
+- `PortalPedidos` — order history
+- `PortalCarrito` — cart inside portal
+- Sub-views: Tracking, Suscripción, Recompensas, Referidos, Cupones, Perfil, Configuración
+
+```ts
+const [view, setView] = useState<View>('inicio');
+// View type: 'inicio' | 'catalogo' | 'pedidos' | 'tracking' | 'suscripcion'
+//            | 'recompensas' | 'referidos' | 'cupones' | 'perfil' | 'config' | 'carrito'
+```
+
+Data comes from `mockData.ts` (`PORTAL_DATA`) — swap with real Firestore hooks when backend is ready.
+
 ### Path alias
 `@/` resolves to `src/`. Use it for all internal imports.
 
@@ -135,6 +172,9 @@ Fonts: Cormorant Garamond, Montserrat, Mulish, Bowlby One SC, JetBrains Mono —
 - PSelect uses `appearance: 'none'` inline — add CSS reset
 - SaveBtn, Switch handlers are client-only (no backend)
 - Cerrar sesión in ConfigView is client-side state reset only
+- All views use mock data (`mockData.ts`) — wire to real Firestore hooks
+- Email verification banner text mentions Firebase (replace with brand copy)
+- Auth error messages hardcoded in Spanish — review for consistency
 
 ## Pre-launch items
 
