@@ -1,8 +1,10 @@
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
   type User as FirebaseUser,
@@ -143,4 +145,13 @@ export async function resetPortalPassword(email: string) {
   await sendPasswordResetEmail(auth, email.trim().toLowerCase(), {
     url: `${window.location.origin}/portal`,
   });
+}
+
+const googleProvider = new GoogleAuthProvider();
+
+export async function loginWithGoogle() {
+  const credential = await signInWithPopup(auth, googleProvider);
+  await credential.user.reload();
+  await ensurePortalUserProfile(credential.user);
+  return getPortalAuthUser(credential.user);
 }
