@@ -2,9 +2,9 @@
  * AdminPanel.tsx — F05: Log muestras + F06: Catación Q-Grader + F07: Motor precios + F08: Kanban logístico
  * Actor: Administrador Tunay Wasi / Hub Lima
  */
-import { useState } from 'react';
-import { DEMO_LOTES, DEMO_PEDIDOS } from '@/features/marketplace/marketplaceSeed';
-import type { LoteDoc } from '@/shared/types/marketplace';
+import { useState, useEffect } from 'react';
+import { fetchMktLotes, fetchMktPedidos, updateMktLoteCatacion } from '@/features/marketplace/marketplaceService';
+import type { LoteDoc, PedidoB2BDoc } from '@/shared/types/marketplace';
 
 const C = {
   green: '#1f3028', cream: '#f2e0cc', terra: '#c96e4b',
@@ -27,10 +27,16 @@ export default function AdminPanel() {
     puntaje: '', acidez: '7', cuerpo: '7', balance: '7', notas: '',
   });
   const [cataGuardado, setCataGuardado] = useState(false);
+  const [guardandoCata, setGuardandoCata] = useState(false);
+  const [todosLotes, setTodosLotes] = useState<LoteDoc[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoB2BDoc[]>([]);
 
-  const lotesParaCatar = DEMO_LOTES.filter(l => l.status === 'muestra_enviada' || l.status === 'en_catacion');
-  const lotesPublicados = DEMO_LOTES.filter(l => l.status === 'publicado');
-  const pedidos = DEMO_PEDIDOS;
+  useEffect(() => {
+    Promise.all([fetchMktLotes(), fetchMktPedidos()]).then(([lotes, peds]) => {
+      setTodosLotes(lotes);
+      setPedidos(peds);
+    });
+  }, [cataGuardado]);
 
   // Motor de precios F07
   function calcPrecioFinal(precioOrigen: number) {
@@ -42,6 +48,8 @@ export default function AdminPanel() {
 
   const totalIngresosMes = pedidos.reduce((s, p) => s + (p.pagoStatus === 'verificado' ? p.subtotalPEN * 0.10 : 0), 0);
   const totalVolumenKg = pedidos.filter(p => p.pagoStatus === 'verificado').reduce((s, p) => s + p.kgTotal, 0);
+  const lotesParaCatar = todosLotes.filter(l => l.status === 'muestra_enviada' || l.status === 'en_catacion');
+  const lotesPublicados = todosLotes.filter(l => l.status === 'publicado');
 
   return (
     <div style={{ background: '#f0ebe4', minHeight: '100vh' }}>
@@ -159,7 +167,7 @@ export default function AdminPanel() {
 
             {/* Selector de lote */}
             <div style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
-              {DEMO_LOTES.filter(l => ['muestra_enviada', 'en_catacion', 'aprobado'].includes(l.status)).map(lote => (
+              {todosLotes.filter(l => ['muestra_enviada', 'en_catacion', 'aprobado'].includes(l.status)).map(lote => (
                 <div key={lote.id} onClick={() => setCatacionLote(lote)} style={{
                   background: catacionLote?.id === lote.id ? C.green : 'white',
                   color: catacionLote?.id === lote.id ? C.cream : C.brown,
@@ -278,15 +286,33 @@ export default function AdminPanel() {
                   )}
 
                   <button
-                    onClick={() => setCataGuardado(true)}
-                    disabled={!cataForm.puntaje}
+                    onClick={async () => {
+                      if (!catacionLote || !cataForm.puntaje) return;
+                      setGuardandoCata(true);
+                      try {
+                        const precioFinal = calcPrecioFinal(catacionLote.precioOrigenPEN).total;
+                        await updateMktLoteCatacion(
+                          catacionLote.id,
+                          Number(cataForm.puntaje),
+                          Number(cataForm.acidez),
+                          Number(cataForm.cuerpo),
+                          Number(cataForm.balance),
+                          cataForm.notas.split(',').map(n => n.trim()).filter(Boolean),
+                          precioFinal,
+                        );
+                        setCataGuardado(true);
+                      } finally {
+                        setGuardandoCata(false);
+                      }
+                    }}
+                    disabled={!cataForm.puntaje || guardandoCata}
                     style={{
                       background: C.terra, color: 'white', border: 'none', borderRadius: 8,
                       padding: '14px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700,
-                      cursor: 'pointer', opacity: !cataForm.puntaje ? 0.5 : 1,
+                      cursor: 'pointer', opacity: (!cataForm.puntaje || guardandoCata) ? 0.5 : 1,
                     }}
                   >
-                    Guardar ficha y publicar lote en marketplace →
+                    {guardandoCata ? 'Guardando...' : 'Guardar ficha y publicar lote en marketplace →'}
                   </button>
                 </div>
               </div>
@@ -370,7 +396,7 @@ export default function AdminPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {DEMO_LOTES.map((l, i) => (
+                  {todosLotes.map((l, i) => (
                     <tr key={l.id} style={{ background: i % 2 === 0 ? 'white' : '#faf7f4' }}>
                       <td style={{ padding: '10px 14px', fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>{l.id}</td>
                       <td style={{ padding: '10px 14px', fontFamily: 'Montserrat', fontSize: 12, color: C.brown, fontWeight: 600 }}>{l.nombreLote.slice(0, 28)}...</td>

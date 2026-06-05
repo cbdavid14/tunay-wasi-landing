@@ -2,9 +2,9 @@
  * MarketplaceLotes.tsx — F09: Marketplace con filtros + F10: Sample Packs + F11: Compra sacos
  * Actor: Tostadora / Cafetería de Especialidad
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { LoteDoc } from '@/shared/types/marketplace';
-import { DEMO_LOTES, DEMO_CAFICULTORES_MARKETPLACE } from '@/features/marketplace/marketplaceSeed';
+import { fetchMktLotes, fetchMktCaficultores } from '@/features/marketplace/marketplaceService';
 
 const C = {
   green: '#1f3028',
@@ -45,9 +45,20 @@ export default function MarketplaceLotes({ onCheckout }: Props) {
   const [filtroSCA, setFiltroSCA] = useState(0);
   const [carrito, setCarrito] = useState<CarritoItem[]>([]);
   const [sacosSeleccionados, setSacosSeleccionados] = useState<Record<string, number>>({});
+  const [todosLotes, setTodosLotes] = useState<LoteDoc[]>([]);
+  const [caficultores, setCaficultores] = useState<{ id: string; nombreProductor: string; nombreFinca: string; region: string; fotoUrl: string }[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    Promise.all([fetchMktLotes(), fetchMktCaficultores()]).then(([lotes, cafs]) => {
+      setTodosLotes(lotes);
+      setCaficultores(cafs);
+      setCargando(false);
+    });
+  }, []);
   const [fichaAbierta, setFichaAbierta] = useState<LoteDoc | null>(null);
 
-  const lotes = DEMO_LOTES.filter(l => {
+  const lotes = todosLotes.filter(l => {
     if (filtroProceso !== 'todos' && l.proceso !== filtroProceso) return false;
     const puntaje = l.puntajeOficial ?? l.puntajeReferencial;
     if (puntaje < filtroSCA) return false;
@@ -55,10 +66,10 @@ export default function MarketplaceLotes({ onCheckout }: Props) {
   });
 
   function getCaficultor(id: string) {
-    return DEMO_CAFICULTORES_MARKETPLACE.find(c => c.id === id);
+    return caficultores.find(c => c.id === id);
   }
 
-  function agregarMuestra(lote: LoteDoc) {
+  async function agregarMuestra(lote: LoteDoc) {
     if (carrito.find(i => i.lote.id === lote.id && i.tipo === 'muestra')) return;
     setCarrito(prev => [...prev, { lote, tipo: 'muestra' }]);
   }
@@ -80,6 +91,12 @@ export default function MarketplaceLotes({ onCheckout }: Props) {
 
   return (
     <div style={{ background: '#f7f3ee', minHeight: '100vh' }}>
+      {cargando && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>Cargando lotes...</p>
+        </div>
+      )}
+      {!cargando && (<>
 
       {/* Hero B2B */}
       <div style={{
@@ -278,10 +295,10 @@ export default function MarketplaceLotes({ onCheckout }: Props) {
                       {/* Caficultor */}
                       {caficultor && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                          <img src={caficultor.foto} alt={caficultor.nombre}
+                          <img src={caficultor.fotoUrl} alt={caficultor.nombreProductor}
                             style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
                           <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>
-                            {caficultor.nombre} · {caficultor.finca}
+                            {caficultor.nombreProductor} · {caficultor.nombreFinca}
                           </span>
                         </div>
                       )}
@@ -433,6 +450,7 @@ export default function MarketplaceLotes({ onCheckout }: Props) {
           </div>
         </div>
       )}
+    </>)}
     </div>
   );
 }

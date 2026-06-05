@@ -2,8 +2,9 @@
  * CaficultorPortal.tsx — F01: Registro finca + F02: Publicar lote + F03: Estado de lotes
  * Actor: Caficultor (optimizado para móvil, zonas rurales)
  */
-import { useState } from 'react';
-import { DEMO_LOTES, DEMO_CAFICULTORES_MARKETPLACE } from '@/features/marketplace/marketplaceSeed';
+import { useState, useEffect } from 'react';
+import { fetchMktLotesByCaficultor, createMktLote } from '@/features/marketplace/marketplaceService';
+import type { LoteDoc } from '@/shared/types/marketplace';
 
 const C = {
   green: '#1f3028', cream: '#f2e0cc', terra: '#c96e4b',
@@ -29,12 +30,48 @@ export default function CaficultorPortal() {
     altitud: '', sacosDisponibles: '', precioOrigenPEN: '', cosecha: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [misLotes, setMisLotes] = useState<LoteDoc[]>([]);
 
-  // Simulamos que el caficultor logueado es "Darlyn"
-  const caficultor = DEMO_CAFICULTORES_MARKETPLACE[0];
-  const misLotes = DEMO_LOTES.filter(l => l.caficultorId === caficultor.id);
+  // Demo: caficultor fijo mkt-caf-001 (en producción vendría del auth)
+  const caficultor = {
+    id: 'mkt-caf-001',
+    nombre: 'Darlyn Sánchez',
+    finca: 'Bello Horizonte',
+    region: 'Oxapampa, Pasco',
+    foto: 'https://images.unsplash.com/photo-1559181567-c3190ca9d5db?w=200',
+  };
+
+  useEffect(() => {
+    fetchMktLotesByCaficultor(caficultor.id).then(setMisLotes);
+  }, [submitted]);
 
   function setField(k: string, v: string) { setLoteForm(f => ({ ...f, [k]: v })); }
+
+  async function handleSubmitLote() {
+    setGuardando(true);
+    const precioOrigen = Number(loteForm.precioOrigenPEN);
+    await createMktLote({
+      caficultorId:       caficultor.id,
+      nombreLote:         loteForm.nombreLote,
+      cosecha:            loteForm.cosecha,
+      proceso:            loteForm.proceso as LoteDoc['proceso'],
+      variedad:           loteForm.variedad,
+      altitud:            `${loteForm.altitud} msnm`,
+      region:             caficultor.region,
+      puntajeReferencial: 0,
+      notasSabor:         [],
+      sacosDisponibles:   Number(loteForm.sacosDisponibles),
+      sacosReservados:    0,
+      precioOrigenPEN:    precioOrigen,
+      muestraDisponible:  false,
+      precioMuestraPEN:   15,
+      status:             'borrador',
+      destacado:          false,
+    });
+    setGuardando(false);
+    setSubmitted(true);
+  }
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', border: `1px solid #ddd`, borderRadius: 8,
@@ -298,15 +335,15 @@ export default function CaficultorPortal() {
               </div>
 
               <button
-                onClick={() => setSubmitted(true)}
-                disabled={!loteForm.nombreLote || !loteForm.variedad || !loteForm.precioOrigenPEN}
                 style={{
                   background: C.terra, color: 'white', border: 'none', borderRadius: 8,
                   padding: '14px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700,
-                  cursor: 'pointer', opacity: (!loteForm.nombreLote || !loteForm.variedad || !loteForm.precioOrigenPEN) ? 0.5 : 1,
+                  cursor: 'pointer', opacity: (!loteForm.nombreLote || !loteForm.variedad || !loteForm.precioOrigenPEN || guardando) ? 0.5 : 1,
                 }}
+                onClick={handleSubmitLote}
+                disabled={!loteForm.nombreLote || !loteForm.variedad || !loteForm.precioOrigenPEN || guardando}
               >
-                Registrar lote y recibir instrucciones de envío →
+                {guardando ? 'Guardando...' : 'Registrar lote y recibir instrucciones de envío →'}
               </button>
             </div>
           </div>
