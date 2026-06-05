@@ -1,0 +1,146 @@
+{
+  "version": "1.1.0",
+  "lastUpdated": "2026-06-05",
+  "modules": [
+    {
+      "id": "agricultura",
+      "order": 1,
+      "title": "Agricultura y Post-cosecha",
+      "description": "Buenas prácticas agronómicas, variedades, manejo de cosecha y procesamiento",
+      "icon": "🌱",
+      "file": "01-agricultura/buenas-practicas.md",
+      "sections": [
+        { "id": "terroir", "title": "El terroir del café peruano" },
+        { "id": "variedades", "title": "Variedades" },
+        { "id": "agronomia", "title": "Manejo agronómico" },
+        { "id": "cosecha", "title": "Cosecha" },
+        { "id": "procesamiento", "title": "Procesamiento Post-cosecha" },
+        { "id": "secado", "title": "Secado — Puntos críticos" },
+        { "id": "clasificacion", "title": "Clasificación del grano verde" }
+      ],
+      "keyFacts": [
+        "El 80% de cafetales en Perú tienen más de 15 años (MIDAGRI 2026)",
+        "Altitud óptima para especialidad: 1,200–2,000 msnm",
+        "Picking selectivo es obligatorio para café de especialidad",
+        "Humedad objetivo post-secado: 10.5–11.5%"
+      ]
+    },
+    {
+      "id": "calidad-qgrader",
+      "order": 2,
+      "title": "Calidad — Q Grader",
+      "description": "Análisis físico, análisis sensorial y protocolo SCA de catación",
+      "icon": "☕",
+      "file": "02-calidad-qgrader/analisis-fisico-sensorial.md",
+      "sections": [
+        { "id": "qgrader", "title": "¿Qué es un Q Grader?" },
+        { "id": "analisis-fisico", "title": "Análisis Físico del Grano Verde" },
+        { "id": "catacion", "title": "Análisis Sensorial — Protocolo SCA" },
+        { "id": "calibracion", "title": "Calibración entre catadores" },
+        { "id": "coe", "title": "Taza de Excelencia" }
+      ],
+      "keyFacts": [
+        "Especialidad mínimo 80 pts SCA. Tunay Wasi parte desde 82 pts.",
+        "0 defectos Cat.1 permitidos en muestra de 350g",
+        "Humedad aceptable: 10.0–12.0%",
+        "CoE Perú 2025: US$10.60–$80.10/lb en subasta"
+      ],
+      "scaTiers": [
+        { "range": "80.0–84.9", "label": "Muy bueno" },
+        { "range": "85.0–89.9", "label": "Excelente" },
+        { "range": "90.0+", "label": "Extraordinario" }
+      ]
+    },
+    {
+      "id": "barista-negocio",
+      "order": 3,
+      "title": "Barista y Negocio",
+      "description": "Perfiles de tueste, calibrado de máquina, extracción y software de apoyo",
+      "icon": "⚙️",
+      "file": "03-barista-negocio/tueste-extraccion-calibrado.md",
+      "sections": [
+        { "id": "tueste", "title": "El Tueste (Roasting)" },
+        { "id": "extraccion", "title": "El Barista — Variables de Extracción" },
+        { "id": "calibrado", "title": "Calibrado de la Máquina Espresso" },
+        { "id": "agua", "title": "El Agua — El Ingrediente Invisible" },
+        { "id": "molienda", "title": "Molienda — El Parámetro más Crítico" }
+      ],
+      "keyFacts": [
+        "Especialidad peruana: siempre tueste Light a Medium-Light",
+        "Extracción ideal: 18–22% de sólidos solubles",
+        "Temperatura agua espresso: 93–96°C para tueste claro",
+        "TDS ideal: 1.15–1.45% (medido con refractómetro)"
+      ],
+      "software": [
+        { "name": "Cropster", "use": "Tostado profesional", "cost": "~US$100/mes" },
+        { "name": "Artisan", "use": "Tostado open source", "cost": "Gratuito" },
+        { "name": "VST CoffeeTools", "use": "Análisis de extracción", "cost": "Pago" },
+        { "name": "Barista Hustle Tools", "use": "Calculadoras barista", "cost": "Gratuito" }
+      ]
+    },
+    {
+      "id": "almacenamiento",
+      "order": 4,
+      "title": "Almacenamiento End-to-End",
+      "description": "Cadena completa de almacenamiento desde finca hasta la taza del consumidor",
+      "icon": "📦",
+      "file": "04-almacenamiento/cadena-completa.md",
+      "sections": [
+        { "id": "enemigos", "title": "Los enemigos del café en almacenamiento" },
+        { "id": "finca", "title": "Almacenamiento en Finca" },
+        { "id": "transito", "title": "Almacenamiento en Tránsito" },
+        { "id": "bodega", "title": "Almacenamiento en Tostadora / Bodega" },
+        { "id": "tostado", "title": "Almacenamiento del Café Tostado" },
+        { "id": "punto-venta", "title": "Almacenamiento en Punto de Venta" },
+        { "id": "casa", "title": "Almacenamiento en Casa" }
+      ],
+      "keyFacts": [
+        "Café verde en pergamino: 10.5–11.5% humedad, hasta 18 meses",
+        "GrainPro extiende vida útil de 12 a 24+ meses",
+        "Café tostado en bolsa con válvula: óptimo entre día 7 y día 30",
+        "Nunca guardar café tostado en la refrigeradora"
+      ],
+      "storageChain": [
+        { "stage": "Finca (pergamino)", "temp": "15–22°C", "rh": "50–65%", "shelfLife": "12–18 meses" },
+        { "stage": "Finca (verde trillado)", "temp": "15–20°C", "rh": "50–60%", "shelfLife": "18–24 meses" },
+        { "stage": "Bodega urbana", "temp": "15–20°C", "rh": "50–60%", "shelfLife": "Hasta 12 meses" },
+        { "stage": "Post-tueste", "temp": "< 25°C", "rh": "< 65%", "shelfLife": "3–4 semanas" },
+        { "stage": "Punto de venta", "temp": "Ambiente", "rh": "< 65%", "shelfLife": "3–5 días" },
+        { "stage": "Casa consumidor", "temp": "Ambiente", "rh": "< 65%", "shelfLife": "2–3 semanas" }
+      ]
+    },
+    {
+      "id": "mercado",
+      "order": 5,
+      "title": "Análisis de Mercado — Specialty Perú",
+      "description": "Problemática estructural, brechas sin resolver y oportunidad de plataforma en el mercado interno peruano",
+      "icon": "📊",
+      "file": "05-mercado/analisis-mercado-specialty-peru.md",
+      "sections": [
+        { "id": "paradoja", "title": "La paradoja peruana" },
+        { "id": "consumo", "title": "Consumo per cápita vs región" },
+        { "id": "produccion", "title": "Dónde va el café peruano" },
+        { "id": "brecha-precio", "title": "La brecha de precio caficultor → taza" },
+        { "id": "perdida-valor", "title": "Por qué el caficultor pierde trazabilidad" },
+        { "id": "cafeterias", "title": "Mercado B2B: cafeterías specialty Lima" },
+        { "id": "dolores", "title": "Los 5 dolores del dueño de cafetería" },
+        { "id": "benchmark", "title": "Benchmark global: Algrano" },
+        { "id": "actores", "title": "Mapa de actores sin plataforma" },
+        { "id": "oportunidad", "title": "Las 3 brechas que Tunay Wasi cierra" }
+      ],
+      "keyFacts": [
+        "Perú: 0.6 kg/persona/año vs Colombia 2.1 kg (ICO 2023)",
+        "94% del café peruano se exporta, solo 6% se consume internamente (MIDAGRI 2024)",
+        "El caficultor recibe 5–9% del precio final al consumidor (JNC 2024)",
+        "85–90% de cafeterías specialty en Lima no tienen tostadora propia",
+        "No existe plataforma transaccional B2B de café specialty en el mercado interno peruano"
+      ],
+      "sources": [
+        { "name": "ICO", "url": "https://www.ico.org/new_historical.asp" },
+        { "name": "JNC", "url": "https://www.juntadelcafe.org.pe" },
+        { "name": "MIDAGRI", "url": "https://www.midagri.gob.pe" },
+        { "name": "Algrano", "url": "https://www.algrano.com" }
+      ]
+    }
+  ]
+}
