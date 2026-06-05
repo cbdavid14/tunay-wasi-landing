@@ -36,25 +36,29 @@
 ## SLIDE 2 — Consumo per cápita: Perú vs la región
 
 ```
-  Consumo per cápita anual (kg/persona) — 2023
-  Fuente: ICO Coffee Report 2023
+  Consumo per cápita anual (kg/persona) — 2025
+  Fuente: MIDAGRI 2025 · ICO Coffee Report 2023
 
   Brasil      ████████████████████████████████████  6.0 kg
   Uruguay     ███████████████████████               4.1 kg
   Venezuela   ████████████████                      2.8 kg
-  Colombia    ████████████                          2.1 kg
-  Bolivia     ████                                  0.8 kg
+  Colombia    ███████████████                       2.5 kg
   Chile       ████████                              1.4 kg
+  PERÚ        ███████                               1.2 kg  ← 9no exportador mundial
+  Bolivia     ████                                  0.8 kg
   Ecuador     ███                                   0.6 kg
-  PERÚ        ███                                   0.6 kg  ← productor
   Paraguay    ██                                    0.4 kg
 
   Cada █ = 0.17 kg/persona/año
 ```
 
-> **Lectura:** Perú produce café de clase mundial y consume menos que Bolivia.
-> Este no es un problema de producto — es un problema de canal y de cultura de consumo.
-> **El mercado interno tiene el mayor potencial de crecimiento de la región.**
+> **Lectura:** Perú duplicó su consumo per cápita en los últimos años (de 0.6 a 1.2 kg).
+> El boom de cafeterías de especialidad está moviendo el mercado interno.
+> Pero sigue siendo la mitad de Colombia y una quinta parte de Brasil.
+> **El potencial de crecimiento sigue siendo el mayor de la región.**
+
+**Fuente consumo Perú 1.2 kg:** MIDAGRI citado en Forbes Perú — *"El boom de cafeterías de especialidad en Perú no para"*, abril 2025
+**Fuente comparativa regional:** ICO — *Coffee Report and Outlook 2023*
 
 ---
 
@@ -88,7 +92,146 @@
 
 ---
 
-## SLIDE 4 — La brecha de precio: el mayor problema de la cadena
+## SLIDE 4 — Cadena de valor del café peruano: los 6 eslabones
+
+```
+  CADENA DE VALOR ACTUAL — Café peruano (2026)
+  Fuente: MIDAGRI 2024 · JNC 2024 · PROMCAFE 2024
+
+  1. PRODUCCIÓN EN FINCA
+     Caficultor — 223,000+ familias
+     Regiones: Cajamarca, Junín, San Martín, Cusco, Pasco, Amazonas, Puno
+     Altitud: 800–2,200 msnm · Procesos: lavado, natural, honey, anaeróbico
+              ▼ vende al contado o por habilitación
+
+  2. ACOPIADOR LOCAL
+     Junta volumen de múltiples productores
+     Mezcla lotes sin separar por calidad · Margen: 30–40%
+              ▼ vende a exportador o cooperativa
+
+  3. EXPORTADOR / COOPERATIVA
+     Consolida para exportación · Precio referencia: bolsa NY (ICE)
+     Destinos: Alemania 28% · EEUU 18% · Bélgica 12% · Italia 9%
+     El 94% del volumen sale por este eslabón
+              ▼ (para el 6% que queda en el país)
+
+  4. TOSTADORA LOCAL
+     ~50 tostadoras activas en Lima (2025)
+     Recibe café verde, tuesta, fracciona en 250g–1kg
+              ▼ vende por WhatsApp / llamada telefónica
+
+  5. CAFETERÍA DE ESPECIALIDAD
+     321 tiendas especializadas en café en Perú (cadenas + independientes)
+     Crecimiento 11.5% entre 2019 y 2024
+     Puku Puku (12 locales), Neira Café Lab (6), D'Sala (4), The Coffee (7)
+     90% del sector concentrado en Lima Moderna
+     Compra café a tostadoras — coordinación por WhatsApp / llamada
+```
+
+**Fuente eslabón 5:** Euromonitor International citado en Forbes Perú — *"El boom de cafeterías de especialidad en Perú no para"*, Lucero Chávez Quispe, 24 abril 2025. forbes.pe
+              ▼
+
+  6. CONSUMIDOR FINAL
+     Ve origen, finca, variedad y proceso en etiquetas specialty
+     Lo que rara vez aparece: el puntaje SCA certificado del lote
+```
+
+**Fuente:** MIDAGRI *Anuario Agropecuario 2024* · JNC *Caracterización del Productor Cafetalero 2022* · PROMCAFE *Trade Statistics 2024*
+
+---
+
+## SLIDE 5 — Buenas iniciativas que ya existen — pero no escalan
+
+```
+  La conexión directa caficultor ↔ cafetería YA existe en Lima.
+  Pero opera de forma aislada, sin infraestructura común.
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  CASOS QUE DEMUESTRAN QUE EL MODELO FUNCIONA                   │
+  │                                                                 │
+  │  Puku Puku Café — Miraflores, Lima                             │
+  │  Relación directa con productores seleccionados                │
+  │  Perfil de origen publicado en carta                           │
+  │                                                                 │
+  │  Tostaduría Bisetti — Lima                                     │
+  │  Vínculos históricos con productores en Cajamarca              │
+  │                                                                 │
+  │  Café Monteverde — Lima                                        │
+  │  Productores propios en Chanchamayo, Junín                     │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  POR QUÉ NO ESCALA                                              │
+  │                                                                 │
+  │  · Cada tostadora construye su red desde cero                  │
+  │  · Requiere viaje a origen — costo y tiempo altos              │
+  │  · Es una relación personal, no una plataforma                 │
+  │  · Las 220+ cafeterías sin tostadora no tienen acceso          │
+  │                                                                 │
+  │  El comercio directo existe como buena práctica individual.    │
+  │  Falta la infraestructura que lo convierta en estándar.        │
+  └─────────────────────────────────────────────────────────────────┘
+```
+
+*Casos documentados como observación de mercado · Sector specialty Lima, 2025*
+```
+
+**Fuente:** MIDAGRI *Anuario Agropecuario 2024* · JNC *Caracterización del Productor Cafetalero 2022* · PROMCAFE *Trade Statistics 2024*
+
+---
+
+## SLIDE 6 — El mercado specialty en números: ya creció, pero le falta infraestructura
+
+```
+  CRECIMIENTO DEL SECTOR — Cafeterías de especialidad Perú (2019–2024)
+  Fuente: Euromonitor International citado en Forbes Perú, abril 2025
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  TIENDAS ESPECIALIZADAS EN CAFÉ (cadenas + independientes)      │
+  │                                                                 │
+  │  2019   ████████████████████████████   ~288 tiendas            │
+  │  2024   ████████████████████████████████  321 tiendas          │
+  │                                                                 │
+  │  Crecimiento: +11.5% en 5 años                                 │
+  │  Cafés tradicionales (3,250): sin cambio en el mismo periodo   │
+  └─────────────────────────────────────────────────────────────────┘
+
+  PRINCIPALES ACTORES Y EXPANSIÓN 2025
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  Puku Puku          12 locales · abre 3 más en 2025            │
+  │                     Top 5 mejores cafeterías del mundo (2025)  │
+  │                     Compra directo al caficultor               │
+  │                                                                 │
+  │  Neira Café Lab      6 locales Lima + 4 carritos en playas     │
+  │                     Proyecta crecer 30% en 2025                │
+  │                     Internacionalización 2026 (México, EEUU)   │
+  │                                                                 │
+  │  The Coffee          7 locales · meta 15 al cierre 2025        │
+  │  (franquicia BR)    35 locales en Perú para 2028               │
+  │                     Ticket: S/40,000–50,000/mes por tienda     │
+  │                                                                 │
+  │  D'Sala Caffè        4 locales · modelo boutique               │
+  │  Artidoro Rodríguez  300+ puntos retail · 5 ton/mes volumen    │
+  └─────────────────────────────────────────────────────────────────┘
+
+  LO QUE FRENA EL CRECIMIENTO
+  · Precio internacional del café en máximos históricos (2024–2025)
+    → Las cafeterías absorben el alza reduciendo márgenes
+  · Falta de relevo generacional en el campo
+  · 90% del sector concentrado en Lima Moderna
+    → Comas, SJL, provincias recién empiezan (oportunidad)
+  · Compra de café verde sigue siendo artesanal — sin plataforma
+
+  "El boom es a nivel nacional. En Arequipa, Ayacucho, Chiclayo,
+   Cusco, Jaén y San Ignacio las cafeterías specialty son un boom."
+   — Omar Moreno, El Cafeteador / organizador Cafesazo
+```
+
+**Fuente:** Forbes Perú — *"El boom de cafeterías de especialidad en Perú no para"*, Lucero Chávez Quispe, 24 abril 2025 · Euromonitor International 2024
+
+---
+
+## SLIDE 7 — La brecha de precio: el mayor problema de la cadena
 
 ```
   Viaje de 1 kg de café — del caficultor a la taza
@@ -154,6 +297,10 @@
      El acopiador presta dinero antes de cosecha.
      Cobra con café a precio que él define.
      El caficultor no puede negociar — ya debe.
+     Fuente: Junta Nacional del Café — "Caracterización del Productor Cafetalero Peruano" (2022)
+             DEVIDA — "Diagnóstico de cadenas productivas de café en zonas VRAEM" (2021)
+             Oxfam — "Cerrando la brecha: por qué los productores de café ganan tan poco" (2020)
+             → URL verificación: juntadelcafe.org.pe · devida.gob.pe · oxfam.org
 
   3. ASIMETRÍA DE INFORMACIÓN
      El acopiador sabe el precio internacional del día.
