@@ -21,7 +21,8 @@
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
       fbq('init', '992445397287279');
-      fbq('track', 'PageView');
+      var isNegocios = window.location.hostname === 'tunay-wasi-negocios.web.app';
+      fbq('track', 'PageView', { content_category: isNegocios ? 'b2b' : 'b2c' });
     })();
   </script>
   <!-- End Meta Pixel -->
