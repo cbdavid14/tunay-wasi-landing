@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const LINKS: [string, string][] = [
   ['Lotes', '#lotes'],
@@ -9,12 +10,26 @@ const LINKS: [string, string][] = [
 export default function SupplyNav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isBlog = location.pathname.startsWith('/blog');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const handleAnchorLink = (href: string) => {
+    setMenuOpen(false);
+    if (isBlog) {
+      navigate('/');
+      setTimeout(() => {
+        const el = document.querySelector(href);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 120);
+    }
+  };
 
   return (
     <header style={{
@@ -50,7 +65,9 @@ export default function SupplyNav() {
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           {LINKS.map(([label, href]) => (
-            <a key={href} href={href} onClick={() => setMenuOpen(false)} className="tw-sup-navlink" style={{
+            <a key={href} href={isBlog ? '/' + href : href}
+              onClick={isBlog ? (e) => { e.preventDefault(); handleAnchorLink(href); } : () => setMenuOpen(false)}
+              className="tw-sup-navlink" style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 500,
               color: '#c4b297', textDecoration: 'none', letterSpacing: '0.04em',
               position: 'relative', padding: '6px 0',
@@ -58,7 +75,20 @@ export default function SupplyNav() {
             }}>{label}</a>
           ))}
 
-          <a href="#solicitud" onClick={() => setMenuOpen(false)} className="tw-sup-cta-btn" style={{
+          <a
+            href="/blog"
+            onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigate('/blog'); }}
+            className="tw-sup-navlink"
+            style={{
+              fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 500,
+              color: '#8faf8a', textDecoration: 'none', letterSpacing: '0.04em',
+              position: 'relative', padding: '6px 0', transition: 'color .25s ease',
+            }}
+          >Blog</a>
+
+          <a href={isBlog ? '/#solicitud' : '#solicitud'}
+            onClick={isBlog ? (e) => { e.preventDefault(); handleAnchorLink('#solicitud'); } : () => setMenuOpen(false)}
+            className="tw-sup-cta-btn" style={{
             fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 600,
             color: '#1f3028',
             background: 'linear-gradient(135deg, #c96e4b 0%, #b85a3a 100%)',
@@ -92,13 +122,22 @@ export default function SupplyNav() {
           background: 'rgba(24, 37, 32, 0.97)',
         }}>
           {LINKS.map(([label, href]) => (
-            <a key={href} href={href} onClick={() => setMenuOpen(false)} style={{
+            <a key={href} href={isBlog ? '/' + href : href}
+              onClick={isBlog ? (e) => { e.preventDefault(); handleAnchorLink(href); } : () => setMenuOpen(false)}
+              style={{
               fontFamily: 'Cormorant Garamond, serif', fontSize: 22, fontWeight: 600,
               color: '#f2e0cc', textDecoration: 'none', letterSpacing: '-0.005em',
               padding: '10px 0', borderBottom: '1px solid #f2e0cc11', display: 'block',
             }}>{label}</a>
           ))}
-          <a href="#solicitud" onClick={() => setMenuOpen(false)} style={{
+          <a href="/blog" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigate('/blog'); }} style={{
+            fontFamily: 'Cormorant Garamond, serif', fontSize: 22, fontWeight: 600,
+            color: '#8faf8a', textDecoration: 'none', letterSpacing: '-0.005em',
+            padding: '10px 0', borderBottom: '1px solid #f2e0cc11', display: 'block',
+          }}>Blog</a>
+          <a href={isBlog ? '/#solicitud' : '#solicitud'}
+            onClick={isBlog ? (e) => { e.preventDefault(); handleAnchorLink('#solicitud'); } : () => setMenuOpen(false)}
+            style={{
             marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 10,
             fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: 14,
             letterSpacing: '0.08em', textTransform: 'uppercase',
