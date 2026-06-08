@@ -1,6 +1,13 @@
 const COLUMNS: [string, [string, string][]][] = [
   ['Tienda', [['Café en grano', '#cafe']]],
   ['Casa', [['Origen', '#origen'], ['Caficultores', '#caficultores'], ['Modelo 50/50', '#modelo'], ['Contacto', '#contacto']]],
+  ['Aprende', [
+    ['¿Qué es un puntaje SCA?', '/blog/que-significa-puntaje-sca-cafe-especialidad'],
+    ['Cadena de valor del café', '/blog/cadena-valor-cafe-peru'],
+    ['Variedades peruanas', '/blog/variedades-cafe-peruano-geisha-typica-bourbon'],
+    ['Procesos post-cosecha', '/blog/procesos-postcosecha-lavado-natural-honey-anaerobico'],
+    ['Ver todos los artículos', '/blog'],
+  ]],
   ['Conecta', [['Instagram', 'https://www.instagram.com/tunay_wasi/'], ['WhatsApp', 'https://wa.me/51917959370?text=Hola%2C%20quiero%20mi%20microlote%20de%20caf%C3%A9%20de%20especialidad%20Tunay%20Wasi'], ['Tiktok', 'https://www.tiktok.com/@tunaywasi7']]],
 ];
 
@@ -8,7 +15,7 @@ export default function Footer() {
   return (
     <footer style={{ background: '#1f3028', color: '#f2e0cc', padding: '80px 36px 32px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ maxWidth: 1320, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: 56 }} className="tw-foot-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 1fr', gap: 56 }} className="tw-foot-grid">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
               <div style={{ width: 48, height: 48, animation: 'tw-logo-hover 4.2s ease-in-out infinite' }}>
@@ -28,9 +35,14 @@ export default function Footer() {
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {items.map(([label, href]) => (
                   <li key={label}>
-                    <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noopener noreferrer' : undefined} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 14, color: '#f2e0cc', textDecoration: 'none', transition: 'color .25s ease' }}
+                    <a
+                      href={href}
+                      target={href.startsWith('http') ? '_blank' : undefined}
+                      rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: label === 'Ver todos los artículos' ? '#8faf8a' : '#f2e0cc', textDecoration: 'none', transition: 'color .25s ease' }}
                       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#8faf8a'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#f2e0cc'; }}>
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = label === 'Ver todos los artículos' ? '#8faf8a' : '#f2e0cc'; }}
+                    >
                       {label}
                     </a>
                   </li>

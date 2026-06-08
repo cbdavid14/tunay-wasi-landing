@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CoffeeBranch from '@/components/decor/CoffeeBranch';
 import ImageSlot from '@/components/decor/ImageSlot';
-import WaitlistForm from '@/components/WaitlistForm';
 import { useCaficultores } from '@/features/catalog/useCaficultores';
 import { useLandingConfig } from '@/features/catalog/useLandingConfig';
 
 export default function Hero() {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { setLoaded(true); }, []);
+  const navigate = useNavigate();
 
   const { data: caficultores } = useCaficultores();
   const { data: landingConfig } = useLandingConfig();
@@ -67,13 +68,21 @@ export default function Hero() {
                 Conoce a los caficultores
               </a>
             </div>
-            <WaitlistForm
-              firestoreCollection="waitlist-b2c"
-              origen="hero"
-              theme="light"
-              style={{ marginTop: 32, ...fade(0.55) }}
-            />
-
+            {/* Blog teaser */}
+            <div style={{ marginTop: 20, ...fade(0.55, 0.7) }}>
+              <button
+                onClick={() => navigate('/blog')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                <span style={{ width: 32, height: 1, background: '#c96e4b', display: 'block' }} />
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, letterSpacing: '0.1em', color: '#533b22', textTransform: 'uppercase' }}>
+                  ¿Curioso sobre el café peruano?
+                </span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#c96e4b', letterSpacing: '0.06em' }}>
+                  Lee nuestro blog →
+                </span>
+              </button>
+            </div>
             <div style={{ display: 'flex', gap: 36, marginTop: 48, flexWrap: 'wrap', ...fade(0.6) }}>
               {([
                 [`Hasta ${producerPctDisplay}%`, 'directo al productor'],
