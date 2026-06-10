@@ -523,6 +523,215 @@ export const POST_CONTENT: Record<string, ReactNode> = {
     </>
   ),
 
+  'cafe-88-puntos-se-vende-como-commodity': (
+    <>
+      <P><em>Serie: La economía del café specialty peruano — Artículo 1 de 4</em></P>
+      <P>Hay un caficultor en Junín que produce un café de 88 puntos SCA. Lo sabe porque un comprador extranjero lo catió hace dos años y quedó impresionado. Pero ese comprador no volvió. Y el siguiente que llegó — un acopiador local — le pagó lo mismo que al vecino que produce un café de 78 puntos.</P>
+      <P>El caficultor terminó vendiendo su lote a precio commodity. No porque su café sea malo. Sino porque el mercado no tenía forma de distinguirlo.</P>
+
+      <H2>El experimento mental de Akerlof</H2>
+      <P>En 1970, el economista George Akerlof publicó un paper que cambiaría la teoría económica: <em>"The Market for Lemons: Quality Uncertainty and the Market Mechanism"</em>. Le valió el Premio Nobel en 2001.</P>
+      <P>Su pregunta era aparentemente simple: ¿por qué el mercado de autos usados funciona tan mal? La respuesta que encontró es una de las ideas más poderosas de la economía moderna.</P>
+      <P>Cuando el vendedor sabe más que el comprador sobre la calidad del producto — lo que Akerlof llamó <strong>asimetría de información</strong> — el mercado se deteriora sistemáticamente:</P>
+      <Table
+        headers={['Paso', 'Lo que ocurre']}
+        rows={[
+          ['1', 'El comprador no puede distinguir un producto bueno de uno malo antes de comprarlo'],
+          ['2', 'Para cubrirse, ofrece un precio promedio — ni el máximo ni el mínimo'],
+          ['3', 'Los vendedores del producto bueno rechazan ese precio — es injusto para ellos'],
+          ['4', 'Solo los vendedores del producto malo aceptan'],
+          ['5', 'El comprador aprende esto, baja aún más su oferta'],
+          ['6', 'El mercado colapsa hacia lo peor'],
+        ]}
+      />
+      <P>Akerlof llamó a los autos malos <em>"lemons"</em> — limones. Y el título del paper quedó como metáfora permanente de los mercados donde la información asimétrica destruye el valor.</P>
+
+      <H2>El mercado peruano de café verde es un mercado de limones</H2>
+      <P>Aplica el mismo mecanismo, punto por punto. El tostador no puede verificar la calidad del café verde antes de comprarlo — o si puede, le cuesta tiempo, dinero y acceso que no siempre tiene. La única forma de saber si un lote es realmente de 88 puntos es tostarlo y catarlo. Pero para eso ya tiene que haberlo comprado.</P>
+      <P>Entonces hace lo que cualquier comprador racional hace en un mercado con información asimétrica: paga el precio que corresponde a la calidad promedio que espera del mercado. No el precio del café excelente. No el precio del café malo. El precio del medio.</P>
+      <P>El resultado: el caficultor que produce calidad recibe el mismo precio que el que no invirtió en su proceso. El caficultor que invirtió en calidad no tiene incentivo para seguir haciéndolo. El mercado converge hacia la mediocridad.</P>
+      <Quote text="El café de 88 puntos se vende como commodity no porque el mercado sea injusto. Sino porque el mercado no tiene los instrumentos para leer su valor." />
+
+      <H2>La señal que rompe la asimetría</H2>
+      <P>Akerlof también identificó la solución: las <strong>señales de calidad verificables</strong>. En el mercado de autos usados, surgieron las garantías, los historiales de mantenimiento, las inspecciones certificadas. Mecanismos que permiten al comprador conocer la calidad antes de pagar el precio de la calidad.</P>
+      <P>En el mercado del café specialty, esa señal existe: el puntaje SCA verificado por un Q-Grader certificado. Pero hay un problema práctico en el mercado peruano: la mayoría de caficultores no tienen acceso a esa certificación. El proceso es costoso, requiere infraestructura que no existe en origen, y los laboratorios de catación están concentrados en Lima o en el extranjero.</P>
+      <P>Entonces el caficultor llega al mercado sin señal verificable. Y el mercado lo trata como si fuera un lemon.</P>
+
+      <H2>Qué cambia cuando la señal existe</H2>
+      <P>Cuando el tostador puede ver — antes de negociar — que un lote específico tiene ficha técnica documentada, variedad verificada, proceso registrado, y una catación de referencia, puede tomar una decisión informada. Ya no paga el precio promedio del mercado. Paga el precio de ese lote específico.</P>
+      <P>Y el caficultor que invirtió en su proceso recibe la recompensa que el mercado le negaba. Eso no es solo justicia. Es eficiencia económica: el precio correcto llega a quien produjo la calidad correcta, y eso crea el incentivo para que más caficultores inviertan en calidad.</P>
+      <P>El mercado deja de converger hacia la mediocridad. Empieza a converger hacia arriba.</P>
+
+      <H2>La conclusión de Akerlof aplicada al café peruano</H2>
+      <Quote text="El problema no es la calidad del producto. Es la ausencia de información que permita al mercado reconocerla y pagarla." />
+      <P>El café de especialidad peruano tiene uno de los perfiles sensoriales más ricos del mundo — altitudes entre 1,200 y 2,000 metros, variedades nativas, procesos experimentales. Pero ese valor permanece invisible para el mercado mientras no exista un canal que lo documente, lo estandarice y lo haga accesible al comprador en el momento en que necesita decidir.</P>
+
+      <H2>Referencia bibliográfica</H2>
+      <P>Akerlof, G. A. (1970). <em>The Market for Lemons: Quality Uncertainty and the Market Mechanism</em>. The Quarterly Journal of Economics, 84(3), 488–500. Premio Nobel de Economía, 2001.</P>
+    </>
+  ),
+
+  'mercado-cafe-verde-que-nadie-puede-ver': (
+    <>
+      <P><em>Serie: La economía del café specialty peruano — Artículo 2 de 4</em></P>
+      <P>Pregúntale a cualquier tostador de especialidad en Lima cómo sabe qué café verde está disponible esta semana. La respuesta es siempre la misma: llama a sus contactos. Uno por uno. Espera que contesten. Espera que tengan algo. Espera que lo que tienen sea lo que él necesita.</P>
+      <P>No hay ningún lugar donde mirar. El mercado existe — hay caficultores con lotes listos, hay tostadores con tostadoras encendidas — pero entre los dos hay un vacío de información que cada uno resuelve con su agenda telefónica.</P>
+
+      <H2>Lo que descubrieron Parker, Van Alstyne y Choudary</H2>
+      <P>En 2016, Geoffrey Parker, Marshall Van Alstyne y Sangeet Paul Choudary publicaron <em>"Platform Revolution"</em>, el análisis más completo sobre cómo funcionan los mercados digitales modernos.</P>
+      <P>Su tesis central: los negocios más valiosos del siglo XXI no producen cosas ni prestan servicios directamente. <strong>Crean las condiciones para que otros intercambien valor entre sí.</strong></P>
+      <P>Airbnb no tiene hoteles. Uber no tiene autos. Amazon Marketplace no produce los productos que vende. Lo que tienen es algo más poderoso: <strong>visibilidad del mercado</strong>. Un lado del mercado puede ver lo que el otro tiene. Puede comparar, evaluar, decidir.</P>
+
+      <H2>El mercado de café verde peruano es un mercado sin plataforma</H2>
+      <P>Existen caficultores con lotes de calidad. Existen tostadores dispuestos a pagar por ellos. Pero entre los dos no hay infraestructura de visibilidad.</P>
+      <Table
+        headers={['Problema observable', 'Causa real']}
+        rows={[
+          ['El tostador gestiona 3+ proveedores', 'Ninguno garantiza continuidad — la diversificación es el seguro contra la opacidad'],
+          ['Cuando hay quiebre, llama a conocidos', 'El backup es su red personal, no el mercado'],
+          ['En enero y febrero el café escasea', 'La cosecha de junio-agosto nunca se conectó con quien la necesitaba en enero'],
+        ]}
+      />
+      <P>La escasez estacional no es un problema de producción. Es un problema de visibilidad anticipada. El café existía. Nadie lo vio a tiempo.</P>
+
+      <H2>El efecto de red que lo cambia todo</H2>
+      <P>Parker y sus coautores identificaron el mecanismo que hace a las plataformas defendibles como negocio: <strong>el efecto de red</strong>. Una plataforma se vuelve más valiosa para cada usuario a medida que más usuarios se unen.</P>
+      <Table
+        headers={['Acción', 'Efecto']}
+        rows={[
+          ['Cada caficultor que registra su lote', 'hace la plataforma más útil para el siguiente tostador'],
+          ['Cada tostador que encuentra lo que busca', 'hace la plataforma más atractiva para el siguiente caficultor'],
+        ]}
+      />
+      <P>No es tecnología lo que crea ese valor. Es la masa crítica de participantes que convierte un directorio en un mercado real.</P>
+
+      <H2>El dato acumulado como ventaja competitiva</H2>
+      <P>Cada lote que pasa por la plataforma deja un rastro: qué variedad, qué proceso, qué región, qué puntaje, qué precio, qué tostador lo compró, qué estación del año. Con el tiempo, esa data responde preguntas que hoy nadie puede responder:</P>
+      <Table
+        headers={['Pregunta', 'Estado actual']}
+        rows={[
+          ['¿Qué variedades de Junín tienen mejor puntaje?', 'Sin datos — nadie los tiene'],
+          ['¿En qué meses hay más Geisha disponible en Cusco?', 'Sin datos — depende de cada proveedor'],
+          ['¿Cuánto paga el mercado por un Natural de 87 pts?', 'Sin datos — cada negociación es privada'],
+        ]}
+      />
+      <P>Esa inteligencia de mercado no existe hoy en ningún formato accesible en Perú. El que la construya primero no solo tiene un negocio — tiene el mapa del mercado que todos los demás necesitan para operar.</P>
+
+      <H2>La plataforma no reemplaza la relación personal</H2>
+      <P>Uno de los hallazgos más importantes en nuestra investigación con tostadores es que el freno principal para adoptar una plataforma digital es la relación personal con el proveedor actual. Parker y sus coautores son explícitos en esto: las plataformas exitosas no destruyen las relaciones existentes. Las complementan con información que la relación sola no puede proveer.</P>
+      <Quote text="La plataforma no crea el valor. Hace visible el valor que ya existía pero que el mercado no podía ver." />
+
+      <H2>Referencia bibliográfica</H2>
+      <P>Parker, G. G., Van Alstyne, M. W., & Choudary, S. P. (2016). <em>Platform Revolution: How Networked Markets Are Transforming the Economy and How to Make Them Work for You</em>. W. W. Norton & Company.</P>
+    </>
+  ),
+
+  'tostador-no-compra-cafe-contrata-certeza': (
+    <>
+      <P><em>Serie: La economía del café specialty peruano — Artículo 3 de 4</em></P>
+      <P>Si le preguntas a un tostador qué compra, te dirá: café verde de especialidad. Pero si lo observas trabajar — la forma en que coordina sus pedidos, el esfuerzo que pone en verificar cada lote, la ansiedad que aparece en enero cuando el stock empieza a escasear — te das cuenta de que lo que realmente está buscando no es el café en sí.</P>
+      <P>Es la certeza de que va a tener café bueno, disponible, a tiempo, consistente. Semana tras semana. El café es el producto. La certeza es el trabajo real que está contratando.</P>
+
+      <H2>La teoría del trabajo por hacer</H2>
+      <P>Clayton Christensen, uno de los pensadores de negocios más influyentes del siglo XX, desarrolló a lo largo de su carrera una idea que parece simple pero que tiene consecuencias profundas: <em>los clientes no compran productos, los contratan para que hagan un trabajo</em>.</P>
+      <P>En su libro <em>"Competing Against Luck"</em> (2016), Christensen formaliza este concepto bajo el nombre de <strong>Jobs-to-be-Done</strong> (JTBD). El ejemplo clásico: una cadena de comida rápida quería aumentar ventas de malteadas. Hicieron encuestas, mejoraron la receta, cambiaron el tamaño. Las ventas no subieron. Cuando fueron a observar quién compraba malteadas y cuándo, descubrieron que la mayoría se vendían temprano, a personas que iban solas al trabajo en auto — no porque tuvieran hambre, sino porque la malteada era lo suficientemente espesa para durar todo el viaje.</P>
+      <Quote text="El trabajo que contrataban no era 'desayunar'. Era 'sobrevivir el viaje al trabajo sin aburrirse'." />
+
+      <H2>El trabajo real del tostador de especialidad</H2>
+      <Quote text="Necesito saber con anticipación qué lotes de calidad verificada van a estar disponibles, para planificar mis tuestes, mantener contento a mis clientes y no quedarme sin café en los meses difíciles." />
+      <P>Ese es el trabajo. Y tiene tres dimensiones:</P>
+      <Table
+        headers={['Dimensión', 'Descripción']}
+        rows={[
+          ['Funcional', 'Acceso a café verde de calidad consistente, disponible cuando lo necesita'],
+          ['Emocional', 'Tranquilidad de saber que no va a fallar a sus clientes — la cadena de fallo es su mayor ansiedad operativa'],
+          ['Social', 'Reputación frente a las cafeterías que esperan consistencia de origen'],
+        ]}
+      />
+
+      <H2>Por qué el mercado actual no hace ese trabajo</H2>
+      <P>El mercado actual le ofrece al tostador exactamente lo que dice que quiere: café. Hay acopiadores, hay cooperativas, hay contactos directos con caficultores. El café existe. Pero el trabajo — la certeza, la anticipación, la visibilidad — no está disponible en ningún formato confiable.</P>
+      <P>El tostador gestiona más de tres proveedores no porque quiera complejidad. La acepta porque es el único mecanismo disponible para aproximarse a la certeza que necesita. Y aun así, en enero y febrero, el sistema falla. Porque la escasez estacional no se resuelve con más proveedores — se resuelve con anticipación.</P>
+
+      <H2>Qué debe construir una plataforma que entiende el trabajo real</H2>
+      <Table
+        headers={['Trabajo del tostador', 'Funcionalidad que lo resuelve']}
+        rows={[
+          ['Saber qué hay disponible ahora', 'Catálogo en tiempo real con stock y calidad'],
+          ['Anticipar la escasez estacional', 'Calendario de disponibilidad por región y mes'],
+          ['Evaluar antes de comprometer capital', 'Solicitud de muestra directa desde la plataforma'],
+          ['Reservar con anticipación', 'Preventa con fecha de cierre y cupo definido'],
+          ['Contarle la historia a sus clientes', 'Perfil completo del caficultor con cada lote'],
+        ]}
+      />
+      <Quote text="El producto correcto no es el que el tostador describe cuando le preguntas qué quiere. Es el que resuelve el trabajo que tiene que hacer cuando nadie lo está observando." />
+
+      <H2>La pregunta que Christensen haría</H2>
+      <P>Antes de construir cualquier funcionalidad, Christensen insistía en responder una pregunta: <em>"¿Qué estaba haciendo el cliente antes de que existiera tu producto, y por qué esa solución era insatisfactoria?"</em></P>
+      <P>La respuesta en este caso es brutalmente clara: el tostador estaba llamando por teléfono, coordinando por WhatsApp, catando muestras sin sistema, y aun así quedándose sin café en enero. Esa solución no era insatisfactoria por falta de esfuerzo. Era insatisfactoria porque el trabajo que necesitaba hacer — certeza de abastecimiento con anticipación — estructuralmente no se puede resolver con una agenda telefónica. Se resuelve con visibilidad del mercado.</P>
+
+      <H2>Referencia bibliográfica</H2>
+      <P>Christensen, C. M., Hall, T., Dillon, K., & Duncan, D. S. (2016). <em>Competing Against Luck: The Story of Innovation and Customer Choice</em>. HarperBusiness.</P>
+    </>
+  ),
+
+  'caficultor-tiene-riqueza-que-mercado-no-puede-leer': (
+    <>
+      <P><em>Serie: La economía del café specialty peruano — Artículo 4 de 4</em></P>
+      <P>Hay una finca en las alturas de Cusco donde crece una variedad de Geisha a 1,800 metros sobre el nivel del mar. El suelo, el microclima, la forma en que el caficultor maneja la fermentación — todo eso se traduce en una taza que un comprador extranjero pagaría tres veces el precio commodity.</P>
+      <P>Pero ese caficultor vende a S/. 8 el kilo. No porque no tenga valor. Sino porque el mercado no tiene manera de leerlo.</P>
+
+      <H2>El capital invisible de Hernando de Soto</H2>
+      <P>En el año 2000, el economista peruano Hernando de Soto publicó <em>"El Misterio del Capital"</em>, uno de los libros más citados sobre desarrollo económico de las últimas décadas. Su pregunta central era aparentemente paradójica: ¿por qué los países pobres tienen tanto capital físico — tierra, casas, animales, cultivos — y aun así no pueden generar riqueza a partir de él?</P>
+      <P>La respuesta de De Soto es elegante y devastadora: <strong>el capital físico sin representación formal es capital muerto</strong>. Una casa sin título de propiedad no puede usarse como garantía para un préstamo. Una finca sin registro catastral no puede venderse en el mercado formal. Los activos existen. Su valor existe. Pero sin el sistema de representación que los haga legibles para el mercado, ese valor permanece atrapado, invisible, inmovilizable.</P>
+
+      <H2>El caficultor peruano y su capital muerto</H2>
+      <P>Aplica el mismo principio, pero en el mercado del café. El caficultor tiene activos reales:</P>
+      <Table
+        headers={['Activo real', 'Estado en el mercado']}
+        rows={[
+          ['Finca con coordenadas GPS y microclima único', 'Sin representación formal — invisible para el comprador remoto'],
+          ['Variedades cultivadas con décadas de selección', 'Sin ficha técnica — el comprador no puede evaluarlas'],
+          ['Proceso de beneficio propio', 'Sin documentación — no verificable antes de recibir muestra'],
+          ['Lote con perfil sensorial diferenciado', 'Sin puntaje SCA — no tiene precio diferenciado'],
+          ['Historia de origen', 'Sin formato — el tostador no puede contarla a sus clientes'],
+        ]}
+      />
+      <Quote text="Su capital existe. Pero está muerto para el mercado que pagaría por él." />
+
+      <H2>La brecha de conocimiento técnico como barrera de representación</H2>
+      <P>De Soto identificó que el problema del capital muerto no es solo falta de documentos — es falta de acceso al sistema que produce esos documentos. En el mercado de café specialty peruano, ese sistema es el lenguaje técnico de la industria: la terminología SCA, los protocolos de catación, la forma de describir variedades y procesos.</P>
+      <P>La mayoría de caficultores en Perú no tienen acceso a ese lenguaje. No por falta de capacidad — por falta de exposición y formación. El resultado es un círculo cerrado:</P>
+      <Table
+        headers={['Paso', 'Consecuencia']}
+        rows={[
+          ['El caficultor no habla el lenguaje técnico del mercado', 'El tostador no puede pre-evaluar el lote sin recibir la muestra'],
+          ['El costo de evaluación recae sobre el tostador', 'El tostador prefiere quedarse con proveedores conocidos'],
+          ['El caficultor nuevo no puede entrar al mercado de calidad', 'El caficultor no tiene incentivo para documentar mejor'],
+        ]}
+      />
+
+      <H2>La solución: el sistema de representación</H2>
+      <P>De Soto no propone regalarles activos a los pobres. Propone crear el sistema institucional que convierta sus activos existentes en capital vivo — legible, transferible, movilizable. El café specialty peruano necesita el equivalente.</P>
+      <P>No un certificado caro e inaccesible que pocos caficultores pueden obtener. Sino un sistema de documentación guiada que tome lo que el caficultor ya sabe sobre su café — la altitud, la variedad, el proceso, la cosecha, el secado — y lo traduzca al lenguaje que el mercado de tostadores puede evaluar.</P>
+
+      <H2>Lo que cambia cuando el capital vive</H2>
+      <DataGrid items={[
+        { number: 'Para el caficultor', label: 'Su café deja de ser commodity — el precio refleja el valor real de su proceso y su origen' },
+        { number: 'Para el tostador', label: 'Puede pre-calificar lotes antes de pedir muestra — su costo de evaluación baja' },
+        { number: 'Para el mercado', label: 'El precio correcto llega a quien produjo la calidad correcta — los incentivos se alinean' },
+      ]} />
+
+      <H2>La paradoja peruana</H2>
+      <P>Hernando de Soto escribió su libro sobre Perú, entre otros países. Décadas después, el café specialty peruano repite exactamente esa paradoja: algunas de las condiciones de cultivo más extraordinarias del mundo, altitudes extremas, diversidad de microclimas, variedades que en otros países serían joyas codiciadas. Y sin embargo, la mayor parte de ese café llega al tostador limeño como commodity, sin nombre, sin historia, sin el precio que merece.</P>
+      <Quote text="El misterio del capital del caficultor peruano no es falta de café. Es falta del sistema que haga ese café legible para el mercado que puede pagarlo." author="Tunay Wasi" />
+      <P><em>Esta serie hace parte de la investigación de Tunay Wasi sobre el mercado de café verde de especialidad en Perú. Si eres tostador, caficultor o inversor y quieres conversar sobre lo que encontramos, escríbenos.</em></P>
+
+      <H2>Referencia bibliográfica</H2>
+      <P>De Soto, H. (2000). <em>The Mystery of Capital: Why Capitalism Triumphs in the West and Fails Everywhere Else</em>. Basic Books.</P>
+    </>
+  ),
+
   'cinco-dolores-dueno-cafeteria-specialty-lima': (
     <>
       <H2>El mercado que creció sin infraestructura</H2>
