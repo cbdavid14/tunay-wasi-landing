@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
+import CheckoutAuthPrompt from './CheckoutAuthPrompt';
 import { QRCodeSVG } from 'qrcode.react';
 import { Money } from '@/shared/money';
 import type { AdapterName, ShippingData, ShippingZone } from '@/shared/types/checkout';
@@ -752,6 +753,7 @@ export default function Checkout() {
   const { closeCheckout, setCheckoutStep } = useCartActions();
   const items = useCartItems();
   const { data, setData, status, orderId, totals, canContinue, submitPayment, reset } = useCheckout();
+  const [authPromptDone, setAuthPromptDone] = useState(false);
   const { data: cycle } = useActiveCycle();
   const { data: shippingZones } = useShipping();
   const { data: yapePlin } = useYapePlin();
@@ -806,13 +808,20 @@ export default function Checkout() {
         {/* Body */}
         <div style={{ padding: '20px 28px 24px' }}>
           {status === 'done' ? (
-            <div style={{ padding: '40px 0', textAlign: 'center' }}>
+            <div style={{ padding: '40px 0 24px', textAlign: 'center' }}>
               <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#8faf8a', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cormorant Garamond, serif', fontSize: 40, color: '#1f3028' }}>✓</div>
               <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 32, color: '#1f3028', margin: 0 }}>¡Pedido recibido!</h3>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#c4b297', marginTop: 12, maxWidth: 380, marginInline: 'auto', lineHeight: 1.6 }}>
                 Pedido <strong style={{ color: '#1f3028' }}>#{orderId}</strong> registrado. Verificaremos tu pago y te confirmaremos por WhatsApp.
               </p>
-              <button onClick={reset} style={{ marginTop: 24, padding: '12px 24px', background: '#c96e4b', color: '#1f3028', border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 12, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Listo</button>
+              {!authPromptDone && orderId ? (
+                <CheckoutAuthPrompt
+                  orderId={orderId}
+                  onDone={() => { setAuthPromptDone(true); reset(); }}
+                />
+              ) : (
+                <button onClick={reset} style={{ marginTop: 24, padding: '12px 24px', background: '#c96e4b', color: '#1f3028', border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 12, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Listo</button>
+              )}
             </div>
           ) : step === 'datos' ? (
             <StepDatos data={data} setData={setData} totals={totals} shippingZones={activeZones} />

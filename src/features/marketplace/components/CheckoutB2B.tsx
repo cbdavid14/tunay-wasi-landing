@@ -4,6 +4,8 @@
  */
 import { useState } from 'react';
 import type { LoteDoc } from '@/shared/types/marketplace';
+import { createMktPedido } from '@/features/marketplace/marketplaceService';
+import type { PerfilCafeteria } from '@/shared/types/auth';
 
 const C = {
   green: '#1f3028', cream: '#f2e0cc', terra: '#c96e4b',
@@ -12,32 +14,88 @@ const C = {
 
 interface CarritoItem {
   lote: LoteDoc;
-  tipo: 'muestra' | 'saco';
   sacos?: number;
+  feeLaboratorioPEN?: number;
 }
 
 interface Props {
   items: CarritoItem[];
+  perfil: PerfilCafeteria;
   onVolver: () => void;
-  onConfirmar: () => void;
+  onConfirmar: (pedidoId: string) => void;
 }
 
-export default function CheckoutB2B({ items, onVolver, onConfirmar }: Props) {
+export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Props) {
   const [step, setStep] = useState<'datos' | 'pago' | 'confirmado'>('datos');
+  const [pedidoId, setPedidoId] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
   const [form, setForm] = useState({
-    razonSocial: '', ruc: '', contacto: '', email: '', telefono: '',
-    direccion: '', metodoPago: 'transferencia' as 'transferencia' | 'culqi' | 'yape',
+    razonSocial: perfil.empresa ?? '',
+    ruc: '',
+    contacto: perfil.nombre ?? '',
+    email: perfil.email ?? '',
+    telefono: perfil.telefono ?? '',
+    direccion: '',
+    metodoPago: 'transferencia' as 'transferencia' | 'culqi' | 'yape',
   });
 
   const subtotal = items.reduce((s, i) => {
-    if (i.tipo === 'muestra') return s + i.lote.precioMuestraPEN;
     return s + (i.lote.precioVentaPEN ?? 0) * (i.sacos ?? 1);
   }, 0);
   const igv = Math.round(subtotal * 0.18);
-  const flete = items.some(i => i.tipo === 'saco') ? 25 * items.filter(i => i.tipo === 'saco').reduce((s, i) => s + (i.sacos ?? 1), 0) : 0;
-  const total = subtotal + igv + flete;
+  const flete = items.length > 0 ? 25 * items.reduce((s, i) => s + (i.sacos ?? 1), 0) : 0;
+  const feeLab = items.reduce((s, i) => s + (i.feeLaboratorioPEN ?? 0), 0);
+  const total = subtotal + igv + flete + feeLab;
 
   function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })); }
+
+  async function handleConfirmar() {
+    setGuardando(true);
+    try {
+      // reservaExpiraAt = ahora + 72 horas
+      const reservaExpiraAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+      // Crear un pedido por cada item de tipo saco
+      let ultimoPedidoId = '';
+      for (const item of items) {
+        const sacos = item.sacos ?? 1;
+        const precioSaco = item.lote.precioVentaPEN ?? 0;
+        const sub = sacos * precioSaco;
+        const igvItem = Math.round(sub * 0.18);
+        const fleteItem = 25 * sacos;
+        const feeLabItem = item.feeLaboratorioPEN ?? 0;
+        ultimoPedidoId = await createMktPedido({
+          loteId: item.lote.id,
+          tostadoraId: perfil.uid,
+          caficultorId: item.lote.caficultorId,
+          sacosSolicitados: sacos,
+          kgTotal: sacos * 60,
+          precioSacoPEN: precioSaco,
+          subtotalPEN: sub,
+          igvPEN: igvItem,
+          fletePEN: fleteItem,
+          ...(feeLabItem > 0 ? { feeLaboratorioPEN: feeLabItem } : {}),
+          totalPEN: sub + igvItem + fleteItem + feeLabItem,
+          metodoPago: form.metodoPago,
+          pagoStatus: 'pendiente',
+          reservaExpiraAt,
+          razonSocial: form.razonSocial,
+          ruc: form.ruc,
+          contacto: form.contacto,
+          email: form.email,
+          telefono: form.telefono,
+          direccionEntrega: form.direccion,
+          logisticaStatus: 'pendiente_pago',
+          pagoCaficultorStatus: 'pendiente',
+          montoCaficultorPEN: sub,
+        });
+      }
+      setPedidoId(ultimoPedidoId);
+      setStep('confirmado');
+    } finally {
+      setGuardando(false);
+    }
+  }
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', border: `1px solid #ddd`, borderRadius: 8,
@@ -54,11 +112,11 @@ export default function CheckoutB2B({ items, onVolver, onConfirmar }: Props) {
             Pedido recibido
           </h2>
           <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, lineHeight: 1.7, marginBottom: 24 }}>
-            Tu pedido <strong style={{ color: C.terra }}>PED-2026-0043</strong> fue registrado.<br />
+            Tu pedido <strong style={{ color: C.terra }}>{pedidoId}</strong> fue registrado.<br />
             Verificaremos el pago y notificaremos al caficultor para el despacho.<br />
             Recibirás la factura electrónica en <strong>{form.email}</strong>.
           </p>
-          <div style={{ background: '#f7f3ee', borderRadius: 10, padding: 16, marginBottom: 24 }}>
+          <div style={{ background: '#f7f3ee', borderRadius: 10, padding: 16, marginBottom: 16 }}>
             <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, marginBottom: 8 }}>Datos para transferencia</p>
             <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: 0 }}>
               BCP · Cuenta Corriente<br />
@@ -68,11 +126,16 @@ export default function CheckoutB2B({ items, onVolver, onConfirmar }: Props) {
               Monto exacto: <strong style={{ color: C.terra }}>S/ {total.toLocaleString()}</strong>
             </p>
           </div>
-          <button onClick={() => { onConfirmar(); }} style={{
+          <div style={{ background: `${C.terra}10`, border: `1px solid ${C.terra}30`, borderRadius: 8, padding: 12, marginBottom: 24 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: 0, fontWeight: 600 }}>
+              Tu reserva vence en 72 horas. Si no recibimos el comprobante de pago en ese plazo, los sacos se liberarán para otros compradores.
+            </p>
+          </div>
+          <button onClick={() => onConfirmar(pedidoId ?? '')} style={{
             background: C.terra, color: 'white', border: 'none', borderRadius: 8,
             padding: '12px 32px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, cursor: 'pointer',
           }}>
-            Ver mi panel de pedidos
+            Ver mis pedidos →
           </button>
         </div>
       </div>
@@ -146,11 +209,12 @@ export default function CheckoutB2B({ items, onVolver, onConfirmar }: Props) {
                 </div>
                 <button
                   onClick={() => setStep('pago')}
-                  disabled={!form.razonSocial || !form.ruc || !form.email}
+                  disabled={!form.razonSocial || !form.ruc || !form.email || !form.direccion}
                   style={{
                     background: C.terra, color: 'white', border: 'none', borderRadius: 8,
                     padding: '12px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700,
-                    cursor: 'pointer', marginTop: 8, opacity: (!form.razonSocial || !form.ruc || !form.email) ? 0.5 : 1,
+                    cursor: 'pointer', marginTop: 8,
+                    opacity: (!form.razonSocial || !form.ruc || !form.email || !form.direccion) ? 0.5 : 1,
                   }}
                 >
                   Continuar al pago →
@@ -197,11 +261,16 @@ export default function CheckoutB2B({ items, onVolver, onConfirmar }: Props) {
                   }}>
                     ← Volver
                   </button>
-                  <button onClick={() => setStep('confirmado')} style={{
-                    background: C.terra, color: 'white', border: 'none', borderRadius: 8,
-                    padding: '12px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                  }}>
-                    Confirmar pedido S/{total.toLocaleString()}
+                  <button
+                    onClick={handleConfirmar}
+                    disabled={guardando}
+                    style={{
+                      background: C.terra, color: 'white', border: 'none', borderRadius: 8,
+                      padding: '12px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700,
+                      cursor: guardando ? 'not-allowed' : 'pointer', opacity: guardando ? 0.6 : 1,
+                    }}
+                  >
+                    {guardando ? 'Registrando...' : `Confirmar pedido S/${total.toLocaleString()}`}
                   </button>
                 </div>
               </div>
@@ -216,21 +285,21 @@ export default function CheckoutB2B({ items, onVolver, onConfirmar }: Props) {
             {items.map((item, i) => (
               <div key={i} style={{ borderBottom: '1px solid #f0ebe4', paddingBottom: 12, marginBottom: 12 }}>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>
-                  {item.tipo === 'muestra' ? '🧪 Muestra 200g' : `📦 ${item.sacos} saco${(item.sacos ?? 1) > 1 ? 's' : ''} (${(item.sacos ?? 1) * 60}kg)`}
+                  {`${item.sacos} saco${(item.sacos ?? 1) > 1 ? 's' : ''} (${(item.sacos ?? 1) * 60}kg)`}
                 </p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
                   {item.lote.nombreLote}
                 </p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.terra, margin: '4px 0 0', fontWeight: 700 }}>
-                  S/ {item.tipo === 'muestra' ? item.lote.precioMuestraPEN : ((item.lote.precioVentaPEN ?? 0) * (item.sacos ?? 1)).toLocaleString()}
+                  S/ {((item.lote.precioVentaPEN ?? 0) * (item.sacos ?? 1)).toLocaleString()}
                 </p>
               </div>
             ))}
-
             {[
               { label: 'Subtotal', val: subtotal },
               { label: 'IGV (18%)', val: igv },
-              { label: `Flete terrestre`, val: flete },
+              { label: 'Flete terrestre', val: flete },
+              ...(feeLab > 0 ? [{ label: 'Catación (lab)', val: feeLab }] : []),
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                 <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>{row.label}</span>
@@ -244,6 +313,11 @@ export default function CheckoutB2B({ items, onVolver, onConfirmar }: Props) {
             <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, marginTop: 8, textAlign: 'center' }}>
               Incluye factura electrónica · Precios en soles peruanos
             </p>
+            <div style={{ background: `${C.tan}15`, borderRadius: 8, padding: 10, marginTop: 12 }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0, textAlign: 'center' }}>
+                Reserva válida por 72 horas tras confirmar
+              </p>
+            </div>
           </div>
         </div>
       </div>

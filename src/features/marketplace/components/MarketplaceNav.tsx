@@ -10,7 +10,7 @@ const C = {
   tan: '#c4b297',
 };
 
-type Vista = 'marketplace' | 'caficultor' | 'admin';
+type Vista = 'marketplace' | 'caficultor' | 'laboratorio' | 'admin';
 
 interface Props {
   vista: Vista;
@@ -54,9 +54,10 @@ export default function MarketplaceNav({ vista, onCambiarVista }: Props) {
       {/* Tabs — quién soy */}
       <div style={{ display: 'flex', gap: 4 }}>
         {([
-          { key: 'marketplace', label: 'Soy tostadora / cafetería' },
-          { key: 'caficultor',  label: 'Soy caficultor' },
-          { key: 'admin',       label: 'Admin' },
+          { key: 'marketplace',  label: 'Soy tostadora / cafetería' },
+          { key: 'caficultor',   label: 'Soy caficultor' },
+          { key: 'laboratorio',  label: 'Soy laboratorio' },
+          { key: 'admin',        label: 'Admin' },
         ] as { key: Vista; label: string }[]).map(tab => (
           <button
             key={tab.key}

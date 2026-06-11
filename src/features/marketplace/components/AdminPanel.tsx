@@ -1,10 +1,30 @@
 /**
- * AdminPanel.tsx — F05: Log muestras + F06: Catación Q-Grader + F07: Motor precios + F08: Kanban logístico
- * Actor: Administrador Tunay Wasi / Hub Lima
+ * AdminPanel.tsx — Panel administrador Tunay Wasi
+ * Actor: Admin TW
+ *
+ * Responsabilidades del admin según MVP v2:
+ *   - Dashboard: métricas del flujo
+ *   - Publicar: revisar lotes aprobados por laboratorio y publicarlos al marketplace
+ *   - Pagos: distribuir pago caficultor + laboratorio tras confirmación del pedido
+ *   - Logística: kanban de pedidos activos
+ *   - Lotes: vista completa de todos los lotes
+ *
+ * Lo que el admin NO hace: catar, tostar, fijar precios de servicios.
  */
 import { useState, useEffect } from 'react';
-import { fetchMktLotes, fetchMktPedidos, updateMktLoteCatacion } from '@/features/marketplace/marketplaceService';
-import type { LoteDoc, PedidoB2BDoc } from '@/shared/types/marketplace';
+import {
+  fetchMktLotes,
+  fetchMktPedidos,
+  liberarReservaPedido,
+  verificarPagoPedido,
+  marcarPagoCaficultor,
+  marcarPagoLaboratorio,
+  updateMktPedidoLogistica,
+  fetchMktLaboratorios,
+} from '@/features/marketplace/marketplaceService';
+import { fetchCafeterias, toggleTieneLaboratorio } from '@/shared/perfilService';
+import type { LoteDoc, PedidoB2BDoc, LaboratorioDoc } from '@/shared/types/marketplace';
+import type { PerfilCafeteria } from '@/shared/types/auth';
 
 const C = {
   green: '#1f3028', cream: '#f2e0cc', terra: '#c96e4b',
@@ -18,38 +38,89 @@ const KANBAN_COLS = [
   { key: 'entregado',   label: 'Entregado ✓',     color: '#4caf50' },
 ];
 
-type AdminTab = 'dashboard' | 'catacion' | 'logistica' | 'lotes';
+type AdminTab = 'dashboard' | 'pagos' | 'logistica' | 'lotes' | 'reservas' | 'laboratorios';
 
 export default function AdminPanel() {
   const [tab, setTab] = useState<AdminTab>('dashboard');
-  const [catacionLote, setCatacionLote] = useState<LoteDoc | null>(null);
-  const [cataForm, setCataForm] = useState({
-    puntaje: '', acidez: '7', cuerpo: '7', balance: '7', notas: '',
-  });
-  const [cataGuardado, setCataGuardado] = useState(false);
-  const [guardandoCata, setGuardandoCata] = useState(false);
   const [todosLotes, setTodosLotes] = useState<LoteDoc[]>([]);
   const [pedidos, setPedidos] = useState<PedidoB2BDoc[]>([]);
+  const [liberando, setLiberando] = useState<string | null>(null);
+  const [verificando, setVerificando] = useState<string | null>(null);
+  const [pagando, setPagando] = useState<string | null>(null);
+  const [marcandoEntregado, setMarcandoEntregado] = useState<string | null>(null);
+  const [laboratorios, setLaboratorios] = useState<LaboratorioDoc[]>([]);
+  const [cafeterias, setCafeterias] = useState<PerfilCafeteria[]>([]);
+  const [toggling, setToggling] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchMktLotes(), fetchMktPedidos()]).then(([lotes, peds]) => {
-      setTodosLotes(lotes);
-      setPedidos(peds);
-    });
-  }, [cataGuardado]);
+    Promise.allSettled([fetchMktLotes(), fetchMktPedidos(), fetchMktLaboratorios(), fetchCafeterias()]).then(
+      ([lotesR, pedsR, labsR, cafsR]) => {
+        if (lotesR.status === 'rejected') console.error('[Admin] mkt_lotes:', lotesR.reason);
+        if (pedsR.status === 'rejected') console.error('[Admin] mkt_pedidos:', pedsR.reason);
+        if (labsR.status === 'rejected') console.error('[Admin] mkt_laboratorios:', labsR.reason);
+        if (cafsR.status === 'rejected') console.error('[Admin] mkt_usuarios/cafeterias:', cafsR.reason);
+        if (lotesR.status === 'fulfilled') setTodosLotes(lotesR.value);
+        if (pedsR.status === 'fulfilled') setPedidos(pedsR.value);
+        if (labsR.status === 'fulfilled') setLaboratorios(labsR.value);
+        if (cafsR.status === 'fulfilled') setCafeterias(cafsR.value);
+      }
+    );
+  }, []);
 
-  // Motor de precios F07
-  function calcPrecioFinal(precioOrigen: number) {
-    const comision = Math.round(precioOrigen * 0.10);
-    const flete = 25;
-    const almacen = 10;
-    return { comision, flete, almacen, total: precioOrigen + comision + flete + almacen };
+  async function handleLiberarReserva(ped: PedidoB2BDoc) {
+    setLiberando(ped.id);
+    await liberarReservaPedido(ped.id, ped.loteId, ped.sacosSolicitados);
+    setPedidos(prev => prev.map(p => p.id === ped.id ? { ...p, pagoStatus: 'rechazado', logisticaStatus: 'cancelado' } : p));
+    setLiberando(null);
   }
+
+  async function handleVerificarPago(ped: PedidoB2BDoc) {
+    setVerificando(ped.id);
+    await verificarPagoPedido(ped.id);
+    setPedidos(prev => prev.map(p => p.id === ped.id ? { ...p, pagoStatus: 'verificado', logisticaStatus: 'en_origen' } : p));
+    setVerificando(null);
+  }
+
+  async function handlePagarCaficultor(ped: PedidoB2BDoc) {
+    setPagando(ped.id);
+    await marcarPagoCaficultor(ped.id);
+    setPedidos(prev => prev.map(p => p.id === ped.id ? { ...p, pagoCaficultorStatus: 'pagado' } : p));
+    setPagando(null);
+  }
+
+  async function handleMarcarEntregado(ped: PedidoB2BDoc) {
+    setMarcandoEntregado(ped.id);
+    await updateMktPedidoLogistica(ped.id, 'entregado');
+    setPedidos(prev => prev.map(p => p.id === ped.id ? { ...p, logisticaStatus: 'entregado' } : p));
+    setMarcandoEntregado(null);
+  }
+
+  async function handleToggleLab(uid: string, actual: boolean) {
+    setToggling(uid);
+    await toggleTieneLaboratorio(uid, !actual);
+    setCafeterias(prev => prev.map(c => c.uid === uid ? { ...c, tieneLaboratorio: !actual } : c));
+    setToggling(null);
+  }
+
+  async function handlePagarLaboratorio(ped: PedidoB2BDoc) {
+    setPagando(`lab-${ped.id}`);
+    await marcarPagoLaboratorio(ped.id);
+    setPedidos(prev => prev.map(p => p.id === ped.id ? { ...p, pagoLaboratorioStatus: 'pagado', pagoLaboratorioAt: new Date().toISOString() } : p));
+    setPagando(null);
+  }
+
+  const now = Date.now();
+  const reservasVencidas = pedidos.filter(p =>
+    p.pagoStatus === 'pendiente' && new Date(p.reservaExpiraAt).getTime() < now
+  );
+  const reservasPendientes = pedidos.filter(p =>
+    p.pagoStatus === 'pendiente' && new Date(p.reservaExpiraAt).getTime() >= now
+  );
 
   const totalIngresosMes = pedidos.reduce((s, p) => s + (p.pagoStatus === 'verificado' ? p.subtotalPEN * 0.10 : 0), 0);
   const totalVolumenKg = pedidos.filter(p => p.pagoStatus === 'verificado').reduce((s, p) => s + p.kgTotal, 0);
-  const lotesParaCatar = todosLotes.filter(l => l.status === 'muestra_enviada' || l.status === 'en_catacion');
   const lotesPublicados = todosLotes.filter(l => l.status === 'publicado');
+  const lotesEnFlujo = todosLotes.filter(l => ['muestra_solicitada', 'muestra_enviada', 'en_catacion'].includes(l.status));
 
   return (
     <div style={{ background: '#f0ebe4', minHeight: '100vh' }}>
@@ -66,10 +137,12 @@ export default function AdminPanel() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {([
-            { key: 'dashboard', label: 'Dashboard' },
-            { key: 'catacion', label: 'Q-Grader' },
-            { key: 'logistica', label: 'Logística' },
-            { key: 'lotes', label: 'Lotes' },
+            { key: 'dashboard',    label: 'Dashboard' },
+            { key: 'pagos',        label: 'Pagos' },
+            { key: 'logistica',    label: 'Logística' },
+            { key: 'lotes',        label: 'Lotes' },
+            { key: 'reservas',     label: 'Reservas' },
+            { key: 'laboratorios', label: 'Laboratorios' },
           ] as { key: AdminTab; label: string }[]).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} style={{
               background: tab === t.key ? C.terra : 'rgba(255,255,255,0.1)',
@@ -88,10 +161,9 @@ export default function AdminPanel() {
         {/* DASHBOARD */}
         {tab === 'dashboard' && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}>
               {[
                 { label: 'Lotes publicados', val: lotesPublicados.length, color: C.sage },
-                { label: 'Lotes en catación', val: lotesParaCatar.length, color: '#d6b15a' },
                 { label: 'Comisiones (mes)', val: `S/ ${totalIngresosMes.toLocaleString()}`, color: C.terra },
                 { label: 'Volumen en tránsito', val: `${totalVolumenKg} kg`, color: C.tan },
               ].map(s => (
@@ -108,234 +180,237 @@ export default function AdminPanel() {
                 Acciones pendientes
               </h3>
               <div style={{ display: 'grid', gap: 10 }}>
-                {lotesParaCatar.map(l => (
+                {lotesEnFlujo.map(l => (
                   <div key={l.id} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    background: '#fffbf5', border: `1px solid ${C.tan}40`, borderRadius: 8, padding: '12px 16px',
+                    background: '#f5f5ff', border: `1px solid ${C.tan}20`, borderRadius: 8, padding: '12px 16px',
                   }}>
                     <div>
                       <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>
-                        Catar: {l.nombreLote}
+                        En flujo: {l.nombreLote}
                       </p>
                       <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
-                        {l.variedad} · {l.region} · {l.sacosDisponibles} sacos
+                        Estado: <strong>{l.status}</strong>
                       </p>
                     </div>
-                    <button onClick={() => { setCatacionLote(l); setTab('catacion'); }} style={{
-                      background: C.terra, color: 'white', border: 'none', borderRadius: 6,
-                      padding: '8px 14px', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    }}>
-                      Registrar cata
-                    </button>
                   </div>
                 ))}
-                {pedidos.filter(p => p.pagoStatus === 'verificado' && p.pagoCaficultorStatus === 'pendiente').map(p => (
-                  <div key={p.id} style={{
+                {pedidos.filter(p => p.pagoStatus === 'verificado' && p.logisticaStatus === 'en_transito').map(p => (
+                  <div key={`${p.id}-entregar`} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    background: '#f5fff5', border: `1px solid ${C.sage}40`, borderRadius: 8, padding: '12px 16px',
+                    background: '#fff8e8', border: `1px solid #d6b15a40`, borderRadius: 8, padding: '12px 16px',
                   }}>
                     <div>
                       <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>
-                        Pagar caficultor: {p.id}
+                        Confirmar entrega: {p.id}
                       </p>
                       <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
-                        Monto: S/ {p.montoCaficultorPEN.toLocaleString()} · Lote: {p.loteId}
+                        {p.sacosSolicitados} saco(s) · Lote: {p.loteId}
                       </p>
                     </div>
-                    <button style={{
-                      background: C.sage, color: 'white', border: 'none', borderRadius: 6,
-                      padding: '8px 14px', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    }}>
-                      Marcar pagado
+                    <button
+                      onClick={() => handleMarcarEntregado(p)}
+                      disabled={marcandoEntregado === p.id}
+                      style={{
+                        background: '#d6b15a', color: 'white', border: 'none', borderRadius: 6,
+                        padding: '8px 14px', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600,
+                        cursor: marcandoEntregado === p.id ? 'not-allowed' : 'pointer',
+                        opacity: marcandoEntregado === p.id ? 0.6 : 1,
+                      }}
+                    >
+                      {marcandoEntregado === p.id ? 'Guardando...' : 'Marcar entregado ✓'}
                     </button>
                   </div>
                 ))}
+                {pedidos.filter(p => p.pagoStatus === 'verificado' && p.logisticaStatus === 'entregado' && p.pagoCaficultorStatus === 'pendiente').flatMap(p => {
+                  const rows = [
+                    <div key={`${p.id}-caf`} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      background: '#f5fff5', border: `1px solid ${C.sage}40`, borderRadius: 8, padding: '12px 16px',
+                    }}>
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>
+                          Pagar caficultor: {p.id}
+                        </p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                          Monto: S/ {p.montoCaficultorPEN.toLocaleString()} · Lote: {p.loteId}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handlePagarCaficultor(p)}
+                        disabled={pagando === p.id}
+                        style={{
+                          background: C.sage, color: 'white', border: 'none', borderRadius: 6,
+                          padding: '8px 14px', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600,
+                          cursor: pagando === p.id ? 'not-allowed' : 'pointer', opacity: pagando === p.id ? 0.6 : 1,
+                        }}
+                      >
+                        {pagando === p.id ? 'Guardando...' : 'Marcar pagado'}
+                      </button>
+                    </div>,
+                  ];
+                  if ((p.feeLaboratorioPEN ?? 0) > 0) {
+                    rows.push(
+                      <div key={`${p.id}-lab`} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        background: '#fff8f5', border: `1px solid ${C.terra}30`, borderRadius: 8, padding: '12px 16px',
+                      }}>
+                        <div>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>
+                            Pagar laboratorio: {p.id}
+                          </p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                            Catación + tueste: S/ {(p.feeLaboratorioPEN ?? 0).toLocaleString()} · Lote: {p.loteId}
+                          </p>
+                        </div>
+                        <span style={{
+                          background: '#f0ebe4', color: C.tan, border: 'none', borderRadius: 6,
+                          padding: '8px 14px', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600,
+                        }}>
+                          {p.pagoLaboratorioStatus === 'pagado'
+                            ? `Lab pagado ✓ ${p.pagoLaboratorioAt ? new Date(p.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}`
+                            : (
+                              <button
+                                onClick={() => handlePagarLaboratorio(p)}
+                                disabled={pagando === `lab-${p.id}`}
+                                style={{
+                                  background: C.sage, color: 'white', border: 'none', borderRadius: 6,
+                                  padding: '8px 14px', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600,
+                                  cursor: pagando === `lab-${p.id}` ? 'not-allowed' : 'pointer',
+                                  opacity: pagando === `lab-${p.id}` ? 0.6 : 1,
+                                }}
+                              >
+                                {pagando === `lab-${p.id}` ? 'Guardando...' : 'Marcar lab pagado'}
+                              </button>
+                            )
+                          }
+                        </span>
+                      </div>
+                    );
+                  }
+                  return rows;
+                })}
               </div>
             </div>
           </div>
         )}
 
-        {/* CATACIÓN — F05 + F06 + F07 */}
-        {tab === 'catacion' && (
+        {/* PAGOS */}
+        {tab === 'pagos' && (
           <div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
-              Control de Calidad — Q-Grader
+            <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 24 }}>
+              Pagos
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24 }}>
-              Registra el puntaje SCA. Al guardar, el lote cambia a "Aprobado" y se calcula el precio final automáticamente.
-            </p>
 
-            {/* Selector de lote */}
-            <div style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
-              {todosLotes.filter(l => ['muestra_enviada', 'en_catacion', 'aprobado'].includes(l.status)).map(lote => (
-                <div key={lote.id} onClick={() => setCatacionLote(lote)} style={{
-                  background: catacionLote?.id === lote.id ? C.green : 'white',
-                  color: catacionLote?.id === lote.id ? C.cream : C.brown,
-                  borderRadius: 10, padding: '14px 18px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                  border: `2px solid ${catacionLote?.id === lote.id ? C.terra : 'transparent'}`,
-                  transition: 'all 0.15s',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: catacionLote?.id === lote.id ? C.sage : C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
-                        {lote.id}
-                      </p>
-                      <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, margin: 0, fontWeight: 700 }}>
-                        {lote.nombreLote}
-                      </p>
+            {/* Sección 1: Verificar transferencias */}
+            <div style={{ marginBottom: 36 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <h3 style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, margin: 0 }}>
+                  Transferencias por verificar
+                </h3>
+                {pedidos.filter(p => p.pagoStatus === 'pendiente' && new Date(p.reservaExpiraAt).getTime() > Date.now()).length > 0 && (
+                  <span style={{ background: C.terra, color: 'white', fontSize: 10, fontFamily: 'Montserrat', fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
+                    {pedidos.filter(p => p.pagoStatus === 'pendiente' && new Date(p.reservaExpiraAt).getTime() > Date.now()).length}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {pedidos.filter(p => p.pagoStatus === 'pendiente' && new Date(p.reservaExpiraAt).getTime() > Date.now()).map(p => {
+                  const expiraEn = new Date(p.reservaExpiraAt).getTime() - Date.now();
+                  const horas = Math.floor(expiraEn / 3600000);
+                  const mins = Math.floor((expiraEn % 3600000) / 60000);
+                  return (
+                    <div key={p.id} style={{ background: 'white', borderRadius: 12, padding: '18px 22px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${C.terra}30` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                        <div>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{p.id}</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
+                            {p.razonSocial} — {p.sacosSolicitados} saco{p.sacosSolicitados !== 1 ? 's' : ''} · Lote: {p.loteId}
+                          </p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 2px' }}>
+                            Total a recibir: <strong style={{ color: C.brown }}>S/ {p.totalPEN.toLocaleString()}</strong>
+                            {p.feeLaboratorioPEN ? ` (incluye S/ ${p.feeLaboratorioPEN} lab)` : ''}
+                          </p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: 0 }}>
+                            Reserva vence en {horas}h {mins}m
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleVerificarPago(p)}
+                          disabled={verificando === p.id}
+                          style={{
+                            background: verificando === p.id ? '#ccc' : C.terra,
+                            color: 'white', border: 'none', borderRadius: 8,
+                            padding: '10px 18px', fontFamily: 'Montserrat', fontSize: 12,
+                            fontWeight: 700, cursor: verificando === p.id ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          {verificando === p.id ? 'Verificando...' : '✓ Marcar pago verificado'}
+                        </button>
+                      </div>
                     </div>
-                    <span style={{
-                      background: lote.status === 'aprobado' ? `${C.sage}30` : `${C.tan}30`,
-                      color: lote.status === 'aprobado' ? C.sage : C.tan,
-                      fontSize: 11, fontFamily: 'Montserrat', fontWeight: 700,
-                      padding: '4px 10px', borderRadius: 20, alignSelf: 'flex-start',
-                    }}>
-                      {lote.status === 'aprobado' ? 'Aprobado' : lote.status === 'en_catacion' ? 'En catación' : 'Muestra recibida'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+                {pedidos.filter(p => p.pagoStatus === 'pendiente' && new Date(p.reservaExpiraAt).getTime() > Date.now()).length === 0 && (
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '16px 0' }}>
+                    No hay transferencias pendientes de verificar.
+                  </p>
+                )}
+              </div>
             </div>
 
-            {catacionLote && !cataGuardado && (
-              <div style={{ background: 'white', borderRadius: 14, padding: 28, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, marginBottom: 20 }}>
-                  Ficha de catación — {catacionLote.nombreLote}
-                </h3>
-
-                <div style={{ display: 'grid', gap: 16 }}>
-                  <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
-                      Puntaje SCA final *
-                    </label>
-                    <input
-                      type="number" min={75} max={100} step={0.25}
-                      value={cataForm.puntaje}
-                      onChange={e => setCataForm(f => ({ ...f, puntaje: e.target.value }))}
-                      style={{ width: 160, padding: '10px 12px', border: `1px solid #ddd`, borderRadius: 8, fontFamily: 'Montserrat', fontSize: 20, fontWeight: 700, color: C.terra }}
-                      placeholder="86.25"
-                    />
-                  </div>
-
-                  {[
-                    { key: 'acidez', label: 'Acidez' },
-                    { key: 'cuerpo', label: 'Cuerpo' },
-                    { key: 'balance', label: 'Balance' },
-                  ].map(attr => (
-                    <div key={attr.key}>
-                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
-                        {attr.label}: <strong style={{ color: C.terra }}>{cataForm[attr.key as keyof typeof cataForm]}/10</strong>
-                      </label>
-                      <input type="range" min={1} max={10}
-                        value={cataForm[attr.key as keyof typeof cataForm]}
-                        onChange={e => setCataForm(f => ({ ...f, [attr.key]: e.target.value }))}
-                        style={{ width: '100%', accentColor: C.terra }}
-                      />
-                    </div>
-                  ))}
-
-                  <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
-                      Notas de sabor (separadas por coma)
-                    </label>
-                    <input
-                      value={cataForm.notas}
-                      onChange={e => setCataForm(f => ({ ...f, notas: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 12px', border: `1px solid #ddd`, borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
-                      placeholder="chocolate, caramelo, frutas rojas, nuez"
-                    />
-                  </div>
-
-                  {/* F07: Motor de precios en tiempo real */}
-                  {cataForm.puntaje && Number(cataForm.puntaje) >= 82 && (
-                    <div style={{ background: C.green, borderRadius: 10, padding: 16, color: C.cream }}>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.sage, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 }}>
-                        Motor de precios — Precio final calculado
-                      </p>
-                      {(() => {
-                        const { comision, flete, almacen, total } = calcPrecioFinal(catacionLote.precioOrigenPEN);
-                        return (
-                          <>
-                            {[
-                              { label: 'Precio origen caficultor', val: `S/ ${catacionLote.precioOrigenPEN.toLocaleString()}` },
-                              { label: 'Comisión plataforma (10%)', val: `S/ ${comision}` },
-                              { label: 'Flete terrestre → Lima', val: `S/ ${flete}` },
-                              { label: 'Almacenamiento hub', val: `S/ ${almacen}` },
-                            ].map(r => (
-                              <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>{r.label}</span>
-                                <span style={{ fontFamily: 'Montserrat', fontSize: 11 }}>{r.val}</span>
-                              </div>
-                            ))}
-                            <div style={{ borderTop: '1px solid rgba(143,175,138,0.3)', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: 13 }}>Precio al tostador/saco</span>
-                              <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, fontWeight: 700, color: C.terra }}>S/ {total.toLocaleString()}</span>
+            {/* Sección 2: Pagar caficultor y lab */}
+            <div>
+              <h3 style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, marginBottom: 14 }}>
+                Distribuir pagos — pago verificado
+              </h3>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, marginBottom: 16 }}>
+                Transferir al caficultor (y al lab si aplica) dentro de las 24h de confirmado el pago.
+              </p>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {pedidos.filter(p => p.pagoStatus === 'verificado' && p.pagoCaficultorStatus === 'pendiente').map(p => (
+                  <div key={p.id} style={{ background: 'white', borderRadius: 12, padding: '18px 22px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${C.sage}30` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{p.id}</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 6px' }}>
+                          Lote: {p.loteId} · {p.sacosSolicitados} sacos
+                        </p>
+                        <div style={{ display: 'flex', gap: 16 }}>
+                          <div style={{ background: '#f7f3ee', borderRadius: 8, padding: '8px 14px' }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Caficultor</p>
+                            <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.brown, margin: 0 }}>S/ {p.montoCaficultorPEN.toLocaleString()}</p>
+                          </div>
+                          {p.feeLaboratorioPEN && (
+                            <div style={{ background: '#f0ebe4', borderRadius: 8, padding: '8px 14px' }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Laboratorio</p>
+                              <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.brown, margin: 0 }}>S/ {p.feeLaboratorioPEN.toLocaleString()}</p>
                             </div>
-                          </>
-                        );
-                      })()}
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handlePagarCaficultor(p)}
+                        disabled={pagando === p.id}
+                        style={{
+                          background: pagando === p.id ? '#ccc' : C.sage,
+                          color: 'white', border: 'none', borderRadius: 8,
+                          padding: '10px 18px', fontFamily: 'Montserrat', fontSize: 12,
+                          fontWeight: 700, cursor: pagando === p.id ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {pagando === p.id ? 'Registrando...' : '✓ Marcar pagado'}
+                      </button>
                     </div>
-                  )}
-
-                  {cataForm.puntaje && Number(cataForm.puntaje) < 82 && (
-                    <div style={{ background: '#fff3f3', border: '1px solid #ffaaaa', borderRadius: 8, padding: 12 }}>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: '#cc0000', margin: 0 }}>
-                        Puntaje por debajo de 82 pts — mínimo para café de especialidad. El lote será marcado como "No aprobado" y se notificará al caficultor con recomendaciones.
-                      </p>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={async () => {
-                      if (!catacionLote || !cataForm.puntaje) return;
-                      setGuardandoCata(true);
-                      try {
-                        const precioFinal = calcPrecioFinal(catacionLote.precioOrigenPEN).total;
-                        await updateMktLoteCatacion(
-                          catacionLote.id,
-                          Number(cataForm.puntaje),
-                          Number(cataForm.acidez),
-                          Number(cataForm.cuerpo),
-                          Number(cataForm.balance),
-                          cataForm.notas.split(',').map(n => n.trim()).filter(Boolean),
-                          precioFinal,
-                        );
-                        setCataGuardado(true);
-                      } finally {
-                        setGuardandoCata(false);
-                      }
-                    }}
-                    disabled={!cataForm.puntaje || guardandoCata}
-                    style={{
-                      background: C.terra, color: 'white', border: 'none', borderRadius: 8,
-                      padding: '14px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700,
-                      cursor: 'pointer', opacity: (!cataForm.puntaje || guardandoCata) ? 0.5 : 1,
-                    }}
-                  >
-                    {guardandoCata ? 'Guardando...' : 'Guardar ficha y publicar lote en marketplace →'}
-                  </button>
-                </div>
+                  </div>
+                ))}
+                {pedidos.filter(p => p.pagoStatus === 'verificado' && p.pagoCaficultorStatus === 'pendiente').length === 0 && (
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '16px 0' }}>
+                    No hay pagos pendientes de distribuir.
+                  </p>
+                )}
               </div>
-            )}
-
-            {cataGuardado && catacionLote && (
-              <div style={{ background: 'white', borderRadius: 14, padding: 32, textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>✓</div>
-                <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 26, color: C.brown, marginBottom: 8 }}>
-                  Lote aprobado y publicado
-                </h3>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 16 }}>
-                  <strong>{catacionLote.nombreLote}</strong> está visible en el marketplace con puntaje <strong style={{ color: C.terra }}>{cataForm.puntaje} pts SCA</strong>.
-                  El caficultor fue notificado por WhatsApp.
-                </p>
-                <button onClick={() => { setCataGuardado(false); setCatacionLote(null); setCataForm({ puntaje: '', acidez: '7', cuerpo: '7', balance: '7', notas: '' }); }} style={{
-                  background: C.terra, color: 'white', border: 'none', borderRadius: 8,
-                  padding: '10px 24px', fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                }}>
-                  Catar otro lote
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -427,6 +502,226 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
+        {/* RESERVAS — liberación manual de reservas vencidas */}
+        {tab === 'reservas' && (
+          <div>
+            <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
+              Gestión de reservas
+            </h2>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24 }}>
+              Reservas activas (72h window) y vencidas sin pago. Liberar una reserva cancela el pedido y devuelve los sacos al lote.
+            </p>
+
+            {/* Vencidas */}
+            {reservasVencidas.length > 0 && (
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <h3 style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: '#c0392b', margin: 0 }}>
+                    Reservas vencidas ({reservasVencidas.length})
+                  </h3>
+                  <span style={{ background: '#ffe5e5', color: '#c0392b', fontSize: 10, fontFamily: 'Montserrat', fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
+                    Acción requerida
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {reservasVencidas.map(p => (
+                    <div key={p.id} style={{
+                      background: 'white', borderRadius: 12, padding: '18px 22px',
+                      border: '1.5px solid #e55', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12,
+                    }}>
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 1, textTransform: 'uppercase', margin: '0 0 2px' }}>
+                          {p.id} · Lote: {p.loteId}
+                        </p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
+                          {p.sacosSolicitados} saco{p.sacosSolicitados !== 1 ? 's' : ''} · S/ {p.totalPEN.toLocaleString()}
+                        </p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#c0392b', margin: 0 }}>
+                          Venció: {new Date(p.reservaExpiraAt).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>
+                          {p.razonSocial} · {p.email}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleLiberarReserva(p)}
+                        disabled={liberando === p.id}
+                        style={{
+                          background: liberando === p.id ? '#ccc' : '#c0392b',
+                          color: 'white', border: 'none', borderRadius: 8,
+                          padding: '10px 18px', fontFamily: 'Montserrat', fontSize: 12,
+                          fontWeight: 700, cursor: liberando === p.id ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {liberando === p.id ? 'Liberando...' : 'Liberar reserva →'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Activas */}
+            <div>
+              <h3 style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, marginBottom: 14 }}>
+                Reservas activas ({reservasPendientes.length})
+              </h3>
+              {reservasPendientes.length === 0 && (
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, textAlign: 'center', padding: '30px 0' }}>
+                  No hay reservas activas pendientes de pago.
+                </p>
+              )}
+              <div style={{ display: 'grid', gap: 12 }}>
+                {reservasPendientes.map(p => {
+                  const expiraEn = new Date(p.reservaExpiraAt).getTime() - now;
+                  const horasRestantes = Math.max(0, Math.floor(expiraEn / 3600000));
+                  const minutosRestantes = Math.max(0, Math.floor((expiraEn % 3600000) / 60000));
+                  return (
+                    <div key={p.id} style={{
+                      background: 'white', borderRadius: 12, padding: '18px 22px',
+                      border: `1px solid ${C.tan}30`, boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12,
+                    }}>
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 1, textTransform: 'uppercase', margin: '0 0 2px' }}>
+                          {p.id} · Lote: {p.loteId}
+                        </p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
+                          {p.sacosSolicitados} saco{p.sacosSolicitados !== 1 ? 's' : ''} · S/ {p.totalPEN.toLocaleString()}
+                        </p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: 0 }}>
+                          Vence en {horasRestantes}h {minutosRestantes}m — {new Date(p.reservaExpiraAt).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>
+                          {p.razonSocial} · {p.email}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleLiberarReserva(p)}
+                        disabled={liberando === p.id}
+                        style={{
+                          background: 'transparent', color: '#c0392b', border: '1px solid #c0392b', borderRadius: 8,
+                          padding: '8px 14px', fontFamily: 'Montserrat', fontSize: 11,
+                          fontWeight: 600, cursor: liberando === p.id ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {liberando === p.id ? 'Liberando...' : 'Liberar anticipado'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {reservasVencidas.length === 0 && reservasPendientes.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>
+                  No hay reservas activas ni vencidas en este momento.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* LABORATORIOS */}
+        {tab === 'laboratorios' && (
+          <div>
+            <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 24 }}>
+              Laboratorios y accesos
+            </h2>
+
+            {/* Laboratorios independientes registrados */}
+            <div style={{ marginBottom: 36 }}>
+              <h3 style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, marginBottom: 14 }}>
+                Laboratorios independientes ({laboratorios.length})
+              </h3>
+              {laboratorios.length === 0 && (
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '20px 0' }}>
+                  No hay laboratorios registrados.
+                </p>
+              )}
+              <div style={{ display: 'grid', gap: 10 }}>
+                {laboratorios.map(lab => (
+                  <div key={lab.id} style={{
+                    background: 'white', borderRadius: 12, padding: '16px 20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  }}>
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>
+                        {lab.nombreComercial}
+                      </p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '0 0 2px' }}>
+                        {lab.email} · {lab.telefono}
+                      </p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                        Catación SCA: S/ {lab.feeCatacionPEN}
+                      </p>
+                    </div>
+                    <span style={{
+                      background: lab.status === 'activo' ? `${C.sage}20` : '#f5f5f5',
+                      color: lab.status === 'activo' ? C.sage : '#aaa',
+                      fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700,
+                      padding: '4px 12px', borderRadius: 20,
+                    }}>
+                      {lab.status === 'activo' ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Cafeterías — toggle tieneLaboratorio */}
+            <div>
+              <h3 style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, marginBottom: 6 }}>
+                Cafeterías — acceso a lab propio
+              </h3>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, marginBottom: 14 }}>
+                Activa "Lab propio" para cafeterías que tienen tostadora propia. Esto habilita el tab "Mi laboratorio" en su portal.
+              </p>
+              {cafeterias.length === 0 && (
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '20px 0' }}>
+                  No hay cafeterías registradas.
+                </p>
+              )}
+              <div style={{ display: 'grid', gap: 10 }}>
+                {cafeterias.map(caf => (
+                  <div key={caf.uid} style={{
+                    background: 'white', borderRadius: 12, padding: '16px 20px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  }}>
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>
+                        {caf.empresa ?? caf.nombre}
+                      </p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                        {caf.email}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleToggleLab(caf.uid, caf.tieneLaboratorio ?? false)}
+                      disabled={toggling === caf.uid}
+                      style={{
+                        background: caf.tieneLaboratorio ? C.sage : '#f0ebe4',
+                        color: caf.tieneLaboratorio ? 'white' : C.tan,
+                        border: 'none', borderRadius: 8,
+                        padding: '8px 16px', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700,
+                        cursor: toggling === caf.uid ? 'not-allowed' : 'pointer',
+                        opacity: toggling === caf.uid ? 0.6 : 1,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {toggling === caf.uid ? '...' : caf.tieneLaboratorio ? 'Lab propio ✓' : 'Sin lab propio'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
