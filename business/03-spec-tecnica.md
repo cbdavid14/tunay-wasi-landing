@@ -70,7 +70,7 @@ interface LoteDoc {
   region?: string;
   sacosDisponibles: number;
   sacosReservados: number;
-  precioOrigenPEN: number;   // lo fija el caficultor
+  precioOrigenPEN: number;   // lo fija el caficultor (puede ajustarse post-catación)
   precioVentaPEN: number;    // calculado al publicar: origen × 1.10
   stockMuestrasHub: number;  // unidades 200g disponibles en hub Lima — se activa recién cuando admin confirma recepción
   muestraEnCamino?: boolean; // caficultor declaró envío al publicar; false después de que admin confirma
@@ -87,6 +87,20 @@ interface LoteDoc {
   createdAt: string;
   publicadoAt?: string;
 }
+```
+
+### Tabla de precios sugeridos por rango SCA (canal grano verde B2B)
+
+Definida en `src/shared/config.ts` como `PRECIOS_SCA_SUGERIDOS`. Se muestra al caficultor en su portal cuando `puntajeOficial` existe.
+
+```typescript
+// Fuente: PRICING_RULES 2.0.md §9.2 — valores redondeados
+const PRECIOS_SCA_SUGERIDOS = [
+  { minSCA: 90,   label: 'Premium (90+ pts)',   precioPorKg: 86 },
+  { minSCA: 84,   label: 'Especial (84–89 pts)', precioPorKg: 50 },
+  { minSCA: 80,   label: 'Selecto (80–83 pts)',  precioPorKg: 35 },
+];
+// Uso: precioPorKg × pesoPorSacoKg = precio sugerido por saco
 ```
 
 ### Campos clave de `mkt_solicitudes_certificacion`
@@ -267,7 +281,7 @@ Dos métodos para todos los roles excepto admin:
 | Método | Formato |
 |---|---|
 | Email + contraseña | Email válido + contraseña ≥ 6 caracteres |
-| Celular + OTP | +51XXXXXXXXX — solo números peruanos |
+| ~~Celular + OTP~~ | Oculto en MVP — requiere Firebase Blaze para producción |
 
 Normalización de teléfono:
 - 9 dígitos empezando con 9 → `"+51" + 9dígitos`

@@ -29,7 +29,7 @@ import {
   fetchMktPedidosByTostadora,
 } from '@/features/marketplace/marketplaceService';
 import type { LoteDoc, SolicitudMuestraDoc, PedidoB2BDoc, LaboratorioDoc, SolicitudCertificacionDoc, SolicitudHubDoc } from '@/shared/types/marketplace';
-import { COMISION_TW } from '@/shared/config';
+import { COMISION_TW, getPrecioSugeridoPorSCA } from '@/shared/config';
 import type { PerfilCaficultor } from '@/shared/types/auth';
 import NotifBell from '@/shared/NotifBell';
 import { useNotificaciones } from '@/shared/useNotificaciones';
@@ -1168,6 +1168,28 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                           </div>
                         )}
                       </div>
+
+                      {/* Sugerencia de precio según puntaje SCA */}
+                      {lote.puntajeOficial && (() => {
+                        const sugerido = getPrecioSugeridoPorSCA(lote.puntajeOficial!);
+                        if (!sugerido) return null;
+                        const precioSugeridoPorSaco = sugerido.precioPorKg * (lote.pesoPorSacoKg || 60);
+                        return (
+                          <div style={{ marginTop: 12, background: '#f0f9f4', border: '1px solid #8faf8a40', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                            <div>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: '#5a8a6a', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                                Precio sugerido Tunay Wasi
+                              </p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                                {sugerido.label} · S/ {sugerido.precioPorKg}/kg
+                              </p>
+                            </div>
+                            <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.green, margin: 0, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              S/ {precioSugeridoPorSaco.toLocaleString()}/saco
+                            </p>
+                          </div>
+                        );
+                      })()}
 
                       {lote.status === 'borrador' && (() => {
                         const faltaFoto = !lote.fotoLoteUrl;

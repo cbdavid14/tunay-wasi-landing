@@ -7,7 +7,7 @@
 
 1. **Automatización primero.** El sistema ejecuta todas las transiciones de estado sin intervención humana salvo excepciones explícitas.
 2. **El puntaje SCA no bloquea la compra.** La cafetería puede comprar un lote sin certificación asumiendo el riesgo de calidad.
-3. **El precio lo fija el caficultor.** El puntaje SCA es información — no modifica el precio automáticamente.
+3. **El precio lo fija el caficultor.** El puntaje SCA es información — el sistema sugiere un precio referencial por rango SCA (RN-PRE-05) pero el caficultor decide el valor final.
 4. **El sistema asigna el laboratorio.** Ni el caficultor ni la cafetería eligen el lab. Elimina conflicto de interés.
 5. **Sin stock negativo.** `sacosReservados = Math.max(0, sacosReservados - sacos)` en toda operación.
 6. **Lo más simple para todos los actores.** Cada flujo tiene el mínimo de pasos posible. Sin ambigüedad.
@@ -350,7 +350,7 @@ Solo el laboratorio certificado (Q-Grader) registra el `puntajeOficial`. La cata
 El `puntajeOficial` registrado por el lab es visible en el catálogo para todas las cafeterías.
 
 **RN-CAL-03 · El puntaje no fija el precio**
-El precio lo fija el caficultor al publicar. El puntaje SCA es información — no modifica el precio automáticamente.
+El precio lo fija el caficultor al publicar. El puntaje SCA es información — el sistema muestra un precio sugerido (RN-PRE-05) pero no lo aplica automáticamente.
 
 ### Precios
 
@@ -374,6 +374,17 @@ El fee del laboratorio se cobra a través de la `SolicitudCertificacion`, no del
 
 **RN-PRE-03 · Peso por saco**
 1 saco = 60 kg.
+
+**RN-PRE-05 · Precio sugerido por puntaje SCA (canal grano verde B2B)**
+Tras completar la catación, el sistema muestra al caficultor un precio sugerido basado en el `puntajeOficial` del lote. El caficultor puede aceptarlo o ajustarlo — es una referencia, no un valor forzado.
+
+| Rango SCA | Categoría | Precio sugerido (S//kg verde) |
+|---|---|---|
+| 80.0 – 83.9 | Selecto | S/ 35/kg |
+| 84.0 – 89.9 | Especial | S/ 50/kg |
+| 90.0+ | Premium | S/ 86/kg |
+
+Fuente: `PRICING_RULES 2.0.md` §9.2 — canal grano verde B2B. Precios redondeados para legibilidad. El caficultor ve el precio sugerido en su tarjeta de lote cuando `puntajeOficial` existe.
 
 **RN-PRE-04 · Lo que recibe cada actor**
 ```

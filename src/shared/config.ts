@@ -45,6 +45,22 @@ export const UMBRAL_SCA = 82;
 export const MAX_MUESTRAS_ACTIVAS = 3;
 
 /**
+ * Precios sugeridos por rango SCA para canal grano verde B2B.
+ * Fuente: PRICING_RULES 2.0.md §9.2 — valores redondeados.
+ * Ordenados de mayor a menor para buscar el primer rango que aplica.
+ */
+export const PRECIOS_SCA_SUGERIDOS: { minSCA: number; label: string; precioPorKg: number }[] = [
+  { minSCA: 90, label: 'Premium (90+ pts)',    precioPorKg: 86 },
+  { minSCA: 84, label: 'Especial (84–89 pts)', precioPorKg: 50 },
+  { minSCA: 80, label: 'Selecto (80–83 pts)',  precioPorKg: 35 },
+];
+
+/** Devuelve el precio sugerido por kg según puntaje SCA, o null si no aplica ningún rango. */
+export function getPrecioSugeridoPorSCA(puntaje: number): { label: string; precioPorKg: number } | null {
+  return PRECIOS_SCA_SUGERIDOS.find(r => puntaje >= r.minSCA) ?? null;
+}
+
+/**
  * Umbral de score de fraude para bloquear un pedido automáticamente.
  * Score asignado por Claude en onPedidoCreated. 0 = sin riesgo, 10 = máximo.
  */
