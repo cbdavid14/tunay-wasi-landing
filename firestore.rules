@@ -16,19 +16,21 @@ service cloud.firestore {
     // Lee el rol desde mkt_usuarios.
     // NOTA: No llamar desde reglas de mkt_usuarios — causaría recursión circular.
     function rol() {
-      return get(/databases/$(database)/documents/mkt_usuarios/$(uid())).data.rol;
+      return exists(/databases/$(database)/documents/mkt_usuarios/$(uid()))
+        ? get(/databases/$(database)/documents/mkt_usuarios/$(uid())).data.rol
+        : '';
     }
 
     function isCaficultor() {
-      return isSignedIn() && rol() == 'caficultor';
+      return isSignedIn() && exists(/databases/$(database)/documents/mkt_usuarios/$(uid())) && rol() == 'caficultor';
     }
 
     function isCafeteria() {
-      return isSignedIn() && rol() == 'cafeteria';
+      return isSignedIn() && exists(/databases/$(database)/documents/mkt_usuarios/$(uid())) && rol() == 'cafeteria';
     }
 
     function isLaboratorio() {
-      return isSignedIn() && rol() == 'laboratorio';
+      return isSignedIn() && exists(/databases/$(database)/documents/mkt_usuarios/$(uid())) && rol() == 'laboratorio';
     }
 
     // ── mkt_usuarios / usuarios_perfil ────────────────────────────────────────
@@ -40,7 +42,10 @@ service cloud.firestore {
     }
 
     match /mkt_usuarios/{userId} {
-      allow read, write: if isSignedIn() && uid() == userId;
+      allow read:   if isSignedIn() && uid() == userId;
+      allow create: if isSignedIn() && uid() == userId;
+      allow update: if isSignedIn() && uid() == userId;
+      allow delete: if false;
     }
 
     // ── mkt_lotes ─────────────────────────────────────────────────────────────
@@ -64,15 +69,17 @@ service cloud.firestore {
 
     match /mkt_caficultores/{caficultorId} {
       allow read: if true;
-      allow write: if isCaficultor() && uid() == caficultorId;
+      allow create: if isSignedIn() && uid() == caficultorId;
+      allow update: if isSignedIn() && uid() == caficultorId;
+      allow delete: if false;
     }
 
     // ── mkt_laboratorios ──────────────────────────────────────────────────────
 
     match /mkt_laboratorios/{labId} {
       allow read: if true;
-      allow create: if isLaboratorio() && uid() == labId;
-      allow update: if isLaboratorio() && uid() == labId;
+      allow create: if isSignedIn() && uid() == labId;
+      allow update: if isSignedIn() && uid() == labId;
       allow delete: if false;
     }
 
@@ -98,6 +105,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         resource.data.caficultorId == uid()
         || resource.data.laboratorioId == uid()
+        || (isLaboratorio() && resource.data.status == 'abierta')
       );
 
       allow create: if isCaficultor()
@@ -106,6 +114,7 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         resource.data.laboratorioId == uid()
         || resource.data.caficultorId == uid()
+        || (isLaboratorio() && resource.data.status == 'abierta')
       );
 
       allow delete: if false;

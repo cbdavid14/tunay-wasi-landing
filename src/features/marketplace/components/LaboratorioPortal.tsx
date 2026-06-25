@@ -9,7 +9,8 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/shared/firebase';
+import { functions, db } from '@/shared/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useIsMobile, padX, padY, tabBarStyle, tabBtn } from '@/shared/mobileStyles';
 import {
   fetchMktLotesPendientesCatacion,
@@ -23,7 +24,6 @@ import {
   updatePerfil,
   uploadCertificadoLab,
   fetchMktSolicitudesCertificacionByLaboratorio,
-  fetchMktSolicitudesCertificacionAbiertas,
   aceptarSolicitudCertificacion,
   countSolicitudesActivasByLab,
   updateMktSolicitudCertificacionStatus,
@@ -124,14 +124,22 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
       });
     });
     fetchMktSolicitudesCertificacionByLaboratorio(laboratorio.uid).then(setSolicitudesCert);
-    fetchMktSolicitudesCertificacionAbiertas().then(async sols => {
-      setSolicitudesAbiertas(sols);
-      if (sols.length > 0) {
-        const loteIds = [...new Set(sols.map(s => s.loteId))];
-        const lotes = await fetchMktLotesByIds(loteIds);
-        setLotesAbiertas(new Map(lotes.map(l => [l.id, l])));
+    // Listener en tiempo real para solicitudes abiertas — desaparecen cuando otro lab acepta
+    const unsubAbiertas = onSnapshot(
+      query(collection(db, 'mkt_solicitudes_certificacion'), where('status', '==', 'abierta')),
+      async (snap) => {
+        const sols = snap.docs.map(d => d.data() as SolicitudCertificacionDoc);
+        setSolicitudesAbiertas(sols);
+        if (sols.length > 0) {
+          const loteIds = [...new Set(sols.map(s => s.loteId))];
+          const lotes = await fetchMktLotesByIds(loteIds);
+          setLotesAbiertas(new Map(lotes.map(l => [l.id, l])));
+        } else {
+          setLotesAbiertas(new Map());
+        }
       }
-    });
+    );
+    return () => unsubAbiertas();
     fetchMktPedidosByLaboratorio(laboratorio.uid).then(setPedidosLab);
     countSolicitudesActivasByLab(laboratorio.uid).then(setSolicitudesActivasCount);
   }, [cataGuardada, notifs.length]);
@@ -232,14 +240,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
     }).catch(() => {});
     // Refrescar listas
     fetchMktLotesPendientesCatacion(laboratorio.uid).then(setPendientes);
-    fetchMktSolicitudesCertificacionAbiertas().then(async sols => {
-      setSolicitudesAbiertas(sols);
-      if (sols.length > 0) {
-        const loteIds = [...new Set(sols.map(s => s.loteId))];
-        const lotes = await fetchMktLotesByIds(loteIds);
-        setLotesAbiertas(new Map(lotes.map(l => [l.id, l])));
-      }
-    });
+    // solicitudesAbiertas se actualiza via onSnapshot — no hace falta refetch manual
     fetchMktSolicitudesCertificacionByLaboratorio(laboratorio.uid).then(setSolicitudesCert);
     countSolicitudesActivasByLab(laboratorio.uid).then(setSolicitudesActivasCount);
     setAceptandoSolicitud(null);
@@ -333,11 +334,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   Sin muestras asignadas aún
                 </h3>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, marginBottom: 12 }}>
-                  Las cafeterías que soliciten muestras de lotes pueden asignarte como laboratorio de catación.
-                  Cuando lo hagan, las muestras aparecerán aquí para que las aceptes y registres el resultado SCA.
+                  Cuando un caficultor publique un lote, el sistema te notificará automáticamente para que lo aceptes.
+                  El primer laboratorio en aceptar queda asignado a esa catación.
                 </p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.sage, marginBottom: 0 }}>
-                  Tu fee de catación y certificaciones son visibles para las cafeterías en el catálogo.
+                  Tu fee de catación y certificaciones son visibles para los caficultores en el catálogo.
                 </p>
               </div>
             )}
@@ -807,7 +808,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             </h2>
             <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 24px' }}>
               El lote quedó en estado <strong>"Aprobado"</strong>.<br />
-              El equipo de Tunay Wasi lo revisará y lo publicará en el marketplace.
+              El puntaje SCA fue registrado y el lote se publicó automáticamente en el catálogo.
             </p>
             {certCompletandoLoteId && (
               <div style={{ background: '#8a6fc910', border: '1px solid #8a6fc940', borderRadius: 10, padding: '12px 20px', maxWidth: 380, margin: '0 auto 20px', textAlign: 'left' }}>
@@ -815,7 +816,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   📋 Solicitud de certificación completada
                 </p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0, lineHeight: 1.5 }}>
-                  Se marcó la certificación como completada. El admin de Tunay Wasi revisará el pago de tu fee y te lo transferirá.
+                  Se marcó la certificación como completada. Tunay Wasi te transferirá el fee una vez que el lote tenga un pedido confirmado.
                 </p>
               </div>
             )}
@@ -1246,11 +1247,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   Sin muestras asignadas aún
                 </h3>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, marginBottom: 12 }}>
-                  Las cafeterías que soliciten muestras de lotes pueden asignarte como laboratorio de catación.
-                  Cuando lo hagan, las muestras aparecerán aquí para que las aceptes y registres el resultado SCA.
+                  Cuando un caficultor publique un lote, el sistema te notificará automáticamente para que lo aceptes.
+                  El primer laboratorio en aceptar queda asignado a esa catación.
                 </p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.sage, marginBottom: 0 }}>
-                  Tu fee de catación y certificaciones son visibles para las cafeterías en el catálogo.
+                  Tu fee de catación y certificaciones son visibles para los caficultores en el catálogo.
                 </p>
               </div>
             )}
@@ -1741,7 +1742,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             </h2>
             <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 24px' }}>
               El lote quedó en estado <strong>"Aprobado"</strong>.<br />
-              El equipo de Tunay Wasi lo revisará y lo publicará en el marketplace.
+              El puntaje SCA fue registrado y el lote se publicó automáticamente en el catálogo.
             </p>
             {certCompletandoLoteId && (
               <div style={{ background: '#8a6fc910', border: '1px solid #8a6fc940', borderRadius: 10, padding: '12px 20px', maxWidth: 380, margin: '0 auto 20px', textAlign: 'left' }}>
@@ -1749,7 +1750,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   📋 Solicitud de certificación completada
                 </p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0, lineHeight: 1.5 }}>
-                  Se marcó la certificación como completada. El admin de Tunay Wasi revisará el pago de tu fee y te lo transferirá.
+                  Se marcó la certificación como completada. Tunay Wasi te transferirá el fee una vez que el lote tenga un pedido confirmado.
                 </p>
               </div>
             )}

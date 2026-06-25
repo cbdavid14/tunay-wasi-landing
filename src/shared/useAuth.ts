@@ -23,7 +23,11 @@ export function useAuth(): AuthState {
         setState({ user: null, perfil: null, loading: false });
         return;
       }
-      const perfil = await fetchPerfil(user.uid);
+      let perfil = await fetchPerfil(user.uid);
+      // Admins no tienen doc en mkt_usuarios — se identifican por dominio de email
+      if (!perfil && user.email?.endsWith('@tunaywasi.pe')) {
+        perfil = { uid: user.uid, rol: 'admin', nombre: user.email, createdAt: '' };
+      }
       setState({ user, perfil, loading: false });
     });
     return unsub;

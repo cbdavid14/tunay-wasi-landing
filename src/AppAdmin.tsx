@@ -1,11 +1,12 @@
 /**
  * AppAdmin.tsx — Entry point para ?target=admin
  *
- * Si el usuario ya es admin autenticado → redirige a / (marketplace unificado).
+ * Si el usuario ya es admin autenticado → muestra el AdminPanel directamente.
  * Si no es admin → pantalla de acceso denegado.
  * Si no hay sesión → pantalla de login.
  */
 import AuthScreen from '@/features/auth/components/AuthScreen';
+import AdminPanel from '@/features/marketplace/components/AdminPanel';
 import { useAuth } from '@/shared/useAuth';
 import { logout } from '@/shared/authService';
 
@@ -26,10 +27,9 @@ export default function AppAdmin() {
     );
   }
 
-  // Admin autenticado → redirigir al marketplace unificado
+  // Admin autenticado → panel directo
   if (user && perfil?.rol === 'admin') {
-    window.location.replace(window.location.pathname);
-    return null;
+    return <AdminPanel onLogout={() => logout()} />;
   }
 
   // Otro rol → acceso denegado
