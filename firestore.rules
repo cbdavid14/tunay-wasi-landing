@@ -33,6 +33,11 @@ service cloud.firestore {
       return isSignedIn() && exists(/databases/$(database)/documents/mkt_usuarios/$(uid())) && rol() == 'laboratorio';
     }
 
+    // Admin se identifica por dominio de email — no tiene doc en mkt_usuarios.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email.matches('.*@tunaywasi\\.pe');
+    }
+
     // ── mkt_usuarios / usuarios_perfil ────────────────────────────────────────
     // Sin llamar a rol() — evita recursión circular.
     // El admin usa Admin SDK y bypasea estas reglas.
@@ -42,9 +47,9 @@ service cloud.firestore {
     }
 
     match /mkt_usuarios/{userId} {
-      allow read:   if isSignedIn() && uid() == userId;
+      allow read:   if isSignedIn() && (uid() == userId || isAdmin());
       allow create: if isSignedIn() && uid() == userId;
-      allow update: if isSignedIn() && uid() == userId;
+      allow update: if isSignedIn() && (uid() == userId || isAdmin());
       allow delete: if false;
     }
 
@@ -103,7 +108,8 @@ service cloud.firestore {
 
     match /mkt_solicitudes_certificacion/{solicitudId} {
       allow read: if isSignedIn() && (
-        resource.data.caficultorId == uid()
+        isAdmin()
+        || resource.data.caficultorId == uid()
         || resource.data.laboratorioId == uid()
         || (isLaboratorio() && resource.data.status == 'abierta')
       );
@@ -112,7 +118,8 @@ service cloud.firestore {
         && request.resource.data.caficultorId == uid();
 
       allow update: if isSignedIn() && (
-        resource.data.laboratorioId == uid()
+        isAdmin()
+        || resource.data.laboratorioId == uid()
         || resource.data.caficultorId == uid()
         || (isLaboratorio() && resource.data.status == 'abierta')
       );
@@ -125,7 +132,8 @@ service cloud.firestore {
 
     match /mkt_pedidos/{pedidoId} {
       allow read: if isSignedIn() && (
-        resource.data.tostadoraId == uid()
+        isAdmin()
+        || resource.data.tostadoraId == uid()
         || resource.data.caficultorId == uid()
         || (isLaboratorio() && resource.data.laboratorioId == uid())
       );
@@ -133,8 +141,8 @@ service cloud.firestore {
       allow create: if isCafeteria()
         && request.resource.data.tostadoraId == uid();
 
-      // La cafetería puede confirmar recepción: solo transición en_transito → entregado
-      allow update: if isCafeteria()
+      // Admin puede actualizar (verificar pago, actualizar logística)
+      allow update: if isAdmin() || (isCafeteria()
         && resource.data.tostadoraId == uid()
         && (
           // Confirmar recepción: en_transito → entregado
@@ -146,7 +154,7 @@ service cloud.firestore {
           (resource.data.pagoStatus == 'pendiente'
             && request.resource.data.pagoStatus == 'en_revision'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pagoStatus', 'comprobanteUrl', 'voucherSubidoAt', 'updatedAt']))
-        );
+        ));
 
       allow delete: if false;
     }
