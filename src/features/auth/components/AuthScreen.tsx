@@ -274,7 +274,8 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
         {modo === 'login' && (
           <div style={{ display: 'grid', gap: 16 }}>
 
-            {/* Método login */}
+            {/* Método login — celular oculto para MVP */}
+            {false && (
             <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
               {(['email', 'celular'] as MetodoLogin[]).map(m => (
                 <button key={m} onClick={() => { setMetodoLogin(m); limpiarError(); setOtpEnviado(false); }} style={{
@@ -287,6 +288,7 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
                 </button>
               ))}
             </div>
+            )}
 
             {metodoLogin === 'email' && (
               <>
@@ -348,7 +350,8 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
         {modo === 'registro' && (
           <div style={{ display: 'grid', gap: 14 }}>
 
-            {/* Método registro */}
+            {/* Método registro — celular oculto para MVP */}
+            {false && (
             <div style={{ display: 'flex', gap: 8 }}>
               {(['email', 'celular'] as MetodoRegistro[]).map(m => (
                 <button key={m} onClick={() => { setMetodoRegistro(m); limpiarError(); setOtpEnviado(false); }} style={{
@@ -361,6 +364,7 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
                 </button>
               ))}
             </div>
+            )}
 
             {/* Nombre */}
             <div>
