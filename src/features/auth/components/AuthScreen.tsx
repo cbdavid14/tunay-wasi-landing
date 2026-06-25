@@ -79,7 +79,7 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
   const [empresa, setEmpresa] = useState('');
   const [ruc, setRuc] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [tieneLaboratorio, setTieneLaboratorio] = useState(false);
+  const [tieneLaboratorio] = useState(false);
   const [nombreComercial, setNombreComercial] = useState('');
   const [certificaciones, setCertificaciones] = useState('');
   const [feeCatacion, setFeeCatacion] = useState('');
@@ -444,12 +444,6 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
                   <label style={labelStyle}>Dirección de entrega</label>
                   <input style={inputStyle} value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Av. La Mar 456, Miraflores, Lima" />
                 </div>
-                <label style={{ display: 'flex', gap: 10, alignItems: 'center', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={tieneLaboratorio} onChange={e => setTieneLaboratorio(e.target.checked)} />
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: C.brown }}>
-                    Tengo Q-Grader y tostadora propios
-                  </span>
-                </label>
               </>
             )}
 
