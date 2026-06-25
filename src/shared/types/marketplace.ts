@@ -14,14 +14,11 @@
 // ─── LOTE ────────────────────────────────────────────────────────────────────
 
 export type LoteStatus =
-  | 'borrador'           // caficultor lo creó, aún no publicado
-  | 'publicado'          // visible en el catálogo del marketplace
-  | 'muestra_solicitada' // cafetería pidió muestra de 200g
-  | 'muestra_enviada'    // caficultor despachó muestra física
-  | 'en_catacion'        // laboratorio tiene la muestra, está catando
-  | 'aprobado'           // laboratorio subió puntaje — admin lo publica
-  | 'agotado'            // sin stock
-  | 'rechazado';         // no pasó control de calidad (< 82 pts)
+  | 'borrador'      // caficultor lo creó, aún no publicado
+  | 'en_catacion'   // sistema asignó lab (Uber model), certificación en proceso
+  | 'publicado'     // lab completó catación — visible en catálogo con puntaje SCA
+  | 'agotado'       // sin stock
+  | 'rechazado';    // retirado por el caficultor o por admin
 
 export type ProcesoKey = 'lavado' | 'natural' | 'honey' | 'anaerobico' | 'doble_fermentacion';
 
@@ -46,10 +43,10 @@ export interface LoteDoc {
   balance?: number;                  // 1-10
   datosTueste?: string;              // perfil de tueste sugerido por el laboratorio
   fichaCatacionUrl?: string;         // PDF de catación subido por el laboratorio
-  laboratorioId?: string;            // FK → /mp_laboratorios/{id}
 
   // ── Stock y precio ─────────────────────────────────────────────────────
-  sacosDisponibles: number;          // total sacos de 60 kg
+  pesoPorSacoKg: number;             // kg por saco — definido por el caficultor
+  sacosDisponibles: number;          // total sacos
   sacosReservados: number;           // reservados por pedidos activos
   precioOrigenPEN: number;           // precio/saco que pide el caficultor (entero PEN)
   precioVentaPEN?: number;           // precio final calculado (con margen + flete)
@@ -57,18 +54,34 @@ export interface LoteDoc {
   // ── Muestra ────────────────────────────────────────────────────────────
   muestraDisponible: boolean;        // hay muestras de 200g para enviar
   precioMuestraPEN: number;          // centavos — típicamente S/15-20
+  stockMuestrasHub: number;          // unidades de 200g disponibles en hub Lima (RN-HUB-02)
+
+  // ── Catación (metadata — no afecta el estado del lote) ────────────────
+  catado?: boolean;                  // true si el lab ya registró la catación
+  laboratorioId?: string;            // FK → /mkt_laboratorios/{id}
 
   // ── Estado ─────────────────────────────────────────────────────────────
   status: LoteStatus;
   destacado: boolean;                // aparece primero en el marketplace
   createdAt: string;                 // ISO 8601
   publicadoAt?: string;
+  despublicadoAt?: string;
   agotadoAt?: string;
 
   // ── Logística ──────────────────────────────────────────────────────────
   fotoLoteUrl?: string;
   fotosUrls?: string[];
   observacionesAdmin?: string;
+
+  // ── Catación (interno) ─────────────────────────────────────────────────────
+  _cataciones?: number[];            // historial de puntajes para calcular promedio
+  _catacionesCount?: number;         // cantidad de cataciones registradas
+
+  // ── Hub Lima ───────────────────────────────────────────────────────────────
+  muestraEnCamino?: boolean;         // true cuando caficultor confirmó envío al hub pero aún no llegó
+  courierMuestrasHub?: string;       // empresa courier del envío al hub
+  guiaMuestrasHub?: string;          // número de guía del envío al hub
+  cantidadMuestrasDeclarada?: number; // unidades 200g declaradas por el caficultor al publicar
 }
 
 // ─── LABORATORIO ─────────────────────────────────────────────────────────────
@@ -118,7 +131,6 @@ export type PedidoStatus =
   | 'pago_verificado'
   | 'en_origen'              // caficultor preparando el despacho
   | 'en_transito'            // en camión hacia Lima
-  | 'en_almacen'             // en hub Lima
   | 'entregado'
   | 'cancelado';
 
@@ -140,10 +152,11 @@ export interface PedidoB2BDoc {
   totalPEN: number;                  // subtotal + igv + flete [+ feeLaboratorio]
 
   // Pago
-  metodoPago: 'transferencia' | 'culqi' | 'yape';
-  pagoStatus: 'pendiente' | 'verificado' | 'rechazado';
+  metodoPago: 'transferencia' | 'izipay' | 'yape';
+  pagoStatus: 'pendiente' | 'en_revision' | 'verificado' | 'rechazado';
   reservaExpiraAt: string;           // ISO — now + 72h; admin libera si vence sin pago
   comprobanteUrl?: string;           // voucher de transferencia subido por cliente
+  voucherSubidoAt?: string;          // ISO — cuando la cafetería subió el voucher
   facturaUrl?: string;               // factura electrónica emitida
 
   // Datos de facturación
@@ -167,8 +180,13 @@ export interface PedidoB2BDoc {
   montoCaficultorPEN: number;        // lo que recibe el caficultor
 
   // Pago al laboratorio (solo Flujo B)
+  laboratorioId?: string;            // desnormalizado del lote — para notificaciones al lab
   pagoLaboratorioStatus?: 'pendiente' | 'pagado';
   pagoLaboratorioAt?: string;
+
+  // IA — análisis de anomalías en el pedido
+  fraudScore?: number;               // 0-10 asignado por Claude en onPedidoCreated
+  fraudFlag?: boolean;               // true si score > 7 — requiere revisión admin
 
   createdAt: string;
   updatedAt: string;
@@ -185,6 +203,86 @@ export interface SolicitudMuestraDoc {
   empresa: string;
   email: string;
   telefono: string;
-  status: 'pendiente' | 'despachada' | 'recibida' | 'catada';
+  direccionEntrega?: string;         // dirección de la cafetería — para que caficultor sepa dónde enviar
+  status: 'pendiente' | 'despachada' | 'recibida' | 'catada' | 'rechazada';
   createdAt: string;
+  // Catación privada — solo visible para la cafetería, no afecta puntajeOficial del lote
+  catacionPrivada?: {
+    puntaje: number;
+    acidez: number;
+    cuerpo: number;
+    balance: number;
+    notasSabor: string[];
+    datosTueste: string;
+    catadoAt: string;
+  };
+}
+
+// ─── SOLICITUD DE CERTIFICACIÓN ───────────────────────────────────────────────
+
+export interface SolicitudCertificacionDoc {
+  id: string;
+  loteId: string;
+  caficultorId: string;              // FK → /caficultores/{id}
+  laboratorioId?: string;            // FK → /mkt_laboratorios/{id} — asignado cuando lab acepta
+  nombreLote: string;                // desnormalizado para queries del lab
+  status: 'abierta' | 'aceptada' | 'muestra_en_camino' | 'muestra_recibida' | 'en_proceso' | 'completada' | 'expirada';
+  // ── Pago del fee via plataforma ───────────────────────────────────────────
+  feeCatacionPEN?: number;           // se fija cuando el lab acepta
+  pagoStatus: 'pendiente' | 'verificado' | 'rechazado';
+  pagoLaboratorioStatus: 'pendiente' | 'pagado';
+  pagoLaboratorioAt?: string;
+  aceptadaAt?: string;               // timestamp cuando lab aceptó
+  // Envío de muestra al laboratorio
+  empresaCourierMuestra?: string;    // Shalom | Olva | Cruz del Sur | Otro
+  numeroGuiaMuestra?: string;
+  guiaEnviadaAt?: string;            // ISO — cuando caficultor confirmó envío
+  muestraRecibidaAt?: string;        // ISO — cuando lab confirmó recepción
+  createdAt: string;
+}
+
+// ─── SOLICITUD HUB → CAFICULTOR (Flujo D) ────────────────────────────────────
+
+export interface SolicitudHubDoc {
+  id: string;                        // "HUB-{timestamp}"
+  loteId: string;                    // FK → /mkt_lotes/{id}
+  caficultorId: string;              // desnormalizado para notificaciones
+  cantidadSolicitada: number;        // 1–3 muestras de 200g
+  status: 'solicitada' | 'confirmada_caficultor' | 'recibida_hub' | 'expirada';
+  // ── Confirmación del caficultor ───────────────────────────────────────────
+  empresaCourier?: string;
+  numeroGuia?: string;
+  confirmadoAt?: string;
+  // ── Recepción en hub ──────────────────────────────────────────────────────
+  cantidadRecibida?: number;
+  recibidoAt?: string;
+  // ── Control ───────────────────────────────────────────────────────────────
+  expiraAt: string;                  // createdAt + 72h
+  createdAt: string;
+}
+
+// ── Notificaciones in-app ─────────────────────────────────────────────────────
+
+export interface NotificacionDoc {
+  id: string;
+  titulo: string;
+  cuerpo: string;
+  leida: boolean;
+  createdAt: string;
+  url?: string;
+}
+
+// ── Calificaciones post-transacción ──────────────────────────────────────────
+
+export interface CalificacionDoc {
+  id: string;
+  pedidoId: string;              // FK al pedido — una calificación por pedido por autor
+  autorId: string;               // uid del actor que califica
+  autorRol: 'cafeteria' | 'caficultor';
+  destinatarioId: string;        // uid del actor calificado
+  destinatarioRol: 'caficultor' | 'cafeteria';
+  puntaje: 1 | 2 | 3 | 4 | 5;
+  comentario?: string;           // máximo 300 caracteres
+  createdAt: string;
+  expiraAt: string;              // createdAt + 30 días
 }

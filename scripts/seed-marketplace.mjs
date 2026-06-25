@@ -13,6 +13,10 @@
 
 import { initializeApp, cert, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
+
+// Apuntar al emulador de Auth (debe matchear FIREBASE_AUTH_EMULATOR_HOST)
+process.env.FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
 
 initializeApp({
   credential: applicationDefault(),
@@ -20,6 +24,7 @@ initializeApp({
 });
 
 const db = getFirestore();
+const auth = getAuth();
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -334,21 +339,166 @@ const mktSolicitudes = [
   },
 ];
 
+// ─── Usuarios de prueba (Auth + mkt_usuarios) ────────────────────────────────
+
+const usuariosPrueba = [
+  {
+    email: 'caficultor01@gmail.com',
+    password: 'test1234',
+    perfil: {
+      rol: 'caficultor',
+      nombre: 'Darlyn Sánchez',
+      finca: 'Bello Horizonte',
+      region: 'Oxapampa, Pasco',
+      email: 'caficultor01@gmail.com',
+    },
+  },
+  {
+    email: 'caficultor02@gmail.com',
+    password: 'test1234',
+    perfil: {
+      rol: 'caficultor',
+      nombre: 'Yolanda Quispe',
+      finca: 'Lechemayo',
+      region: 'La Convención, Cusco',
+      email: 'caficultor02@gmail.com',
+    },
+  },
+  {
+    email: 'cafeteria01@gmail.com',
+    password: 'test1234',
+    perfil: {
+      rol: 'cafeteria',
+      nombre: 'Andrés Vidal',
+      empresa: 'Café del Parque S.A.C.',
+      ruc: '20601234567',
+      tieneLaboratorio: false,
+      direccionEntrega: 'Av. La Mar 456, Miraflores, Lima',
+      email: 'cafeteria01@gmail.com',
+    },
+  },
+  {
+    email: 'cafeteria02@gmail.com',
+    password: 'test1234',
+    perfil: {
+      rol: 'cafeteria',
+      nombre: 'Sofía Herrera',
+      empresa: 'Arábica Lima S.A.C.',
+      ruc: '20609876543',
+      tieneLaboratorio: true,
+      direccionEntrega: 'Jr. Conquistadores 200, San Isidro, Lima',
+      email: 'cafeteria02@gmail.com',
+    },
+  },
+  {
+    email: 'laboratorio01@gmail.com',
+    password: 'test1234',
+    perfil: {
+      rol: 'laboratorio',
+      nombre: 'Carmen López',
+      nombreComercial: 'CQI Lab Perú',
+      certificaciones: ['Q-Grader CQI', 'SCA Authorized'],
+      feeCatacionPEN: 80,
+      feeTuestePEN: 120,
+      region: 'Lima, San Isidro',
+      direccion: 'Av. Conquistadores 500, San Isidro',
+      email: 'laboratorio01@gmail.com',
+    },
+  },
+  {
+    email: 'admin@tunaywasi.pe',
+    password: 'test1234',
+    perfil: {
+      rol: 'admin',
+      nombre: 'Admin Tunay Wasi',
+      email: 'admin@tunaywasi.pe',
+    },
+  },
+];
+
+async function seedUsuarios() {
+  console.log(`\n👤 Seeding usuarios Auth + mkt_usuarios (${usuariosPrueba.length})...`);
+  const uidMap = {}; // email → uid
+  for (const u of usuariosPrueba) {
+    let uid;
+    try {
+      const existing = await auth.getUserByEmail(u.email);
+      uid = existing.uid;
+      console.log(`  ~ ${u.email} (ya existe, uid: ${uid})`);
+    } catch {
+      const created = await auth.createUser({ email: u.email, password: u.password });
+      uid = created.uid;
+      console.log(`  ✓ ${u.email} (creado, uid: ${uid})`);
+    }
+    await db.collection('mkt_usuarios').doc(uid).set({ uid, ...u.perfil, createdAt: NOW });
+    uidMap[u.email] = uid;
+  }
+  return uidMap;
+}
+
 // ─── Ejecutar ────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log('🚀 Seed marketplace → alpaso-app (QA)\n');
-  console.log('   Prefijo: mkt_\n');
+
+  const uidMap = await seedUsuarios();
+
+  const caf01 = uidMap['caficultor01@gmail.com'];
+  const caf02 = uidMap['caficultor02@gmail.com'];
+  const caf01Tost = uidMap['cafeteria01@gmail.com'];
+  const caf02Tost = uidMap['cafeteria02@gmail.com'];
+  const lab01   = uidMap['laboratorio01@gmail.com'];
+
+  // Sobrescribir caficultorId en lotes con UIDs reales
+  const lotes = mktLotes.map(l => ({
+    ...l,
+    caficultorId: l.caficultorId === 'mkt-caf-001' ? caf01
+                : l.caficultorId === 'mkt-caf-002' ? caf02
+                : l.caficultorId,
+  }));
+
+  // Sobrescribir IDs en pedidos con UIDs reales
+  const pedidos = mktPedidos.map(p => ({
+    ...p,
+    caficultorId: p.caficultorId === 'mkt-caf-001' ? caf01
+                : p.caficultorId === 'mkt-caf-002' ? caf02
+                : p.caficultorId,
+    tostadoraId:  p.tostadoraId === 'mkt-tost-001' ? caf01Tost
+                : p.tostadoraId === 'mkt-tost-002' ? caf02Tost
+                : p.tostadoraId,
+  }));
 
   await seed('mkt_caficultores',         mktCaficultores);
-  await seed('mkt_lotes',               mktLotes);
+  await seed('mkt_lotes',               lotes);
   await seed('mkt_tostadoras',          mktTostadoras);
-  await seed('mkt_pedidos',             mktPedidos);
+  await seed('mkt_pedidos',             pedidos);
   await seed('mkt_solicitudes_muestra', mktSolicitudes);
 
-  console.log('\n✅ Listo. Colecciones en Firestore:');
-  console.log('   mkt_caficultores (4) · mkt_lotes (4) · mkt_tostadoras (2) · mkt_pedidos (2) · mkt_solicitudes_muestra (2)');
-  console.log('\n   Corre la app: VITE_APP_TARGET=marketplace npm run dev\n');
+  // Doc de laboratorio en mkt_laboratorios (sincronizarLabDoc lo hace al login, pero lo pre-creamos)
+  await db.collection('mkt_laboratorios').doc(lab01).set({
+    id: lab01,
+    uid: lab01,
+    nombreComercial: 'CQI Lab Perú',
+    certificaciones: ['Q-Grader CQI', 'SCA Authorized'],
+    feeCatacionPEN: 80,
+    feeTuestePEN: 120,
+    region: 'Lima, San Isidro',
+    direccion: 'Av. Conquistadores 500, San Isidro',
+    contactoNombre: 'Carmen López',
+    telefono: '+51987000001',
+    email: 'laboratorio01@gmail.com',
+    createdAt: NOW,
+  });
+  console.log(`  ✓ mkt_laboratorios/${lab01}`);
+
+  console.log('\n✅ Listo. Usuarios de prueba:');
+  console.log(`   caficultor01@gmail.com  / test1234  (uid: ${caf01})`);
+  console.log(`   caficultor02@gmail.com  / test1234  (uid: ${caf02})`);
+  console.log(`   cafeteria01@gmail.com   / test1234  (uid: ${caf01Tost})`);
+  console.log(`   cafeteria02@gmail.com   / test1234  (uid: ${caf02Tost})`);
+  console.log(`   laboratorio01@gmail.com / test1234  (uid: ${lab01})`);
+  console.log(`   admin@tunaywasi.pe      / test1234  (uid: ${uidMap['admin@tunaywasi.pe']})`);
+  console.log('\n   Corre la app: npm run dev\n');
   process.exit(0);
 }
 

@@ -25,7 +25,8 @@ export async function crearPerfil(uid: string, perfil: Omit<PerfilDoc, 'uid' | '
       contactoNombre: p.nombre,
       email: p.email ?? '',
       telefono: p.telefono ?? '',
-      direccion: '',
+      direccion: p.direccion ?? '',
+      region: p.region ?? '',
       certificaciones: p.certificaciones ?? [],
       feeCatacionPEN: p.feeCatacionPEN ?? 0,
       feeTuestePEN: p.feeTuestePEN ?? 0,
@@ -57,10 +58,14 @@ export async function toggleTieneLaboratorio(uid: string, tieneLaboratorio: bool
   await updateDoc(doc(db, 'mkt_usuarios', uid), { tieneLaboratorio });
 }
 
-/**
- * Asegura que el laboratorio tenga su doc en mkt_laboratorios.
- * Llámala al iniciar sesión como laboratorio (idempotente — usa setDoc merge).
- */
+export async function actualizarPerfilCafeteria(
+  uid: string,
+  datos: Partial<Pick<PerfilCafeteria, 'nombre' | 'empresa' | 'ruc' | 'telefono' | 'direccionEntrega'>>,
+): Promise<void> {
+  const limpio = Object.fromEntries(Object.entries(datos).filter(([, v]) => v !== undefined && v !== ''));
+  await updateDoc(doc(db, 'mkt_usuarios', uid), limpio);
+}
+
 export async function sincronizarLabDoc(perfil: PerfilLaboratorio): Promise<void> {
   const labDoc = Object.fromEntries(Object.entries({
     id: perfil.uid,
@@ -69,7 +74,8 @@ export async function sincronizarLabDoc(perfil: PerfilLaboratorio): Promise<void
     contactoNombre: perfil.nombre,
     email: perfil.email ?? '',
     telefono: perfil.telefono ?? '',
-    direccion: '',
+    direccion: perfil.direccion ?? '',
+    region: perfil.region ?? '',
     certificaciones: perfil.certificaciones ?? [],
     feeCatacionPEN: perfil.feeCatacionPEN ?? 0,
     feeTuestePEN: perfil.feeTuestePEN ?? 0,

@@ -36,6 +36,11 @@ export interface PerfilLaboratorio extends PerfilBase {
   certificaciones: string[];   // ["Q-Grader CQI", "SCA Authorized"]
   feeCatacionPEN: number;      // lo fija el laboratorio
   feeTuestePEN: number;
+  region?: string;
+  direccion?: string;          // dirección física para envío de muestras
+  certificadoUrl?: string;     // URL del archivo subido (PDF o imagen)
+  certificadoStatus?: 'pendiente' | 'aprobado' | 'rechazado'; // revisión del admin
+  certificadoNota?: string;    // nota del admin al rechazar
 }
 
 export interface PerfilAdmin extends PerfilBase {

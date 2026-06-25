@@ -1,10 +1,10 @@
 /**
- * AppAdmin.tsx — SPA para el panel administrador de Tunay Wasi
- * VITE_APP_TARGET=admin
+ * AppAdmin.tsx — Entry point para ?target=admin
  *
- * Sin landing pública — solo login, acceso directo al panel.
+ * Si el usuario ya es admin autenticado → redirige a / (marketplace unificado).
+ * Si no es admin → pantalla de acceso denegado.
+ * Si no hay sesión → pantalla de login.
  */
-import AdminPanel from '@/features/marketplace/components/AdminPanel';
 import AuthScreen from '@/features/auth/components/AuthScreen';
 import { useAuth } from '@/shared/useAuth';
 import { logout } from '@/shared/authService';
@@ -14,7 +14,7 @@ const C = {
 };
 
 export default function AppAdmin() {
-  const { user, loading } = useAuth();
+  const { user, perfil, loading } = useAuth();
 
   if (loading) {
     return (
@@ -26,34 +26,39 @@ export default function AppAdmin() {
     );
   }
 
-  if (user) {
+  // Admin autenticado → redirigir al marketplace unificado
+  if (user && perfil?.rol === 'admin') {
+    window.location.replace(window.location.pathname);
+    return null;
+  }
+
+  // Otro rol → acceso denegado
+  if (user && perfil && perfil.rol !== 'admin') {
     return (
-      <>
-        <div style={{
-          background: C.green, padding: '0 24px', height: 52,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(143,175,138,0.15)',
-        }}>
-          <span style={{ fontFamily: 'Mulish, sans-serif', color: C.cream, fontWeight: 900, fontSize: 16, letterSpacing: 2 }}>
-            TUNAY WASI · Admin
-          </span>
+      <div style={{ background: C.green, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', color: C.terra, fontSize: 14, marginBottom: 8 }}>
+            Acceso denegado
+          </p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', color: C.tan, fontSize: 12, marginBottom: 24 }}>
+            Tu cuenta no tiene permisos de administrador.
+          </p>
           <button
             onClick={() => logout()}
             style={{
               background: 'transparent', color: C.tan, border: `1px solid ${C.tan}40`,
-              borderRadius: 8, padding: '5px 12px', fontFamily: 'Montserrat, sans-serif',
+              borderRadius: 8, padding: '6px 16px', fontFamily: 'Montserrat, sans-serif',
               fontSize: 11, cursor: 'pointer',
             }}
           >
             Cerrar sesión
           </button>
         </div>
-        <AdminPanel />
-      </>
+      </div>
     );
   }
 
-  // Login
+  // Sin sesión → login
   return (
     <div style={{ background: C.green, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 400 }}>

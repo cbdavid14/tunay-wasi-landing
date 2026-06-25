@@ -84,6 +84,8 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
   const [certificaciones, setCertificaciones] = useState('');
   const [feeCatacion, setFeeCatacion] = useState('');
   const [feeTueste, setFeeTueste] = useState('');
+  const [labRegion, setLabRegion] = useState('');
+  const [labDireccion, setLabDireccion] = useState('');
 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
@@ -189,6 +191,8 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
           certificaciones: certificaciones.split(',').map(c => c.trim()).filter(Boolean),
           feeCatacionPEN: Number(feeCatacion) || 0,
           feeTuestePEN: Number(feeTueste) || 0,
+          region: labRegion || undefined,
+          direccion: labDireccion || undefined,
         };
       } else {
         perfilRaw = { ...base, rol: 'admin' };
@@ -454,6 +458,14 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
                 <div>
                   <label style={labelStyle}>Certificaciones (separadas por coma)</label>
                   <input style={inputStyle} value={certificaciones} onChange={e => setCertificaciones(e.target.value)} placeholder="Q-Grader CQI, SCA Authorized" />
+                </div>
+                <div>
+                  <label style={labelStyle}>Región / ciudad</label>
+                  <input style={inputStyle} value={labRegion} onChange={e => setLabRegion(e.target.value)} placeholder="Lima, Miraflores" />
+                </div>
+                <div>
+                  <label style={labelStyle}>Dirección para recepción de muestras</label>
+                  <input style={inputStyle} value={labDireccion} onChange={e => setLabDireccion(e.target.value)} placeholder="Av. Conquistadores 500, San Isidro" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>

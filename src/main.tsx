@@ -7,14 +7,14 @@ import './index.css';
 /**
  * VITE_APP_TARGET controla qué SPA se monta:
  *
- *   clientes      → Landing B2C (tienda preventa)
- *   marketplace   → Portal cafetería sin laboratorio propio
- *   cafeteria_lab → Portal cafetería con laboratorio propio ("Mi laboratorio" activo)
- *   caficultor    → Portal caficultor (registro y publicación de lotes)
- *   laboratorio   → Portal laboratorio (catación + tueste)
+ *   marketplace   → Portal B2B unificado (todos los actores: caficultor, laboratorio, cafetería)
  *   admin         → Panel administrador Tunay Wasi
+ *   clientes      → Landing B2C (tienda preventa)
+ *
+ * Por defecto se monta 'marketplace'.
  */
-const target = import.meta.env.VITE_APP_TARGET ?? 'clientes';
+const urlTarget = new URLSearchParams(window.location.search).get('target');
+const target = urlTarget ?? import.meta.env.VITE_APP_TARGET ?? 'marketplace';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
@@ -22,21 +22,15 @@ if (!root) throw new Error('Missing #root element');
 async function mountApp() {
   let AppComponent;
 
-  if (target === 'marketplace' || target === 'cafeteria_lab') {
-    const mod = await import('./AppMarketplace');
-    AppComponent = mod.default;
-  } else if (target === 'caficultor') {
-    const mod = await import('./AppCaficultor');
-    AppComponent = mod.default;
-  } else if (target === 'laboratorio') {
-    const mod = await import('./AppLaboratorio');
-    AppComponent = mod.default;
-  } else if (target === 'admin') {
+  if (target === 'admin') {
     const mod = await import('./AppAdmin');
     AppComponent = mod.default;
-  } else {
-    // clientes — landing B2C por defecto
+  } else if (target === 'clientes') {
     const mod = await import('./App');
+    AppComponent = mod.default;
+  } else {
+    // marketplace — portal B2B unificado (default)
+    const mod = await import('./AppMarketplace');
     AppComponent = mod.default;
   }
 
