@@ -63,7 +63,8 @@ service cloud.firestore {
       allow create: if isCaficultor()
         && request.resource.data.caficultorId == uid();
 
-      allow update: if (isCaficultor() && resource.data.caficultorId == uid())
+      allow update: if isAdmin()
+        || (isCaficultor() && resource.data.caficultorId == uid())
         || isCafeteria()
         || isLaboratorio();
 
@@ -96,7 +97,8 @@ service cloud.firestore {
       allow create: if isCafeteria();
 
       allow update: if isSignedIn() && (
-        resource.data.tostadoraId == uid()
+        isAdmin()
+        || resource.data.tostadoraId == uid()
         || isCaficultor()
         || isLaboratorio()
       );
@@ -142,7 +144,12 @@ service cloud.firestore {
         && request.resource.data.tostadoraId == uid();
 
       // Admin puede actualizar (verificar pago, actualizar logística)
-      allow update: if isAdmin() || (isCafeteria()
+      allow update: if isAdmin()
+        || (isCaficultor() && resource.data.caficultorId == uid()
+          && resource.data.logisticaStatus == 'en_origen'
+          && request.resource.data.logisticaStatus == 'en_transito'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['logisticaStatus', 'empresaTransporte', 'numeroGuia', 'updatedAt']))
+        || (isCafeteria()
         && resource.data.tostadoraId == uid()
         && (
           // Confirmar recepción: en_transito → entregado
