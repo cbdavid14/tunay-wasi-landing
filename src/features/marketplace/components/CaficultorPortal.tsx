@@ -29,7 +29,7 @@ import {
   fetchMktPedidosByTostadora,
 } from '@/features/marketplace/marketplaceService';
 import type { LoteDoc, SolicitudMuestraDoc, PedidoB2BDoc, LaboratorioDoc, SolicitudCertificacionDoc, SolicitudHubDoc } from '@/shared/types/marketplace';
-import { COMISION_TW, FLETE_POR_SACO_PEN } from '@/shared/config';
+import { COMISION_TW } from '@/shared/config';
 import type { PerfilCaficultor } from '@/shared/types/auth';
 import NotifBell from '@/shared/NotifBell';
 import { useNotificaciones } from '@/shared/useNotificaciones';
@@ -384,8 +384,6 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
 
   // Calcula precio estimado que recibirá el caficultor
   const precioOrigen = Number(loteForm.precioOrigenPEN) || 0;
-  const comisionPlataforma = Math.round(precioOrigen * COMISION_TW);
-  const precioFinal = precioOrigen + comisionPlataforma + FLETE_POR_SACO_PEN;
 
   // ── Render principal (modoEmbebido oculta header y nav propios) ─────────────
   if (false) {
@@ -1707,26 +1705,15 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 </div>
               </div>
 
-              {/* Calculadora de ingresos en tiempo real */}
+              {/* Precio que recibirá el caficultor */}
               {precioOrigen > 0 && (
-                <div style={{ background: C.green, borderRadius: 10, padding: 16, color: C.cream }}>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.sage, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 }}>
-                    Estimado — precio al tostador en Lima
-                  </p>
-                  {[
-                    { label: 'Tu precio (lo que tú recibes)', val: `S/ ${precioOrigen.toLocaleString()}` },
-                    { label: `Comisión plataforma (${(COMISION_TW * 100).toFixed(0)}%)`, val: `+ S/ ${comisionPlataforma}` },
-                    { label: 'Flete Lima', val: `+ S/ ${FLETE_POR_SACO_PEN}` },
-                  ].map(r => (
-                    <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>{r.label}</span>
-                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.cream }}>{r.val}</span>
-                    </div>
-                  ))}
-                  <div style={{ borderTop: '1px solid rgba(143,175,138,0.3)', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700 }}>Precio final al tostador</span>
-                    <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, fontWeight: 700, color: C.terra }}>S/ {precioFinal.toLocaleString()}</span>
-                  </div>
+                <div style={{ background: C.green, borderRadius: 10, padding: 16, color: C.cream, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.sage, textTransform: 'uppercase', letterSpacing: 2 }}>
+                    Lo que recibes por saco
+                  </span>
+                  <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, fontWeight: 700, color: C.terra }}>
+                    S/ {precioOrigen.toLocaleString()}
+                  </span>
                 </div>
               )}
 
