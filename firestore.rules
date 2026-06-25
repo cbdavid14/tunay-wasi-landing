@@ -43,7 +43,12 @@ service cloud.firestore {
     // El admin usa Admin SDK y bypasea estas reglas.
 
     match /usuarios_perfil/{userId} {
-      allow read, write: if isSignedIn() && uid() == userId;
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && uid() == userId;
+      // Actualizar rating desnormalizado por otro usuario (post-calificación)
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['promedioCalificacion', 'totalCalificaciones']);
+      allow delete: if false;
     }
 
     match /mkt_usuarios/{userId} {
