@@ -395,7 +395,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, color: C.brown, marginBottom: 8 }}>
               Publica tu primer lote
             </h3>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 16px' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 16px' }}>
               Son solo 3 campos: nombre del lote, precio por saco y cantidad disponible.
             </p>
             <button onClick={() => setTab('nuevo_lote')} style={{ background: C.terra, color: 'white', border: 'none', borderRadius: 8, padding: '12px 28px', fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
@@ -478,9 +478,9 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
         {tab === 'solicitudes' && (
           <div>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Mis muestras</h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24 }}>Cafeterías interesadas en tus lotes.</p>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24 }}>Cafeterías interesadas en tus lotes.</p>
             {solicitudes.length === 0 ? (
-              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, textAlign: 'center', padding: '60px 0' }}>Aún no tienes solicitudes de muestra.</p>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, textAlign: 'center', padding: '60px 0' }}>Aún no tienes solicitudes de muestra.</p>
             ) : (
               <div style={{ display: 'grid', gap: 14 }}>
                 {solicitudes.filter(s => s.status !== 'rechazada').map(sol => {
@@ -517,7 +517,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
         {tab === 'nuevo_lote' && !submitted && (
           <div>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Publicar nuevo lote</h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>Completa los datos de tu lote.</p>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>Completa los datos de tu lote.</p>
             <div style={{ background: 'white', borderRadius: 14, padding: 28, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'grid', gap: 18 }}>
               <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Nombre del lote *</label><input style={inputStyle} value={loteForm.nombreLote} onChange={e => setField('nombreLote', e.target.value)} placeholder="Ej: Finca San José — Geisha Honey Lote 01" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -570,7 +570,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: 52, marginBottom: 16 }}>🌱</div>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 8 }}>¡Lote registrado!</h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, maxWidth: 440, margin: '0 auto 20px' }}>Tu lote está guardado como borrador. Publícalo desde "Mis lotes".</p>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.7, maxWidth: 440, margin: '0 auto 20px' }}>Tu lote está guardado como borrador. Publícalo desde "Mis lotes".</p>
             <button onClick={() => { setSubmitted(false); setTab('mis_lotes'); }} style={{ background: C.terra, color: 'white', border: 'none', borderRadius: 8, padding: '12px 28px', fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
               Ver mis lotes →
             </button>
@@ -579,9 +579,9 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
         {tab === 'mis_pagos' && (
           <div>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Mis pagos</h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>Pagos de tus pedidos entregados.</p>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>Pagos de tus pedidos entregados.</p>
             {misPedidos.filter(p => p.pagoCaficultorStatus === 'pagado' || p.logisticaStatus === 'entregado').length === 0 ? (
-              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, textAlign: 'center', padding: '60px 0' }}>Aún no tienes pagos registrados.</p>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, textAlign: 'center', padding: '60px 0' }}>Aún no tienes pagos registrados.</p>
             ) : (
               <div style={{ display: 'grid', gap: 10 }}>
                 {misPedidos.filter(p => p.logisticaStatus === 'entregado' || p.pagoCaficultorStatus === 'pagado').map(ped => {
@@ -861,7 +861,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
               <div>
                 {misPedidos.filter(p => p.pagoStatus === 'verificado' && p.logisticaStatus === 'en_origen').length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>No hay pedidos pendientes de despacho.</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown }}>No hay pedidos pendientes de despacho.</p>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gap: 12 }}>
@@ -1033,7 +1033,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, color: C.brown, marginBottom: 8 }}>
                   Publica tu primer lote
                 </h3>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, marginBottom: 4, maxWidth: 420, margin: '0 auto 16px' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.7, marginBottom: 4, maxWidth: 420, margin: '0 auto 16px' }}>
                   Son solo 3 campos: nombre del lote, precio por saco y cantidad disponible.<br />
                   Las cafeterías lo verán inmediatamente en el catálogo.
                 </p>
@@ -1119,7 +1119,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                         </div>
                       </div>
 
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, marginBottom: 14 }}>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, marginBottom: 14 }}>
                         {info.desc}
                       </p>
 
@@ -1389,7 +1389,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
               <div>
                 {solicitudesHub.filter(s => s.status === 'solicitada' || s.status === 'confirmada_caficultor').length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>Sin solicitudes del hub por ahora.</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown }}>Sin solicitudes del hub por ahora.</p>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gap: 12 }}>
@@ -1455,7 +1455,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                     <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, fontWeight: 700, color: C.brown, margin: '0 0 8px' }}>
                       Certifica la calidad de tu café
                     </p>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
                       Envía una muestra a un laboratorio Q-Grader. Si el puntaje supera el umbral SCA, tu lote se publica automáticamente en el catálogo para que las cafeterías lo compren.
                     </p>
                   </div>
@@ -1561,7 +1561,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
               Publicar nuevo lote
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>
               Completa los datos de tu lote. Tunay Wasi conecta tu café directamente con cafeterías y tostadoras.
               Cuando publicas, guardamos muestras en nuestro hub en Lima para agilizar la entrega — así las cafeterías
               reciben su muestra rápido y sin esperas. Cuando un comprador hace un pedido, recibes tu pago directamente.
@@ -1774,7 +1774,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 8 }}>
               ¡Lote registrado!
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, maxWidth: 440, margin: '0 auto 20px' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.7, maxWidth: 440, margin: '0 auto 20px' }}>
               Tu lote está guardado como <strong>borrador</strong>. Esto es lo que registramos:
             </p>
 
@@ -1807,7 +1807,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                   </div>
                   <div>
                     <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.green, margin: '0 0 4px' }}>{item.titulo}</p>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -1828,7 +1828,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
               Mis pagos
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>
               Aquí aparecen los pagos de tus pedidos entregados. Tunay Wasi transfiere tu monto dentro de las 48h hábiles tras confirmar la entrega.
             </p>
 
@@ -1989,7 +1989,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             {/* Estado vacío */}
             {misPedidos.filter(p => p.logisticaStatus !== 'cancelado').length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown }}>
                   Aún no tienes pagos registrados.<br />
                   Aparecerán aquí cuando un pedido sea entregado.
                 </p>
