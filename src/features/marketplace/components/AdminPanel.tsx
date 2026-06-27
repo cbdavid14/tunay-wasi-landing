@@ -94,13 +94,13 @@ function FiltroPeriodoBar({ valor, onChange }: { valor: FiltroPeriodo; onChange:
 }
 
 const KANBAN_COLS = [
-  { key: 'en_origen',   label: 'En Origen',   color: C.tan },
+  { key: 'en_origen',   label: 'En Origen',   color: C.brown },
   { key: 'en_transito', label: 'En Tránsito',  color: '#d6b15a' },
   { key: 'entregado',   label: 'Entregado ✓',  color: '#4caf50' },
 ];
 
 const KANBAN_MUESTRAS_COLS = [
-  { key: 'solicitada',             label: 'Solicitada',       color: C.tan },
+  { key: 'solicitada',             label: 'Solicitada',       color: C.brown },
   { key: 'confirmada_caficultor',  label: 'En camino',        color: '#d6b15a' },
   { key: 'recibida_hub',           label: 'Recibida en hub',  color: C.sage },
 ];
@@ -283,7 +283,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
       <div style={{ background: C.brown, padding: isMobile ? '14px 16px' : '20px 28px', color: C.cream }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 12 : 16 }}>
           <div>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 10, letterSpacing: 3, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 10, letterSpacing: 3, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>
               Panel Administrador
             </p>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: isMobile ? 18 : 22, margin: 0, color: C.cream }}>
@@ -355,7 +355,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
               <div style={{ textAlign: 'center', padding: '60px 0' }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
                 <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.sage, margin: 0 }}>Todo al día</p>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginTop: 8 }}>No hay acciones pendientes en este momento.</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginTop: 8 }}>No hay acciones pendientes en este momento.</p>
               </div>
             ) : (
               <div style={{ display: 'grid', gap: 12 }}>
@@ -375,7 +375,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                       </span>
                       <div>
                         <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>{a.label}</p>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{a.desc}</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{a.desc}</p>
                       </div>
                     </div>
                     <button
@@ -443,13 +443,13 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                   {(() => {
                     const items = filtrarPorFecha(pedidos.filter(p => p.pagoStatus === 'pendiente' || p.pagoStatus === 'en_revision'), filtroPagosVerificar, 'createdAt');
                     return items.length === 0 ? (
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '40px 0', textAlign: 'center' }}>No hay comprobantes pendientes de verificar.</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, padding: '40px 0', textAlign: 'center' }}>No hay comprobantes pendientes de verificar.</p>
                     ) : items.map(p => (
                       <div key={p.id} style={{ background: 'white', borderRadius: 12, padding: '18px 22px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${p.pagoStatus === 'en_revision' ? '#c5a8f060' : `${C.tan}40`}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>{p.id}</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0, textTransform: 'uppercase', letterSpacing: 1 }}>{p.id}</p>
                               <span style={{
                                 background: p.pagoStatus === 'en_revision' ? '#8a6fc920' : '#fff3e0',
                                 color: p.pagoStatus === 'en_revision' ? '#8a6fc9' : '#e65100',
@@ -462,7 +462,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                             <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
                               {p.razonSocial} — {p.sacosSolicitados} saco{p.sacosSolicitados !== 1 ? 's' : ''} · Lote: {p.loteId}
                             </p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 4px' }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 4px' }}>
                               Total: <strong style={{ color: C.brown }}>S/ {p.totalPEN.toLocaleString()}</strong>
                               {p.feeLaboratorioPEN ? ` (incluye S/ ${p.feeLaboratorioPEN} lab)` : ''}
                             </p>
@@ -472,7 +472,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                               </a>
                             )}
                             {p.voucherSubidoAt && (
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '4px 0 0' }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '4px 0 0' }}>
                                 Subido: {new Date(p.voucherSubidoAt).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                               </p>
                             )}
@@ -503,23 +503,23 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                       filtroPagosDistribuir, 'createdAt',
                     );
                     return items.length === 0 ? (
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '40px 0', textAlign: 'center' }}>No hay pagos pendientes. Se habilitan cuando el caficultor sube la guía de envío.</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, padding: '40px 0', textAlign: 'center' }}>No hay pagos pendientes. Se habilitan cuando el caficultor sube la guía de envío.</p>
                     ) : items.map(p => (
                       <div key={p.id} style={{ background: 'white', borderRadius: 12, padding: '18px 22px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: `1px solid ${C.sage}30` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{p.id}</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{p.id}</p>
                             <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 6px' }}>
                               Lote: {p.loteId} · {p.sacosSolicitados} sacos
                             </p>
                             <div style={{ display: 'flex', gap: 16 }}>
                               <div style={{ background: '#f7f3ee', borderRadius: 8, padding: '8px 14px' }}>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Caficultor</p>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Caficultor</p>
                                 <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.brown, margin: 0 }}>S/ {p.montoCaficultorPEN.toLocaleString()}</p>
                               </div>
                               {p.feeLaboratorioPEN && (
                                 <div style={{ background: '#f0ebe4', borderRadius: 8, padding: '8px 14px' }}>
-                                  <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Laboratorio</p>
+                                  <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Laboratorio</p>
                                   <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.brown, margin: 0 }}>S/ {p.feeLaboratorioPEN.toLocaleString()}</p>
                                 </div>
                               )}
@@ -547,15 +547,15 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                       filtroFeesLab, 'createdAt',
                     );
                     return items.length === 0 ? (
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '40px 0', textAlign: 'center' }}>No hay fees de certificación pendientes.</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, padding: '40px 0', textAlign: 'center' }}>No hay fees de certificación pendientes.</p>
                     ) : items.map(cert => {
                       const lab = laboratorios.find(l => l.id === cert.laboratorioId);
                       return (
                         <div key={cert.id} style={{ background: 'white', borderRadius: 12, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #8a6fc930', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{cert.id}</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{cert.id}</p>
                             <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>{cert.nombreLote}</p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                               Lab: <strong>{lab?.nombreComercial ?? cert.laboratorioId}</strong> · Fee: <strong style={{ color: C.brown }}>S/ {cert.feeCatacionPEN}</strong>
                             </p>
                           </div>
@@ -615,7 +615,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
               <div>
                 {/* Pendientes */}
                 {solicitudesMuestra.filter(s => s.status === 'pendiente').length === 0 ? (
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '24px 0', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, padding: '24px 0', textAlign: 'center' }}>
                     No hay solicitudes pendientes de despacho.
                   </p>
                 ) : (
@@ -631,7 +631,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                             <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>
                               {sol.empresa ?? sol.tostadoraId}
                             </p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>
                               {sol.id} · {sol.loteId}
                               {sinStock && <span style={{ color: C.terra, marginLeft: 8 }}>· Sin stock</span>}
                             </p>
@@ -675,20 +675,20 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                   return (
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.tan, margin: 0 }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, margin: 0 }}>
                           Despachadas ({despachadas.length})
                         </p>
                         <FiltroPeriodoBar valor={filtroDespachar} onChange={setFiltroDespachar} />
                       </div>
                       {despachadas.length === 0 ? (
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, textAlign: 'center', padding: '16px 0' }}>Sin registros en este período.</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, textAlign: 'center', padding: '16px 0' }}>Sin registros en este período.</p>
                       ) : (
                         <div style={{ display: 'grid', gap: 6 }}>
                           {despachadas.map(sol => (
                             <div key={sol.id} style={{ background: 'white', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', borderLeft: `3px solid ${C.sage}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>{sol.empresa ?? sol.tostadoraId}</p>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>
                                   {sol.id} · {sol.loteId}
                                   {(sol as SolicitudMuestraDoc & { empresaCourier?: string; numeroGuia?: string }).empresaCourier && ` · ${(sol as SolicitudMuestraDoc & { empresaCourier?: string; numeroGuia?: string }).empresaCourier} ${(sol as SolicitudMuestraDoc & { empresaCourier?: string; numeroGuia?: string }).numeroGuia ?? ''}`}
                                 </p>
@@ -710,7 +710,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                 {/* Pendientes de confirmación */}
                 {solicitudesHub.filter(h => h.status === 'confirmada_caficultor').length === 0
                   && todosLotes.filter(l => l.muestraEnCamino && !solicitudesHub.some(h => h.loteId === l.id && h.status === 'confirmada_caficultor')).length === 0 && (
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '24px 0', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, padding: '24px 0', textAlign: 'center' }}>
                     No hay muestras en camino al hub.
                   </p>
                 )}
@@ -722,7 +722,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                       <div key={hub.id} style={{ background: 'white', borderRadius: 10, padding: '14px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', borderLeft: `4px solid #d6b15a`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                         <div>
                           <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>{lote?.nombreLote ?? hub.loteId}</p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>
                             {hub.id} · {hub.cantidadSolicitada} muestra{hub.cantidadSolicitada !== 1 ? 's' : ''}
                             {hub.empresaCourier ? ` · ${hub.empresaCourier}` : ''}{hub.numeroGuia ? ` · Guía: ${hub.numeroGuia}` : ''}
                           </p>
@@ -745,7 +745,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                     <div key={lote.id} style={{ background: 'white', borderRadius: 10, padding: '14px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', borderLeft: `4px solid #8a6fc9`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                       <div>
                         <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>{lote.nombreLote}</p>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>
                           {lote.cantidadMuestrasDeclarada ?? 0} muestras declaradas
                           {lote.courierMuestrasHub ? ` · ${lote.courierMuestrasHub}` : ''}{lote.guiaMuestrasHub ? ` · Guía: ${lote.guiaMuestrasHub}` : ''}
                         </p>
@@ -767,13 +767,13 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                   return (
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.tan, margin: 0 }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, margin: 0 }}>
                           Recibidas ({recibidas.length})
                         </p>
                         <FiltroPeriodoBar valor={filtroRecibir} onChange={setFiltroRecibir} />
                       </div>
                       {recibidas.length === 0 ? (
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, textAlign: 'center', padding: '16px 0' }}>Sin registros en este período.</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, textAlign: 'center', padding: '16px 0' }}>Sin registros en este período.</p>
                       ) : (
                         <div style={{ display: 'grid', gap: 6 }}>
                           {recibidas.map(hub => {
@@ -782,7 +782,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                               <div key={hub.id} style={{ background: 'white', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', borderLeft: `3px solid ${C.sage}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
                                   <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>{lote?.nombreLote ?? hub.loteId}</p>
-                                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>
+                                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>
                                     {hub.id} · {hub.cantidadRecibida ?? hub.cantidadSolicitada} recibidas
                                   </p>
                                 </div>
@@ -830,7 +830,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
             {/* Sub-tab: Kanban */}
             {subTabLogistica === 'kanban' && (
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 12 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 12 }}>
                   Estado de todos los pedidos activos. Actualiza el estado al avanzar en la cadena.
                 </p>
                 <FiltroPeriodoBar valor={filtroLogistica} onChange={setFiltroLogistica} />
@@ -857,14 +857,14 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                           </button>
                           {isOpen && (
                             pedidosCol.length === 0 ? (
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, textAlign: 'center', padding: '14px 0', margin: 0 }}>Sin pedidos</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, textAlign: 'center', padding: '14px 0', margin: 0 }}>Sin pedidos</p>
                             ) : (
                               <div style={{ padding: '10px 12px', display: 'grid', gap: 8 }}>
                                 {pedidosCol.map(p => (
                                   <div key={p.id} style={{ background: '#f7f3ee', borderRadius: 8, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
                                       <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>{p.id}</p>
-                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>Lote: {p.loteId}</p>
+                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>Lote: {p.loteId}</p>
                                     </div>
                                     <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.terra, margin: 0, fontWeight: 700 }}>
                                       {p.sacosSolicitados}s · S/{p.totalPEN.toLocaleString()}
@@ -892,12 +892,12 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                         </div>
                         <div style={{ padding: 12, minHeight: 120 }}>
                           {pedidosCol.length === 0 && (
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, textAlign: 'center', marginTop: 20 }}>Sin pedidos</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, textAlign: 'center', marginTop: 20 }}>Sin pedidos</p>
                           )}
                           {pedidosCol.map(p => (
                             <div key={p.id} style={{ background: '#f7f3ee', borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>{p.id}</p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 4px' }}>Lote: {p.loteId}</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 4px' }}>Lote: {p.loteId}</p>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: 0, fontWeight: 600 }}>
                                 {p.sacosSolicitados} sacos · S/{p.totalPEN.toLocaleString()}
                               </p>
@@ -915,7 +915,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
             {/* Sub-tab: Kanban muestras */}
             {subTabLogistica === 'muestras' && (
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 16 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 16 }}>
                   Seguimiento de muestras físicas desde solicitud hasta su recepción en el hub.
                 </p>
                 {isMobile ? (
@@ -941,7 +941,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                           </button>
                           {isOpen && (
                             items.length === 0 ? (
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, textAlign: 'center', padding: '14px 0', margin: 0 }}>Sin muestras</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, textAlign: 'center', padding: '14px 0', margin: 0 }}>Sin muestras</p>
                             ) : (
                               <div style={{ padding: '10px 12px', display: 'grid', gap: 8 }}>
                                 {items.map(s => {
@@ -949,7 +949,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                                   return (
                                     <div key={s.id} style={{ background: '#f7f3ee', borderRadius: 8, padding: '10px 12px' }}>
                                       <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>{lote?.nombreLote ?? s.loteId}</p>
-                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>{s.empresaCourier ?? `${s.cantidadSolicitada} muestra(s)`}</p>
+                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>{s.empresaCourier ?? `${s.cantidadSolicitada} muestra(s)`}</p>
                                     </div>
                                   );
                                 })}
@@ -974,14 +974,14 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                           </div>
                           <div style={{ padding: 12, minHeight: 120 }}>
                             {items.length === 0 && (
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, textAlign: 'center', marginTop: 20 }}>Sin muestras</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, textAlign: 'center', marginTop: 20 }}>Sin muestras</p>
                             )}
                             {items.map(s => {
                               const lote = todosLotes.find(l => l.id === s.loteId);
                               return (
                                 <div key={s.id} style={{ background: '#f7f3ee', borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
                                   <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>{lote?.nombreLote ?? s.loteId}</p>
-                                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 4px' }}>{s.empresaCourier ?? `${s.cantidadSolicitada} muestra(s)`}</p>
+                                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 4px' }}>{s.empresaCourier ?? `${s.cantidadSolicitada} muestra(s)`}</p>
                                   <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.sage, margin: 0 }}>
                                     {new Date(s.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}
                                   </p>
@@ -1000,7 +1000,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
             {/* Sub-tab: Reservas */}
             {subTabLogistica === 'reservas' && (
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 12 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 12 }}>
                   Reservas activas (72h window) y vencidas sin pago. Liberar una reserva cancela el pedido y devuelve los sacos al lote.
                 </p>
                 <FiltroPeriodoBar valor={filtroReservas} onChange={setFiltroReservas} />
@@ -1026,7 +1026,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                       display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12,
                     }}>
                       <div>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 1, textTransform: 'uppercase', margin: '0 0 2px' }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, letterSpacing: 1, textTransform: 'uppercase', margin: '0 0 2px' }}>
                           {p.id} · Lote: {p.loteId}
                         </p>
                         <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
@@ -1035,7 +1035,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                         <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#c0392b', margin: 0 }}>
                           Venció: {new Date(p.reservaExpiraAt).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '2px 0 0' }}>
                           {p.razonSocial} · {p.email}
                         </p>
                       </div>
@@ -1067,7 +1067,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                 Reservas activas ({activas.length})
               </h3>
               {activas.length === 0 && (
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, textAlign: 'center', padding: '30px 0' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, textAlign: 'center', padding: '30px 0' }}>
                   No hay reservas activas pendientes de pago.
                 </p>
               )}
@@ -1083,7 +1083,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                       display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12,
                     }}>
                       <div>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 1, textTransform: 'uppercase', margin: '0 0 2px' }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, letterSpacing: 1, textTransform: 'uppercase', margin: '0 0 2px' }}>
                           {p.id} · Lote: {p.loteId}
                         </p>
                         <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
@@ -1092,7 +1092,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                         <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: 0 }}>
                           Vence en {horasRestantes}h {minutosRestantes}m — {new Date(p.reservaExpiraAt).toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '2px 0 0' }}>
                           {p.razonSocial} · {p.email}
                         </p>
                       </div>
@@ -1117,7 +1117,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
 
             {filtrarPorFecha(reservasVencidas, filtroReservas).length === 0 && filtrarPorFecha(reservasPendientes, filtroReservas).length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown }}>
                   No hay reservas{filtroReservas !== 'todo' ? ' en este período' : ' activas ni vencidas en este momento'}.
                 </p>
               </div>
@@ -1139,11 +1139,11 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
               <h3 style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, marginBottom: 6 }}>
                 Cafeterías — acceso a lab propio
               </h3>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, marginBottom: 14 }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, marginBottom: 14 }}>
                 Activa "Lab propio" para cafeterías que tienen tostadora propia. Esto habilita el tab "Mi laboratorio" en su portal.
               </p>
               {cafeterias.length === 0 && (
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, padding: '20px 0' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, padding: '20px 0' }}>
                   No hay cafeterías registradas.
                 </p>
               )}
@@ -1158,7 +1158,7 @@ export default function AdminPanel({ tabActivo, modoEmbebido, onLogout }: { tabA
                       <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>
                         {caf.empresa ?? caf.nombre}
                       </p>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                         {caf.email}
                       </p>
                     </div>

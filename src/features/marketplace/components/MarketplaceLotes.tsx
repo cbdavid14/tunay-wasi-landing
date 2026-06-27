@@ -409,26 +409,26 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: '0 0 4px' }}>
                 {item.lote.nombreLote}
               </h3>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 20px' }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 20px' }}>
                 {item.lote.variedad} · {item.lote.region} · {item.lote.puntajeOficial ?? item.lote.puntajeReferencial} pts SCA
               </p>
               {/* Detalle */}
               <div style={{ background: '#f7f3ee', borderRadius: 12, padding: '14px 16px', marginBottom: 20, display: 'grid', gap: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>{sacos} saco{sacos > 1 ? 's' : ''} × S/ {(item.lote.precioVentaPEN ?? 0).toLocaleString()}</span>
+                  <span style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>{sacos} saco{sacos > 1 ? 's' : ''} × S/ {(item.lote.precioVentaPEN ?? 0).toLocaleString()}</span>
                   <span style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, fontWeight: 600 }}>S/ {subtotal.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>IGV (18%)</span>
+                  <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>IGV (18%)</span>
                   <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>S/ {igv.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>Flete</span>
+                  <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>Flete</span>
                   <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>S/ {flete.toLocaleString()}</span>
                 </div>
                 {fee > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>Catación (lab)</span>
+                    <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>Catación (lab)</span>
                     <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>S/ {fee.toLocaleString()}</span>
                   </div>
                 )}
@@ -462,7 +462,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
       })()}
       {cargando && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>Cargando lotes...</p>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown }}>Cargando lotes...</p>
         </div>
       )}
       {!cargando && (<>
@@ -661,7 +661,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 </div>
                 <div>
                   <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, fontWeight: 700, color: C.cream, margin: 0 }}>{perfil?.nombre ?? 'Mi cuenta'}</p>
-                  {perfil?.empresa && <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '2px 0 0' }}>{perfil.empresa}</p>}
+                  {perfil?.empresa && <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '2px 0 0' }}>{perfil.empresa}</p>}
                   <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.sage, margin: '2px 0 0' }}>Sesión iniciada</p>
                 </div>
               </div>
@@ -669,7 +669,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               {/* Datos de registro / edición */}
               <div style={{ background: 'white', borderRadius: 14, padding: '20px', marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, fontWeight: 700, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>Datos de la empresa</p>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, fontWeight: 700, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>Datos de la empresa</p>
                   {!editandoPerfil ? (
                     <button
                       onClick={() => {
@@ -703,7 +703,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                       { label: 'Dirección de entrega', value: (perfil as PerfilCafeteria | null)?.direccionEntrega },
                     ] as { label: string; value: string | undefined }[]).filter(d => d.value).map(d => (
                       <div key={d.label} style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 12 }}>
-                        <span style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 0.5 }}>{d.label}</span>
+                        <span style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 0.5 }}>{d.label}</span>
                         <span style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>{d.value}</span>
                       </div>
                     ))}
@@ -718,7 +718,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                       { key: 'direccionEntrega', label: 'Dirección de entrega', placeholder: 'Av. La Mar 456, Miraflores' },
                     ] as { key: keyof typeof formPerfil; label: string; placeholder: string }[]).map(f => (
                       <div key={f.key}>
-                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>{f.label}</label>
+                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>{f.label}</label>
                         <input
                           value={formPerfil[f.key]}
                           onChange={e => setFormPerfil(prev => ({ ...prev, [f.key]: e.target.value }))}
@@ -753,7 +753,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 >
                   <span style={{ fontSize: 22 }}>📦</span>
                   <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 600, color: C.brown }}>Mis muestras</span>
-                  <span style={{ marginLeft: 'auto', color: C.tan, fontSize: 18 }}>›</span>
+                  <span style={{ marginLeft: 'auto', color: C.brown, fontSize: 18 }}>›</span>
                 </button>
                 <button
                   onClick={() => setVistaActual('pedidos')}
@@ -761,7 +761,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 >
                   <span style={{ fontSize: 22 }}>📋</span>
                   <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 600, color: C.brown }}>Mis pedidos</span>
-                  <span style={{ marginLeft: 'auto', color: C.tan, fontSize: 18 }}>›</span>
+                  <span style={{ marginLeft: 'auto', color: C.brown, fontSize: 18 }}>›</span>
                 </button>
                 <button
                   onClick={() => { onLogout?.(); }}
@@ -794,7 +794,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 26, color: C.brown, marginBottom: 8 }}>
                 Accede a tu cuenta
               </h3>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 28, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 28, lineHeight: 1.6 }}>
                 Inicia sesión para gestionar tus muestras, pedidos y perfil de empresa.
               </p>
               <button
@@ -814,14 +814,14 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, margin: '0 0 6px' }}>
             Mis muestras
           </h2>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24 }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24 }}>
             Solicitudes de muestra de café verde de tu empresa.
           </p>
 
           {/* Filtros */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24, alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>Estado:</span>
+              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>Estado:</span>
               {([
                 { key: 'todos', label: 'Todos' },
                 { key: 'pendiente', label: 'Pendiente' },
@@ -840,7 +840,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               ))}
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginLeft: 'auto' }}>
-              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>Orden:</span>
+              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>Orden:</span>
               {([
                 { key: 'reciente', label: 'Más reciente' },
                 { key: 'antiguo', label: 'Más antiguo' },
@@ -866,7 +866,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 : a.createdAt.localeCompare(b.createdAt));
             if (solsFiltradas.length === 0 && misSolicitudes.length === 0) return (
               <div style={{ background: 'white', borderRadius: 12, padding: 24, textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                   Aún no has solicitado muestras. Explora el catálogo y solicita tu primera muestra.
                 </p>
                 <button onClick={() => setVistaActual('catalogo')} style={{
@@ -879,7 +879,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
             );
             if (solsFiltradas.length === 0) return (
               <div style={{ background: 'white', borderRadius: 12, padding: 24, textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                   No hay muestras con el filtro seleccionado.
                 </p>
               </div>
@@ -898,13 +898,13 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                     <div style={{ flex: '1 1 200px' }}>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>
                         {sol.loteId}
                       </p>
                       <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
                         {lote?.nombreLote ?? sol.loteId}
                       </p>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                         Solicitado: {new Date(sol.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
                     </div>
@@ -969,7 +969,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                       </button>
                     )}
                     {sol.status === 'recibida' && lote && !lote.puntajeOficial && (
-                      <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, fontStyle: 'italic' }}>
+                      <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, fontStyle: 'italic' }}>
                         Esperando certificación SCA del lote
                       </span>
                     )}
@@ -991,14 +991,14 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, margin: '0 0 6px' }}>
             Mis pedidos
           </h2>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24 }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24 }}>
             Pedidos B2B de sacos de café verde.
           </p>
 
           {/* Filtros */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24, alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>Estado:</span>
+              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>Estado:</span>
               {([
                 { key: 'todos', label: 'Todos' },
                 { key: 'pendiente', label: 'Pago pendiente' },
@@ -1018,7 +1018,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               ))}
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginLeft: 'auto' }}>
-              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>Orden:</span>
+              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>Orden:</span>
               {([
                 { key: 'reciente', label: 'Más reciente' },
                 { key: 'antiguo', label: 'Más antiguo' },
@@ -1052,14 +1052,14 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
 
             if (pedidosFiltrados.length === 0 && misPedidos.length === 0) return (
               <div style={{ background: 'white', borderRadius: 12, padding: 24, textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                   Aún no tienes pedidos. Cuando reserves sacos de un lote aparecerán aquí.
                 </p>
               </div>
             );
             if (pedidosFiltrados.length === 0) return (
               <div style={{ background: 'white', borderRadius: 12, padding: 24, textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                   No hay pedidos con el filtro seleccionado.
                 </p>
               </div>
@@ -1093,13 +1093,13 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                     style={{ padding: '18px 24px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}
                   >
                     <div>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>
                         {ped.id}
                       </p>
                       <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>
                         {ped.sacosSolicitados} saco{ped.sacosSolicitados !== 1 ? 's' : ''} · {lote?.nombreLote ?? ped.loteId}
                       </p>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                         {new Date(ped.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })} · S/ {ped.totalPEN.toLocaleString()}
                       </p>
                     </div>
@@ -1119,7 +1119,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                           : ped.pagoStatus === 'en_revision' ? '🕐 Comprobante en revisión'
                           : vencida ? 'Reserva vencida' : `Vence en ${horasRestantes}h ${minutosRestantes}m`}
                       </span>
-                      <span style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan }}>{abierto ? '▲' : '▼'}</span>
+                      <span style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown }}>{abierto ? '▲' : '▼'}</span>
                     </div>
                   </div>
 
@@ -1128,7 +1128,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                     <div style={{ borderTop: '1px solid #f0ebe4', padding: '20px 24px' }}>
 
                       {/* Stepper logístico */}
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
                         Estado del pedido
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
@@ -1168,13 +1168,13 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                         <div style={{ background: '#fffbf5', border: `1px solid ${C.tan}30`, borderRadius: 8, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 24 }}>
                           {ped.empresaTransporte && (
                             <div>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Transportista</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Transportista</p>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: 0 }}>{ped.empresaTransporte}</p>
                             </div>
                           )}
                           {ped.numeroGuia && (
                             <div>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Número de guía</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Número de guía</p>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: 0 }}>{ped.numeroGuia}</p>
                             </div>
                           )}
@@ -1184,7 +1184,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                       {/* Datos del pedido */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Lote</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Lote</p>
                           {[
                             ['Nombre', lote?.nombreLote ?? ped.loteId],
                             ['Variedad', lote?.variedad ?? '—'],
@@ -1192,13 +1192,13 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                             ['Sacos', `${ped.sacosSolicitados} × 60 kg = ${ped.kgTotal} kg`],
                           ].map(([k, v]) => (
                             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f7f3ee', padding: '5px 0' }}>
-                              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>{k}</span>
+                              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>{k}</span>
                               <span style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 600, color: C.brown }}>{v}</span>
                             </div>
                           ))}
                         </div>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Facturación</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Facturación</p>
                           {[
                             ['Razón social', ped.razonSocial],
                             ['RUC', ped.ruc],
@@ -1206,7 +1206,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                             ['Entrega', ped.direccionEntrega],
                           ].map(([k, v]) => (
                             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f7f3ee', padding: '5px 0', gap: 8 }}>
-                              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, whiteSpace: 'nowrap' }}>{k}</span>
+                              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, whiteSpace: 'nowrap' }}>{k}</span>
                               <span style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 600, color: C.brown, textAlign: 'right' }}>{v}</span>
                             </div>
                           ))}
@@ -1215,7 +1215,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
 
                       {/* Desglose de precios */}
                       <div style={{ background: '#f7f3ee', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Desglose</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Desglose</p>
                         {[
                           ['Subtotal', `S/ ${ped.subtotalPEN.toLocaleString()}`],
                           ['IGV (18%)', `S/ ${ped.igvPEN.toLocaleString()}`],
@@ -1223,7 +1223,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                           ...(ped.feeLaboratorioPEN ? [['Catación (lab)', `S/ ${ped.feeLaboratorioPEN.toLocaleString()}`]] : []),
                         ].map(([k, v]) => (
                           <div key={k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>{k}</span>
+                            <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>{k}</span>
                             <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>{v}</span>
                           </div>
                         ))}
@@ -1393,7 +1393,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
             Compra directo del caficultor.<br/>Con trazabilidad completa.
           </h1>
           {!isMobile && (
-            <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, maxWidth: 560, lineHeight: 1.7 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, maxWidth: 560, lineHeight: 1.7 }}>
               Café verde en grano. Sacos de 60 kg. Puntaje SCA verificado por laboratorio certificado.
               Ficha técnica descargable para tu empaque. Pago al caficultor garantizado.
             </p>
@@ -1409,7 +1409,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
             ].map(s => (
               <div key={s.n} style={{ minWidth: isMobile ? 'calc(50% - 8px)' : 'auto' }}>
                 <div style={{ fontFamily: 'Cormorant Garamond', fontSize: isMobile ? 22 : 28, fontWeight: 700, color: C.cream }}>{s.n}</div>
-                <div style={{ fontFamily: 'Montserrat', fontSize: isMobile ? 10 : 11, color: C.tan, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
+                <div style={{ fontFamily: 'Montserrat', fontSize: isMobile ? 10 : 11, color: C.brown, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -1460,7 +1460,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               </h3>
 
               <div style={{ marginBottom: 20 }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, marginBottom: 8 }}>Proceso</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, marginBottom: 8 }}>Proceso</p>
                 {['todos', 'lavado', 'natural', 'honey', 'anaerobico'].map(p => (
                   <button key={p} onClick={() => setFiltroProceso(p)} style={{
                     display: 'block', width: '100%', textAlign: 'left',
@@ -1475,7 +1475,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               </div>
 
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, marginBottom: 8 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, marginBottom: 8 }}>
                   Puntaje SCA mínimo: <strong style={{ color: C.terra }}>{filtroSCA > 0 ? `${filtroSCA}+` : 'todos'}</strong>
                 </p>
                 {[0, 82, 84, 86, 88].map(pts => (
@@ -1505,7 +1505,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 { label: 'Pasarela de pagos (~4%)', val: 'S/ 38' },
               ].map(r => (
                 <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>{r.label}</span>
+                  <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>{r.label}</span>
                   <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.cream }}>{r.val}</span>
                 </div>
               ))}
@@ -1520,7 +1520,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
           <div>
             {!isMobile && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                   {lotes.length} lote{lotes.length !== 1 ? 's' : ''} encontrado{lotes.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -1570,7 +1570,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                     <div style={{ padding: isMobile ? '16px' : '20px 24px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>
                             {lote.id} · {lote.region}
                           </p>
                           <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, fontWeight: 700, color: C.brown, margin: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -1599,7 +1599,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                           <div style={{ fontFamily: 'Cormorant Garamond', fontSize: 32, fontWeight: 700, color: C.terra, lineHeight: 1 }}>
                             {puntaje.toFixed(1)}
                           </div>
-                          <div style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, textTransform: 'uppercase' }}>
+                          <div style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, textTransform: 'uppercase' }}>
                             pts SCA{lote.puntajeOficial ? '' : ' ref.'}
                           </div>
                         </div>
@@ -1647,7 +1647,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                         >
                           <img src={caficultor.fotoUrl} alt={caficultor.nombreProductor}
                             style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-                          <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, textDecoration: 'underline dotted' }}>
+                          <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, textDecoration: 'underline dotted' }}>
                             {caficultor.nombreProductor} · {caficultor.nombreFinca}
                           </span>
                         </div>
@@ -1669,15 +1669,15 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                   {/* Desglose de precio — solo desktop */}
                                   {!isMobile && (
                                     <div style={{ background: '#fafaf8', border: '1px solid #ede8e0', borderRadius: 10, padding: '10px 14px', fontSize: 11, fontFamily: 'Montserrat' }}>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.tan, marginBottom: 4 }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.brown, marginBottom: 4 }}>
                                         <span>Precio caficultor / saco</span>
                                         <span style={{ color: C.brown, fontWeight: 600 }}>S/ {lote.precioOrigenPEN.toLocaleString()}</span>
                                       </div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.tan, marginBottom: 4 }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.brown, marginBottom: 4 }}>
                                         <span>Comisión plataforma (10%)</span>
                                         <span style={{ color: C.brown }}>S/ {comision.toLocaleString()}</span>
                                       </div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.tan, marginBottom: 4 }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.brown, marginBottom: 4 }}>
                                         <span>Flete Lima</span>
                                         <span style={{ color: C.brown }}>S/ {FLETE_POR_SACO_PEN}</span>
                                       </div>
@@ -1698,7 +1698,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                           fontFamily: 'Montserrat', fontSize: 13, textAlign: 'center',
                                         }}
                                       />
-                                      <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>
+                                      <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>
                                         {isMobile
                                           ? `S/${lote.precioVentaPEN.toLocaleString()}/saco`
                                           : `saco${(sacosSeleccionados[lote.id] ?? 1) !== 1 ? 's' : ''} × S/${lote.precioVentaPEN.toLocaleString()}`}
@@ -1715,7 +1715,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                       Reservar →
                                     </button>
                                     {!isMobile && (
-                                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>
+                                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>
                                         {disponibles} saco{disponibles !== 1 ? 's' : ''} disponible{disponibles !== 1 ? 's' : ''}
                                       </span>
                                     )}
@@ -1742,7 +1742,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                       </button>
                                     );
                                     return (
-                                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, fontStyle: 'italic' }}>
+                                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, fontStyle: 'italic' }}>
                                         Muestras agotadas temporalmente
                                       </span>
                                     );
@@ -1763,7 +1763,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                   }}>
                                     Muestras agotadas temporalmente
                                   </button>
-                                  <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, fontStyle: 'italic' }}>
+                                  <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, fontStyle: 'italic' }}>
                                     El caficultor está preparando el próximo envío al hub Lima.
                                   </span>
                                 </div>
@@ -1785,7 +1785,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                               </button>
                             );
                           })()}
-                          <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>
+                          <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>
                             S/{lote.precioMuestraPEN} · {disponibles} saco{disponibles !== 1 ? 's' : ''} disponible{disponibles !== 1 ? 's' : ''}
                           </span>
                         </div>
@@ -1804,7 +1804,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                 <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#d6b15a', fontWeight: 700, margin: '0 0 4px' }}>
                                   ⚠ Calidad no verificada — en proceso de certificación SCA
                                 </p>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0, lineHeight: 1.5 }}>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0, lineHeight: 1.5 }}>
                                   Este lote aún no tiene puntaje SCA oficial. Si compras ahora, asumes el riesgo de calidad.
                                 </p>
                               </div>
@@ -1816,7 +1816,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                     onChange={e => setSacosSeleccionados(prev => ({ ...prev, [lote.id]: Number(e.target.value) }))}
                                     style={{ width: 60, padding: '8px 10px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, textAlign: 'center' }}
                                   />
-                                  <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>
+                                  <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>
                                     saco{(sacosSeleccionados[lote.id] ?? 1) !== 1 ? 's' : ''} × S/{lote.precioVentaPEN.toLocaleString()}
                                   </span>
                                 </div>
@@ -1880,7 +1880,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.cream, margin: '0 0 4px' }}>
                 {fichaAbierta.nombreLote}
               </h3>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>{fichaAbierta.region}</p>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>{fichaAbierta.region}</p>
             </div>
 
             {[
@@ -1892,14 +1892,14 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               ['Notas de sabor', fichaAbierta.notasSabor.join(', ')],
             ].map(([k, v]) => (
               <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f0ebe4', padding: '8px 0' }}>
-                <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>{k}</span>
+                <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>{k}</span>
                 <span style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 600, color: C.brown }}>{v}</span>
               </div>
             ))}
 
             {fichaAbierta.acidez && (
               <div style={{ marginTop: 16 }}>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Perfil sensorial</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Perfil sensorial</p>
                 {[
                   { label: 'Acidez', val: fichaAbierta.acidez },
                   { label: 'Cuerpo', val: fichaAbierta.cuerpo ?? 0 },
@@ -1941,24 +1941,24 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${C.cream}` }} />
               <div>
                 <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: 0, fontWeight: 700 }}>{modalCaficultor.nombreProductor}</p>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '4px 0 0' }}>Productor de café de especialidad</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '4px 0 0' }}>Productor de café de especialidad</p>
               </div>
             </div>
             <div style={{ display: 'grid', gap: 12 }}>
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Finca</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Finca</p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, margin: 0, fontWeight: 600 }}>{modalCaficultor.nombreFinca}</p>
               </div>
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Región</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Región</p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, margin: 0 }}>{modalCaficultor.region}</p>
               </div>
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Calificación</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Calificación</p>
                 {modalCaficultorCalifs === null ? (
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>Cargando...</p>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>Cargando...</p>
                 ) : modalCaficultorCalifs.total === 0 ? (
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>Sin calificaciones aún</p>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>Sin calificaciones aún</p>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 16, color: '#d6b15a', letterSpacing: 2 }}>
@@ -1967,14 +1967,14 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                     <span style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown }}>
                       {modalCaficultorCalifs.promedio.toFixed(1)}
                     </span>
-                    <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>
+                    <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>
                       ({modalCaficultorCalifs.total} {modalCaficultorCalifs.total === 1 ? 'reseña' : 'reseñas'})
                     </span>
                   </div>
                 )}
               </div>
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Pedidos completados</p>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Pedidos completados</p>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, margin: 0, fontWeight: 600 }}>
                   {modalCaficultorPedidos === null ? 'Cargando...' : modalCaficultorPedidos === 0 ? 'Sin pedidos aún' : `${modalCaficultorPedidos} pedido${modalCaficultorPedidos !== 1 ? 's' : ''}`}
                 </p>
@@ -2001,7 +2001,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
             <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, color: C.brown, margin: '0 0 4px' }}>
               Calificar caficultor
             </h3>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 20px' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 20px' }}>
               Pedido {modalCalifPedido.id} · {todosLotes.find(l => l.id === modalCalifPedido.loteId)?.nombreLote ?? modalCalifPedido.loteId}
             </p>
             {/* Selector de estrellas */}
@@ -2021,7 +2021,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 </button>
               ))}
             </div>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '0 0 6px' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '0 0 6px' }}>
               Comentario (opcional)
             </p>
             <textarea
@@ -2032,7 +2032,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               placeholder="¿Cómo fue la experiencia con este caficultor?"
               style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e0d8d0', fontFamily: 'Montserrat', fontSize: 12, resize: 'none', boxSizing: 'border-box', outline: 'none' }}
             />
-            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textAlign: 'right', margin: '2px 0 16px' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textAlign: 'right', margin: '2px 0 16px' }}>
               {califComentario.length}/300
             </p>
             <div style={{ display: 'flex', gap: 10 }}>

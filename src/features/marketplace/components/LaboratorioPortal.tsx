@@ -333,7 +333,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, color: C.brown, marginBottom: 8 }}>
                   Sin muestras asignadas aún
                 </h3>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, marginBottom: 12 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.7, marginBottom: 12 }}>
                   Cuando un caficultor publique un lote, el sistema te notificará automáticamente para que lo aceptes.
                   El primer laboratorio en aceptar queda asignado a esa catación.
                 </p>
@@ -354,7 +354,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: '4px 0 2px' }}>
                       {lote.nombreLote}
                     </h3>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                       {lote.variedad} · {lote.proceso} · {lote.altitud} · {lote.region}
                     </p>
                   </div>
@@ -383,7 +383,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: '4px 0 2px' }}>
                       {lote.nombreLote}
                     </h3>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                       {lote.variedad} · {lote.proceso} · {lote.altitud}
                     </p>
                   </div>
@@ -438,7 +438,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                               ['Peso muestra', `${lote.pesoPorSacoKg} kg/saco`],
                               ['Puntaje ref.', `${lote.puntajeReferencial} pts`],
                             ].filter(([, v]) => v && v !== '0 pts').map(([k, v]) => (
-                              <span key={k} style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan }}>
+                              <span key={k} style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown }}>
                                 <strong style={{ color: C.brown }}>{k}:</strong> {v}
                               </span>
                             ))}
@@ -446,7 +446,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         )}
                         <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#8a6fc9', fontWeight: 700, margin: 0 }}>
                           Tu fee: S/ {laboratorio.feeCatacionPEN ?? 90}
-                          <span style={{ fontWeight: 400, color: C.tan, marginLeft: 6 }}>(configurado en tu Perfil)</span>
+                          <span style={{ fontWeight: 400, color: C.brown, marginLeft: 6 }}>(configurado en tu Perfil)</span>
                         </p>
                         {aceptadaYaTomada === cert.id && (
                           <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: '6px 0 0', fontWeight: 700 }}>
@@ -489,13 +489,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                           <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: '4px 0 2px' }}>
                             {cert.nombreLote}
                           </h3>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                             Fee: S/ {cert.feeCatacionPEN} ·{' '}
                             <span style={{ color: cert.pagoStatus === 'verificado' ? C.sage : C.terra, fontWeight: 700 }}>
                               {cert.pagoStatus === 'verificado' ? 'Fee verificado ✓' : 'Fee pendiente de pago'}
                             </span>
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '2px 0 0' }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '2px 0 0' }}>
                             Lote ID: {cert.loteId} · Solicitud: {cert.id}
                           </p>
                         </div>
@@ -574,13 +574,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
               Registrar catación
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>
               Ingresa los resultados de la catación SCA y el perfil de tueste sugerido.
               Al guardar, si el puntaje supera el umbral SCA el lote se publica automáticamente en el catálogo.
             </p>
             {!loteSeleccionado && (
               <div style={{ marginBottom: 24 }}>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 8 }}>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 8 }}>
                   Selecciona el lote a catar
                 </label>
                 <div style={{ display: 'grid', gap: 10 }}>
@@ -595,11 +595,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                       }}
                     >
                       <strong>{lote.nombreLote}</strong>
-                      <span style={{ color: C.tan, marginLeft: 8 }}>{lote.variedad} · {lote.region}</span>
+                      <span style={{ color: C.brown, marginLeft: 8 }}>{lote.variedad} · {lote.region}</span>
                     </div>
                   ))}
                   {enCatacion.length === 0 && (
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                       No hay lotes en catación. Acepta una muestra primero.
                     </p>
                   )}
@@ -630,7 +630,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   <div style={{ background: C.green, borderRadius: 10, padding: '14px 18px', marginBottom: 24, color: C.cream }}>
                     <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.sage, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>Catando</p>
                     <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, margin: 0, fontWeight: 700 }}>{loteSeleccionado.nombreLote}</p>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '4px 0 0' }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '4px 0 0' }}>
                       {loteSeleccionado.variedad} · {loteSeleccionado.proceso} · {loteSeleccionado.altitud} · {loteSeleccionado.region}
                     </p>
                   </div>
@@ -645,13 +645,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'densidad' as const, label: 'Densidad (g/L)', placeholder: '680' },
                       ]).map(({ key, label, placeholder }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           <input value={cataForm[key]} onChange={e => setCataForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
                             style={{ ...inputStyle, padding: '8px 10px', fontSize: 13 }} />
                         </div>
                       ))}
                     </div>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Defectos físicos (cantidad)</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Defectos físicos (cantidad)</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
                       {([
                         { key: 'defNegros' as const, label: 'Negros' },
@@ -660,7 +660,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'defCascaras' as const, label: 'Cáscaras' },
                       ]).map(({ key, label }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           {inputNum(key, 0, 50, 1)}
                         </div>
                       ))}
@@ -679,12 +679,12 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'apreciacionGlobal' as const, label: 'Apreciación Global' },
                       ]).map(({ key, label }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           {inputNum(key, 6, 10, 0.25)}
                         </div>
                       ))}
                     </div>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Atributos de 5 tazas (2 pts c/u = máx 10)</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Atributos de 5 tazas (2 pts c/u = máx 10)</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }}>
                       {([
                         { key: 'uniformidad' as const, label: 'Uniformidad' },
@@ -692,7 +692,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'tazaLimpia' as const, label: 'Taza Limpia' },
                       ]).map(({ key, label }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           <select value={cataForm[key]} onChange={e => setCataForm(f => ({ ...f, [key]: e.target.value }))}
                             style={{ ...inputStyle, padding: '8px 10px', fontSize: 13, background: 'white' }}>
                             {[0,2,4,6,8,10].map(v => <option key={v} value={v}>{v} pts</option>)}
@@ -705,11 +705,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     </h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
                       <div>
-                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>Tazas afectadas (0–5)</label>
+                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>Tazas afectadas (0–5)</label>
                         {inputNum('defTazasAfectadas', 0, 5, 1)}
                       </div>
                       <div>
-                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>Intensidad</label>
+                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>Intensidad</label>
                         <select value={cataForm.defIntensidad} onChange={e => setCataForm(f => ({ ...f, defIntensidad: e.target.value }))}
                           style={{ ...inputStyle, padding: '8px 10px', fontSize: 13, background: 'white' }}>
                           <option value="0">Sin defecto</option>
@@ -720,11 +720,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     </div>
                     <div style={{ background: '#faf7f3', borderRadius: 10, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                       <div>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>Puntaje Final SCA</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>Puntaje Final SCA</p>
                         <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 36, color: clasificacion.color, margin: 0, fontWeight: 700, lineHeight: 1 }}>
                           {puntajeFinal.toFixed(2)}
                         </p>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '4px 0 0' }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '4px 0 0' }}>
                           {totalCalidad.toFixed(2)} calidad − {totalDefectos} defectos
                         </p>
                       </div>
@@ -733,7 +733,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                       </span>
                     </div>
                     <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                         Notas de sabor <span style={{ fontWeight: 400 }}>(separadas por coma) *</span>
                       </label>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -762,7 +762,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                       {iaError && <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: '4px 0 0' }}>{iaError}</p>}
                     </div>
                     <div style={{ marginBottom: 24 }}>
-                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                         Perfil de tueste sugerido *
                       </label>
                       <select value={cataForm.datosTueste} onChange={e => setCataForm(f => ({ ...f, datosTueste: e.target.value }))}
@@ -806,7 +806,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 8 }}>
               Catación registrada
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 24px' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 24px' }}>
               El lote quedó en estado <strong>"Aprobado"</strong>.<br />
               El puntaje SCA fue registrado y el lote se publicó automáticamente en el catálogo.
             </p>
@@ -815,7 +815,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: '#8a6fc9', fontWeight: 700, margin: '0 0 4px' }}>
                   📋 Solicitud de certificación completada
                 </p>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0, lineHeight: 1.5 }}>
                   Se marcó la certificación como completada. Tunay Wasi te transferirá el fee una vez que el lote tenga un pedido confirmado.
                 </p>
               </div>
@@ -836,11 +836,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
         {tab === 'mis_catas' && subTabCatas === 'historial' && (
           <div>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Historial</h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24 }}>
               Todos los pedidos procesados — catación y/o tueste por lote.
             </p>
             {historial.length === 0 && pedidosHistorial.length === 0 ? (
-              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, textAlign: 'center', padding: '40px 0' }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, textAlign: 'center', padding: '40px 0' }}>
                 Aún no hay pedidos completados.
               </p>
             ) : (
@@ -861,7 +861,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                             <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.sage, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{loteId}</p>
                             <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, color: C.cream, margin: 0, fontWeight: 700 }}>{lote?.nombreLote ?? loteId}</p>
                             {lote && 'variedad' in lote && (
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '2px 0 0' }}>
                                 {(lote as LoteDoc).variedad} · {(lote as LoteDoc).proceso} · {(lote as LoteDoc).region}
                               </p>
                             )}
@@ -874,22 +874,22 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         <div style={{ padding: '16px 20px' }}>
                           {catacion && (
                             <div style={{ marginBottom: pedidos.length > 0 ? 14 : 0, paddingBottom: pedidos.length > 0 ? 14 : 0, borderBottom: pedidos.length > 0 ? '1px solid #f0ebe4' : 'none' }}>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Catación SCA</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Catación SCA</p>
                               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                                 <div>
-                                  <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Puntaje</p>
+                                  <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Puntaje</p>
                                   <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, color: (catacion.puntajeOficial ?? 0) >= 82 ? C.sage : C.terra, margin: 0, fontWeight: 700, lineHeight: 1 }}>{catacion.puntajeOficial ?? '—'} pts</p>
                                 </div>
                                 {catacion.acidez != null && (
                                   <div>
-                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Acidez / Cuerpo / Balance</p>
+                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Acidez / Cuerpo / Balance</p>
                                     <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: 0, fontWeight: 600 }}>{catacion.acidez} · {catacion.cuerpo} · {catacion.balance}</p>
                                   </div>
                                 )}
                                 {catacion.notasSabor?.length > 0 && (
                                   <div>
-                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Notas</p>
-                                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>{catacion.notasSabor.join(', ')}</p>
+                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Notas</p>
+                                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>{catacion.notasSabor.join(', ')}</p>
                                   </div>
                                 )}
                               </div>
@@ -897,14 +897,14 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                           )}
                           {pedidos.length > 0 && (
                             <div>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Pedidos</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Pedidos</p>
                               <div style={{ display: 'grid', gap: 8 }}>
                                 {pedidos.map((p: PedidoB2BDoc) => (
                                   <div key={p.id} style={{ background: '#f7f3ee', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                     <div>
-                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px' }}>{p.id} · {new Date(p.updatedAt).toLocaleDateString('es-PE')}</p>
+                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px' }}>{p.id} · {new Date(p.updatedAt).toLocaleDateString('es-PE')}</p>
                                       <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: 0, fontWeight: 600 }}>{p.razonSocial}</p>
-                                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>{p.sacosSolicitados} sacos · {p.kgTotal} kg</p>
+                                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '2px 0 0' }}>{p.sacosSolicitados} sacos · {p.kgTotal} kg</p>
                                       {(p.feeLaboratorioPEN ?? 0) > 0 && (
                                         <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
                                           <span style={{ background: `${C.sage}20`, color: C.sage, fontSize: 9, fontFamily: 'Montserrat', fontWeight: 600, padding: '2px 6px', borderRadius: 10 }}>Catación S/ {p.feeLaboratorioPEN}</span>
@@ -933,7 +933,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
         {tab === 'pagos' && (
           <div>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Mis pagos</h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>
               Fees recibidos de Tunay Wasi por cataciones y certificaciones completadas.
             </p>
             {(() => {
@@ -961,13 +961,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   {/* Pendientes */}
                   {(pendientesB2B.length > 0 || pendientesCert.length > 0) && (
                     <div>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pendientes de pago</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pendientes de pago</p>
                       <div style={{ display: 'grid', gap: 8 }}>
                         {pendientesB2B.map(p => (
                           <div key={p.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${C.terra}` }}>
                             <div>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Catación pedido B2B</p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{p.id.slice(-8).toUpperCase()}</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{p.id.slice(-8).toUpperCase()}</p>
                             </div>
                             <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: C.terra }}>S/ {p.feeLaboratorioPEN}</span>
                           </div>
@@ -976,7 +976,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                           <div key={c.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid #8a6fc9` }}>
                             <div>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Certificación — {c.nombreLote}</p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>Catación completada — pendiente de transferencia por Tunay Wasi</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>Catación completada — pendiente de transferencia por Tunay Wasi</p>
                             </div>
                             <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: '#8a6fc9' }}>S/ {c.feeCatacionPEN}</span>
                           </div>
@@ -987,13 +987,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   {/* Historial pagado */}
                   {(feesB2B.length > 0 || feesCert.length > 0) && (
                     <div>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pagos recibidos</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pagos recibidos</p>
                       <div style={{ display: 'grid', gap: 8 }}>
                         {feesB2B.map(p => (
                           <div key={p.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${C.sage}` }}>
                             <div>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Catación pedido B2B ✓</p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{p.pagoLaboratorioAt ? new Date(p.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{p.pagoLaboratorioAt ? new Date(p.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
                             </div>
                             <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: C.sage }}>S/ {p.feeLaboratorioPEN}</span>
                           </div>
@@ -1002,7 +1002,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                           <div key={c.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${C.sage}` }}>
                             <div>
                               <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Certificación — {c.nombreLote} ✓</p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{c.pagoLaboratorioAt ? new Date(c.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{c.pagoLaboratorioAt ? new Date(c.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
                             </div>
                             <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: C.sage }}>S/ {c.feeCatacionPEN}</span>
                           </div>
@@ -1011,7 +1011,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     </div>
                   )}
                   {feesB2B.length === 0 && feesCert.length === 0 && pendientesB2B.length === 0 && pendientesCert.length === 0 && (
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, textAlign: 'center', padding: '40px 0' }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, textAlign: 'center', padding: '40px 0' }}>
                       Aún no hay fees registrados. Los pagos aparecerán aquí cuando completes cataciones y certificaciones.
                     </p>
                   )}
@@ -1025,38 +1025,38 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
         {tab === 'perfil' && (
           <div>
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Mi perfil</h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 28, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 28, lineHeight: 1.6 }}>
               Estos datos aparecen en las solicitudes de certificación que recibas de los caficultores.
             </p>
             <div style={{ background: 'white', borderRadius: 14, padding: 24, display: 'grid', gap: 16, maxWidth: 480 }}>
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>Laboratorio</label>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>Laboratorio</label>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, margin: 0, fontWeight: 700 }}>{laboratorio.nombreComercial}</p>
               </div>
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>Teléfono de contacto</label>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>Teléfono de contacto</label>
                 <input value={perfilLabForm.telefono} onChange={e => setPerfilLabForm(f => ({ ...f, telefono: e.target.value }))} placeholder="+51 987 654 321"
                   style={{ width: '100%', padding: '11px 14px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 14, color: C.brown, background: 'white', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>Región / ciudad</label>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>Región / ciudad</label>
                 <input value={perfilLabForm.region} onChange={e => setPerfilLabForm(f => ({ ...f, region: e.target.value }))} placeholder="Lima, San Isidro"
                   style={{ width: '100%', padding: '11px 14px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 14, color: C.brown, background: 'white', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>Dirección para recepción de muestras</label>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>Dirección para recepción de muestras</label>
                 <input value={perfilLabForm.direccion} onChange={e => setPerfilLabForm(f => ({ ...f, direccion: e.target.value }))} placeholder="Av. Conquistadores 500, San Isidro, Lima"
                   style={{ width: '100%', padding: '11px 14px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 14, color: C.brown, background: 'white', boxSizing: 'border-box' }} />
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '4px 0 0' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '4px 0 0' }}>
                   Esta dirección la verán los caficultores antes de solicitar la certificación.
                 </p>
               </div>
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>Fee de catación (S/)</label>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>Fee de catación (S/)</label>
                 <input value={perfilLabForm.feeCatacionPEN} onChange={e => setPerfilLabForm(f => ({ ...f, feeCatacionPEN: e.target.value }))} placeholder="Ej: 80"
                   type="number" min={0} step={10}
                   style={{ width: '100%', padding: '11px 14px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 14, color: C.brown, background: 'white', boxSizing: 'border-box' }} />
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '4px 0 0' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '4px 0 0' }}>
                   Monto que cobras por catación SCA. Lo verán los caficultores al solicitar certificación.
                 </p>
               </div>
@@ -1075,7 +1075,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>
                   Certificado Q-Grader
                 </p>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0, lineHeight: 1.6 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0, lineHeight: 1.6 }}>
                   Sube tu certificado Q-Grader (PDF o imagen). El equipo de Tunay Wasi lo revisará antes de activar tu cuenta para catar lotes.
                 </p>
               </div>
@@ -1097,7 +1097,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     </p>
                     {certUrl && (
                       <a href={certUrl} target="_blank" rel="noreferrer"
-                        style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginTop: 2 }}>
+                        style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginTop: 2 }}>
                         Ver certificado subido →
                       </a>
                     )}
@@ -1163,13 +1163,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 {(laboratorio.nombre ?? laboratorio.nombreComercial).charAt(0).toUpperCase()}
               </div>
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, letterSpacing: 2, margin: '0 0 2px', textTransform: 'uppercase' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, letterSpacing: 2, margin: '0 0 2px', textTransform: 'uppercase' }}>
                   Portal del laboratorio
                 </p>
                 <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: isMobile ? 18 : 24, margin: '0 0 2px' }}>
                   {laboratorio.nombreComercial}
                 </h2>
-                {!isMobile && <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                {!isMobile && <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                   {laboratorio.certificaciones.join(' · ')}
                 </p>}
               </div>
@@ -1196,7 +1196,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             ].map(s => (
               <div key={s.label}>
                 <div style={{ fontFamily: 'Cormorant Garamond', fontSize: isMobile ? 22 : 28, fontWeight: 700, color: C.cream }}>{s.n}</div>
-                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
+                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -1246,7 +1246,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, color: C.brown, marginBottom: 8 }}>
                   Sin muestras asignadas aún
                 </h3>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, marginBottom: 12 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.7, marginBottom: 12 }}>
                   Cuando un caficultor publique un lote, el sistema te notificará automáticamente para que lo aceptes.
                   El primer laboratorio en aceptar queda asignado a esa catación.
                 </p>
@@ -1268,7 +1268,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: '4px 0 2px' }}>
                       {lote.nombreLote}
                     </h3>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                       {lote.variedad} · {lote.proceso} · {lote.altitud} · {lote.region}
                     </p>
                   </div>
@@ -1298,7 +1298,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: '4px 0 2px' }}>
                       {lote.nombreLote}
                     </h3>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                       {lote.variedad} · {lote.proceso} · {lote.altitud}
                     </p>
                   </div>
@@ -1353,7 +1353,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                               ['Peso muestra', `${lote.pesoPorSacoKg} kg/saco`],
                               ['Puntaje ref.', `${lote.puntajeReferencial} pts`],
                             ].filter(([, v]) => v && v !== '0 pts').map(([k, v]) => (
-                              <span key={k} style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan }}>
+                              <span key={k} style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown }}>
                                 <strong style={{ color: C.brown }}>{k}:</strong> {v}
                               </span>
                             ))}
@@ -1361,7 +1361,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         )}
                         <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#8a6fc9', fontWeight: 700, margin: 0 }}>
                           Tu fee: S/ {laboratorio.feeCatacionPEN ?? 90}
-                          <span style={{ fontWeight: 400, color: C.tan, marginLeft: 6 }}>(configurado en tu Perfil)</span>
+                          <span style={{ fontWeight: 400, color: C.brown, marginLeft: 6 }}>(configurado en tu Perfil)</span>
                         </p>
                         {aceptadaYaTomada === cert.id && (
                           <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: '6px 0 0', fontWeight: 700 }}>
@@ -1404,13 +1404,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                           <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: '4px 0 2px' }}>
                             {cert.nombreLote}
                           </h3>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                             Fee: S/ {cert.feeCatacionPEN} ·{' '}
                             <span style={{ color: cert.pagoStatus === 'verificado' ? C.sage : C.terra, fontWeight: 700 }}>
                               {cert.pagoStatus === 'verificado' ? 'Fee verificado ✓' : 'Fee pendiente de pago'}
                             </span>
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '2px 0 0' }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '2px 0 0' }}>
                             Lote ID: {cert.loteId} · Solicitud: {cert.id}
                           </p>
                         </div>
@@ -1489,7 +1489,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
               Registrar catación
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>
               Ingresa los resultados de la catación SCA y el perfil de tueste sugerido.
               Al guardar, si el puntaje supera el umbral SCA el lote se publica automáticamente en el catálogo.
             </p>
@@ -1497,7 +1497,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             {/* Selector de lote si no viene preseleccionado */}
             {!loteSeleccionado && (
               <div style={{ marginBottom: 24 }}>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 8 }}>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 8 }}>
                   Selecciona el lote a catar
                 </label>
                 <div style={{ display: 'grid', gap: 10 }}>
@@ -1512,11 +1512,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                       }}
                     >
                       <strong>{lote.nombreLote}</strong>
-                      <span style={{ color: C.tan, marginLeft: 8 }}>{lote.variedad} · {lote.region}</span>
+                      <span style={{ color: C.brown, marginLeft: 8 }}>{lote.variedad} · {lote.region}</span>
                     </div>
                   ))}
                   {enCatacion.length === 0 && (
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                       No hay lotes en catación. Acepta una muestra primero.
                     </p>
                   )}
@@ -1552,7 +1552,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, margin: 0, fontWeight: 700 }}>
                       {loteSeleccionado.nombreLote}
                     </p>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '4px 0 0' }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '4px 0 0' }}>
                       {loteSeleccionado.variedad} · {loteSeleccionado.proceso} · {loteSeleccionado.altitud} · {loteSeleccionado.region}
                     </p>
                   </div>
@@ -1570,13 +1570,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'densidad' as const, label: 'Densidad (g/L)', placeholder: '680' },
                       ]).map(({ key, label, placeholder }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           <input value={cataForm[key]} onChange={e => setCataForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
                             style={{ ...inputStyle, padding: '8px 10px', fontSize: 13 }} />
                         </div>
                       ))}
                     </div>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Defectos físicos (cantidad)</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Defectos físicos (cantidad)</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
                       {([
                         { key: 'defNegros' as const, label: 'Negros' },
@@ -1585,7 +1585,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'defCascaras' as const, label: 'Cáscaras' },
                       ]).map(({ key, label }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           {inputNum(key, 0, 50, 1)}
                         </div>
                       ))}
@@ -1606,12 +1606,12 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'apreciacionGlobal' as const, label: 'Apreciación Global' },
                       ]).map(({ key, label }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           {inputNum(key, 6, 10, 0.25)}
                         </div>
                       ))}
                     </div>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Atributos de 5 tazas (2 pts c/u = máx 10)</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>Atributos de 5 tazas (2 pts c/u = máx 10)</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }}>
                       {([
                         { key: 'uniformidad' as const, label: 'Uniformidad' },
@@ -1619,7 +1619,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         { key: 'tazaLimpia' as const, label: 'Taza Limpia' },
                       ]).map(({ key, label }) => (
                         <div key={key}>
-                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                          <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                           <select value={cataForm[key]} onChange={e => setCataForm(f => ({ ...f, [key]: e.target.value }))}
                             style={{ ...inputStyle, padding: '8px 10px', fontSize: 13, background: 'white' }}>
                             {[0,2,4,6,8,10].map(v => <option key={v} value={v}>{v} pts</option>)}
@@ -1634,11 +1634,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     </h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
                       <div>
-                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>Tazas afectadas (0–5)</label>
+                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>Tazas afectadas (0–5)</label>
                         {inputNum('defTazasAfectadas', 0, 5, 1)}
                       </div>
                       <div>
-                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4 }}>Intensidad</label>
+                        <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4 }}>Intensidad</label>
                         <select value={cataForm.defIntensidad} onChange={e => setCataForm(f => ({ ...f, defIntensidad: e.target.value }))}
                           style={{ ...inputStyle, padding: '8px 10px', fontSize: 13, background: 'white' }}>
                           <option value="0">Sin defecto</option>
@@ -1651,11 +1651,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                     {/* PUNTAJE EN VIVO */}
                     <div style={{ background: '#faf7f3', borderRadius: 10, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                       <div>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>Puntaje Final SCA</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>Puntaje Final SCA</p>
                         <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 36, color: clasificacion.color, margin: 0, fontWeight: 700, lineHeight: 1 }}>
                           {puntajeFinal.toFixed(2)}
                         </p>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '4px 0 0' }}>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '4px 0 0' }}>
                           {totalCalidad.toFixed(2)} calidad − {totalDefectos} defectos
                         </p>
                       </div>
@@ -1666,7 +1666,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
 
                     {/* NOTAS Y TUESTE */}
                     <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                         Notas de sabor <span style={{ fontWeight: 400 }}>(separadas por coma) *</span>
                       </label>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -1695,7 +1695,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                       {iaError && <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: '4px 0 0' }}>{iaError}</p>}
                     </div>
                     <div style={{ marginBottom: 24 }}>
-                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                         Perfil de tueste sugerido *
                       </label>
                       <select value={cataForm.datosTueste} onChange={e => setCataForm(f => ({ ...f, datosTueste: e.target.value }))}
@@ -1740,7 +1740,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 8 }}>
               Catación registrada
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 24px' }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, lineHeight: 1.7, maxWidth: 420, margin: '0 auto 24px' }}>
               El lote quedó en estado <strong>"Aprobado"</strong>.<br />
               El puntaje SCA fue registrado y el lote se publicó automáticamente en el catálogo.
             </p>
@@ -1749,7 +1749,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: '#8a6fc9', fontWeight: 700, margin: '0 0 4px' }}>
                   📋 Solicitud de certificación completada
                 </p>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0, lineHeight: 1.5 }}>
                   Se marcó la certificación como completada. Tunay Wasi te transferirá el fee una vez que el lote tenga un pedido confirmado.
                 </p>
               </div>
@@ -1771,12 +1771,12 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
               Historial
             </h2>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24 }}>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24 }}>
               Todos los pedidos procesados — catación y/o tueste por lote.
             </p>
 
             {historial.length === 0 && pedidosHistorial.length === 0 ? (
-              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.tan, textAlign: 'center', padding: '40px 0' }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, textAlign: 'center', padding: '40px 0' }}>
                 Aún no hay pedidos completados.
               </p>
             ) : (
@@ -1802,7 +1802,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                               {lote?.nombreLote ?? loteId}
                             </p>
                             {lote && 'variedad' in lote && (
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '2px 0 0' }}>
                                 {(lote as LoteDoc).variedad} · {(lote as LoteDoc).proceso} · {(lote as LoteDoc).region}
                               </p>
                             )}
@@ -1825,19 +1825,19 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                           {/* Resultado catación */}
                           {catacion && (
                             <div style={{ marginBottom: pedidos.length > 0 ? 14 : 0, paddingBottom: pedidos.length > 0 ? 14 : 0, borderBottom: pedidos.length > 0 ? '1px solid #f0ebe4' : 'none' }}>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>
                                 Catación SCA
                               </p>
                               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                                 <div>
-                                  <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Puntaje</p>
+                                  <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Puntaje</p>
                                   <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, color: (catacion.puntajeOficial ?? 0) >= 82 ? C.sage : C.terra, margin: 0, fontWeight: 700, lineHeight: 1 }}>
                                     {catacion.puntajeOficial ?? '—'} pts
                                   </p>
                                 </div>
                                 {catacion.acidez != null && (
                                   <div>
-                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Acidez / Cuerpo / Balance</p>
+                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Acidez / Cuerpo / Balance</p>
                                     <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: 0, fontWeight: 600 }}>
                                       {catacion.acidez} · {catacion.cuerpo} · {catacion.balance}
                                     </p>
@@ -1845,8 +1845,8 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                                 )}
                                 {catacion.notasSabor?.length > 0 && (
                                   <div>
-                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Notas</p>
-                                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>{catacion.notasSabor.join(', ')}</p>
+                                    <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Notas</p>
+                                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>{catacion.notasSabor.join(', ')}</p>
                                   </div>
                                 )}
                               </div>
@@ -1856,16 +1856,16 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                           {/* Pedidos */}
                           {pedidos.length > 0 && (
                             <div>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>
                                 Pedidos
                               </p>
                               <div style={{ display: 'grid', gap: 8 }}>
                                 {pedidos.map((p: PedidoB2BDoc) => (
                                   <div key={p.id} style={{ background: '#f7f3ee', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                     <div>
-                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px' }}>{p.id} · {new Date(p.updatedAt).toLocaleDateString('es-PE')}</p>
+                                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px' }}>{p.id} · {new Date(p.updatedAt).toLocaleDateString('es-PE')}</p>
                                       <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: 0, fontWeight: 600 }}>{p.razonSocial}</p>
-                                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '2px 0 0' }}>
+                                      <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '2px 0 0' }}>
                                         {p.sacosSolicitados} sacos · {p.kgTotal} kg
                                       </p>
                                       {(p.feeLaboratorioPEN ?? 0) > 0 && (
@@ -1906,7 +1906,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
       {tab === 'pagos' && (
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 24px' }}>
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Mis pagos</h2>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 24, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>
             Fees recibidos de Tunay Wasi por cataciones y certificaciones completadas.
           </p>
           {(() => {
@@ -1932,13 +1932,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 </div>
                 {(pendientesB2B.length > 0 || pendientesCert.length > 0) && (
                   <div>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pendientes de pago</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pendientes de pago</p>
                     <div style={{ display: 'grid', gap: 8 }}>
                       {pendientesB2B.map(p => (
                         <div key={p.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${C.terra}` }}>
                           <div>
                             <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Catación pedido B2B</p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{p.id.slice(-8).toUpperCase()}</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{p.id.slice(-8).toUpperCase()}</p>
                           </div>
                           <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: C.terra }}>S/ {p.feeLaboratorioPEN}</span>
                         </div>
@@ -1947,7 +1947,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         <div key={c.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid #8a6fc9` }}>
                           <div>
                             <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Certificación — {c.nombreLote}</p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>Catación completada — pendiente de transferencia por Tunay Wasi</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>Catación completada — pendiente de transferencia por Tunay Wasi</p>
                           </div>
                           <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: '#8a6fc9' }}>S/ {c.feeCatacionPEN}</span>
                         </div>
@@ -1957,13 +1957,13 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 )}
                 {(feesB2B.length > 0 || feesCert.length > 0) && (
                   <div>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pagos recibidos</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 10px' }}>Pagos recibidos</p>
                     <div style={{ display: 'grid', gap: 8 }}>
                       {feesB2B.map(p => (
                         <div key={p.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${C.sage}` }}>
                           <div>
                             <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Catación pedido B2B ✓</p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{p.pagoLaboratorioAt ? new Date(p.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{p.pagoLaboratorioAt ? new Date(p.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
                           </div>
                           <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: C.sage }}>S/ {p.feeLaboratorioPEN}</span>
                         </div>
@@ -1972,7 +1972,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                         <div key={c.id} style={{ background: 'white', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderLeft: `3px solid ${C.sage}` }}>
                           <div>
                             <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 2px' }}>Certificación — {c.nombreLote} ✓</p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{c.pagoLaboratorioAt ? new Date(c.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{c.pagoLaboratorioAt ? new Date(c.pagoLaboratorioAt).toLocaleDateString('es-PE') : ''}</p>
                           </div>
                           <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: C.sage }}>S/ {c.feeCatacionPEN}</span>
                         </div>
@@ -1981,7 +1981,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   </div>
                 )}
                 {feesB2B.length === 0 && feesCert.length === 0 && pendientesB2B.length === 0 && pendientesCert.length === 0 && (
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, textAlign: 'center', padding: '40px 0' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, textAlign: 'center', padding: '40px 0' }}>
                     Aún no hay fees registrados. Los pagos aparecerán aquí cuando completes cataciones y certificaciones.
                   </p>
                 )}
@@ -1997,12 +1997,12 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>
             Mi perfil
           </h2>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, marginBottom: 28, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 28, lineHeight: 1.6 }}>
             Estos datos aparecen en las solicitudes de certificación que recibas de los caficultores.
           </p>
           <div style={{ background: 'white', borderRadius: 14, padding: 24, display: 'grid', gap: 16, maxWidth: 480 }}>
             <div>
-              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>
+              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>
                 Laboratorio
               </label>
               <p style={{ fontFamily: 'Montserrat', fontSize: 14, color: C.brown, margin: 0, fontWeight: 700 }}>
@@ -2010,7 +2010,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
               </p>
             </div>
             <div>
-              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>
+              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>
                 Teléfono de contacto
               </label>
               <input
@@ -2021,7 +2021,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
               />
             </div>
             <div>
-              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>
+              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>
                 Región / ciudad
               </label>
               <input
@@ -2032,7 +2032,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
               />
             </div>
             <div>
-              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 5 }}>
+              <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 5 }}>
                 Dirección para recepción de muestras
               </label>
               <input
@@ -2041,7 +2041,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 placeholder="Av. Conquistadores 500, San Isidro, Lima"
                 style={{ width: '100%', padding: '11px 14px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 14, color: C.brown, background: 'white', boxSizing: 'border-box' }}
               />
-              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '4px 0 0' }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '4px 0 0' }}>
                 Esta dirección la verán los caficultores antes de solicitar la certificación.
               </p>
             </div>
@@ -2065,7 +2065,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
               <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Certificado Q-Grader
               </p>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0, lineHeight: 1.6 }}>
                 Sube tu certificado Q-Grader (PDF o imagen). El equipo de Tunay Wasi lo revisará antes de activar tu cuenta para catar lotes.
               </p>
             </div>

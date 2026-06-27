@@ -45,7 +45,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: C.tan,
+  fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: C.brown,
   display: 'block', marginBottom: 5,
 };
 
@@ -248,7 +248,7 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
           <p style={{ fontFamily: 'Mulish, sans-serif', fontWeight: 900, fontSize: 20, letterSpacing: 2, color: C.green, margin: '0 0 4px' }}>
             TUNAY WASI
           </p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: C.tan, letterSpacing: 2, textTransform: 'uppercase', margin: 0 }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: C.brown, letterSpacing: 2, textTransform: 'uppercase', margin: 0 }}>
             {ROL_LABEL[rol]}
           </p>
         </div>
@@ -315,7 +315,7 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
                 <div>
                   <label style={labelStyle}>Número de celular</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ ...inputStyle, width: 'auto', padding: '11px 12px', color: C.tan, background: '#f7f3ee' }}>+51</span>
+                    <span style={{ ...inputStyle, width: 'auto', padding: '11px 12px', color: C.brown, background: '#f7f3ee' }}>+51</span>
                     <input style={{ ...inputStyle }} type="tel" value={telefono}
                       onChange={e => setTelefono(e.target.value)}
                       placeholder="987 654 321" />
@@ -329,7 +329,7 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
 
             {metodoLogin === 'celular' && otpEnviado && (
               <>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.tan, margin: 0 }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.brown, margin: 0 }}>
                   Código enviado a +51 {telefono}
                 </p>
                 <div>
@@ -393,7 +393,7 @@ export default function AuthScreen({ rol, onSuccess, orderId }: Props) {
                 <div>
                   <label style={labelStyle}>Número de celular *</label>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ ...inputStyle, width: 'auto', padding: '11px 12px', color: C.tan, background: '#f7f3ee' }}>+51</span>
+                    <span style={{ ...inputStyle, width: 'auto', padding: '11px 12px', color: C.brown, background: '#f7f3ee' }}>+51</span>
                     <input style={inputStyle} type="tel" value={regTelefono}
                       onChange={e => setRegTelefono(e.target.value)} placeholder="987 654 321" />
                   </div>

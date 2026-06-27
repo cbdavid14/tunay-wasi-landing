@@ -5,7 +5,7 @@ import { useIsMobile } from './mobileStyles';
 
 const C = {
   green: '#1f3028', cream: '#f2e0cc', terra: '#c96e4b',
-  sage: '#8faf8a', tan: '#c4b297',
+  sage: '#8faf8a', tan: '#c4b297', brown: '#533b22',
 };
 
 // Infiere el tab de destino desde el título — fallback para notifs sin campo url
@@ -119,7 +119,7 @@ export default function NotifBell({ uid, onNavegar }: Props) {
                   onClick={() => setOpen(false)}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: 'Montserrat', fontSize: 16, color: C.tan, lineHeight: 1, padding: '0 4px',
+                    fontFamily: 'Montserrat', fontSize: 16, color: C.brown, lineHeight: 1, padding: '0 4px',
                   }}
                 >
                   ✕
@@ -132,7 +132,7 @@ export default function NotifBell({ uid, onNavegar }: Props) {
           {notifs.length === 0 ? (
             <div style={{
               padding: 32, textAlign: 'center',
-              fontFamily: 'Montserrat', fontSize: 12, color: C.tan,
+              fontFamily: 'Montserrat', fontSize: 12, color: C.brown,
             }}>
               Sin notificaciones
             </div>
@@ -165,12 +165,12 @@ export default function NotifBell({ uid, onNavegar }: Props) {
                   }}>
                     {n.titulo}
                   </span>
-                  <span style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, whiteSpace: 'nowrap', marginTop: 1 }}>
+                  <span style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, whiteSpace: 'nowrap', marginTop: 1 }}>
                     {tiempoRelativo(n.createdAt)}
                   </span>
                 </div>
                 <p style={{
-                  fontFamily: 'Montserrat', fontSize: 11, color: C.tan,
+                  fontFamily: 'Montserrat', fontSize: 11, color: C.brown,
                   margin: '3px 0 0', lineHeight: 1.5,
                 }}>
                   {n.cuerpo}

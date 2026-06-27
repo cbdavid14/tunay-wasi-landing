@@ -142,7 +142,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: isMobile ? 26 : 32, color: C.brown, marginBottom: 8 }}>
             Pedido recibido
           </h2>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.7, marginBottom: 20 }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.7, marginBottom: 20 }}>
             Tu pedido <strong style={{ color: C.terra }}>{pedidoId}</strong> fue registrado.<br />
             {form.metodoPago === 'transferencia'
               ? <>Verificaremos el pago y notificaremos al caficultor para el despacho.</>
@@ -152,7 +152,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
           </p>
           {form.metodoPago === 'transferencia' && (
             <div style={{ background: '#f7f3ee', borderRadius: 10, padding: 16, marginBottom: 16, textAlign: 'left' }}>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, marginBottom: 8, textAlign: 'center' }}>Datos para transferencia</p>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, marginBottom: 8, textAlign: 'center' }}>Datos para transferencia</p>
               <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: 0, lineHeight: 1.8 }}>
                 BCP · Cuenta Corriente<br />
                 <strong>191-12345678-0-90</strong><br />
@@ -195,7 +195,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
           <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>
             {`${item.sacos} saco${(item.sacos ?? 1) > 1 ? 's' : ''} (${(item.sacos ?? 1) * 60}kg)`}
           </p>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{item.lote.nombreLote}</p>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{item.lote.nombreLote}</p>
           <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.terra, margin: '3px 0 0', fontWeight: 700 }}>
             S/ {((item.lote.precioVentaPEN ?? 0) * (item.sacos ?? 1)).toLocaleString()}
           </p>
@@ -208,7 +208,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
         ...(feeLab > 0 ? [{ label: 'Catación (lab)', val: feeLab }] : []),
       ].map(row => (
         <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-          <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>{row.label}</span>
+          <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>{row.label}</span>
           <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>S/ {row.val.toLocaleString()}</span>
         </div>
       ))}
@@ -217,7 +217,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
         <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, fontWeight: 700, color: C.terra }}>S/ {total.toLocaleString()}</span>
       </div>
       {!isMobile && (
-        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, marginTop: 8, textAlign: 'center' }}>
+        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, marginTop: 8, textAlign: 'center' }}>
           Incluye factura electrónica · Precios en soles
         </p>
       )}
@@ -281,11 +281,11 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                     <p style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
                       {item.lote.nombreLote}
                     </p>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 8px' }}>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 8px' }}>
                       {item.lote.variedad} · {item.lote.region} · {item.lote.puntajeOficial ?? item.lote.puntajeReferencial} pts SCA
                     </p>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan }}>
+                      <span style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown }}>
                         {item.sacos ?? 1} saco{(item.sacos ?? 1) > 1 ? 's' : ''} × S/ {(item.lote.precioVentaPEN ?? 0).toLocaleString()}
                       </span>
                       <span style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.terra }}>
@@ -302,7 +302,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                     ...(feeLab > 0 ? [{ label: 'Catación (lab)', val: feeLab }] : []),
                   ].map(row => (
                     <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan }}>{row.label}</span>
+                      <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>{row.label}</span>
                       <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>S/ {row.val.toLocaleString()}</span>
                     </div>
                   ))}
@@ -312,7 +312,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                   </div>
                 </div>
                 <div style={{ background: `${C.tan}15`, borderRadius: 8, padding: '10px 14px' }}>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0, textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0, textAlign: 'center' }}>
                     Reserva válida por 72 horas · Incluye factura electrónica
                   </p>
                 </div>
@@ -337,30 +337,30 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Razón Social *</label>
+                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Razón Social *</label>
                     <input style={inputStyle} value={form.razonSocial} onChange={e => set('razonSocial', e.target.value)} placeholder="Café del Parque S.A.C." />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>RUC *</label>
+                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>RUC *</label>
                     <input style={inputStyle} value={form.ruc} onChange={e => set('ruc', e.target.value)} placeholder="20601234567" maxLength={11} />
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Nombre de contacto *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Nombre de contacto *</label>
                   <input style={inputStyle} value={form.contacto} onChange={e => set('contacto', e.target.value)} placeholder="Andrés Villanueva" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Email *</label>
+                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Email *</label>
                     <input style={inputStyle} type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="andres@cafedelparque.pe" />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Teléfono *</label>
+                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Teléfono *</label>
                     <input style={inputStyle} value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="+51 987 654 321" />
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Dirección de entrega *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Dirección de entrega *</label>
                   <input style={inputStyle} value={form.direccion} onChange={e => set('direccion', e.target.value)} placeholder="Av. La Mar 456, Miraflores" />
                 </div>
                 <button
@@ -384,7 +384,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                 <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: isMobile ? 20 : 22, color: C.brown, margin: '0 0 4px' }}>
                   Método de pago
                 </h3>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                   Emitimos factura electrónica con IGV al confirmar.
                 </p>
                 {[
@@ -403,7 +403,7 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <p style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 600, color: C.brown, margin: '0 0 2px' }}>{m.label}</p>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>{m.sub}</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>{m.sub}</p>
                       </div>
                       <div style={{
                         width: 20, height: 20, borderRadius: '50%', flexShrink: 0, marginLeft: 12,

@@ -4,7 +4,7 @@ import { useIsMobile } from '@/shared/mobileStyles';
 
 const C = {
   green: '#1f3028', cream: '#f2e0cc', terra: '#c96e4b',
-  sage: '#8faf8a', tan: '#c4b297',
+  sage: '#8faf8a', tan: '#c4b297', brown: '#533b22',
 };
 
 function getSubtitulo(perfil: PerfilDoc): string {
@@ -66,12 +66,12 @@ export default function UserMenu({ perfil, onLogout, navItems, onNavegar }: Prop
           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: C.cream, lineHeight: 1 }}>
             {primerNombre}
           </span>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: C.tan, lineHeight: 1, marginTop: 3 }}>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: C.brown, lineHeight: 1, marginTop: 3 }}>
             {subtituloCorto}
           </span>
         </div>
         )}
-        {!isMobile && <span style={{ color: C.tan, fontSize: 10, marginLeft: 2, lineHeight: 1 }}>▾</span>}
+        {!isMobile && <span style={{ color: C.brown, fontSize: 10, marginLeft: 2, lineHeight: 1 }}>▾</span>}
       </button>
 
       {/* Dropdown */}
@@ -105,7 +105,7 @@ export default function UserMenu({ perfil, onLogout, navItems, onNavegar }: Prop
                 {perfil.nombre}
               </div>
               <div style={{
-                fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: C.tan,
+                fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: C.brown,
                 marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {subtitulo}

@@ -40,7 +40,7 @@ const C = {
 };
 
 const STATUS_INFO: Record<string, { label: string; color: string; desc: string }> = {
-  borrador:    { label: 'Borrador', color: C.tan, desc: 'Completa los datos y publícalo cuando estés listo.' },
+  borrador:    { label: 'Borrador', color: C.brown, desc: 'Completa los datos y publícalo cuando estés listo.' },
   en_catacion: { label: 'En certificación ⏳', color: '#8a6fc9', desc: 'Un laboratorio está catando tu café. Si el puntaje supera el umbral SCA, tu lote se publica automáticamente en el catálogo.' },
   publicado:   { label: 'Publicado ✓', color: C.sage, desc: 'Tu café está en el marketplace con puntaje SCA. Las cafeterías pueden comprarlo directamente.' },
   agotado:     { label: 'Agotado', color: C.terra, desc: 'Todos los sacos fueron vendidos. ¡Excelente!' },
@@ -411,24 +411,24 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
           </div>
           <div style={{ display: 'grid', gap: 14 }}>
             {misLotes.map(lote => {
-              const info = STATUS_INFO[lote.status] ?? { label: lote.status, color: C.tan, desc: '' };
+              const info = STATUS_INFO[lote.status] ?? { label: lote.status, color: C.brown, desc: '' };
               const disponibles = lote.sacosDisponibles - lote.sacosReservados;
               return (
                 <div key={lote.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{lote.id} · {lote.cosecha}</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{lote.id} · {lote.cosecha}</p>
                       <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: 0 }}>{lote.nombreLote}</h3>
                     </div>
                     <span style={{ background: `${info.color}20`, color: info.color, fontSize: 11, fontFamily: 'Montserrat', fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>{info.label}</span>
                   </div>
                   <div style={{ display: 'flex', gap: 20 }}>
                     <div>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Precio/saco</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Precio/saco</p>
                       <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: 0, fontWeight: 700 }}>S/ {lote.precioOrigenPEN.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Disponibles</p>
+                      <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Disponibles</p>
                       <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: 0, fontWeight: 700 }}>{disponibles} sacos</p>
                     </div>
                   </div>
@@ -489,9 +489,9 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                     <div key={sol.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderLeft: `4px solid ${sol.status === 'pendiente' ? C.terra : C.sage}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>{sol.id} · {new Date(sol.createdAt).toLocaleDateString('es-PE')}</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 1 }}>{sol.id} · {new Date(sol.createdAt).toLocaleDateString('es-PE')}</p>
                           <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, color: C.brown, margin: '0 0 2px' }}>{lote?.nombreLote ?? sol.loteId}</h3>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>{sol.empresa} · {sol.nombreContacto}</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>{sol.empresa} · {sol.nombreContacto}</p>
                         </div>
                         <span style={{ background: sol.status === 'pendiente' ? `${C.terra}20` : `${C.sage}20`, color: sol.status === 'pendiente' ? C.terra : C.sage, fontSize: 11, fontFamily: 'Montserrat', fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
                           {sol.status === 'pendiente' ? 'Pendiente' : sol.status === 'despachada' ? 'Despachada ✓' : 'Recibida ✓'}
@@ -519,33 +519,33 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 28, color: C.brown, marginBottom: 6 }}>Publicar nuevo lote</h2>
             <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, marginBottom: 24, lineHeight: 1.6 }}>Completa los datos de tu lote.</p>
             <div style={{ background: 'white', borderRadius: 14, padding: 28, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'grid', gap: 18 }}>
-              <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Nombre del lote *</label><input style={inputStyle} value={loteForm.nombreLote} onChange={e => setField('nombreLote', e.target.value)} placeholder="Ej: Finca San José — Geisha Honey Lote 01" /></div>
+              <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Nombre del lote *</label><input style={inputStyle} value={loteForm.nombreLote} onChange={e => setField('nombreLote', e.target.value)} placeholder="Ej: Finca San José — Geisha Honey Lote 01" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Variedad *</label><input style={inputStyle} value={loteForm.variedad} onChange={e => setField('variedad', e.target.value)} placeholder="Geisha, Caturra..." /></div>
-                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Proceso *</label><select style={inputStyle} value={loteForm.proceso} onChange={e => setField('proceso', e.target.value)}><option value="lavado">Lavado</option><option value="natural">Natural</option><option value="honey">Honey</option><option value="anaerobico">Anaeróbico</option><option value="doble_fermentacion">Doble fermentación</option></select></div>
+                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Variedad *</label><input style={inputStyle} value={loteForm.variedad} onChange={e => setField('variedad', e.target.value)} placeholder="Geisha, Caturra..." /></div>
+                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Proceso *</label><select style={inputStyle} value={loteForm.proceso} onChange={e => setField('proceso', e.target.value)}><option value="lavado">Lavado</option><option value="natural">Natural</option><option value="honey">Honey</option><option value="anaerobico">Anaeróbico</option><option value="doble_fermentacion">Doble fermentación</option></select></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Altitud (msnm) *</label><input style={inputStyle} type="number" value={loteForm.altitud} onChange={e => setField('altitud', e.target.value)} placeholder="1800" /></div>
-                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Cosecha *</label><input style={inputStyle} value={loteForm.cosecha} onChange={e => setField('cosecha', e.target.value)} placeholder="Junio 2026" /></div>
+                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Altitud (msnm) *</label><input style={inputStyle} type="number" value={loteForm.altitud} onChange={e => setField('altitud', e.target.value)} placeholder="1800" /></div>
+                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Cosecha *</label><input style={inputStyle} value={loteForm.cosecha} onChange={e => setField('cosecha', e.target.value)} placeholder="Junio 2026" /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Sacos disponibles *</label><input style={inputStyle} type="number" value={loteForm.sacosDisponibles} onChange={e => setField('sacosDisponibles', e.target.value)} placeholder="10" min={1} /></div>
-                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Kg por saco *</label><input style={inputStyle} type="number" value={loteForm.pesoPorSacoKg} onChange={e => setField('pesoPorSacoKg', e.target.value)} placeholder="60" min={1} max={70} /></div>
-                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Precio mínimo/saco (S/) *</label><input style={inputStyle} type="number" value={loteForm.precioOrigenPEN} onChange={e => setField('precioOrigenPEN', e.target.value)} placeholder="850" min={100} /></div>
+                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Sacos disponibles *</label><input style={inputStyle} type="number" value={loteForm.sacosDisponibles} onChange={e => setField('sacosDisponibles', e.target.value)} placeholder="10" min={1} /></div>
+                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Kg por saco *</label><input style={inputStyle} type="number" value={loteForm.pesoPorSacoKg} onChange={e => setField('pesoPorSacoKg', e.target.value)} placeholder="60" min={1} max={70} /></div>
+                <div><label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Precio mínimo/saco (S/) *</label><input style={inputStyle} type="number" value={loteForm.precioOrigenPEN} onChange={e => setField('precioOrigenPEN', e.target.value)} placeholder="850" min={100} /></div>
               </div>
               {/* Hub Lima — muestras de 200g */}
               <div style={{ background: '#f5f9ff', border: '1px solid #8a6fc930', borderRadius: 10, padding: 16 }}>
                 <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: '#8a6fc9', margin: '0 0 10px' }}>📦 Muestras al hub Lima (200g c/u)</p>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '0 0 12px', lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '0 0 12px', lineHeight: 1.5 }}>
                   Envía muestras de 200g a nuestro hub en Lima. Las cafeterías podrán recibirlas antes de comprar sacos.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                   <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Cantidad de muestras *</label>
+                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Cantidad de muestras *</label>
                     <input style={inputStyle} type="number" value={loteForm.stockMuestrasHub} onChange={e => setField('stockMuestrasHub', e.target.value)} placeholder="5" min={1} max={50} />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Courier *</label>
+                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Courier *</label>
                     <select style={inputStyle} value={loteForm.courierMuestrasHub} onChange={e => setField('courierMuestrasHub', e.target.value)}>
                       <option value="Shalom">Shalom</option>
                       <option value="Olva">Olva</option>
@@ -554,7 +554,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>N° de guía</label>
+                    <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>N° de guía</label>
                     <input style={inputStyle} value={loteForm.guiaMuestrasHub} onChange={e => setField('guiaMuestrasHub', e.target.value)} placeholder="SHL-XXXXXX" />
                   </div>
                 </div>
@@ -590,7 +590,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                     <div key={ped.id} style={{ background: 'white', borderRadius: 12, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderLeft: `4px solid ${ped.pagoCaficultorStatus === 'pagado' ? C.sage : C.terra}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{ped.id} · {lote?.nombreLote ?? ped.loteId}</p>
+                        <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{ped.id} · {lote?.nombreLote ?? ped.loteId}</p>
                         <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: ped.pagoCaficultorStatus === 'pagado' ? C.sage : C.terra, margin: 0, fontWeight: 600 }}>{ped.pagoCaficultorStatus === 'pagado' ? `Pagado ✓${ped.pagoCaficultorAt ? ' · ' + new Date(ped.pagoCaficultorAt).toLocaleDateString('es-PE') : ''}` : 'Pago en proceso (máx. 48h hábiles)'}</p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -622,7 +622,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ width: 64, height: 64, borderRadius: '50%', background: C.terra, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 700, fontFamily: 'Cormorant Garamond', color: 'white', flexShrink: 0 }}>{caficultor.nombre.charAt(0).toUpperCase()}</div>
-                <div><h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: 0 }}>{caficultor.nombre}</h2><p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '2px 0 0' }}>{caficultor.email}</p></div>
+                <div><h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: 0 }}>{caficultor.nombre}</h2><p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '2px 0 0' }}>{caficultor.email}</p></div>
               </div>
               <button onClick={onLogout} title="Cerrar sesión" style={{ background: 'none', border: 'none', borderRadius: 10, padding: '8px', cursor: 'pointer', color: C.tan, lineHeight: 1, flexShrink: 0, opacity: 0.7, transition: 'opacity 0.15s' }} onMouseEnter={e => (e.currentTarget.style.opacity = '1')} onMouseLeave={e => (e.currentTarget.style.opacity = '0.7')}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -649,7 +649,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 <button onClick={() => setModalCafeteria(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.tan }}>✕</button>
               </div>
               <p style={{ fontFamily: 'Montserrat', fontSize: 15, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>{ped.razonSocial}</p>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 16px' }}>RUC {ped.ruc}</p>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 16px' }}>RUC {ped.ruc}</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 4 }}>
                 <div style={{ background: '#f5f9ff', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
                   <div style={{ fontFamily: 'Montserrat', fontSize: 20, fontWeight: 700, color: '#8a6fc9' }}>
@@ -657,7 +657,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                       : califs!.total === 0 ? '—'
                       : califs!.promedio.toFixed(1)}
                   </div>
-                  <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, marginTop: 2 }}>
+                  <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, marginTop: 2 }}>
                     {!califsLoaded ? '' : califs!.total === 0 ? 'Sin reseñas' : `★ ${califs!.total} reseña${califs!.total !== 1 ? 's' : ''}`}
                   </div>
                 </div>
@@ -665,7 +665,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                   <div style={{ fontFamily: 'Montserrat', fontSize: 20, fontWeight: 700, color: C.sage }}>
                     {modalCafeteriaPedidos === null ? '…' : modalCafeteriaPedidos}
                   </div>
-                  <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, marginTop: 2 }}>Pedidos completados</div>
+                  <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, marginTop: 2 }}>Pedidos completados</div>
                 </div>
               </div>
               <button onClick={() => setModalCafeteria(null)} style={{ width: '100%', background: '#f5f0ea', color: C.brown, border: 'none', borderRadius: 8, padding: '12px', fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginTop: 18 }}>
@@ -682,7 +682,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: 0 }}>Calificar cafetería</h3>
                 <button onClick={() => setModalCalifPedido(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.tan }}>✕</button>
               </div>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 16px' }}>Pedido {ped.id}</p>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 16px' }}>Pedido {ped.id}</p>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {([1,2,3,4,5] as const).map(n => (
                   <button key={n} onClick={() => setCalifPuntaje(n)} style={{
@@ -753,7 +753,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: isMobile ? 18 : 22, margin: 0 }}>
                   Hola, {caficultor.nombre}
                 </h2>
-                {!isMobile && <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                {!isMobile && <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                   Finca {caficultor.finca} · {caficultor.region}
                 </p>}
               </div>
@@ -782,7 +782,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             ].map(s => (
               <div key={s.label}>
                 <div style={{ fontFamily: 'Cormorant Garamond', fontSize: 26, fontWeight: 700, color: ('alert' in s && s.alert && s.n > 0) ? C.terra : C.cream }}>{s.n}</div>
-                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
+                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -877,7 +877,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
                               {ped.id} · {new Date(ped.createdAt).toLocaleDateString('es-PE')}
                             </p>
                             <h4 style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, color: C.brown, margin: 0 }}>
@@ -895,15 +895,15 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
 
                         <div style={{ ...grid3(isMobile), marginBottom: 14 }}>
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Sacos</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Sacos</p>
                             <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: 0, fontWeight: 700 }}>{ped.sacosSolicitados}</p>
                           </div>
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Peso total</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Peso total</p>
                             <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: 0, fontWeight: 700 }}>{ped.kgTotal} kg</p>
                           </div>
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Tu pago</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Tu pago</p>
                             <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.sage, margin: 0, fontWeight: 700 }}>S/ {ped.montoCaficultorPEN.toLocaleString()}</p>
                           </div>
                         </div>
@@ -916,19 +916,19 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                             <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: '0 0 2px', fontWeight: 700 }}>
                               {lab.nombreComercial}
                             </p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 2px' }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 2px' }}>
                               {lab.direccion}
                             </p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '0 0 8px' }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '0 0 8px' }}>
                               Contacto: {lab.contactoNombre} · {lab.telefono}
                             </p>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0, fontStyle: 'italic' }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0, fontStyle: 'italic' }}>
                               El laboratorio tueste y entrega al comprador ({ped.razonSocial}).
                             </p>
                           </div>
                         ) : (
                           <div style={{ background: '#fffbf5', border: `1px solid ${C.tan}40`, borderRadius: 8, padding: 12, marginBottom: 14 }}>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 6px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 6px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
                               Envía directamente al comprador
                             </p>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -936,10 +936,10 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                                 <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, margin: '0 0 2px', fontWeight: 700 }}>
                                   {ped.razonSocial}
                                 </p>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 2px' }}>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 2px' }}>
                                   {ped.direccionEntrega}
                                 </p>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                                   Contacto: {ped.contacto} · {ped.telefono}
                                 </p>
                               </div>
@@ -969,7 +969,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                         {/* Formulario de envío */}
                         <div style={{ ...grid2(isMobile), marginBottom: 12 }}>
                           <div>
-                            <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                            <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
                               Empresa transportista *
                             </label>
                             <select
@@ -985,7 +985,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                             </select>
                           </div>
                           <div>
-                            <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                            <label style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
                               Número de guía *
                             </label>
                             <input
@@ -1090,7 +1090,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                     <div key={lote.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
                             {lote.id} · {lote.cosecha}
                           </p>
                           <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: 0 }}>
@@ -1127,7 +1127,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                       {lote.sacosDisponibles > 0 && (
                         <div style={{ marginBottom: 14 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan }}>
+                            <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>
                               {lote.sacosReservados} reservados / {lote.sacosDisponibles} total
                             </span>
                             <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.sage }}>
@@ -1146,14 +1146,14 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
 
                       <div style={{ display: 'flex', gap: 20 }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Tu precio/saco</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Tu precio/saco</p>
                           <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.brown, margin: 0, fontWeight: 700 }}>
                             S/ {lote.precioOrigenPEN.toLocaleString()}
                           </p>
                         </div>
                         {ingresosEstimados > 0 && (
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Ingresos estimados</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Ingresos estimados</p>
                             <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.sage, margin: 0, fontWeight: 700 }}>
                               S/ {ingresosEstimados.toLocaleString()}
                             </p>
@@ -1161,7 +1161,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                         )}
                         {lote.puntajeOficial && (
                           <div>
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Puntaje Q-Grader</p>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Puntaje Q-Grader</p>
                             <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, color: C.terra, margin: 0, fontWeight: 700 }}>
                               {lote.puntajeOficial} pts SCA
                             </p>
@@ -1180,7 +1180,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                               <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: '#5a8a6a', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
                                 Precio sugerido Tunay Wasi
                               </p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                                 {sugerido.label} · S/ {sugerido.precioPorKg}/kg
                               </p>
                             </div>
@@ -1230,7 +1230,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                               >
                                 {publicando === lote.id ? 'Publicando...' : 'Publicar →'}
                               </button>
-                              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, fontStyle: 'italic' }}>
+                              <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, fontStyle: 'italic' }}>
                                 Al publicar, el sistema asigna un laboratorio certificado automáticamente.
                               </span>
                             </div>
@@ -1246,7 +1246,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                               <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: '#8a6fc9', margin: '0 0 3px' }}>
                                 Certificación en curso
                               </p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0 }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0 }}>
                                 El sistema notificó a los laboratorios disponibles. Si el puntaje SCA supera el umbral, tu lote se publica automáticamente en el catálogo.
                               </p>
                             </div>
@@ -1285,7 +1285,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                       {/* Pedidos de este lote */}
                       {misPedidos.filter(p => p.loteId === lote.id).length > 0 && (
                         <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid #eee` }}>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 1 }}>
                             Pedidos
                           </p>
                           <div style={{ display: 'grid', gap: 6 }}>
@@ -1314,7 +1314,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
                                       <span style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 600, color: C.brown }}>{ped.id}</span>
-                                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, marginLeft: 8 }}>
+                                      <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, marginLeft: 8 }}>
                                         {ped.sacosSolicitados} sacos · S/ {ped.montoCaficultorPEN.toLocaleString()}
                                       </span>
                                     </div>
@@ -1402,9 +1402,9 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                         <div key={sol.id} style={{ background: 'white', borderRadius: 12, padding: 18, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderLeft: `4px solid ${sol.status === 'confirmada_caficultor' ? C.sage : C.terra}` }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                             <div>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Hub Lima</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Hub Lima</p>
                               <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, color: C.brown, margin: 0, fontWeight: 700 }}>{lote?.nombreLote ?? sol.loteId}</p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '2px 0 0' }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '2px 0 0' }}>
                                 {sol.cantidadSolicitada} muestra{sol.cantidadSolicitada > 1 ? 's' : ''} de 200g · <strong style={{ color: C.brown }}>Jr. Ucayali 850, Lima — Tunay Wasi</strong>
                               </p>
                             </div>
@@ -1415,7 +1415,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                             )}
                           </div>
                           {sol.status === 'confirmada_caficultor' && (
-                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+                            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                               {sol.empresaCourier} · Guía: <strong>{sol.numeroGuia}</strong>
                             </p>
                           )}
@@ -1473,7 +1473,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                         <div key={cert.id} style={{ background: 'white', borderRadius: 10, padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderLeft: `4px solid ${statusColor[cert.status] ?? C.tan}` }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                             <div>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{cert.loteId}</p>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 9, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>{cert.loteId}</p>
                               <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, color: C.brown, margin: 0, fontWeight: 700 }}>{cert.nombreLote}</p>
                             </div>
                             <span style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: statusColor[cert.status] ?? C.tan, background: `${statusColor[cert.status]}18`, padding: '4px 10px', borderRadius: 20 }}>
@@ -1488,12 +1488,12 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                           {lab && (
                             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 8 }}>
                               <div>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Laboratorio</p>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Laboratorio</p>
                                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0, fontWeight: 600 }}>{lab.nombreComercial}</p>
                               </div>
                               <div>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase' }}>Dirección</p>
-                                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>{lab.direccion}</p>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase' }}>Dirección</p>
+                                <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>{lab.direccion}</p>
                               </div>
                             </div>
                           )}
@@ -1535,7 +1535,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                               <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#d6b15a', fontWeight: 700, margin: 0 }}>
                                 ✈ Muestra en camino — {cert.empresaCourierMuestra} · Guía: {cert.numeroGuiaMuestra}
                               </p>
-                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: '4px 0 0' }}>
+                              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: '4px 0 0' }}>
                                 Esperando confirmación de recepción.
                               </p>
                             </div>
@@ -1569,19 +1569,19 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
 
             <div style={{ background: 'white', borderRadius: 14, padding: 28, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'grid', gap: 18 }}>
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Nombre del lote *</label>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Nombre del lote *</label>
                 <input style={inputStyle} value={loteForm.nombreLote} onChange={e => setField('nombreLote', e.target.value)}
                   placeholder="Ej: Finca San José — Geisha Honey Lote 01" />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Variedad *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Variedad *</label>
                   <input style={inputStyle} value={loteForm.variedad} onChange={e => setField('variedad', e.target.value)}
                     placeholder="Geisha, Caturra, Bourbon..." />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Proceso *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Proceso *</label>
                   <select style={inputStyle} value={loteForm.proceso} onChange={e => setField('proceso', e.target.value)}>
                     <option value="lavado">Lavado</option>
                     <option value="natural">Natural</option>
@@ -1594,32 +1594,32 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Altitud (msnm) *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Altitud (msnm) *</label>
                   <input style={inputStyle} type="number" value={loteForm.altitud} onChange={e => setField('altitud', e.target.value)}
                     placeholder="1800" />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Cosecha *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Cosecha *</label>
                   <input style={inputStyle} value={loteForm.cosecha} onChange={e => setField('cosecha', e.target.value)}
                     placeholder="Junio 2026" />
                 </div>
               </div>
 
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                   Puntaje SCA referencial (opcional)
                 </label>
                 <input style={inputStyle} type="number" value={loteForm.puntajeReferencial}
                   onChange={e => setField('puntajeReferencial', e.target.value)}
                   placeholder="Ej: 84.5" min={60} max={100} step={0.25} />
-                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '4px 0 0' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '4px 0 0' }}>
                   Si tienes una evaluación propia, ingrésala. El puntaje oficial lo certifica el laboratorio.
                 </p>
               </div>
 
               {/* Foto del lote — opcional */}
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                   Foto del lote (opcional) — JPG o PNG, máx. 5 MB
                 </label>
                 <input
@@ -1649,14 +1649,14 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                     <div style={{ height: 4, background: '#eee', borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${uploadProgress}%`, background: C.terra, transition: 'width 0.2s' }} />
                     </div>
-                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, marginTop: 4 }}>Subiendo imagen... {uploadProgress}%</p>
+                    <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, marginTop: 4 }}>Subiendo imagen... {uploadProgress}%</p>
                   </div>
                 )}
               </div>
 
               {/* Certificado existente */}
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                   ¿Ya tienes certificado SCA? Adjúntalo (PDF, JPG, PNG)
                 </label>
                 <input
@@ -1676,24 +1676,24 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                       style={{ background: 'none', border: 'none', color: C.tan, cursor: 'pointer', fontSize: 12 }}>✕</button>
                   </div>
                 )}
-                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '4px 0 0', lineHeight: 1.5 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '4px 0 0', lineHeight: 1.5 }}>
                   Si ya tienes una catación SCA de un laboratorio certificado, adjúntala y tu lote podrá publicarse directamente. Si no tienes, puedes solicitarla desde el portal una vez registrado el lote.
                 </p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Sacos disponibles *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Sacos disponibles *</label>
                   <input style={inputStyle} type="number" value={loteForm.sacosDisponibles} onChange={e => setField('sacosDisponibles', e.target.value)}
                     placeholder="10" min={1} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Kg por saco *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Kg por saco *</label>
                   <input style={inputStyle} type="number" value={loteForm.pesoPorSacoKg} onChange={e => setField('pesoPorSacoKg', e.target.value)}
                     placeholder="60" min={1} max={70} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Precio mínimo por saco (S/) *</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Precio mínimo por saco (S/) *</label>
                   <input style={inputStyle} type="number" value={loteForm.precioOrigenPEN} onChange={e => setField('precioOrigenPEN', e.target.value)}
                     placeholder="850" min={100} />
                 </div>
@@ -1701,17 +1701,17 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                     Muestras 200g en hub Lima
                   </label>
                   <input style={inputStyle} type="number" value={loteForm.stockMuestrasHub} onChange={e => setField('stockMuestrasHub', e.target.value)}
                     placeholder="5" min={0} max={50} />
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '4px 0 0' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '4px 0 0' }}>
                     Unidades de 200g que envías al hub Tunay Wasi en Lima para despacho inmediato a tostadoras
                   </p>
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>
                     ¿Hay muestras disponibles?
                   </label>
                   <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
@@ -1743,7 +1743,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 6px', fontWeight: 600 }}>
                   Próximo paso: enviar muestra de 200g
                 </p>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0, lineHeight: 1.7 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0, lineHeight: 1.7 }}>
                   Envía 200g de tu café verde (en pergamino o trillado) por <strong>Shalom o Olva</strong> a:<br />
                   <strong>Jr. Ucayali 142, Lima Centro — A nombre de: Tunay Wasi</strong><br />
                   Costo de envío: S/15-20. Te reembolsamos si el lote se aprueba.
@@ -1836,7 +1836,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             {misPedidos.filter(p => !['entregado', 'cancelado'].includes(p.logisticaStatus) && p.pagoCaficultorStatus !== 'pagado').length > 0 && (
               <div style={{ marginBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <span style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.tan }}>
+                  <span style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown }}>
                     Pedidos en curso
                   </span>
                   <span style={{ background: C.tan, color: 'white', fontSize: 10, fontFamily: 'Montserrat', fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
@@ -1866,10 +1866,10 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
                             {ped.id} · {lote?.nombreLote ?? ped.loteId}
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 4px' }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 4px' }}>
                             {ped.sacosSolicitados} saco(s) · {ped.razonSocial}
                           </p>
                           <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 600, color: logColor[ped.logisticaStatus] ?? C.tan, margin: 0 }}>
@@ -1880,7 +1880,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                           <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 24, fontWeight: 700, color: C.brown, margin: 0 }}>
                             S/ {ped.montoCaficultorPEN.toLocaleString()}
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>tu parte</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>tu parte</p>
                         </div>
                       </div>
                     );
@@ -1910,10 +1910,10 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
                             {ped.id} · {lote?.nombreLote ?? ped.loteId}
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 2px' }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 2px' }}>
                             {ped.sacosSolicitados} saco(s) · {ped.razonSocial}
                           </p>
                           <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.terra, margin: 0, fontWeight: 600 }}>
@@ -1924,7 +1924,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                           <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 26, fontWeight: 700, color: C.terra, margin: 0 }}>
                             S/ {ped.montoCaficultorPEN.toLocaleString()}
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>pendiente</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>pendiente</p>
                         </div>
                       </div>
                     );
@@ -1936,7 +1936,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             {/* Pagos recibidos */}
             {misPedidos.filter(p => p.pagoCaficultorStatus === 'pagado').length > 0 && (
               <div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.tan, marginBottom: 12 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: C.brown, marginBottom: 12 }}>
                   Pagos recibidos
                 </p>
                 <div style={{ display: 'grid', gap: 10 }}>
@@ -1949,10 +1949,10 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>
                             {ped.id} · {lote?.nombreLote ?? ped.loteId}
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 2px' }}>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 2px' }}>
                             {ped.sacosSolicitados} saco(s) · {ped.razonSocial}
                           </p>
                           <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.sage, margin: 0, fontWeight: 600 }}>
@@ -1963,7 +1963,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                           <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 26, fontWeight: 700, color: C.sage, margin: 0 }}>
                             S/ {ped.montoCaficultorPEN.toLocaleString()}
                           </p>
-                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, margin: 0 }}>recibido</p>
+                          <p style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, margin: 0 }}>recibido</p>
                         </div>
                         </div>
                         {ped.logisticaStatus === 'entregado' && !calificacionesYaHechas.has(ped.id) && (
@@ -2008,7 +2008,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 </div>
                 <div>
                   <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: 0 }}>{caficultor.nombre}</h2>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '2px 0 0' }}>{caficultor.email}</p>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '2px 0 0' }}>{caficultor.email}</p>
                 </div>
               </div>
               <button onClick={onLogout} title="Cerrar sesión" style={{ background: 'none', border: 'none', borderRadius: 10, padding: '8px', cursor: 'pointer', color: C.tan, lineHeight: 1, flexShrink: 0, opacity: 0.7, transition: 'opacity 0.15s' }} onMouseEnter={e => (e.currentTarget.style.opacity = '1')} onMouseLeave={e => (e.currentTarget.style.opacity = '0.7')}>
@@ -2017,7 +2017,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             </div>
 
             {/* Formulario edición */}
-            <h3 style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
+            <h3 style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
               Editar datos
 </h3>
             <div style={{ display: 'grid', gap: 14 }}>
@@ -2028,7 +2028,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 { key: 'telefono', label: 'Teléfono (ej: +51 987 654 321)' },
               ] as { key: keyof typeof perfilForm; label: string }[]).map(({ key, label }) => (
                 <div key={key}>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>{label}</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>{label}</label>
                   <input
                     style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, background: 'white', boxSizing: 'border-box' }}
                     value={perfilForm[key]}
@@ -2076,7 +2076,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
 
             {/* Soporte */}
             <div style={{ borderTop: '1px solid #f0ebe4', marginTop: 24, paddingTop: 16 }}>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: 0 }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: 0 }}>
                 ¿Dudas o problemas? Escríbenos a{' '}
                 <a href="mailto:tunaywasi@gmail.com" style={{ color: C.terra, fontWeight: 700, textDecoration: 'none' }}>tunaywasi@gmail.com</a>
               </p>
@@ -2095,18 +2095,18 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
             </div>
             <div style={{ display: 'grid', gap: 14 }}>
               <div>
-                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Nombre del lote</label>
+                <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Nombre del lote</label>
                 <input style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                   value={editForm.nombreLote} onChange={e => setEditForm(f => ({ ...f, nombreLote: e.target.value }))} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Variedad</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Variedad</label>
                   <input style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.variedad} onChange={e => setEditForm(f => ({ ...f, variedad: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Proceso</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Proceso</label>
                   <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.proceso} onChange={e => setEditForm(f => ({ ...f, proceso: e.target.value }))}>
                     <option value="lavado">Lavado</option>
@@ -2119,41 +2119,41 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Altitud (msnm)</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Altitud (msnm)</label>
                   <input type="number" style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.altitud} onChange={e => setEditForm(f => ({ ...f, altitud: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Cosecha</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Cosecha</label>
                   <input style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.cosecha} onChange={e => setEditForm(f => ({ ...f, cosecha: e.target.value }))} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Sacos</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Sacos</label>
                   <input type="number" min={1} style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.sacosDisponibles} onChange={e => setEditForm(f => ({ ...f, sacosDisponibles: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Kg/saco</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Kg/saco</label>
                   <input type="number" min={10} max={70} style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.pesoPorSacoKg} onChange={e => setEditForm(f => ({ ...f, pesoPorSacoKg: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Precio/saco (S/)</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Precio/saco (S/)</label>
                   <input type="number" min={100} style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.precioOrigenPEN} onChange={e => setEditForm(f => ({ ...f, precioOrigenPEN: e.target.value }))} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>Muestras 200g en hub Lima</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>Muestras 200g en hub Lima</label>
                   <input type="number" min={0} max={50} style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.stockMuestrasHub} onChange={e => setEditForm(f => ({ ...f, stockMuestrasHub: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, display: 'block', marginBottom: 4 }}>¿Muestras disponibles?</label>
+                  <label style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, display: 'block', marginBottom: 4 }}>¿Muestras disponibles?</label>
                   <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontFamily: 'Montserrat', fontSize: 13, color: C.brown, boxSizing: 'border-box' }}
                     value={editForm.muestraDisponible} onChange={e => setEditForm(f => ({ ...f, muestraDisponible: e.target.value }))}>
                     <option value="true">Sí</option>
@@ -2185,13 +2185,13 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
               <button onClick={() => setModalCafeteria(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.tan }}>✕</button>
             </div>
             <p style={{ fontFamily: 'Montserrat', fontSize: 15, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>{ped.razonSocial}</p>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 16px' }}>RUC {ped.ruc}</p>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 16px' }}>RUC {ped.ruc}</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 4 }}>
               <div style={{ background: '#f5f9ff', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
                 <div style={{ fontFamily: 'Montserrat', fontSize: 20, fontWeight: 700, color: '#8a6fc9' }}>
                   {!califsLoaded ? '…' : califs!.total === 0 ? '—' : califs!.promedio.toFixed(1)}
                 </div>
-                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, marginTop: 2 }}>
+                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, marginTop: 2 }}>
                   {!califsLoaded ? '' : califs!.total === 0 ? 'Sin reseñas' : `★ ${califs!.total} reseña${califs!.total !== 1 ? 's' : ''}`}
                 </div>
               </div>
@@ -2199,7 +2199,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
                 <div style={{ fontFamily: 'Montserrat', fontSize: 20, fontWeight: 700, color: C.sage }}>
                   {modalCafeteriaPedidos === null ? '…' : modalCafeteriaPedidos}
                 </div>
-                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.tan, marginTop: 2 }}>Pedidos completados</div>
+                <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, marginTop: 2 }}>Pedidos completados</div>
               </div>
             </div>
             <button onClick={() => setModalCafeteria(null)} style={{ width: '100%', background: '#f5f0ea', color: C.brown, border: 'none', borderRadius: 8, padding: '12px', fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginTop: 18 }}>
@@ -2217,7 +2217,7 @@ export default function CaficultorPortal({ caficultor, onLogout, modoEmbebido, t
               <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, color: C.brown, margin: 0 }}>Calificar cafetería</h3>
               <button onClick={() => setModalCalifPedido(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.tan }}>✕</button>
             </div>
-            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 16px' }}>Pedido {ped.id} · {ped.razonSocial}</p>
+            <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 16px' }}>Pedido {ped.id} · {ped.razonSocial}</p>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               {([1,2,3,4,5] as const).map(n => (
                 <button key={n} onClick={() => setCalifPuntaje(n)} style={{
