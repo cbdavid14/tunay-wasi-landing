@@ -33,7 +33,7 @@ import {
   fetchMktLotesByIds,
 } from '@/features/marketplace/marketplaceService';
 import { sincronizarLabDoc } from '@/shared/perfilService';
-import { COMISION_TW, FLETE_POR_SACO_PEN } from '@/shared/config';
+import { COMISION_TW } from '@/shared/config';
 import type { LoteDoc, PedidoB2BDoc, SolicitudCertificacionDoc } from '@/shared/types/marketplace';
 import type { PerfilLaboratorio } from '@/shared/types/auth';
 import NotifBell from '@/shared/NotifBell';
@@ -270,7 +270,7 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
     const puntaje = Math.round((totalCalidad - totalDefectos) * 100) / 100;
     const notasSabor = cataForm.notas.split(',').map(n => n.trim()).filter(Boolean);
     const comisionPlataforma = Math.round(loteSeleccionado.precioOrigenPEN * COMISION_TW);
-    const precioVenta = loteSeleccionado.precioOrigenPEN + comisionPlataforma + FLETE_POR_SACO_PEN;
+    const precioVenta = loteSeleccionado.precioOrigenPEN + comisionPlataforma;
 
     await updateMktLoteCatacion(
       loteSeleccionado.id,
@@ -299,12 +299,6 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
       await updatePagoCertificacion(certPendiente.id, { pagoStatus: 'verificado' });
       setCertCompletandoLoteId(loteSeleccionado.id);
     }
-    // Notificar al caficultor que su lote fue certificado
-    saveNotif(loteSeleccionado.caficultorId, {
-      titulo: '🎉 Tu lote fue certificado',
-      cuerpo: `"${loteSeleccionado.nombreLote}" obtuvo ${puntaje.toFixed(1)} pts SCA y ya está publicado en el catálogo.`,
-      url: 'mis_lotes',
-    }).catch(() => {});
     setGuardando(false);
     setCataGuardada(true);
   }
@@ -316,7 +310,9 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
     boxSizing: 'border-box', minHeight: 48,
   };
 
-  const enCatacion = pendientes.filter(l => l.laboratorioId === laboratorio.uid && !l.catado);
+  // Excluir lotes que ya tienen solicitud de certificación activa — esos se muestran en su propia sección
+  const loteIdsConCert = new Set(solicitudesCert.filter(c => c.laboratorioId === laboratorio.uid).map(c => c.loteId));
+  const enCatacion = pendientes.filter(l => l.laboratorioId === laboratorio.uid && !l.catado && !loteIdsConCert.has(l.id));
   const muestraRecibida = pendientes.filter(l => !l.laboratorioId);
 
   // ── Modo embebido — solo contenido del tab, sin header ni nav propio ────────
@@ -371,7 +367,10 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                 </div>
               </div>
             ))}
-            {enCatacion.map(lote => (
+            {enCatacion.map(lote => {
+              const certLote = solicitudesCert.find(c => c.loteId === lote.id && c.laboratorioId === laboratorio.uid);
+              const esperandoMuestra = certLote && (certLote.status === 'aceptada' || certLote.status === 'muestra_en_camino');
+              return (
               <div key={lote.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: `1px solid ${C.sage}44` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
@@ -387,6 +386,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                       {lote.variedad} · {lote.proceso} · {lote.altitud}
                     </p>
                   </div>
+                  {esperandoMuestra ? (
+                    <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#8a6fc9', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {certLote!.status === 'muestra_en_camino' ? '✈ Muestra en camino' : '⏳ Esperando muestra'}
+                    </span>
+                  ) : (
                   <button
                     onClick={() => { setLoteSeleccionado(lote); setTab('mis_catas'); setSubTabCatas('catacion'); setCataGuardada(false); }}
                     style={{
@@ -397,9 +401,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   >
                     Registrar cata →
                   </button>
+                  )}
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             {/* SOLICITUDES DE CERTIFICACIÓN — abiertas (Uber) y asignadas */}
             {(solicitudesAbiertas.length > 0 || solicitudesCert.filter(c => ['aceptada', 'muestra_en_camino', 'muestra_recibida', 'en_proceso'].includes(c.status)).length > 0) && (
@@ -1286,7 +1292,10 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
               </div>
             ))}
 
-            {enCatacion.map(lote => (
+            {enCatacion.map(lote => {
+              const certLote = solicitudesCert.find(c => c.loteId === lote.id && c.laboratorioId === laboratorio.uid);
+              const esperandoMuestra = certLote && (certLote.status === 'aceptada' || certLote.status === 'muestra_en_camino');
+              return (
               <div key={lote.id} style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: `1px solid ${C.sage}44` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
@@ -1302,6 +1311,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                       {lote.variedad} · {lote.proceso} · {lote.altitud}
                     </p>
                   </div>
+                  {esperandoMuestra ? (
+                    <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: '#8a6fc9', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {certLote!.status === 'muestra_en_camino' ? '✈ Muestra en camino' : '⏳ Esperando muestra'}
+                    </span>
+                  ) : (
                   <button
                     onClick={() => { setLoteSeleccionado(lote); setTab('mis_catas'); setSubTabCatas('catacion'); setCataGuardada(false); }}
                     style={{
@@ -1312,9 +1326,11 @@ export default function LaboratorioPortal({ laboratorio, onLogout, modoEmbebido,
                   >
                     Registrar cata →
                   </button>
+                  )}
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             {/* SOLICITUDES DE CERTIFICACIÓN — abiertas (Uber) y asignadas */}
             {(solicitudesAbiertas.length > 0 || solicitudesCert.filter(c => ['aceptada', 'muestra_en_camino', 'muestra_recibida', 'en_proceso'].includes(c.status)).length > 0) && (

@@ -84,7 +84,7 @@ export default function OnboardingModal({ rol, nombre, onEmpezarTour, onSaltar }
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: 30, color: C.brown, margin: '0 0 8px' }}>
             Bienvenido, {primerNombre}
           </h2>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.tan, lineHeight: 1.75, margin: 0, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 13, color: C.brown, lineHeight: 1.75, margin: 0, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
             {intro}
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function OnboardingModal({ rol, nombre, onEmpezarTour, onSaltar }
         <div style={{ borderTop: `1px solid ${C.cream}`, marginBottom: 20 }} />
 
         {/* Cards */}
-        <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.tan, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 14px' }}>
+        <p style={{ fontFamily: 'Montserrat', fontSize: 11, fontWeight: 700, color: C.brown, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 14px' }}>
           Esto es lo que puedes hacer:
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
@@ -106,7 +106,7 @@ export default function OnboardingModal({ rol, nombre, onEmpezarTour, onSaltar }
               <p style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.brown, margin: '0 0 4px' }}>
                 {card.titulo}
               </p>
-              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.tan, margin: 0, lineHeight: 1.55 }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown, margin: 0, lineHeight: 1.55 }}>
                 {card.descripcion}
               </p>
             </div>
@@ -128,7 +128,7 @@ export default function OnboardingModal({ rol, nombre, onEmpezarTour, onSaltar }
           <button
             onClick={onSaltar}
             style={{
-              width: '100%', background: 'transparent', color: C.tan,
+              width: '100%', background: 'transparent', color: C.brown,
               border: `1px solid ${C.tan}40`, borderRadius: 10, padding: '11px',
               fontFamily: 'Montserrat', fontSize: 12, cursor: 'pointer',
             }}

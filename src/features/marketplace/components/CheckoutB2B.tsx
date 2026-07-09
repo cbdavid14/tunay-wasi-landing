@@ -6,7 +6,7 @@ import { useState } from 'react';
 import type { LoteDoc } from '@/shared/types/marketplace';
 import type { PerfilCafeteria } from '@/shared/types/auth';
 import { createMktPedido } from '@/features/marketplace/marketplaceService';
-import { IGV, FLETE_POR_SACO_PEN, KG_POR_SACO } from '@/shared/config';
+import { IGV, KG_POR_SACO } from '@/shared/config';
 import { openIzipayModal } from '@/features/marketplace/adapters/izipayAdapter';
 import { useIsMobile } from '@/shared/mobileStyles';
 
@@ -46,9 +46,8 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
 
   const subtotal = items.reduce((s, i) => s + (i.lote.precioVentaPEN ?? 0) * (i.sacos ?? 1), 0);
   const igv = Math.round(subtotal * IGV);
-  const flete = items.length > 0 ? FLETE_POR_SACO_PEN * items.reduce((s, i) => s + (i.sacos ?? 1), 0) : 0;
   const feeLab = items.reduce((s, i) => s + (i.feeLaboratorioPEN ?? 0), 0);
-  const total = subtotal + igv + flete + feeLab;
+  const total = subtotal + igv + feeLab;
 
   function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })); }
 
@@ -63,9 +62,8 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
         const precioSaco = item.lote.precioVentaPEN ?? 0;
         const sub = sacos * precioSaco;
         const igvItem = Math.round(sub * IGV);
-        const fleteItem = FLETE_POR_SACO_PEN * sacos;
         const feeLabItem = item.feeLaboratorioPEN ?? 0;
-        const totalItem = sub + igvItem + fleteItem + feeLabItem;
+        const totalItem = sub + igvItem + feeLabItem;
         const montoCaficultor = sacos * (item.lote.precioOrigenPEN ?? 0);
 
         ultimoPedidoId = await createMktPedido({
@@ -77,7 +75,6 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
           precioSacoPEN: precioSaco,
           subtotalPEN: sub,
           igvPEN: igvItem,
-          fletePEN: fleteItem,
           ...(feeLabItem > 0 ? { feeLaboratorioPEN: feeLabItem } : {}),
           totalPEN: totalItem,
           metodoPago: form.metodoPago,
@@ -204,7 +201,6 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
       {[
         { label: 'Subtotal', val: subtotal },
         { label: 'IGV (18%)', val: igv },
-        { label: 'Flete terrestre', val: flete },
         ...(feeLab > 0 ? [{ label: 'Catación (lab)', val: feeLab }] : []),
       ].map(row => (
         <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -212,6 +208,9 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
           <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>S/ {row.val.toLocaleString()}</span>
         </div>
       ))}
+      <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown, marginBottom: 6 }}>
+        Flete: pago contraentrega al courier al recibir
+      </div>
       <div style={{ borderTop: `2px solid ${C.terra}`, marginTop: 8, paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 700, color: C.brown }}>TOTAL</span>
         <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, fontWeight: 700, color: C.terra }}>S/ {total.toLocaleString()}</span>
@@ -298,7 +297,6 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                   {[
                     { label: 'Subtotal', val: subtotal },
                     { label: 'IGV (18%)', val: igv },
-                    { label: 'Flete terrestre', val: flete },
                     ...(feeLab > 0 ? [{ label: 'Catación (lab)', val: feeLab }] : []),
                   ].map(row => (
                     <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -306,6 +304,9 @@ export default function CheckoutB2B({ items, perfil, onVolver, onConfirmar }: Pr
                       <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown }}>S/ {row.val.toLocaleString()}</span>
                     </div>
                   ))}
+                  <div style={{ fontFamily: 'Montserrat', fontSize: 10, color: C.brown }}>
+                    Flete: pago contraentrega al courier al recibir
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                     <span style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: C.brown }}>TOTAL</span>
                     <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 26, fontWeight: 700, color: C.terra }}>S/ {total.toLocaleString()}</span>

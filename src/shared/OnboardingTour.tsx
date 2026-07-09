@@ -161,7 +161,7 @@ export default function OnboardingTour({ pasos, onFin, onSaltar }: Props) {
               onClick={onSaltar}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                fontFamily: 'Montserrat', fontSize: 11, color: C.tan,
+                fontFamily: 'Montserrat', fontSize: 11, color: C.brown,
                 padding: '2px 6px',
               }}
             >
@@ -173,7 +173,7 @@ export default function OnboardingTour({ pasos, onFin, onSaltar }: Props) {
           <p style={{ fontFamily: 'Cormorant Garamond', fontSize: 20, fontWeight: 700, color: C.brown, margin: '0 0 6px', lineHeight: 1.2 }}>
             {step.titulo}
           </p>
-          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.tan, margin: '0 0 16px', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, margin: '0 0 16px', lineHeight: 1.6 }}>
             {step.descripcion}
           </p>
 

@@ -49,7 +49,7 @@ export interface LoteDoc {
   sacosDisponibles: number;          // total sacos
   sacosReservados: number;           // reservados por pedidos activos
   precioOrigenPEN: number;           // precio/saco que pide el caficultor (entero PEN)
-  precioVentaPEN?: number;           // precio final calculado (con margen + flete)
+  precioVentaPEN?: number;           // precio final = precioOrigenPEN + comisión 10% — flete NO incluido (pago contraentrega)
 
   // ── Muestra ────────────────────────────────────────────────────────────
   muestraDisponible: boolean;        // hay muestras de 200g para enviar
@@ -146,10 +146,10 @@ export interface PedidoB2BDoc {
   precioSacoPEN: number;             // precio al momento del pedido
   subtotalPEN: number;               // sacos * precio
   igvPEN: number;                    // 18% de subtotal
-  fletePEN: number;                  // flete terrestre
+  fletePEN?: number;                 // referencial — el flete real lo paga la cafetería al courier en destino (contraentrega)
   feeLaboratorioPEN?: number;        // catación + tueste del lab contratado (solo Flujo B)
   feeCatacionPEN?: number;           // porción fija de catación (para desglose)
-  totalPEN: number;                  // subtotal + igv + flete [+ feeLaboratorio]
+  totalPEN: number;                  // subtotal + igv [+ feeLaboratorio] — flete NO incluido
 
   // Pago
   metodoPago: 'transferencia' | 'izipay' | 'yape';

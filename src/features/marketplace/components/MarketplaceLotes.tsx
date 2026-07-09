@@ -26,8 +26,9 @@ import {
   fetchCalificacionesByDestinatario,
 } from '@/features/marketplace/marketplaceService';
 import { saveNotif } from '@/shared/notificacionesService';
-import { actualizarPerfilCafeteria } from '@/shared/perfilService';
-import { COMISION_TW, FLETE_POR_SACO_PEN } from '@/shared/config';
+import { actualizarPerfilCafeteria, fetchPerfil } from '@/shared/perfilService';
+import type { PerfilCaficultor } from '@/shared/types/auth';
+import { COMISION_TW } from '@/shared/config';
 import { useNotificaciones } from '@/shared/useNotificaciones';
 import { useOnboarding } from '@/shared/useOnboarding';
 import OnboardingModal from '@/shared/OnboardingModal';
@@ -168,7 +169,20 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
       perfilUid ? fetchMktPedidosByTostadora(perfilUid) : Promise.resolve([]),
     ]).then(async ([lotes, cafs, labs, sols, peds]) => {
       setTodosLotes(lotes);
-      setCaficultores(cafs);
+      // Fallback: para caficultorIds de lotes sin doc en mkt_caficultores, leer mkt_usuarios
+      const cafIds = new Set(lotes.map(l => l.caficultorId));
+      const cafMap = new Map((cafs as { id: string; nombreProductor: string; nombreFinca: string; region: string; fotoUrl: string }[]).map(c => [c.id, c]));
+      const faltantes = [...cafIds].filter(id => !cafMap.has(id));
+      if (faltantes.length > 0) {
+        const extra = await Promise.all(faltantes.map(async id => {
+          const p = await fetchPerfil(id);
+          if (!p) return null;
+          const pc = p as PerfilCaficultor;
+          return { id, nombreProductor: pc.nombre, nombreFinca: pc.finca ?? '', region: pc.region ?? '', fotoUrl: '' };
+        }));
+        extra.forEach(e => { if (e) cafMap.set(e.id, e); });
+      }
+      setCaficultores([...cafMap.values()]);
       setLaboratorios(labs);
       // Deduplicar: solo una solicitud por lote (la más reciente)
       const solsTyped = sols as SolicitudMuestraDoc[];
@@ -1499,10 +1513,8 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
               </p>
               {[
                 { label: 'Precio origen caficultor', val: 'S/ 850' },
-                { label: 'Comisión plataforma (10%)', val: 'S/ 85' },
-                { label: 'Flete terrestre → Lima', val: 'S/ 25' },
-                { label: 'Almacenamiento hub Lima', val: 'S/ 10' },
-                { label: 'Pasarela de pagos (~4%)', val: 'S/ 38' },
+                { label: 'Comisión plataforma (5%)', val: 'S/ 43' },
+                { label: 'Flete → pago contraentrega al courier', val: 'No incluido' },
               ].map(r => (
                 <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontFamily: 'Montserrat', fontSize: 11, color: C.brown }}>{r.label}</span>
@@ -1510,8 +1522,8 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                 </div>
               ))}
               <div style={{ borderTop: `1px solid rgba(143,175,138,0.3)`, marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.cream }}>Total puesto Lima</span>
-                <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.terra }}>S/ 1,008</span>
+                <span style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: C.cream }}>Total / saco (sin IGV)</span>
+                <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, fontWeight: 700, color: C.terra }}>S/ 893</span>
               </div>
             </div>
           </aside>}
@@ -1646,7 +1658,12 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                           style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, cursor: 'pointer' }}
                         >
                           <img src={caficultor.fotoUrl} alt={caficultor.nombreProductor}
-                            style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                            style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', display: caficultor.fotoUrl ? 'block' : 'none' }} />
+                          {!caficultor.fotoUrl && (
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#8faf8a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, color: 'white', fontFamily: 'Montserrat', fontWeight: 700 }}>
+                              {caficultor.nombreProductor.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                           <span style={{ fontFamily: 'Montserrat', fontSize: 12, color: C.brown, textDecoration: 'underline dotted' }}>
                             {caficultor.nombreProductor} · {caficultor.nombreFinca}
                           </span>
@@ -1679,7 +1696,7 @@ export default function MarketplaceLotes({ onCheckout, perfil, isLoggedIn = fals
                                       </div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', color: C.brown, marginBottom: 4 }}>
                                         <span>Flete Lima</span>
-                                        <span style={{ color: C.brown }}>S/ {FLETE_POR_SACO_PEN}</span>
+                                        <span style={{ color: C.brown }}>Pago contraentrega al courier</span>
                                       </div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #ede8e0', paddingTop: 6, marginTop: 2 }}>
                                         <span style={{ fontWeight: 700, color: C.brown }}>Total / saco (sin IGV)</span>

@@ -9,14 +9,9 @@
  * Comisión de la plataforma sobre el precio de origen del caficultor.
  * Se aplica como: precioVentaPEN = precioOrigenPEN + round(precioOrigenPEN × COMISION_TW)
  *
- * Valor inicial: 10% — pendiente de confirmación con el modelo de negocio final.
+ * 5% — mínimo viable para cubrir pasarela de pagos y mantener fricción baja en etapa de adquisición.
  */
-export const COMISION_TW = 0.10;
-
-/**
- * Flete por saco en PEN. Se suma al total del pedido.
- */
-export const FLETE_POR_SACO_PEN = 25;
+export const COMISION_TW = 0.05;
 
 /**
  * IGV peruano.
