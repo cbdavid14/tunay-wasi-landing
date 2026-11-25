@@ -293,6 +293,8 @@ const ModalProducto: React.FC<{
     const precioBaseCents = Math.round(precioBaseSoles * 100)
     const kg = parseInt(form.kgDisponibles) || 0
     if (isNaN(precioBaseCents) || precioBaseCents <= 0) { onToast('Precio base inválido', 'error'); return }
+    // LOT-04: stock debe ser > 0 para publicar con estado activo
+    if (kg <= 0 && estadoProducto === 'activo') { onToast('El stock debe ser mayor a 0 para publicar el lote como activo', 'error'); return }
 
     setGuardando(true)
     try {
