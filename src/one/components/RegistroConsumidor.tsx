@@ -243,7 +243,7 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
       <header style={{ height: 52, padding: '0 32px', borderBottom: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', gap: 16 }}>
         {paso === 1 ? (
           <a
-            href="#/registro-emprendedor"
+            href="#/login?registro=1"
             style={{ fontSize: 12, color: 'var(--tw-text-muted)', textDecoration: 'none' }}
           >
             ← Cambiar tipo

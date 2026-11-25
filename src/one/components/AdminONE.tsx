@@ -26,13 +26,16 @@ import {
   confirmarEjecucionFinanciera,
   reintentarEjecucionFinanciera,
   solicitarInfoDisputa,
+  liberarPago,
 } from '../service'
+import { db } from '@/shared/firebase'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import type { PedidoONE, SolicitudB2B, EvidenciaONE, ReclamoONE, EstadoReclamo, PagoCaficultorONE } from '../types'
 import {
   demoFetchPedidosAdmin,
   demoVerificarPago,
   demoRechazarPago,
 } from '../demoService'
-import type { PedidoONE, SolicitudB2B, EvidenciaONE, ReclamoONE, EstadoReclamo } from '../types'
 import { logout } from '../authService'
 import ChatPedido from './ChatPedido'
 
@@ -244,6 +247,33 @@ const TabPagos: React.FC<{
   const [ampliada, setAmpliada] = useState<string | null>(null)
   const [filtro, setFiltro] = useState<string>('voucher_subido')
   const [busqueda, setBusqueda] = useState('')
+  // G-05: Pagos caficultor retenidos
+  const [pagosRetenidos, setPagosRetenidos] = useState<PagoCaficultorONE[]>([])
+  const [pagosRetenidosLoading, setPagosRetenidosLoading] = useState(false)
+  const [liberandoPago, setLiberandoPago] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isDemo) return
+    setPagosRetenidosLoading(true)
+    getDocs(query(collection(db, 'one_pagos_caficultor'), where('estado', 'in', ['RETENIDO', 'PENDIENTE'])))
+      .then(snap => {
+        const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as PagoCaficultorONE))
+        setPagosRetenidos(all.filter(p => p.estado === 'RETENIDO'))
+      })
+      .catch(() => {})
+      .finally(() => setPagosRetenidosLoading(false))
+  }, [isDemo])
+
+  async function handleLiberarPago(pago: PagoCaficultorONE) {
+    setLiberandoPago(pago.id)
+    try {
+      const adminUid = auth.currentUser?.uid ?? 'admin'
+      await liberarPago(pago.id, adminUid, 'yape', pago.cuentaDestino ?? '')
+      setPagosRetenidos(prev => prev.filter(p => p.id !== pago.id))
+      onToast(`Pago liberado: ${pago.negocioNombre} — S/ ${(pago.montoNetoCents / 100).toFixed(0)}`, 'ok')
+    } catch { onToast('Error al liberar el pago', 'error') }
+    finally { setLiberandoPago(null) }
+  }
 
   async function verificar(pedidoId: string, grupoCheckoutId?: string) {
     setAccionando(pedidoId)
@@ -386,6 +416,46 @@ const TabPagos: React.FC<{
           </div>
           )
         })}
+        </div>
+      )}
+
+      {/* G-05: Pagos retenidos de caficultores — botón Liberar pago */}
+      {!isDemo && (
+        <div style={{ marginTop: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>
+              ⚠ Pagos retenidos a caficultores
+            </h3>
+            {pagosRetenidos.length > 0 && (
+              <span style={{ padding: '2px 8px', borderRadius: 10, background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{pagosRetenidos.length}</span>
+            )}
+          </div>
+          {pagosRetenidosLoading ? (
+            <p style={{ color: 'var(--tw-text-muted)', fontSize: 12 }}>Cargando...</p>
+          ) : pagosRetenidos.length === 0 ? (
+            <p style={{ color: 'var(--tw-text-muted)', fontSize: 12 }}>No hay pagos retenidos.</p>
+          ) : (
+            <div className="adm-grid-cards">
+              {pagosRetenidos.map(pago => (
+                <div key={pago.id} style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '14px 16px', border: '1px solid rgba(201,110,75,.35)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>{pago.negocioNombre}</p>
+                      <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>Pedido: {pago.pedidoRef} · Estado: RETENIDO</p>
+                      {pago.motivo && <p style={{ margin: '3px 0 0', fontSize: 10, color: 'var(--tw-terra)' }}>Motivo: {pago.motivo}</p>}
+                    </div>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tw-terra)', flexShrink: 0 }}>S/ {(pago.montoNetoCents / 100).toFixed(0)}</span>
+                  </div>
+                  <BtnAccion
+                    label="💸 Liberar pago"
+                    onClick={() => handleLiberarPago(pago)}
+                    color={'var(--tw-sage)'}
+                    disabled={liberandoPago === pago.id}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

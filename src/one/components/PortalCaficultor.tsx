@@ -11,6 +11,8 @@ import {
   fetchCotizacionesCaficultor, responderCotizacion,
   fetchPagosByCaficultor,
 } from '../service'
+import { db } from '@/shared/firebase'
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import {
   demoFetchPedidosByCaficultor, demoFetchProductosByCaficultorLive,
   demoFetchCaficultor, demoUpdateStock,
@@ -275,6 +277,17 @@ const ModalProducto: React.FC<{
       onToast('Nombre, variedad y precio base son obligatorios', 'error')
       return
     }
+    // G-07: PR-04 — NEGOTIABLE solo se puede seleccionar con TYPE_A (café verde)
+    if (form.pricingMode === 'NEGOTIABLE' && form.tipoCafe !== 'verde') {
+      onToast('El precio negociable (NEGOTIABLE) solo está permitido para café verde (TYPE_A). Cambia el tipo de café o selecciona precio fijo.', 'error')
+      return
+    }
+    // G-04: Validar mínimo 4 fotos al publicar lote
+    const fotosValidas = form.fotos.map(f => f.trim()).filter(Boolean)
+    if (fotosValidas.length < 4) {
+      onToast('Debes subir al menos 4 fotos del producto', 'error')
+      return
+    }
     const precioBaseSoles = parseFloat(form.precioBaseKgSoles)
     const precioBaseCents = Math.round(precioBaseSoles * 100)
     const kg = parseInt(form.kgDisponibles) || 0
@@ -283,7 +296,6 @@ const ModalProducto: React.FC<{
     setGuardando(true)
     try {
       const notasSabor = form.notasSabor.split(',').map(s => s.trim()).filter(Boolean)
-      const fotosValidas = form.fotos.map(f => f.trim()).filter(Boolean)
       const fotosPrincipal = fotosValidas[0] ?? 'https://res.cloudinary.com/dtc9meqbc/image/upload/v1/tunaywasi/placeholder-cafe.jpg'
       const data: Omit<ProductoONE, 'id' | 'createdAt' | 'updatedAt'> = {
         caficultorId, caficultorNombre,
@@ -1627,6 +1639,36 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
                     {/* ── Columna acciones ── */}
                     <div className="pedido-acciones">
+                      {/* G-03: Voucher subido — el caficultor puede ver el estado y confirmar */}
+                      {isPend && p.pagoStatus === 'voucher_subido' && (
+                        <div style={{ marginBottom: 6 }}>
+                          <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(243,156,18,0.12)', border: '1px solid rgba(243,156,18,0.3)', fontSize: 11, color: '#f39c12', marginBottom: 6, textAlign: 'center' }}>
+                            📎 Comprobante enviado por el comprador
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (isDemo) { toast('Voucher marcado como revisado (demo)', 'ok'); return }
+                              try {
+                                await updateDoc(doc(db, 'one_pedidos', p.id), {
+                                  pagoStatus: 'voucher_revisado_caficultor',
+                                  voucherRevisadoAt: serverTimestamp(),
+                                })
+                                setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, pagoStatus: 'voucher_revisado_caficultor' as any } : x))
+                                toast('Comprobante marcado como revisado', 'ok')
+                              } catch { toast('Error al marcar el comprobante', 'error') }
+                            }}
+                            style={{ padding: '8px 0', borderRadius: 8, border: '1px solid rgba(243,156,18,0.5)', background: 'rgba(243,156,18,0.1)', color: '#f39c12', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', width: '100%' }}
+                          >
+                            ✓ Revisé el comprobante
+                          </button>
+                        </div>
+                      )}
+                      {/* G-03: Voucher ya revisado por caficultor */}
+                      {isPend && (p.pagoStatus as string) === 'voucher_revisado_caficultor' && (
+                        <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(143,175,138,0.1)', border: '1px solid rgba(143,175,138,0.3)', fontSize: 11, color: 'var(--tw-sage)', marginBottom: 6, textAlign: 'center' }}>
+                          ✓ Comprobante revisado — esperando verificación admin
+                        </div>
+                      )}
                       {isPend && pagoOk && (
                         <button
                           onClick={() => abrirDespacho(p)}

@@ -13,6 +13,14 @@ const REGIONES = ['Cajamarca', 'Amazonas', 'San Martín', 'Cusco', 'Puno', 'Jun�
 const VARIEDADES = ['Bourbon', 'Caturra', 'Typica', 'Geisha', 'Catimor', 'Pache', 'Wush Wush', 'Otra']
 const PROCESOS = ['Natural (seco)', 'Washed (lavado)', 'Honey', 'Anaerobic']
 
+// TRIB-04: Modalidades tributarias del caficultor
+type TipoRegistroCaficultor = 'SOLO_DNI' | 'RUC_PROPIO' | 'COOPERATIVA'
+const TIPOS_REGISTRO: { value: TipoRegistroCaficultor; label: string; desc: string }[] = [
+  { value: 'SOLO_DNI',   label: 'Solo DNI',   desc: 'Solo puedes vender café TYPE_A. Cobra con Yape/Plin.' },
+  { value: 'RUC_PROPIO', label: 'RUC propio', desc: 'Emites facturas. Puedes vender todos los tipos.' },
+  { value: 'COOPERATIVA',label: 'Cooperativa', desc: 'Tu cooperativa emite los comprobantes por ti.' },
+]
+
 type Paso = 1 | 2 | 3 | 'confirmacion'
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
@@ -165,6 +173,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
   const [kgDisponibles, setKgDisponibles] = useState<number>(0)
   const [variedadPrincipal, setVariedadPrincipal] = useState('')
   const [proceso, setProceso] = useState('')
+  const [tipoRegistroCaficultor, setTipoRegistroCaficultor] = useState<TipoRegistroCaficultor>('SOLO_DNI')
 
   // Paso 3 — Identidad
   const [dni, setDni] = useState('')
@@ -197,6 +206,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
     if (!region) return 'Selecciona tu región.'
     if (!distrito.trim()) return 'Ingresa tu distrito o localidad.'
     if (!variedadPrincipal) return 'Selecciona la variedad principal.'
+    if (!tipoRegistroCaficultor) return 'Selecciona tu modalidad tributaria.'
     return null
   }
 
@@ -238,6 +248,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
             'caficultor.dni': dni,
             'caficultor.numeroYape': numeroYape,
             'caficultor.kgDisponibles': kgDisponibles,
+            'caficultor.tipoRegistroCaficultor': tipoRegistroCaficultor,
             updatedAt: serverTimestamp(),
           })
         }
@@ -358,6 +369,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
               kgDisponibles={kgDisponibles} setKgDisponibles={setKgDisponibles}
               variedadPrincipal={variedadPrincipal} setVariedadPrincipal={setVariedadPrincipal}
               proceso={proceso} setProceso={setProceso}
+              tipoRegistroCaficultor={tipoRegistroCaficultor} setTipoRegistroCaficultor={setTipoRegistroCaficultor}
               error={error}
               onNext={handlePaso2}
               getInputStyle={getInputStyle}
@@ -462,10 +474,11 @@ const Paso2: React.FC<{
   kgDisponibles: number; setKgDisponibles: (v: number) => void
   variedadPrincipal: string; setVariedadPrincipal: (v: string) => void
   proceso: string; setProceso: (v: string) => void
+  tipoRegistroCaficultor: TipoRegistroCaficultor; setTipoRegistroCaficultor: (v: TipoRegistroCaficultor) => void
   error: string | null
   onNext: () => void
   getInputStyle: GetInputStyle
-}> = ({ region, setRegion, distrito, setDistrito, altitudMsnm, setAltitudMsnm, kgDisponibles, setKgDisponibles, variedadPrincipal, setVariedadPrincipal, proceso, setProceso, error, onNext, getInputStyle }) => {
+}> = ({ region, setRegion, distrito, setDistrito, altitudMsnm, setAltitudMsnm, kgDisponibles, setKgDisponibles, variedadPrincipal, setVariedadPrincipal, proceso, setProceso, tipoRegistroCaficultor, setTipoRegistroCaficultor, error, onNext, getInputStyle }) => {
   const [focused, setFocused] = useState('')
   return (
     <div>
@@ -524,6 +537,31 @@ const Paso2: React.FC<{
             </select>
           </Field>
         </div>
+
+        {/* TRIB-04: Modalidad tributaria */}
+        <Field label="Modalidad tributaria" required hint="Determina qué tipos de café puedes vender y cómo recibirás pagos.">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 4 }}>
+            {TIPOS_REGISTRO.map(t => {
+              const sel = tipoRegistroCaficultor === t.value
+              return (
+                <label key={t.value} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 8, border: `1px solid ${sel ? 'var(--tw-terra)' : 'var(--tw-border)'}`, background: sel ? 'rgba(201,110,75,0.06)' : 'var(--tw-bg)', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="tipoRegistroCaficultor"
+                    value={t.value}
+                    checked={sel}
+                    onChange={() => setTipoRegistroCaficultor(t.value)}
+                    style={{ marginTop: 2, accentColor: 'var(--tw-terra)', flexShrink: 0 }}
+                  />
+                  <div>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: sel ? 'var(--tw-terra)' : 'var(--tw-text)' }}>{t.label}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.4 }}>{t.desc}</p>
+                  </div>
+                </label>
+              )
+            })}
+          </div>
+        </Field>
       </div>
 
       {error && <p style={{ margin: '12px 0 0', padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', fontSize: 12, color: '#ef4444' }}>{error}</p>}
