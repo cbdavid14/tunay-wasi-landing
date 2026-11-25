@@ -1,4 +1,4 @@
-name: Deploy → ONE QA (alpaso-app-mvp.web.app)
+name: Deploy → ONE QA (alpaso-mvp.web.app)
 
 on:
   push:
@@ -47,7 +47,7 @@ jobs:
           VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
           VITE_EMAILJS_PRIVATE_KEY: ${{ secrets.VITE_EMAILJS_PRIVATE_KEY }}
 
-      - name: Deploy → alpaso-app-mvp.web.app
+      - name: Deploy → alpaso-mvp.web.app
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

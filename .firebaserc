@@ -9,7 +9,8 @@
       "hosting": {
         "clientes": ["alpaso-app"],
         "caficultores": ["alpaso-app-caficultores"],
-        "negocios": ["alpaso-app-negocios"]
+        "negocios": ["alpaso-app-negocios"],
+        "mvp": ["alpaso-mvp"]
       }
     },
     "tunay-wasi": {
