@@ -64,8 +64,10 @@ function formatFecha(iso: string): string {
 }
 
 function stepDePedido(p: PedidoONE): number {
-  if (p.logisticaStatus === 'entregado' || p.logisticaStatus === 'resuelto_ok') return 4
-  if (p.recepcionConfirmada) return 3
+  // ENT-01/ENT-02: step 4 = Calificado solo si el comprador ya calificó
+  if ((p.logisticaStatus === 'entregado' || p.logisticaStatus === 'resuelto_ok') && p.calificado) return 4
+  // step 3 = Recibido: logisticaStatus entregado o recepción confirmada manualmente
+  if (p.logisticaStatus === 'entregado' || p.logisticaStatus === 'resuelto_ok' || p.recepcionConfirmada) return 3
   if (p.logisticaStatus === 'en_agencia' || p.logisticaStatus === 'en_disputa') return 2
   if (p.pagoStatus === 'verificado') return 1
   return 0
