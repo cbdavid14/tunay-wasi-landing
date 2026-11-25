@@ -302,6 +302,31 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         .tw-pc-btn-selector { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
         .tw-pc-btn-selector:active { transform: scale(0.95); transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1); }
       `}</style>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": `${p.name} — ${p.farm}, ${p.region.split(' · ').slice(-1)[0]}`,
+          "description": p.desc,
+          "sku": p.code,
+          "brand": { "@type": "Brand", "name": "Tunay Wasi" },
+          "manufacturer": { "@type": "Person", "name": p.producer },
+          "offers": {
+            "@type": "Offer",
+            "priceCurrency": "PEN",
+            "price": (p.weights[0][1] / 100).toFixed(2),
+            "availability": isAgotado ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+            "seller": { "@type": "Organization", "name": "Tunay Wasi" },
+          },
+          ...(p.score ? { "additionalProperty": [{
+            "@type": "PropertyValue",
+            "name": "Puntaje SCA",
+            "value": String(p.score),
+          }] } : {}),
+        }) }}
+      />
     </article>
   );
 }
