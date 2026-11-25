@@ -151,8 +151,8 @@ export default function Footer() {
               <div className="tw-footer-col-links">
                 {[
                   { icon: '☕', label: 'Catálogo público',   hash: '#/',                    hover: 'var(--tw-terra)' },
-                  { icon: '🌱', label: 'Para caficultores',  hash: '#/docs/caf-cuenta',     hover: 'var(--tw-sage)'  },
-                  { icon: '🏪', label: 'Para compradores',   hash: '#/docs/neg-cuenta',     hover: 'var(--tw-terra)' },
+                  { icon: '🌱', label: 'Para caficultores',  hash: '#/para-caficultores',   hover: 'var(--tw-sage)'  },
+                  { icon: '🏪', label: 'Para compradores',   hash: '#/para-cafeterias',     hover: 'var(--tw-terra)' },
                   { icon: '💬', label: 'Soporte y FAQ',      hash: '#/soporte',             hover: null              },
                   { icon: '📖', label: 'Documentación',      hash: '#/docs',                hover: null              },
                 ].map(({ icon, label, hash, hover }) => (
