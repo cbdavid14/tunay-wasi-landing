@@ -9,6 +9,7 @@
  * Paso 3 — Confirmación
  */
 import React, { useState, useRef, useEffect } from 'react'
+import { navigate } from '@/router'
 import type { FormatoONE, LogisticaCaficultorONE, ReposicionItemConfig, FrecuenciaReposicion } from '../types'
 import { createPedido, subirVoucher, fetchMenusByNegocio, fetchLogisticaCaficultor, createReposicion, linkReposicionesToPedido } from '../service'
 import {
@@ -403,7 +404,7 @@ const Paso1Form: React.FC<Paso1Props> = ({
         <p style={{ color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', fontSize: 15, marginBottom: 24 }}>
           Tu carrito está vacío
         </p>
-        <a href="#/" style={{
+        <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{
           display: 'inline-block', padding: '14px 32px', borderRadius: 10,
           background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', textDecoration: 'none',
           fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
@@ -547,7 +548,7 @@ const Paso1Form: React.FC<Paso1Props> = ({
           })}
         </div>
 
-        <a href="#/" style={{ display: 'inline-block', marginTop: 10, fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+        <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ display: 'inline-block', marginTop: 10, fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
           + Agregar más cafés al catálogo
         </a>
 
@@ -1267,7 +1268,7 @@ const Paso3Screen: React.FC<{ pedidoId: string; nombreLocal: string; totalCents:
     >
       <span style={{ fontSize: 20 }}>💬</span> Enviar comprobante por WhatsApp
     </a>
-    <a href="#/portal" style={{
+    <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{
       display: 'block', padding: '13px', borderRadius: 10,
       background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none',
       fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textAlign: 'center',
@@ -1276,7 +1277,7 @@ const Paso3Screen: React.FC<{ pedidoId: string; nombreLocal: string; totalCents:
       Ver mi portal →
     </a>
     <div style={{ textAlign: 'center' }}>
-      <a href="#/" style={{ fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textDecoration: 'none' }}>
+      <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textDecoration: 'none' }}>
         Volver al catálogo
       </a>
     </div>
@@ -1545,7 +1546,7 @@ const CheckoutONE: React.FC<Props> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {step < PASO_CONFIRM && (
             <button
-              onClick={() => { window.location.hash = '#/' }}
+              onClick={() => { navigate('/') }}
               style={{
                 background: 'none', border: 'none', color: 'var(--tw-text-muted)',
                 fontSize: 12, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',

@@ -7,7 +7,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('1 — B2C puede agregar lote TYPE_B/C al carrito desde el catálogo (US-12 B2C)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Buscar una tarjeta de tipo B o C (no verde/TYPE_A)
@@ -39,7 +39,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('2 — TIPO-01: B2C no puede agregar lote TYPE_A al carrito (TIPO-01 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const cards = page.locator('.sc-product-card')
@@ -67,7 +67,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   test('3 — B2C: carrito inyectado aparece en checkout (US-13)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     const body = await page.locator('body').textContent() ?? ''
     expect(body).toMatch(/Bourbon Lavado|La Coipa/i)
@@ -78,7 +78,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   test('4 — B2C: checkout muestra opciones de envío (US-14)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     const body = await page.locator('body').textContent() ?? ''
     expect(body).toMatch(/envío|despacho|Lima|recojo|entrega/i)
@@ -87,7 +87,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   test('5 — B2C: checkout paso 1 incluye campos de dirección (US-14)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     const body = await page.locator('body').textContent() ?? ''
     expect(body).toMatch(/nombre|teléfono|dirección|distrito|empresa/i)
@@ -96,7 +96,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   test('6 — B2C: carrito vacío en checkout muestra mensaje apropiado (US-13)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
     // Sin inyectar carrito — ir al checkout con carrito vacío
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     const body = await page.locator('body').textContent() ?? ''
     // Carrito vacío: mensaje o redirige al catálogo
@@ -105,13 +105,13 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('7 — Guest con carrito inyectado en checkout redirige a login (INV-01)', async ({ page }) => {
     // Sin login, inyectar carrito y navegar a checkout
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await page.waitForTimeout(500)
     await page.evaluate(() => {
       const item = { producto: { id: 'prod-001', nombre: 'Bourbon Test', precioBaseKgCents: 40000 }, formato: '1kg', qty: 1 }
       localStorage.setItem('one_carrito_items', JSON.stringify([item]))
     })
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(1000)
     // Debe redirigir a login o mostrar gate
     const url = page.url()
@@ -122,7 +122,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   test('8 — B2C: cambiar cantidad de item en carrito actualiza el total (US-13)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     const body1 = await page.locator('body').textContent() ?? ''
     const matchPrecio = body1.match(/S\/\s*(\d+[\.,]\d{0,2})/)

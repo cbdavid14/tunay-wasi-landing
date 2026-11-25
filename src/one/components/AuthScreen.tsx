@@ -3,6 +3,7 @@
  * Opciones: Google Sign-In + Email/Password
  */
 import React, { useState, useEffect, useRef } from 'react'
+import { navigate } from '@/router'
 import { loginConGoogle, login, registrar, resetPassword } from '../authService'
 import { fetchUsuario } from '../service'
 import type { RolONE } from '../types'
@@ -104,13 +105,13 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
     // Si hay carrito guardado (localStorage), retomar el checkout — cualquier rol
     try {
       if (localStorage.getItem('one_carrito_items')) {
-        window.location.hash = '#/checkout'
+        navigate('/checkout')
         return
       }
     } catch { /* ok */ }
-    if (rol === 'seller') { window.location.hash = '#/caficultor-portal'; return }
-    if (rol === 'admin') { window.location.hash = '#/admin'; return }
-    window.location.hash = '#/portal'
+    if (rol === 'seller') { navigate('/caficultor-portal'); return }
+    if (rol === 'admin') { navigate('/admin'); return }
+    navigate('/portal')
   }
 
   // ── Google ──────────────────────────────────────────────────────────────────
@@ -179,7 +180,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
       await login(email, password)
       const { auth } = await import('@/shared/firebase')
       const currentUser = auth.currentUser
-      if (!currentUser) { window.location.hash = '#/portal'; return }
+      if (!currentUser) { navigate('/portal'); return }
       // TODO: re-enable email verification before launch
       // if (!currentUser.emailVerified) {
       //   setError('Debes verificar tu correo antes de ingresar. Revisa tu bandeja de entrada.')
@@ -275,7 +276,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         setAnalyticsUser(pendingUid, 'buyer_b2c')
         track('registro_completado', { rolUsuario: 'buyer_b2c' })
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
-        window.location.hash = '#/catalogo'
+        navigate('/catalogo')
       } else {
         await registrar(email, password, nombre.trim(), 'buyer_b2c')
         const { auth } = await import('@/shared/firebase')
@@ -319,7 +320,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         setAnalyticsUser(pendingUid, 'buyer_b2b')
         track('registro_completado', { rolUsuario: 'buyer_b2b' })
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
-        window.location.hash = '#/catalogo'
+        navigate('/catalogo')
       } else {
         await registrar(email, password, nombre.trim(), 'buyer_b2b')
         const { auth } = await import('@/shared/firebase')
@@ -1245,7 +1246,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                     }, { merge: true })
                   }
                   track('registro_completado', { rolUsuario: 'seller' })
-                  window.location.hash = '#/caficultor-portal'
+                  navigate('/caficultor-portal')
                 } catch {
                   setError('Error al guardar tu perfil. Intenta de nuevo.')
                   setPaso('registro_caficultor_identidad')

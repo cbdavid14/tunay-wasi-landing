@@ -4,6 +4,7 @@
  * Canales: WhatsApp, Email, Instagram, Docs + FAQ accordion
  */
 import React, { useState } from 'react'
+import { navigate } from '@/router'
 
 const FAQ_SOPORTE = [
   {
@@ -51,7 +52,7 @@ const NavBar: React.FC = () => (
     padding: '0 5%', height: 56,
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
-      <button onClick={() => { window.location.hash = '#/' }} style={{
+      <button onClick={() => { navigate('/') }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Cormorant Garamond, serif',
         fontSize: 20, fontWeight: 700, color: 'var(--tw-text)',
@@ -69,14 +70,14 @@ const NavBar: React.FC = () => (
       </span>
     </div>
     <div className="sop-nav-links" style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-      <button onClick={() => { window.location.hash = '#/docs' }} style={{
+      <button onClick={() => { navigate('/docs') }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-terra)',
         fontWeight: 600, whiteSpace: 'nowrap',
       }}>
         Documentación
       </button>
-      <button onClick={() => { window.location.hash = '#/' }} style={{
+      <button onClick={() => { navigate('/') }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
         whiteSpace: 'nowrap',
@@ -178,7 +179,7 @@ const CANALES: Canal[] = [
     titulo: 'Documentación',
     descripcion: 'Guías paso a paso para negocios y caficultores.',
     ctaLabel: 'Ver documentación',
-    href: '#/docs',
+    href: '/docs',
     color: 'var(--tw-sage)',
     bgColor: '#0a1f13',
   },
@@ -195,9 +196,9 @@ const SeccionCanales: React.FC = () => (
         {CANALES.map(canal => (
           <a
             key={canal.titulo}
-            href={canal.href.startsWith('#') ? undefined : canal.href}
-            onClick={canal.href.startsWith('#') ? () => { window.location.hash = canal.href } : undefined}
-            target={canal.href.startsWith('#') ? undefined : '_blank'}
+            href={canal.href}
+            onClick={canal.href.startsWith('/') ? (e) => { e.preventDefault(); navigate(canal.href) } : undefined}
+            target={canal.href.startsWith('http') ? '_blank' : undefined}
             rel="noopener noreferrer"
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -375,13 +376,13 @@ const Footer: React.FC = () => (
         TunayWasi
       </span>
       <div style={{ display: 'flex', gap: 20 }}>
-        <button onClick={() => { window.location.hash = '#/docs' }} style={{
+        <button onClick={() => { navigate('/docs') }} style={{
           background: 'none', border: 'none', cursor: 'pointer',
           fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
         }}>
           Documentación
         </button>
-        <button onClick={() => { window.location.hash = '#/' }} style={{
+        <button onClick={() => { navigate('/') }} style={{
           background: 'none', border: 'none', cursor: 'pointer',
           fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
         }}>

@@ -6,6 +6,7 @@
  * Big domino: calculadora TunayWasi vs acopiador — el número habla solo.
  */
 import React, { useState } from 'react'
+import { navigate } from '@/router'
 import { BetaRegistro } from './BetaRegistro'
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
@@ -108,7 +109,7 @@ const Nav: React.FC<{ onRegistrar: () => void }> = ({ onRegistrar }) => {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 24px', height: 64,
       }}>
-        <button onClick={() => { window.location.hash = '#/'; close() }} style={{
+        <button onClick={() => { navigate('/'); close() }} style={{
           background: 'none', border: 'none', cursor: 'pointer',
           fontFamily: 'Cormorant Garamond, serif',
           fontSize: 22, fontWeight: 700, color: 'var(--tw-text)',
@@ -118,10 +119,10 @@ const Nav: React.FC<{ onRegistrar: () => void }> = ({ onRegistrar }) => {
 
         {/* Desktop links */}
         <div className="cafi-nav-desktop" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button onClick={() => { window.location.hash = '#/para-cafeterias' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Soy negocio</button>
-          <button onClick={() => { window.location.hash = '#/' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Ver catálogo</button>
-          <button onClick={() => { window.location.hash = '#/docs' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Docs</button>
-          <button onClick={() => { window.location.hash = '#/soporte' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-sage)', fontWeight: 600 }}>Soporte</button>
+          <button onClick={() => { navigate('/para-cafeterias') }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Soy negocio</button>
+          <button onClick={() => { navigate('/') }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Ver catálogo</button>
+          <button onClick={() => { navigate('/docs') }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Docs</button>
+          <button onClick={() => { navigate('/soporte') }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-sage)', fontWeight: 600 }}>Soporte</button>
           <button onClick={onRegistrar} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: 'var(--tw-bg)', fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.3.17.64.24.97.24.37 0 .73-.1 1.05-.29l13.54-7.8-3.06-3.06-12.5 10.91zm-1.68-21.5C1.19 2.61 1 3.07 1 3.58v16.84c0 .51.19.97.5 1.32l.07.07L10.93 12l-9.36-9.81-.07.07zM20.8 9.4l-2.44-1.41-3.41 3.41 3.41 3.41 2.47-1.43c.7-.41.7-1.57-.03-1.98zm-17.6-7.3l12.5 10.91 3.06-3.06L5.22.56C4.9.37 4.54.27 4.17.27c-.33 0-.67.07-.97.24L3.2 2.1z"/></svg>
             Descargar app
@@ -149,10 +150,10 @@ const Nav: React.FC<{ onRegistrar: () => void }> = ({ onRegistrar }) => {
           borderTop: `1px solid ${"var(--tw-border)"}`,
           gap: 4,
         }}>
-          <button onClick={() => { window.location.hash = '#/para-cafeterias'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Soy negocio</button>
-          <button onClick={() => { window.location.hash = '#/'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Ver catálogo</button>
-          <button onClick={() => { window.location.hash = '#/docs'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Docs</button>
-          <button onClick={() => { window.location.hash = '#/soporte'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-sage)', fontWeight: 600, textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Soporte</button>
+          <button onClick={() => { navigate('/para-cafeterias'); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Soy negocio</button>
+          <button onClick={() => { navigate('/'); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Ver catálogo</button>
+          <button onClick={() => { navigate('/docs'); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Docs</button>
+          <button onClick={() => { navigate('/soporte'); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-sage)', fontWeight: 600, textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Soporte</button>
           <button onClick={() => { onRegistrar(); close() }} style={{ marginTop: 8, padding: '13px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: 'var(--tw-bg)', fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.3.17.64.24.97.24.37 0 .73-.1 1.05-.29l13.54-7.8-3.06-3.06-12.5 10.91zm-1.68-21.5C1.19 2.61 1 3.07 1 3.58v16.84c0 .51.19.97.5 1.32l.07.07L10.93 12l-9.36-9.81-.07.07zM20.8 9.4l-2.44-1.41-3.41 3.41 3.41 3.41 2.47-1.43c.7-.41.7-1.57-.03-1.98zm-17.6-7.3l12.5 10.91 3.06-3.06L5.22.56C4.9.37 4.54.27 4.17.27c-.33 0-.67.07-.97.24L3.2 2.1z"/></svg>
             Descargar app (Android)
@@ -606,7 +607,7 @@ const SeccionCTA: React.FC<{ onRegistrar: () => void }> = ({ onRegistrar }) => (
 const LandingCaficultores: React.FC = () => {
   function irAFormulario() {
     const el = document.getElementById('beta-form')
-    if (!el) { window.location.hash = '#/para-caficultores'; return }
+    if (!el) { navigate('/para-caficultores'); return }
     const esMovil = window.matchMedia('(max-width: 720px)').matches
     if (esMovil) {
       el.style.display = 'block'

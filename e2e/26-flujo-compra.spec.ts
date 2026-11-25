@@ -7,7 +7,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
 
   test('1 — B2B APPROVED agrega producto al carrito (US-12 B2B · PR-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -25,7 +25,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
 
   test('2 — B2C no puede agregar lote TYPE_A (US-12 B2C restriction)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -48,7 +48,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     // Ir directamente al checkout
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     const body = await page.locator('body').textContent()
     // Nombre del producto inyectado (el checkout lo lee del store/localStorage)
@@ -60,7 +60,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   test('4 — Checkout paso 1: opciones de envío visibles (US-14)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     const body = await page.locator('body').textContent()
     // Debe mostrar el checkout, no redirigir
@@ -72,7 +72,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   test('5 — Checkout paso 2: campos de dirección obligatorios (US-14 validación)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     // El checkout paso 1 (Carrito) ya incluye los campos de dirección en el mismo paso
     const body = await page.locator('body').textContent()
@@ -91,7 +91,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   test('6 — Checkout paso 3: resumen con total en S/ (US-14 CA)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
-    await irA(page, '#/checkout')
+    await irA(page, '/checkout')
     await page.waitForTimeout(800)
     // Paso 1: seleccionar envío
     const optLima = page.getByRole('button', { name: /Lima|envío/i }).first()
@@ -120,7 +120,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('7 — Guest ve login gate al intentar agregar al carrito (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })

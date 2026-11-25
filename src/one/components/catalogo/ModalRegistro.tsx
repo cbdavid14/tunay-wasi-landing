@@ -1,4 +1,5 @@
 import React from 'react'
+import { navigate } from '@/router'
 
 interface Props {
   onClose: () => void
@@ -42,8 +43,8 @@ export const ModalRegistro: React.FC<Props> = ({ onClose, productoIntencion }) =
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* Opción 1: Consumidor */}
         <a
-          href="#/registro"
-          onClick={onClose}
+          href="/registro"
+          onClick={(e) => { e.preventDefault(); onClose(); navigate('/registro') }}
           style={{
             padding: '13px 16px', borderRadius: 9,
             background: 'var(--tw-terra)', color: '#fff',
@@ -61,8 +62,8 @@ export const ModalRegistro: React.FC<Props> = ({ onClose, productoIntencion }) =
 
         {/* Opción 2: Negocio */}
         <a
-          href="#/registro-emprendedor"
-          onClick={onClose}
+          href="/registro-emprendedor"
+          onClick={(e) => { e.preventDefault(); onClose(); navigate('/registro-emprendedor') }}
           style={{
             padding: '13px 16px', borderRadius: 9,
             border: '1px solid var(--tw-border)', background: 'var(--tw-card)',
@@ -87,8 +88,8 @@ export const ModalRegistro: React.FC<Props> = ({ onClose, productoIntencion }) =
 
         {/* Opción 3: Iniciar sesión */}
         <a
-          href="#/portal"
-          onClick={onClose}
+          href="/portal"
+          onClick={(e) => { e.preventDefault(); onClose(); navigate('/portal') }}
           style={{
             padding: '11px 16px', borderRadius: 9,
             border: '1px solid var(--tw-terra)', background: 'transparent',

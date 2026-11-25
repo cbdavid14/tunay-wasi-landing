@@ -43,6 +43,7 @@ import Footer from '@/components/layout/Footer'
 import { DEMO_USER } from '@/one/demoService'
 import { useTheme, setTheme as applyTheme, getStoredTheme } from '@/shared/useTheme'
 import type { Theme } from '@/shared/useTheme'
+import { navigate } from './router'
 
 // ─── PaginaCaficultores ───────────────────────────────────────────────────────
 
@@ -156,7 +157,7 @@ function PaginaCaficultores() {
             <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 28, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 3 }}>🌱 Caficultores Destacados</div>
             <div style={{ fontSize: 12, color: 'var(--tw-text-muted)' }}>Conoce a quienes cultivan tu café · Directo del productor</div>
           </div>
-          <a href="#/" style={{ fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 600 }}>← Catálogo</a>
+          <a href="/" onClick={e => { e.preventDefault(); navigate('/') }} style={{ fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 600 }}>← Catálogo</a>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {CAFICULTORES_DATA.map(c => (
@@ -196,7 +197,7 @@ function GlobalHeader({
   carritoCount,
   onIrAlCheckout,
   usuarioONE,
-  hash,
+  hash: currentPath,
   avatarBadge = 0,
   portalTab,
   onPortalTabChange,
@@ -225,10 +226,10 @@ function GlobalHeader({
   const esAdmin = usuarioONE?.rol === 'admin'
 
   const navItems = [
-    { href: '#/', label: 'Catálogo', emoji: '☕' },
-    { href: '#/caficultores', label: 'Caficultores', emoji: '🌱' },
-    { href: '#/docs', label: 'Guías', emoji: '📖' },
-    { href: '#/soporte', label: 'Soporte', emoji: '💬' },
+    { href: '/', label: 'Catálogo', emoji: '☕' },
+    { href: '/caficultores', label: 'Caficultores', emoji: '🌱' },
+    { href: '/docs', label: 'Guías', emoji: '📖' },
+    { href: '/soporte', label: 'Soporte', emoji: '💬' },
   ]
 
   return (
@@ -257,7 +258,7 @@ function GlobalHeader({
           </button>
 
           {/* Logo */}
-          <a href="#/" className="header-logo" style={{ textDecoration: 'none', flexShrink: 0 }}>
+          <a href="/" onClick={e => { e.preventDefault(); navigate('/') }} className="header-logo" style={{ textDecoration: 'none', flexShrink: 0 }}>
             <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 17, fontWeight: 700, color: 'var(--tw-text)', whiteSpace: 'nowrap' }}>
               Tunay <span style={{ color: 'var(--tw-text)' }}>·</span> <span style={{ color: 'var(--tw-terra)' }}>Wasi</span>
             </span>
@@ -276,7 +277,7 @@ function GlobalHeader({
               color: 'var(--tw-text)', outline: 'none',
             }}
             value={searchValue ?? ''}
-            onChange={e => { if (hash !== '#/') window.location.hash = '#/'; onSearchChange?.(e.target.value) }}
+            onChange={e => { if (currentPath !== '/') navigate('/'); onSearchChange?.(e.target.value) }}
             onFocus={e => (e.currentTarget.style.borderColor = 'var(--tw-terra)')}
             onBlur={e => (e.currentTarget.style.borderColor = 'var(--tw-border)')}
           />
@@ -308,7 +309,8 @@ function GlobalHeader({
             {/* Avatar */}
             {inicial ? (
               <a
-                href={esCaficultor ? '#/caficultor-portal' : esAdmin ? '#/admin' : '#/portal'}
+                href={esCaficultor ? '/caficultor-portal' : esAdmin ? '/admin' : '/portal'}
+                onClick={(e) => { e.preventDefault(); navigate(esCaficultor ? '/caficultor-portal' : esAdmin ? '/admin' : '/portal') }}
                 style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', position: 'relative' }}
               >
                 <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tw-terra)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
@@ -322,15 +324,15 @@ function GlobalHeader({
               </a>
             ) : (
               <>
-                <a href="#/registro-caficultor" className="header-producer-btn" style={{ padding: '5px 8px', borderRadius: 7, border: '1px dashed var(--tw-sage)', background: 'transparent', color: 'var(--tw-sage)', fontSize: 10, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                <a href="/registro-caficultor" onClick={e => { e.preventDefault(); navigate('/registro-caficultor') }} className="header-producer-btn" style={{ padding: '5px 8px', borderRadius: 7, border: '1px dashed var(--tw-sage)', background: 'transparent', color: 'var(--tw-sage)', fontSize: 10, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   <span className="header-producer-full">🌱 Soy productor</span>
                   <span className="header-producer-short">🌱 Soy Productor</span>
                 </a>
-                <a href="#/login" className="header-login-btn" style={{ padding: '5px 8px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                <a href="/login" onClick={e => { e.preventDefault(); navigate('/login') }} className="header-login-btn" style={{ padding: '5px 8px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   <span className="header-btn-full">Ingresar</span>
                   <span className="header-btn-short">Ingresar</span>
                 </a>
-                <a href="#/login?registro=1" className="header-register-btn" style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                <a href="/login" onClick={e => { e.preventDefault(); navigate('/login?registro=1') }} className="header-register-btn" style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   <span className="header-btn-full">Registrarse</span>
                   <span className="header-btn-short">Registrarse</span>
                 </a>
@@ -345,7 +347,7 @@ function GlobalHeader({
             placeholder="🔎  Buscar café, variedad, región..."
             style={{ width: '100%', boxSizing: 'border-box', background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontFamily: 'Montserrat, sans-serif', color: 'var(--tw-text)', outline: 'none' }}
             value={searchValue ?? ''}
-            onChange={e => { if (hash !== '#/') window.location.hash = '#/'; onSearchChange?.(e.target.value) }}
+            onChange={e => { if (currentPath !== '/') navigate('/'); onSearchChange?.(e.target.value) }}
             onFocus={e => (e.currentTarget.style.borderColor = 'var(--tw-terra)')}
             onBlur={e => (e.currentTarget.style.borderColor = 'var(--tw-border)')}
           />
@@ -384,10 +386,10 @@ function GlobalHeader({
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 20px',
                 textDecoration: 'none',
-                color: hash === item.href ? 'var(--tw-terra)' : 'var(--tw-text)',
-                background: hash === item.href ? 'rgba(201,110,75,.08)' : 'transparent',
-                fontSize: 13, fontWeight: hash === item.href ? 700 : 500,
-                borderLeft: hash === item.href ? '3px solid var(--tw-terra)' : '3px solid transparent',
+                color: currentPath === item.href ? 'var(--tw-terra)' : 'var(--tw-text)',
+                background: currentPath === item.href ? 'rgba(201,110,75,.08)' : 'transparent',
+                fontSize: 13, fontWeight: currentPath === item.href ? 700 : 500,
+                borderLeft: currentPath === item.href ? '3px solid var(--tw-terra)' : '3px solid transparent',
               }}
             >
               <span style={{ fontSize: 16 }}>{item.emoji}</span>
@@ -406,22 +408,22 @@ function GlobalHeader({
 
             {/* Tabs del portal según rol */}
             {(esCaficultor ? [
-              { id: 'productos', emoji: '🌱', label: 'Mis cafés',  href: '#/caficultor-portal' },
-              { id: 'pedidos',   emoji: '📦', label: 'Mis Ventas', href: '#/caficultor-portal' },
-              { id: 'pagos',     emoji: '💰', label: 'Mis Pagos',  href: '#/caficultor-portal' },
-              { id: 'wasi',      emoji: '🤖', label: 'Wasi',       href: '#/caficultor-portal' },
-              { id: 'perfil',    emoji: '⚙️', label: 'Perfil',     href: '#/caficultor-portal' },
+              { id: 'productos', emoji: '🌱', label: 'Mis cafés',  href: '/caficultor-portal' },
+              { id: 'pedidos',   emoji: '📦', label: 'Mis Ventas', href: '/caficultor-portal' },
+              { id: 'pagos',     emoji: '💰', label: 'Mis Pagos',  href: '/caficultor-portal' },
+              { id: 'wasi',      emoji: '🤖', label: 'Wasi',       href: '/caficultor-portal' },
+              { id: 'perfil',    emoji: '⚙️', label: 'Perfil',     href: '/caficultor-portal' },
             ] : (esNegocio || esAdmin) ? [
-              { id: 'mis_compras', emoji: '📦', label: 'Mis Compras', href: '#/portal' },
-              { id: 'carrito',     emoji: '🛒', label: 'Carrito',     href: '#/portal' },
-              { id: 'wasi',        emoji: '🤖', label: 'Wasi',        href: '#/portal' },
-              { id: 'perfil',      emoji: '⚙️', label: 'Perfil',      href: '#/portal' },
+              { id: 'mis_compras', emoji: '📦', label: 'Mis Compras', href: '/portal' },
+              { id: 'carrito',     emoji: '🛒', label: 'Carrito',     href: '/portal' },
+              { id: 'wasi',        emoji: '🤖', label: 'Wasi',        href: '/portal' },
+              { id: 'perfil',      emoji: '⚙️', label: 'Perfil',      href: '/portal' },
             ] : []).map(item => {
               const isActive = portalTab === item.id
               return (
                 <button
                   key={item.id}
-                  onClick={() => { onPortalTabChange?.(item.id); window.location.hash = item.href; cerrarMenu() }}
+                  onClick={() => { onPortalTabChange?.(item.id); navigate(item.href); cerrarMenu() }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12, width: '100%',
                     padding: '10px 20px', background: isActive ? 'rgba(201,110,75,.08)' : 'transparent',
@@ -438,7 +440,7 @@ function GlobalHeader({
             })}
 
             {esAdmin && (
-              <a href="#/admin" onClick={cerrarMenu} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', textDecoration: 'none', color: 'var(--tw-text)', fontSize: 13, fontWeight: 500 }}>
+              <a href="/admin" onClick={e => { e.preventDefault(); navigate('/admin'); cerrarMenu() }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', textDecoration: 'none', color: 'var(--tw-text)', fontSize: 13, fontWeight: 500 }}>
                 <span style={{ fontSize: 16 }}>⚙️</span> Administración
               </a>
             )}
@@ -446,7 +448,7 @@ function GlobalHeader({
         ) : (
           <div style={{ padding: '8px 20px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, color: 'var(--tw-sage)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>¿Eres productor?</p>
-            <a href="#/registro-caficultor" onClick={cerrarMenu} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--tw-sage)', background: 'rgba(143,175,138,0.07)', textDecoration: 'none' }}>
+            <a href="/registro-caficultor" onClick={e => { e.preventDefault(); navigate('/registro-caficultor'); cerrarMenu() }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--tw-sage)', background: 'rgba(143,175,138,0.07)', textDecoration: 'none' }}>
               <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(143,175,138,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🌱</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 1 }}>Registrarme como caficultor</div>
@@ -455,10 +457,10 @@ function GlobalHeader({
               <span style={{ fontSize: 14, color: 'var(--tw-sage)' }}>›</span>
             </a>
             <div style={{ height: 1, background: 'var(--tw-border)', margin: '2px 0' }} />
-            <a href="#/login" onClick={cerrarMenu} style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+            <a href="/login" onClick={e => { e.preventDefault(); navigate('/login'); cerrarMenu() }} style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
               Ingresar
             </a>
-            <a href="#/login?registro=1" onClick={cerrarMenu} style={{ padding: '9px 0', borderRadius: 8, background: 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+            <a href="/login" onClick={e => { e.preventDefault(); navigate('/login?registro=1'); cerrarMenu() }} style={{ padding: '9px 0', borderRadius: 8, background: 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
               Crear cuenta
             </a>
           </div>
@@ -556,16 +558,17 @@ function useAuthONE(isDemo = false) {
   return { user, usuarioONE, loading, isAdmin }
 }
 
-// ─── Hash router simple ───────────────────────────────────────────────────────
+// ─── History router ───────────────────────────────────────────────────────────
 
-function useHash() {
-  const [hash, setHash] = useState(window.location.hash || '#/')
+function usePathname() {
+  const getPath = () => window.location.pathname + window.location.search || '/'
+  const [path, setPath] = useState(getPath)
   useEffect(() => {
-    const handler = () => setHash(window.location.hash || '#/')
-    window.addEventListener('hashchange', handler)
-    return () => window.removeEventListener('hashchange', handler)
+    const handler = () => setPath(getPath())
+    window.addEventListener('popstate', handler)
+    return () => window.removeEventListener('popstate', handler)
   }, [])
-  return hash
+  return path
 }
 
 // ─── Helpers localStorage — carrito persistente ───────────────────────────────
@@ -653,7 +656,7 @@ const AppONE: React.FC = () => {
   useTheme()
   const isDemo = new URLSearchParams(window.location.search).get('demo') === '1'
   const { user, usuarioONE, loading, isAdmin } = useAuthONE(isDemo)
-  const hash = useHash()
+  const path = usePathname()
 
   const [carritoItems, setCarritoItems] = useState<ItemCarrito[]>(leerCarritoStorage)
   const [kitSeleccionados, setKitSeleccionados] = useState<Set<string>>(new Set())
@@ -773,7 +776,7 @@ const AppONE: React.FC = () => {
 
   // Al entrar al portal: marcar todos los estados actuales como vistos
   useEffect(() => {
-    if ((hash !== '#/portal' && hash !== '#/caficultor-portal') || !usuarioONE) return
+    if ((path !== '/portal' && path !== '/caficultor-portal') || !usuarioONE) return
     async function marcarVisto() {
       try {
         const { fetchPedidosByNegocio, fetchPedidosByCaficultor } = await import('./one/service')
@@ -787,11 +790,11 @@ const AppONE: React.FC = () => {
       } catch { /* ok */ }
     }
     marcarVisto()
-  }, [hash, usuarioONE?.uid])
+  }, [path, usuarioONE?.uid])
 
   function irAlCarritoPortal() {
     setPortalTabNeg('carrito')
-    window.location.hash = '#/portal'
+    navigate('/portal')
   }
 
   // Persistir carrito en localStorage en cada cambio
@@ -860,7 +863,7 @@ const AppONE: React.FC = () => {
   // ─── Helper: envuelve contenido con el header global ─────────────────────
 
   // Rutas que no muestran el header (fullscreen)
-  const sinHeader = hash === '#/login' || hash === '#/login?registro=1' || hash === '#/registro-caficultor' || hash === '#/registro-emprendedor' || hash === '#/registro' || hash === '#/para-caficultores' || hash === '#/para-cafeterias' || hash === '#/soporte' || hash === '#/docs' || hash.startsWith('#/docs/')
+  const sinHeader = path === '/login' || path.startsWith('/login') || path === '/registro-caficultor' || path === '/registro-emprendedor' || path === '/registro' || path === '/para-caficultores' || path === '/para-cafeterias' || path === '/soporte' || path === '/docs' || path.startsWith('/docs/')
 
   function withHeader(content: React.ReactNode) {
     if (sinHeader) return <>{content}</>
@@ -869,14 +872,14 @@ const AppONE: React.FC = () => {
         <GlobalHeader
           carritoCount={carritoItems.length}
           onIrAlCheckout={() => {
-            if (!user && !isDemo) { window.location.hash = '#/login' }
+            if (!user && !isDemo) { navigate('/login') }
             else { irAlCarritoPortal() }
           }}
           usuarioONE={usuarioONE}
-          hash={hash}
+          hash={path}
           avatarBadge={avatarBadge}
-          portalTab={hash === '#/portal' ? portalTabNeg : hash === '#/caficultor-portal' ? portalTabCaf : undefined}
-          onPortalTabChange={hash === '#/portal' ? setPortalTabNeg : hash === '#/caficultor-portal' ? setPortalTabCaf : undefined}
+          portalTab={path === '/portal' ? portalTabNeg : path === '/caficultor-portal' ? portalTabCaf : undefined}
+          onPortalTabChange={path === '/portal' ? setPortalTabNeg : path === '/caficultor-portal' ? setPortalTabCaf : undefined}
           searchValue={catalogoSearch}
           onSearchChange={setCatalogoSearch}
         />
@@ -916,80 +919,80 @@ const AppONE: React.FC = () => {
 
   // ─── Rutas ────────────────────────────────────────────────────────────────
 
-  if (hash.startsWith('#/caficultor/') && !hash.endsWith('/portal')) {
-    const caficultorId = hash.replace('#/caficultor/', '')
+  if (path.startsWith('/caficultor/') && !path.endsWith('/portal')) {
+    const caficultorId = path.replace('/caficultor/', '')
     return withHeader(
       <>
-        <PageMeta title="Perfil del caficultor" description="Conoce al caficultor, su finca y los cafés de especialidad que produce directamente." canonical={`${BASE_URL}/#/caficultor/${caficultorId}`} />
+        <PageMeta title="Perfil del caficultor" description="Conoce al caficultor, su finca y los cafés de especialidad que produce directamente." canonical={`${BASE_URL}/caficultor/${caficultorId}`} />
         <PerfilCaficultor caficultorId={caficultorId} isDemo={isDemo} />
       </>
     )
   }
 
 
-  if (hash === '#/caficultores') {
+  if (path === '/caficultores') {
     return withHeader(<PaginaCaficultores />)
   }
 
-  if (hash === '#/para-caficultores') {
+  if (path === '/para-caficultores') {
     return withHeader(
       <>
-        <PageMeta title="Vende tu café a precio real — Para caficultores" description="Únete a Tunay Wasi y vende tu café de especialidad directamente a cafeterías y negocios." canonical={`${BASE_URL}/#/para-caficultores`} />
+        <PageMeta title="Vende tu café a precio real — Para caficultores" description="Únete a Tunay Wasi y vende tu café de especialidad directamente a cafeterías y negocios." canonical={`${BASE_URL}/para-caficultores`} />
         <LandingCaficultores />
       </>
     )
   }
 
-  if (hash === '#/para-cafeterias') {
+  if (path === '/para-cafeterias') {
     return withHeader(
       <>
-        <PageMeta title="Abastece tu cafetería con café de especialidad — Para emprendedores" description="Compra café de especialidad directamente del caficultor peruano." canonical={`${BASE_URL}/#/para-cafeterias`} />
+        <PageMeta title="Abastece tu cafetería con café de especialidad — Para emprendedores" description="Compra café de especialidad directamente del caficultor peruano." canonical={`${BASE_URL}/para-cafeterias`} />
         <LandingEmprendedor />
       </>
     )
   }
 
-  if (hash === '#/docs' || hash.startsWith('#/docs/')) {
+  if (path === '/docs' || path.startsWith('/docs/')) {
     return withHeader(
       <>
-        <PageMeta title="Documentación" description="Guías y documentación para caficultores y emprendedores en Tunay Wasi." canonical={`${BASE_URL}/#/docs`} />
-        <DocsONE hash={hash} />
+        <PageMeta title="Documentación" description="Guías y documentación para caficultores y emprendedores en Tunay Wasi." canonical={`${BASE_URL}/docs`} />
+        <DocsONE path={path} />
       </>
     )
   }
 
-  if (hash === '#/soporte') {
+  if (path === '/soporte') {
     return withHeader(
       <>
-        <PageMeta title="Soporte" description="¿Tienes alguna duda? El equipo de Tunay Wasi está aquí para ayudarte." canonical={`${BASE_URL}/#/soporte`} />
+        <PageMeta title="Soporte" description="¿Tienes alguna duda? El equipo de Tunay Wasi está aquí para ayudarte." canonical={`${BASE_URL}/soporte`} />
         <SoporteONE />
       </>
     )
   }
 
-  if (hash === '#/terminos') {
-    return withHeader(<><PageMeta title="Términos y Condiciones — Tunay Wasi" description="Condiciones de uso de la plataforma Tunay Wasi." canonical={`${BASE_URL}/#/terminos`} /><TerminosONE /></>)
+  if (path === '/terminos') {
+    return withHeader(<><PageMeta title="Términos y Condiciones — Tunay Wasi" description="Condiciones de uso de la plataforma Tunay Wasi." canonical={`${BASE_URL}/terminos`} /><TerminosONE /></>)
   }
 
-  if (hash === '#/contrato') {
-    return withHeader(<><PageMeta title="Contrato de Comprador — Tunay Wasi" description="Condiciones específicas para compradores en Tunay Wasi." canonical={`${BASE_URL}/#/contrato`} /><ContratoCompradorONE /></>)
+  if (path === '/contrato') {
+    return withHeader(<><PageMeta title="Contrato de Comprador — Tunay Wasi" description="Condiciones específicas para compradores en Tunay Wasi." canonical={`${BASE_URL}/contrato`} /><ContratoCompradorONE /></>)
   }
 
-  if (hash === '#/privacidad') {
-    return withHeader(<><PageMeta title="Política de Privacidad — Tunay Wasi" description="Cómo tratamos tus datos personales en Tunay Wasi." canonical={`${BASE_URL}/#/privacidad`} /><PrivacidadONE /></>)
+  if (path === '/privacidad') {
+    return withHeader(<><PageMeta title="Política de Privacidad — Tunay Wasi" description="Cómo tratamos tus datos personales en Tunay Wasi." canonical={`${BASE_URL}/privacidad`} /><PrivacidadONE /></>)
   }
 
-  if (hash === '#/reclamaciones') {
-    return withHeader(<><PageMeta title="Libro de Reclamaciones — Tunay Wasi" description="Registra tu reclamo o queja conforme al D.Leg. 1510 y Ley 29571." canonical={`${BASE_URL}/#/reclamaciones`} /><LibroReclamacionesONE /></>)
+  if (path === '/reclamaciones') {
+    return withHeader(<><PageMeta title="Libro de Reclamaciones — Tunay Wasi" description="Registra tu reclamo o queja conforme al D.Leg. 1510 y Ley 29571." canonical={`${BASE_URL}/reclamaciones`} /><LibroReclamacionesONE /></>)
   }
 
-  if (hash === '#/armar-kit') {
+  if (path === '/armar-kit') {
     function handleKitConfirmar() {
       setKitConfirmando(true)
       setTimeout(() => {
         if (!user && !isDemo) {
           trackCarritoMeta('ir_a_login', { itemCount: carritoItems.length })
-          window.location.hash = '#/login'
+          navigate('/login')
         } else {
           irAlCarritoPortal()
         }
@@ -1025,43 +1028,43 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (hash === '#/registro-caficultor') {
+  if (path === '/registro-caficultor') {
     return (
       <>
-        <PageMeta title="Regístrate como caficultor" description="Crea tu perfil de caficultor en Tunay Wasi y empieza a vender tu café de especialidad." canonical={`${BASE_URL}/#/registro-caficultor`} />
+        <PageMeta title="Regístrate como caficultor" description="Crea tu perfil de caficultor en Tunay Wasi y empieza a vender tu café de especialidad." canonical={`${BASE_URL}/registro-caficultor`} />
         <RegistroCaficultor isDemo={isDemo} />
       </>
     )
   }
 
-  if (hash === '#/registro') {
+  if (path === '/registro') {
     return (
       <>
-        <PageMeta title="Crear cuenta" description="Crea tu cuenta en Tunay Wasi para comprar café de especialidad directo del productor." canonical={`${BASE_URL}/#/registro`} />
+        <PageMeta title="Crear cuenta" description="Crea tu cuenta en Tunay Wasi para comprar café de especialidad directo del productor." canonical={`${BASE_URL}/registro`} />
         <RegistroConsumidor isDemo={isDemo} />
       </>
     )
   }
 
-  if (hash === '#/registro-emprendedor') {
+  if (path === '/registro-emprendedor') {
     return (
       <>
-        <PageMeta title="Regístrate como negocio" description="Crea tu cuenta de negocio en Tunay Wasi y accede al catálogo." canonical={`${BASE_URL}/#/registro-emprendedor`} />
+        <PageMeta title="Regístrate como negocio" description="Crea tu cuenta de negocio en Tunay Wasi y accede al catálogo." canonical={`${BASE_URL}/registro-emprendedor`} />
         <RegistroEmprendedor isDemo={isDemo} />
       </>
     )
   }
 
   // Limpiar flag de pedido confirmado al salir del checkout
-  if (hash !== '#/checkout') {
+  if (path !== '/checkout') {
     sessionStorage.removeItem('one_pedido_confirmado')
   }
 
-  if (hash === '#/checkout') {
+  if (path === '/checkout') {
     if (!user && !isDemo) {
       trackCarritoMeta('login_requerido', { itemCount: carritoItems.length })
       track('login_requerido', { itemCount: carritoItems.length, pasoDesde: 'checkout' })
-      window.location.hash = '#/login'
+      navigate('/login')
       return null
     }
     trackCarritoMeta('checkout', { itemCount: carritoItems.length })
@@ -1098,7 +1101,7 @@ const AppONE: React.FC = () => {
           totalCarritoCents={totalCarritoCents}
           carritoProductoIds={carritoProductoIds}
           carritoLineas={carritoItems}
-          onIrAlCheckout={() => { window.location.hash = '#/checkout' }}
+          onIrAlCheckout={() => { navigate('/checkout') }}
           isDemo={isDemo}
           embeddedMode={true}
           rolUsuario={usuarioONE?.rol ?? null}
@@ -1108,19 +1111,19 @@ const AppONE: React.FC = () => {
         />)
   }
 
-  if (hash === '#/portal') {
+  if (path === '/portal') {
     if (!user && !isDemo) {
-      window.location.hash = '#/login'
+      navigate('/login')
       return null
     }
     // Sin doc en Firestore — registro Google incompleto, debe elegir rol
     if (user && !usuarioONE && !isDemo) {
-      window.location.hash = '#/login'
+      navigate('/login')
       return null
     }
     // TIPO-02 INVARIANTE: caficultor no accede al portal de negocio
     if (usuarioONE?.rol === 'seller') {
-      window.location.hash = '#/caficultor-portal'
+      navigate('/caficultor-portal')
       return null
     }
     track('portal_negocio_visto', { rolUsuario: usuarioONE?.rol ?? 'buyer_b2b' })
@@ -1135,13 +1138,13 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (hash === '#/caficultor-portal' || hash === '#/portal-caficultores') {
+  if (path === '/caficultor-portal' || path === '/portal-caficultores') {
     if (!user && !isDemo) {
-      window.location.hash = '#/login'
+      navigate('/login')
       return null
     }
     if (user && !usuarioONE && !isDemo) {
-      window.location.hash = '#/login'
+      navigate('/login')
       return null
     }
     track('portal_caficultor_visto', { rolUsuario: 'seller' })
@@ -1157,15 +1160,15 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (hash === '#/admin') {
+  if (path === '/admin') {
     if (!isAdmin && !isDemo) {
-      window.location.hash = '#/'
+      navigate('/')
       return null
     }
     return withHeader(<AdminONE isDemo={isDemo} />)
   }
 
-  if (hash === '#/login' || hash === '#/login?registro=1') {
+  if (path === '/login' || path.startsWith('/login')) {
     track('login_iniciado', { itemCount: carritoItems.length })
     if (user || isDemo) {
       if (hayCarrito) {
@@ -1183,11 +1186,11 @@ const AppONE: React.FC = () => {
         )
       }
       if (usuarioONE.rol === 'seller') {
-        window.location.hash = '#/caficultor-portal'
+        navigate('/caficultor-portal')
       } else if (usuarioONE.rol === 'admin' || isAdmin) {
-        window.location.hash = '#/admin'
+        navigate('/admin')
       } else {
-        window.location.hash = '#/portal'
+        navigate('/portal')
       }
       return null
     }
@@ -1195,7 +1198,7 @@ const AppONE: React.FC = () => {
       <AuthScreen
         mensajePrevia={hayCarrito ? 'Para continuar con tu pedido, ingresa o crea tu cuenta.' : undefined}
         onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
-        pasoInicial={hash === '#/login?registro=1' ? 'seleccion_rol_registro' : 'inicio'}
+        pasoInicial={new URLSearchParams(window.location.search).get('registro') === '1' ? 'seleccion_rol_registro' : 'inicio'}
       />
     )
   }
@@ -1224,7 +1227,7 @@ const AppONE: React.FC = () => {
         onSearchChange={setCatalogoSearch}
         onSolicitarCotizacion={(producto) => {
           if (!user && !isDemo) {
-            window.location.hash = '#/login'
+            navigate('/login')
             return
           }
           setModalCotizProducto(producto)
@@ -1234,7 +1237,7 @@ const AppONE: React.FC = () => {
           if (!user && !isDemo) {
             trackCarritoMeta('ir_a_login', { itemCount: carritoItems.length })
             track('checkout_intentado', { itemCount: carritoItems.length, pasoDesde: 'catalogo', totalCents: totalCarritoCents })
-            window.location.hash = '#/login'
+            navigate('/login')
           } else {
             track('checkout_intentado', { itemCount: carritoItems.length, totalCents: totalCarritoCents })
             irAlCarritoPortal()

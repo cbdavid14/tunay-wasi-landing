@@ -4,6 +4,7 @@
  * Layout: sidebar izq + contenido centro + tabla de contenidos derecha (CulqiDocs-style)
  */
 import React, { useState, useEffect, useRef } from 'react'
+import { navigate } from '@/router'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -338,7 +339,7 @@ const NavBar: React.FC = () => (
     padding: '0 20px', height: 56,
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <button onClick={() => { window.location.hash = '#/' }} style={{
+      <button onClick={() => { navigate('/') }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Cormorant Garamond, serif',
         fontSize: 20, fontWeight: 700, color: 'var(--tw-text)',
@@ -355,13 +356,13 @@ const NavBar: React.FC = () => (
       </span>
     </div>
     <div className="docs-nav-links" style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-      <button onClick={() => { window.location.hash = '#/' }} style={{
+      <button onClick={() => { navigate('/') }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
       }}>
         Catálogo
       </button>
-      <button onClick={() => { window.location.hash = '#/soporte' }} style={{
+      <button onClick={() => { navigate('/soporte') }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-sage)',
         fontWeight: 600,
@@ -719,16 +720,16 @@ const SECCIONES_WEB: Seccion[] = [
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
+const DocsONE: React.FC<{ path?: string }> = ({ path: routePath = '/docs' }) => {
   const [plataforma, setPlataforma] = useState<'android' | 'web'>('android')
   const [seccionAbierta, setSeccionAbierta] = useState<string>('negocio')
   const [articuloActivo, setArticuloActivo] = useState<string>('neg-cuenta')
 
   const secciones = plataforma === 'android' ? SECCIONES : SECCIONES_WEB
 
-  // Parsear slug desde el hash: #/docs/neg-catalogo
+  // Parsear slug desde la ruta: /docs/neg-catalogo
   useEffect(() => {
-    const slug = hash.replace('#/docs/', '').replace('#/docs', '')
+    const slug = routePath.replace('/docs/', '').replace('/docs', '')
     if (slug) {
       for (const sec of [...SECCIONES, ...SECCIONES_WEB]) {
         const art = sec.articulos.find(a => a.slug === slug)
@@ -740,7 +741,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
         }
       }
     }
-  }, [hash])
+  }, [routePath])
 
   // Cuando cambia plataforma, resetear al primer artículo
   function cambiarPlataforma(p: 'android' | 'web') {
@@ -935,7 +936,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
           <div style={{ marginTop: 24, padding: '0 20px' }}>
             <div style={{ borderTop: `1px solid ${"var(--tw-border)"}`, paddingTop: 20 }}>
               <button
-                onClick={() => { window.location.hash = '#/soporte' }}
+                onClick={() => { navigate('/soporte') }}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontFamily: 'Montserrat, sans-serif',

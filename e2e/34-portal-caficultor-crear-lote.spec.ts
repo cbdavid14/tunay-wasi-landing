@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, USERS } from './helpers'
+import { loginEmail, irA, esperarCarga, USERS } from './helpers'
 
 // US-03 · PR-01 · US-42 · N1-01
 
@@ -7,7 +7,8 @@ test.describe('34 — Portal caficultor: crear y gestionar lotes', () => {
 
   async function cargarPortalCaficultor(page: any) {
     await loginEmail(page, USERS.caficultor.email, USERS.caficultor.password)
-    await irA(page, '#/caficultor-portal')
+    await irA(page, '/caficultor-portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => {
         const text = document.body.textContent ?? ''
@@ -20,7 +21,7 @@ test.describe('34 — Portal caficultor: crear y gestionar lotes', () => {
 
   test('1 — Portal muestra sección de gestión de café/productos (US-03)', async ({ page }) => {
     await cargarPortalCaficultor(page)
-    expect(page.url()).not.toMatch(/#\/login/)
+    expect(page.url()).not.toMatch(/\/login/)
     const body = await page.locator('body').textContent() ?? ''
     expect(body).toMatch(/café|productos?|lotes?|agregar|mis café/i)
   })

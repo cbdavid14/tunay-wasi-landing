@@ -227,7 +227,7 @@ export function demoGenerarKit(pedidoId: string): Promise<string> {
   const primerItem = pedido.items[0]
   const productoMatch = (seedProductos as unknown as ProductoONE[]).find(p => p.nombre === primerItem?.productoNombre)
   const caficultorId = productoMatch?.caficultorId ?? 'cafemanuel'
-  const qrUrl = `${window.location.origin}${window.location.pathname}#/caficultor/${caficultorId}`
+  const qrUrl = `${window.location.origin}/caficultor/${caficultorId}`
 
   const nuevoKit: KitIdentidadONE = {
     id: kitId,
@@ -417,7 +417,7 @@ export function demoFetchMenuActivo(negocioId: string): Promise<MenuONE | null> 
 export function demoCreateMenu(input: CreateMenuInput): Promise<string> {
   const id = `menu-demo-${Date.now()}`
   const uid = input.negocioId === 'demo-user' ? 'user-emprendedor-001' : input.negocioId
-  const qrUrl = `#/negocio/${uid}?menu=${id}`
+  const qrUrl = `/negocio/${uid}?menu=${id}`
   const nuevo: MenuONE = {
     id,
     negocioId: uid,

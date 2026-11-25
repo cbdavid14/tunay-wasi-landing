@@ -6,7 +6,7 @@ import { loginEmail, esperarCarga, USERS } from './helpers'
 test.describe('29 — Tarjetas del catálogo por rol', () => {
 
   test('1 — Tarjeta tiene nombre del café y precio visible (todos los roles)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -20,7 +20,7 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
   test('2 — Tarjeta NO muestra puntuación SCA numérica (INV-04/CAL-01 INVARIANTE)', async ({ page }) => {
     // Este test nunca debe skipearse — es un INVARIANTE de negocio
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
@@ -35,7 +35,7 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
 
   test('3 — Guest ve tarjetas con precio pero no botón directo de compra en la tarjeta', async ({ page }) => {
     // Sin login
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -57,7 +57,7 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
 
   test('4 — B2B APPROVED ve precio y puede abrir ficha de detalle (US-05 · B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -75,7 +75,7 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
   test('5 — B2C ve tarjetas TYPE_B y TYPE_C pero NO TYPE_A en catálogo (INV restricción)', async ({ page }) => {
     // INVARIANTE: B2C no puede ver lotes TYPE_A (café verde)
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
@@ -92,7 +92,7 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
   })
 
   test('6 — Tarjeta muestra nombre del caficultor o finca (US-05 trazabilidad)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })

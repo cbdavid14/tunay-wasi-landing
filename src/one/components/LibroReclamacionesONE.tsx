@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { navigate } from '@/router'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/shared/firebase'
 
@@ -222,7 +223,7 @@ export default function LibroReclamacionesONE() {
 
           <p style={{ fontSize: 11, color: 'var(--tw-text-faint)', lineHeight: 1.6 }}>
             Tus datos se tratarán conforme a nuestra{' '}
-            <a href="/#/privacidad" style={{ color: 'var(--tw-terra)', textDecoration: 'none' }}>Política de Privacidad</a>.
+            <a href="/privacidad" onClick={(e) => { e.preventDefault(); navigate('/privacidad') }} style={{ color: 'var(--tw-terra)', textDecoration: 'none' }}>Política de Privacidad</a>.
             Ley 29571 · Ley 32495 · D.Leg. 1729 · Lima, Perú.
           </p>
         </form>

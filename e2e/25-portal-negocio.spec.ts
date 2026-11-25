@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, USERS } from './helpers'
+import { loginEmail, irA, esperarCarga, USERS } from './helpers'
 
 // US-06 · US-10 · US-14 · B2B-01 · PR-02 · Protección de rutas
 
@@ -7,7 +7,8 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('1 — B2B APPROVED accede al portal negocio sin redirigir (US-06 · B2B-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -20,7 +21,8 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('2 — Tab Pedidos muestra historial o estado vacío (US-06)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -39,7 +41,8 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('3 — Tab Cotizaciones carga sin bloquear sesión (US-16 · B2B-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -54,7 +57,8 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('4 — Portal negocio B2B APPROVED: sin banner de pendiente (PR-02 · US-10)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -67,7 +71,8 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('5 — Tab Perfil muestra datos del negocio (US-04)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -90,7 +95,8 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('6 — Navegación entre tabs no pierde la sesión (sesión persistente)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -110,7 +116,8 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('7 — B2B PENDING ve banner de aprobación pendiente (B2B-01 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.pending.email, USERS.pending.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -122,14 +129,14 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
   })
 
   test('8 — Guest redirigido a login desde portal (INV-01)', async ({ page }) => {
-    await page.goto('/#/portal')
-    await page.waitForURL(/#\/login/, { timeout: 8_000 })
-    expect(page.url()).toMatch(/#\/login/)
+    await page.goto('/portal')
+    await page.waitForURL(/\/login/, { timeout: 8_000 })
+    expect(page.url()).toMatch(/\/login/)
   })
 
   test('9 — B2B APPROVED puede iniciar flujo de compra desde catálogo (US-12 · B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await page.waitForTimeout(1000)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })

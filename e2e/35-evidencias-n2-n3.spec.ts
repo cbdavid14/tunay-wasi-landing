@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, USERS } from './helpers'
+import { loginEmail, irA, esperarCarga, USERS } from './helpers'
 
 // US-42 · N1-01 · N2-01 · N3-01 · INV-04 (evidencias afectan visibilidad SCA)
 
@@ -7,7 +7,8 @@ test.describe('35 — Evidencias N1/N2/N3 desde portal caficultor', () => {
 
   async function cargarPortalCaficultor(page: any) {
     await loginEmail(page, USERS.caficultor.email, USERS.caficultor.password)
-    await irA(page, '#/caficultor-portal')
+    await irA(page, '/caficultor-portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => {
         const text = document.body.textContent ?? ''
@@ -70,7 +71,7 @@ test.describe('35 — Evidencias N1/N2/N3 desde portal caficultor', () => {
 
   test('5 — Evidencias afectan el badge de nivel en la tarjeta del catálogo (N1-01 visual)', async ({ page }) => {
     // Verificar que las tarjetas del catálogo muestran nivel de evidencia
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await page.waitForFunction(
       () => {
         const splash = [...document.querySelectorAll('div')].find(el =>
@@ -89,7 +90,7 @@ test.describe('35 — Evidencias N1/N2/N3 desde portal caficultor', () => {
 
   test('6 — B2B APPROVED puede ver el nivel de evidencia en la ficha de lote (INV-04)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await page.waitForTimeout(1000)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     await page.locator('.sc-product-card').first().click()
@@ -97,18 +98,18 @@ test.describe('35 — Evidencias N1/N2/N3 desde portal caficultor', () => {
     const body = await page.locator('body').textContent() ?? ''
     // Ficha detalle cargó correctamente para B2B
     expect(body).toMatch(/catálogo|proceso|datos del producto/i)
-    expect(page.url()).not.toMatch(/#\/login/)
+    expect(page.url()).not.toMatch(/\/login/)
   })
 
   test('7 — Solo el caficultor puede subir evidencias (no buyer_b2b)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
     // B2B no tiene portal caficultor
-    await irA(page, '#/caficultor-portal')
-    await page.waitForURL(/#\/login/, { timeout: 8_000 }).catch(() => {})
-    // Debe redirigir a login (no tiene acceso) o mostrar el catálogo
+    await irA(page, '/caficultor-portal')
+    await page.waitForURL(/\/login|\/portal|\//, { timeout: 8_000 }).catch(() => {})
+    // Debe redirigir a login (no tiene acceso) o mostrar el portal de negocio
     const url = page.url()
-    expect(url).toMatch(/#\/login|#\/|#\/portal/)
-    if (url.match(/#\/caficultor-portal/)) {
+    expect(url).toMatch(/\/login|\/portal|\//)
+    if (url.match(/\/caficultor-portal/)) {
       // Si llegó al portal, no debe poder crear/subir evidencias
       const body = await page.locator('body').textContent() ?? ''
       expect(body).not.toMatch(/agregar evidencia|subir evidencia/i)

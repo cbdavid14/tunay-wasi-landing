@@ -4,6 +4,7 @@
  * Ruta: #/registro-caficultor
  */
 import React, { useState } from 'react'
+import { navigate } from '@/router'
 import { registrarCaficultor } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
@@ -298,7 +299,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
               </div>
             ))}
           </div>
-          <a href="#/" style={{ display: 'block', padding: 14, borderRadius: 10, textAlign: 'center', background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ display: 'block', padding: 14, borderRadius: 10, textAlign: 'center', background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
             Ver catálogo →
           </a>
         </div>
@@ -324,7 +325,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
         display: 'flex', alignItems: 'center', gap: 16,
       }}>
         {paso === 1 ? (
-          <a href="#/" style={{ fontSize: 12, color: 'var(--tw-text-muted)', textDecoration: 'none' }}>← Inicio</a>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ fontSize: 12, color: 'var(--tw-text-muted)', textDecoration: 'none' }}>← Inicio</a>
         ) : (
           <button
             onClick={() => { setError(null); setPaso(p => (p === 3 ? 2 : p === 2 ? 1 : 1) as Paso) }}
@@ -461,7 +462,7 @@ const Paso1: React.FC<{
       </button>
       <p style={{ margin: '12px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', textAlign: 'center' }}>
         ¿Ya tienes cuenta?{' '}
-        <a href="#/login" style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
+        <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login') }} style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
       </p>
     </div>
   )

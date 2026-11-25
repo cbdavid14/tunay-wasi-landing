@@ -118,7 +118,7 @@ export function track(
         ...propiedades,
 
         // Contexto
-        url: window.location.hash,
+        url: window.location.pathname + window.location.search,
         ...getDeviceInfo(),
 
         // Tiempo (serverTimestamp para que sea consistente con zona Lima en Firestore)

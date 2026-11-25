@@ -3,6 +3,7 @@
  * Dark mode Netflix-style con sidebar navigation, CRUD de productos, toast
  */
 import React, { useEffect, useState, useRef } from 'react'
+import { navigate } from '@/router'
 import {
   fetchPedidosByCaficultor, fetchProductos, fetchCaficultor,
   fetchCalificacionesByCaficultor, updateStock,
@@ -2699,7 +2700,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
         {/* Ver perfil público */}
         <div style={{ marginBottom: 14 }}>
-          <a href={`#/caficultor/${caficultorId}`} style={{ fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 600 }}>
+          <a href={`/caficultor/${caficultorId}`} onClick={(e) => { e.preventDefault(); navigate(`/caficultor/${caficultorId}`) }} style={{ fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 600 }}>
             Ver perfil público →
           </a>
         </div>

@@ -1,3 +1,5 @@
+import { navigate } from '@/router'
+
 const CHECK_SVG = (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8faf8a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12" />
@@ -94,19 +96,19 @@ export default function Footer() {
               <div className="tw-footer-cta-label" style={{ color: 'var(--tw-terra)' }}>Para consumidores</div>
               <div className="tw-footer-cta-title">Café tostado y molido</div>
               <div className="tw-footer-cta-sub">Por presentación (250 g · 500 g · 1 kg). Boleta electrónica.</div>
-              <button className="tw-footer-btn tw-footer-btn--primary" onClick={() => { window.location.hash = '#/'; window.scrollTo({ top: 0 }); }}>Registrarme gratis →</button>
+              <button className="tw-footer-btn tw-footer-btn--primary" onClick={() => { navigate('/'); window.scrollTo({ top: 0 }); }}>Registrarme gratis →</button>
             </div>
             <div className="tw-footer-cta-card tw-footer-cta-card--empresa">
               <div className="tw-footer-cta-label" style={{ color: 'var(--tw-sage)' }}>Para empresas</div>
               <div className="tw-footer-cta-title">Verde · tostado · molido a granel</div>
               <div className="tw-footer-cta-sub">Precio S/kg + escalas de volumen. Factura electrónica. RUC requerido.</div>
-              <button className="tw-footer-btn tw-footer-btn--outline-sage" onClick={() => { window.location.hash = '#/'; window.scrollTo({ top: 0 }); }}>Solicitar aprobación →</button>
+              <button className="tw-footer-btn tw-footer-btn--outline-sage" onClick={() => { navigate('/'); window.scrollTo({ top: 0 }); }}>Solicitar aprobación →</button>
             </div>
             <div className="tw-footer-cta-card">
               <div className="tw-footer-cta-label">Para caficultores</div>
               <div className="tw-footer-cta-title">Vende directo. 0% comisión beta</div>
               <div className="tw-footer-cta-sub">Fija tu precio, publica tus lotes y recibe el pago en 24h tras entrega.</div>
-              <button className="tw-footer-btn tw-footer-btn--outline" onClick={() => { window.location.hash = '#/'; window.scrollTo({ top: 0 }); }}>Publicar mi lote →</button>
+              <button className="tw-footer-btn tw-footer-btn--outline" onClick={() => { navigate('/'); window.scrollTo({ top: 0 }); }}>Publicar mi lote →</button>
             </div>
           </div>
         </div>
@@ -150,14 +152,14 @@ export default function Footer() {
               <div className="tw-footer-col-title">Plataforma</div>
               <div className="tw-footer-col-links">
                 {[
-                  { icon: '☕', label: 'Catálogo público',   hash: '#/',                    hover: 'var(--tw-terra)' },
-                  { icon: '🌱', label: 'Para caficultores',  hash: '#/para-caficultores',   hover: 'var(--tw-sage)'  },
-                  { icon: '🏪', label: 'Para compradores',   hash: '#/para-cafeterias',     hover: 'var(--tw-terra)' },
-                  { icon: '💬', label: 'Soporte y FAQ',      hash: '#/soporte',             hover: null              },
-                  { icon: '📖', label: 'Documentación',      hash: '#/docs',                hover: null              },
-                ].map(({ icon, label, hash, hover }) => (
-                  <a key={label} href={'/' + hash} className="tw-footer-link"
-                    onClick={(e) => { e.preventDefault(); window.location.hash = hash; window.scrollTo({ top: 0 }); }}
+                  { icon: '☕', label: 'Catálogo público',   href: '/',                    hover: 'var(--tw-terra)' },
+                  { icon: '🌱', label: 'Para caficultores',  href: '/para-caficultores',   hover: 'var(--tw-sage)'  },
+                  { icon: '🏪', label: 'Para compradores',   href: '/para-cafeterias',     hover: 'var(--tw-terra)' },
+                  { icon: '💬', label: 'Soporte y FAQ',      href: '/soporte',             hover: null              },
+                  { icon: '📖', label: 'Documentación',      href: '/docs',                hover: null              },
+                ].map(({ icon, label, href, hover }) => (
+                  <a key={label} href={href} className="tw-footer-link"
+                    onClick={(e) => { e.preventDefault(); navigate(href); window.scrollTo({ top: 0 }); }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = hover ?? 'var(--tw-footer-text)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--tw-footer-text-muted)'; }}>
                     <span style={{ fontSize: 11 }}>{icon}</span>{label}
@@ -171,13 +173,13 @@ export default function Footer() {
               <div className="tw-footer-col-title">Legal</div>
               <div className="tw-footer-col-links">
                 {[
-                  { label: 'Términos y Condiciones',    hash: '#/terminos'       },
-                  { label: 'Contrato comprador',         hash: '#/contrato'       },
-                  { label: 'Privacidad de datos',        hash: '#/privacidad'     },
-                  { label: '📋 Libro de Reclamaciones',  hash: '#/reclamaciones', terra: true },
-                ].map(({ label, hash, terra }) => (
-                  <a key={label} href={'/' + hash} className={'tw-footer-link' + (terra ? ' tw-footer-link--terra' : '')}
-                    onClick={(e) => { e.preventDefault(); window.location.hash = hash; window.scrollTo({ top: 0 }); }}
+                  { label: 'Términos y Condiciones',    href: '/terminos'       },
+                  { label: 'Contrato comprador',         href: '/contrato'       },
+                  { label: 'Privacidad de datos',        href: '/privacidad'     },
+                  { label: '📋 Libro de Reclamaciones',  href: '/reclamaciones', terra: true },
+                ].map(({ label, href, terra }) => (
+                  <a key={label} href={href} className={'tw-footer-link' + (terra ? ' tw-footer-link--terra' : '')}
+                    onClick={(e) => { e.preventDefault(); navigate(href); window.scrollTo({ top: 0 }); }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = terra ? 'var(--tw-terra)' : 'var(--tw-footer-text)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = terra ? 'var(--tw-terra)' : 'var(--tw-footer-text-muted)'; }}>
                     {label}
@@ -234,8 +236,8 @@ export default function Footer() {
               <span className="tw-footer-bottom-sep">|</span>
               <span>tunay-wasi.com</span>
               <span className="tw-footer-bottom-sep">|</span>
-              <a href="/#/terminos" className="tw-footer-bottom-link">Términos</a>
-              <a href="/#/privacidad" className="tw-footer-bottom-link">Privacidad</a>
+              <a href="/terminos" className="tw-footer-bottom-link">Términos</a>
+              <a href="/privacidad" className="tw-footer-bottom-link">Privacidad</a>
             </div>
             <div className="tw-footer-bottom-right">
               {[

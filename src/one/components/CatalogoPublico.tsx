@@ -3,6 +3,7 @@
  * Orquestador delgado; lógica de UI extraída a catalogo/
  */
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { navigate } from '@/router'
 import type { ProductoONE, CaficultorONE, FormatoONE } from '../types'
 import { fetchProductos, fetchCaficultores, fetchPedidosByNegocio } from '../service'
 import type { PedidoONE } from '../types'
@@ -686,25 +687,25 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
             <button onClick={() => setAppDrawerOpen(false)} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--tw-text-muted)' }}>✕</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a href="#/" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, background: 'rgba(201,110,75,.08)', color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700, fontSize: 12 }}>☕ Catálogo</a>
+            <a href="/" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, background: 'rgba(201,110,75,.08)', color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700, fontSize: 12 }}>☕ Catálogo</a>
             {rolUsuario === 'buyer_b2b' || rolUsuario === 'buyer_b2c' || rolUsuario === 'admin' ? (
               <>
-                <a href="#/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🏪 Mi Portal</a>
-                <a href="#/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Compras</a>
+                <a href="/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🏪 Mi Portal</a>
+                <a href="/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Compras</a>
               </>
             ) : rolUsuario === 'seller' ? (
               <>
-                <a href="#/caficultor-portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-sage)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🌱 Mi Portal</a>
-                <a href="#/caficultor-portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Ventas</a>
+                <a href="/caficultor-portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-sage)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🌱 Mi Portal</a>
+                <a href="/caficultor-portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Ventas</a>
               </>
             ) : (
               <>
-                <a href="#/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Compras</a>
-                <a href="#/para-cafeterias" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-terra)', textDecoration: 'none', fontSize: 12 }}>☕ Soy Negocio</a>
+                <a href="/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Compras</a>
+                <a href="/para-cafeterias" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-terra)', textDecoration: 'none', fontSize: 12 }}>☕ Soy Negocio</a>
               </>
             )}
-            <a href="#/docs" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📄 Documentación</a>
-            <a href="#/soporte" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>❓ Preguntas frecuentes</a>
+            <a href="/docs" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📄 Documentación</a>
+            <a href="/soporte" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>❓ Preguntas frecuentes</a>
           </div>
           {/* Theme switcher en drawer */}
           <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid var(--tw-border)', marginBottom: 14 }}>
@@ -748,7 +749,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
                 </>
               ) : (
                 <>
-                  <a href="#/login" onClick={() => setAppDrawerOpen(false)} style={{ fontSize: 11, fontWeight: 600, color: 'var(--tw-terra)', textDecoration: 'none' }}>Iniciar sesión</a>
+                  <a href="/login" onClick={() => setAppDrawerOpen(false)} style={{ fontSize: 11, fontWeight: 600, color: 'var(--tw-terra)', textDecoration: 'none' }}>Iniciar sesión</a>
                   <div style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>Para acceder a tu cuenta</div>
                 </>
               )}
@@ -804,7 +805,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
           <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--tw-card)', border: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--tw-text)', flexShrink: 0 }}>D</div>
           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
             <button onClick={() => setModalRegistro(true)} style={{ padding: '5px 11px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)' }}>Registrarse</button>
-            <a href="#/portal" style={{ padding: '5px 11px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Mi portal</a>
+            <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{ padding: '5px 11px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Mi portal</a>
           </div>
         </header>}
 
@@ -819,7 +820,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
             return (
               <div className="d-banner-pend">
                 <span>⏳ {pedidos.length} pedido{pedidos.length !== 1 ? 's' : ''} · <strong>{resumen}</strong></span>
-                <a href="#/portal" style={{ color: 'var(--tw-terra)', fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}>Ver →</a>
+                <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{ color: 'var(--tw-terra)', fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}>Ver →</a>
               </div>
             )
           })()}
@@ -1076,7 +1077,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
               {!hideFiltersHeader && <><div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--tw-border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>Caficultores destacados</div>
-                  <a href="#/caficultores" style={{ fontSize: 10, color: 'var(--tw-terra)', fontWeight: 600, textDecoration: 'none' }}>Ver todos →</a>
+                  <a href="/caficultores" onClick={(e) => { e.preventDefault(); navigate('/caficultores') }} style={{ fontSize: 10, color: 'var(--tw-terra)', fontWeight: 600, textDecoration: 'none' }}>Ver todos →</a>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
                   {loading ? (
@@ -1196,7 +1197,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
               ) : pedidos.length === 0 ? (
                 <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', padding: '8px 0', textAlign: 'center', lineHeight: 1.5 }}>
                   Aún no tienes pedidos.<br />
-                  <a href="#/catalogo" style={{ color: 'var(--tw-terra)', fontWeight: 600, textDecoration: 'none' }}>Explorar catálogo →</a>
+                  <a href="/catalogo" onClick={(e) => { e.preventDefault(); navigate('/catalogo') }} style={{ color: 'var(--tw-terra)', fontWeight: 600, textDecoration: 'none' }}>Explorar catálogo →</a>
                 </div>
               ) : pedidos.slice(0, 3).map((ped, i) => {
                 const fase = ped.cancelado
@@ -1486,22 +1487,22 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
         {!embeddedMode && (<nav className="bn-bar" role="navigation" aria-label="Navegación principal">
           {rolUsuario === 'seller' ? (
             <>
-              <a href="#/" className="bn-item active"><span className="bn-icon">☕</span><span>Catálogo</span></a>
-              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">🌱</span><span>Mis cafés</span></a>
-              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">📦</span><span>Mis Ventas</span></a>
-              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">🤖</span><span>Wasi</span></a>
-              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">👤</span><span>Perfil</span></a>
+              <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} className="bn-item active"><span className="bn-icon">☕</span><span>Catálogo</span></a>
+              <a href="/caficultor-portal" onClick={(e) => { e.preventDefault(); navigate('/caficultor-portal') }} className="bn-item"><span className="bn-icon">🌱</span><span>Mis cafés</span></a>
+              <a href="/caficultor-portal" onClick={(e) => { e.preventDefault(); navigate('/caficultor-portal') }} className="bn-item"><span className="bn-icon">📦</span><span>Mis Ventas</span></a>
+              <a href="/caficultor-portal" onClick={(e) => { e.preventDefault(); navigate('/caficultor-portal') }} className="bn-item"><span className="bn-icon">🤖</span><span>Wasi</span></a>
+              <a href="/caficultor-portal" onClick={(e) => { e.preventDefault(); navigate('/caficultor-portal') }} className="bn-item"><span className="bn-icon">👤</span><span>Perfil</span></a>
             </>
           ) : (
             <>
-              <a href="#/" className="bn-item active"><span className="bn-icon">☕</span><span>Catálogo</span></a>
-              <a href="#/portal" className="bn-item" style={{ position: 'relative' }}>
+              <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} className="bn-item active"><span className="bn-icon">☕</span><span>Catálogo</span></a>
+              <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} className="bn-item" style={{ position: 'relative' }}>
                 <span className="bn-icon">📦</span>
                 {(carritoCount ?? 0) > 0 && (<span className="bn-badge">{carritoCount}</span>)}
                 <span>Mis Compras</span>
               </a>
-              <a href="#/docs" className="bn-item"><span className="bn-icon">📄</span><span>Docs</span></a>
-              <a href="#/para-caficultores" className="bn-item"><span className="bn-icon">🌱</span><span>Caficultor</span></a>
+              <a href="/docs" onClick={(e) => { e.preventDefault(); navigate('/docs') }} className="bn-item"><span className="bn-icon">📄</span><span>Docs</span></a>
+              <a href="/para-caficultores" onClick={(e) => { e.preventDefault(); navigate('/para-caficultores') }} className="bn-item"><span className="bn-icon">🌱</span><span>Caficultor</span></a>
               <button className="bn-item" onClick={() => setModalRegistro(true)} style={{ position: 'relative' }}>
                 <span className="bn-icon">👤</span><span>Perfil</span>
               </button>

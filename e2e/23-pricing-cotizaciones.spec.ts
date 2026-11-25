@@ -6,7 +6,7 @@ import { loginEmail, irA, esperarCarga, USERS } from './helpers'
 test.describe('23 — Pricing y cotizaciones', () => {
 
   test('1 — Solo lotes activos aparecen en catálogo (PS-01 INVARIANTE)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const body = await page.locator('body').textContent()
@@ -16,7 +16,7 @@ test.describe('23 — Pricing y cotizaciones', () => {
   })
 
   test('2 — Guest: catálogo carga y tarjetas muestran precio por presentación (PR-01)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const body = await page.locator('body').textContent()
@@ -25,7 +25,7 @@ test.describe('23 — Pricing y cotizaciones', () => {
 
   test('3 — B2B APPROVED puede iniciar solicitud de cotización desde catálogo (US-16)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const btnCotizar = page.getByRole('button', { name: /cotiz/i }).first()
@@ -38,7 +38,7 @@ test.describe('23 — Pricing y cotizaciones', () => {
   })
 
   test('4 — B2C no puede agregar lote al carrito sin modal de login (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Abrir primera tarjeta para ver acciones disponibles
@@ -55,7 +55,7 @@ test.describe('23 — Pricing y cotizaciones', () => {
 
   test('5 — Portal negocio B2B APPROVED: tab cotizaciones carga sin bloqueo (US-16 · B2B-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
     // Buscar tab de cotizaciones
     const tabCot = page.getByRole('button', { name: /cotizac/i })
     if (await tabCot.isVisible()) {
@@ -74,7 +74,8 @@ test.describe('23 — Pricing y cotizaciones', () => {
 
   test('6 — B2B PENDING: cotizaciones bloqueadas — banner de aprobación (B2B-01 · US-16)', async ({ page }) => {
     await loginEmail(page, USERS.pending.email, USERS.pending.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }

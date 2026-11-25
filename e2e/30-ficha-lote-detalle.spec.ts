@@ -6,7 +6,7 @@ import { loginEmail, esperarCarga, USERS } from './helpers'
 test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol', () => {
 
   test('1 — Click en tarjeta abre ficha de detalle (inline, no navegación) (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -25,7 +25,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
   })
 
   test('2 — Ficha tiene nombre del café, precio y caficultor (US-05 trazabilidad)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)
@@ -39,7 +39,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
   })
 
   test('3 — Ficha tiene selector de presentación/formato (US-12 presentaciones)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)
@@ -60,7 +60,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
 
   test('4 — B2B APPROVED ve datos técnicos con puntuación SCA (US-05 · INV-04)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)
@@ -79,7 +79,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
   test('5 — B2C NO ve puntuación SCA numérica en ficha (INV-04/CAL-01 INVARIANTE)', async ({ page }) => {
     // INVARIANTE: score SCA nunca visible para B2C
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)
@@ -90,7 +90,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
 
   test('6 — Guest NO ve puntuación SCA numérica en ficha (INV-04/CAL-01 INVARIANTE)', async ({ page }) => {
     // INVARIANTE: score SCA nunca visible para guests
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)
@@ -101,7 +101,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
 
   test('7 — B2B APPROVED ve botón "Agregar al carrito" para lote FIXED (US-12 B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     // Buscar primer lote que tenga el botón Agregar al carrito (FIXED)
     const tarjetas = page.locator('.sc-product-card')
@@ -126,7 +126,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
 
   test('8 — B2B APPROVED ve "Solicitar cotización" para lote NEGOTIABLE (US-16 · PR-01)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
@@ -155,7 +155,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
 
   test('9 — B2C ve botón de compra para TYPE_B/TYPE_C (US-12 B2C)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
@@ -168,7 +168,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
 
   test('10 — B2C intenta comprar TYPE_A — ve restricción (US-12 · INV restricción)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     // TYPE_A no aparece en catálogo para B2C (filtrado a nivel de catálogo)
     // Si por alguna razón accede a un lote TYPE_A, debe ver restricción
@@ -194,7 +194,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
   })
 
   test('11 — Guest ve opción de login/registro al intentar comprar (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -211,7 +211,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
   })
 
   test('12 — Ficha muestra origen, variedad o proceso del café (US-05 trazabilidad)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)
@@ -221,7 +221,7 @@ test.describe('30 — Ficha de lote: detalle, datos técnicos y acciones por rol
   })
 
   test('13 — Cerrar ficha vuelve al catálogo (US-05 UX)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)

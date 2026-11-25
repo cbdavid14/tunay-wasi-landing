@@ -4,6 +4,7 @@
  * US-01: validación RUC SUNAT, razón social autofill, rol buyer_b2b
  */
 import React, { useState, useRef } from 'react'
+import { navigate } from '@/router'
 import { registrar } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
@@ -163,7 +164,7 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
   function handleConfirmTipo() {
     if (!tipo) return
     if (tipo === 'b2c') {
-      window.location.hash = '#/registro'
+      navigate('/registro')
       return
     }
     setError(null)
@@ -301,13 +302,13 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
             <p style={{ margin: '0 0 20px', fontSize: 11, color: 'var(--tw-text-faint)' }}>RUC {ruc} · Verificado SUNAT</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a href="#/" style={{
+            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{
               display: 'block', padding: 14, borderRadius: 10, textAlign: 'center',
               background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700,
             }}>
               Ver catálogo →
             </a>
-            <a href="#/portal" style={{
+            <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{
               display: 'block', padding: 12, borderRadius: 10, textAlign: 'center',
               background: 'none', border: '1px solid var(--tw-border)', color: 'var(--tw-text-muted)',
               textDecoration: 'none', fontSize: 13, fontWeight: 600,
@@ -325,7 +326,7 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
       {/* Header */}
       <header style={{ height: 52, padding: '0 32px', borderBottom: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', gap: 16 }}>
         {paso === 0 ? (
-          <a href="#/" style={{ fontSize: 12, color: 'var(--tw-text-muted)', textDecoration: 'none' }}>← Volver al catálogo</a>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ fontSize: 12, color: 'var(--tw-text-muted)', textDecoration: 'none' }}>← Volver al catálogo</a>
         ) : (
           <button
             onClick={() => { setError(null); setPaso(p => (p === 3 ? 2 : p === 2 ? 1 : 0)) }}
@@ -456,7 +457,7 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
               </button>
               <p style={{ margin: '12px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', textAlign: 'center' }}>
                 ¿Ya tienes cuenta?{' '}
-                <a href="#/login" style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
+                <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login') }} style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
               </p>
             </div>
           )}

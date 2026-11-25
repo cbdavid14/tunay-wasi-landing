@@ -11,7 +11,7 @@ export const USERS = {
 // ── Login vía UI (formulario real de Firebase)
 // Placeholder real del email: "tu@email.com" — el paso inicio ya muestra email+contraseña
 export async function loginEmail(page: Page, email: string, password: string) {
-  await page.goto('/#/login')
+  await page.goto('/login')
   await page.waitForLoadState('networkidle')
   // Paso 1: si aparece pantalla de selección de método, clic en "Ingresar con email"
   const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
@@ -24,16 +24,16 @@ export async function loginEmail(page: Page, email: string, password: string) {
   await page.getByPlaceholder('tu@email.com').fill(email)
   await page.getByPlaceholder('••••••••').fill(password)
   await page.getByRole('button', { name: /ingresar →/i }).click()
-  // Hash router: esperar que el hash deje de ser #/login
+  // History API: esperar que el pathname deje de ser /login
   await page.waitForFunction(
-    () => !window.location.hash.startsWith('#/login'),
+    () => !window.location.pathname.startsWith('/login'),
     { timeout: 15_000 }
   )
 }
 
-// ── Navegar a una ruta hash
-export async function irA(page: Page, hash: string) {
-  await page.evaluate((h) => { window.location.hash = h }, hash)
+// ── Navegar a una ruta (History API)
+export async function irA(page: Page, path: string) {
+  await page.goto(path)
   await page.waitForTimeout(400)
 }
 

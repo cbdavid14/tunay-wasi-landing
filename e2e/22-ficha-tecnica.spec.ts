@@ -9,7 +9,7 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('1 — Puntaje SCA numérico nunca aparece en las tarjetas del catálogo (CAL-01 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Verificar que las tarjetas en sí no tienen el badge numérico SCA
@@ -24,7 +24,7 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
   })
 
   test('2 — Guest abre detalle de producto: sin datos técnicos B2B (CAL-02 · US-42)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -41,21 +41,26 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('3 — B2C abre detalle: sin datos técnicos ni precio mayorista (CAL-02 · PR-02)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
     await primeraTarjeta.click()
     await page.waitForTimeout(600)
-    const body = await page.locator('body').textContent()
-    expect(body).not.toMatch(/precio.{0,10}S\/\s*(kg|Kg)/i)
-    expect(body).not.toMatch(/mayorist/i)
-    expect(body).not.toMatch(/SCA\s+\d+/i)
+    // Acotar al panel de detalle, no al body completo (el footer tiene texto de marketing con "Precio S/kg")
+    const panel = page.locator('.detalle-inline-grid, .detalle-inline-panel').first()
+    const panelVisible = await panel.isVisible({ timeout: 3000 }).catch(() => false)
+    const textContent = panelVisible
+      ? await panel.textContent()
+      : await page.locator('body').textContent()
+    expect(textContent).not.toMatch(/precio.{0,10}S\/\s*(kg|Kg)/i)
+    expect(textContent).not.toMatch(/mayorist/i)
+    expect(textContent).not.toMatch(/SCA\s+\d+/i)
   })
 
   test('4 — B2B APPROVED: tarjetas del catálogo no muestran puntaje SCA numérico (PR-02 · US-10 · B2B-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
@@ -69,7 +74,7 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('5 — SCA nunca aparece en ningún flujo B2B APPROVED (CAL-01 INVARIANTE global)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -86,7 +91,7 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
   test('6 — Catálogo B2B con demo: NO hay SCA numérico en las tarjetas (INV-04)', async ({ page }) => {
     // Verificar INV-04 desde el catálogo con datos demo (más determinista que el portal)
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
@@ -101,7 +106,7 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('7 — Lote sin acción comercial (PAUSED): banner y sin botón de compra (PS-02 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetaPausada = page.locator('.sc-product-card').filter({ hasText: /pausad|no disponible/i }).first()
     const existe = await tarjetaPausada.isVisible()

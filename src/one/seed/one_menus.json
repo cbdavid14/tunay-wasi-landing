@@ -62,7 +62,7 @@
       }
     ],
     "activo": true,
-    "qrUrl": "#/cafeteria/user-emprendedor-001?menu=menu-001",
+    "qrUrl": "/cafeteria/user-emprendedor-001?menu=menu-001",
     "createdAt": "2026-08-01T10:00:00.000Z",
     "updatedAt": "2026-09-10T14:30:00.000Z"
   },
@@ -74,7 +74,7 @@
     "cafesIds": ["producto-002", "producto-007"],
     "preparaciones": [],
     "activo": false,
-    "qrUrl": "#/cafeteria/user-emprendedor-001?menu=menu-002",
+    "qrUrl": "/cafeteria/user-emprendedor-001?menu=menu-002",
     "createdAt": "2026-08-15T09:00:00.000Z",
     "updatedAt": "2026-08-15T09:00:00.000Z"
   },
@@ -86,7 +86,7 @@
     "cafesIds": [],
     "preparaciones": [],
     "activo": false,
-    "qrUrl": "#/cafeteria/user-emprendedor-001?menu=menu-003",
+    "qrUrl": "/cafeteria/user-emprendedor-001?menu=menu-003",
     "createdAt": "2026-08-01T10:00:00.000Z",
     "updatedAt": "2026-08-01T10:00:00.000Z"
   }

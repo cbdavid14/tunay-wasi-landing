@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { navigate } from '@/router'
 import { registrar } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
@@ -218,13 +219,13 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
             <p style={{ margin: '0 0 20px', fontSize: 11, color: 'var(--tw-text-faint)' }}>DNI {dni} · Consumidor B2C</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a href="#/" style={{
+            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{
               display: 'block', padding: 14, borderRadius: 10, textAlign: 'center',
               background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700,
             }}>
               Ver cafés →
             </a>
-            <a href="#/portal" style={{
+            <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{
               display: 'block', padding: 12, borderRadius: 10, textAlign: 'center',
               background: 'none', border: '1px solid var(--tw-border)', color: 'var(--tw-text-muted)',
               textDecoration: 'none', fontSize: 13, fontWeight: 600,
@@ -243,7 +244,7 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
       <header style={{ height: 52, padding: '0 32px', borderBottom: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', gap: 16 }}>
         {paso === 1 ? (
           <a
-            href="#/login?registro=1"
+            href="/login?registro=1" onClick={(e) => { e.preventDefault(); navigate('/login?registro=1') }}
             style={{ fontSize: 12, color: 'var(--tw-text-muted)', textDecoration: 'none' }}
           >
             ← Cambiar tipo
@@ -322,7 +323,7 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
               </button>
               <p style={{ margin: '12px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', textAlign: 'center' }}>
                 ¿Ya tienes cuenta?{' '}
-                <a href="#/login" style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
+                <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login') }} style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
               </p>
             </div>
           )}

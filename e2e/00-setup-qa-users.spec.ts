@@ -14,7 +14,7 @@ const BASE = 'http://localhost:5173'
 const PROJECT = 'tunay-wasi'
 
 async function loginYObtenerToken(page: Parameters<typeof test>[1] extends (args: { page: infer P }) => unknown ? P : never, email: string, password: string): Promise<{ uid: string; token: string } | null> {
-  await page.goto(`${BASE}/#/login`)
+  await page.goto(`${BASE}/login`)
   await page.waitForLoadState('networkidle')
   const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -26,7 +26,7 @@ async function loginYObtenerToken(page: Parameters<typeof test>[1] extends (args
   await page.getByPlaceholder('••••••••').fill(password)
   await page.getByRole('button', { name: /ingresar →/i }).click()
   await page.waitForFunction(
-    () => !window.location.hash.startsWith('#/login'),
+    () => !window.location.pathname.startsWith('/login'),
     { timeout: 15_000 }
   ).catch(() => {})
   await page.waitForTimeout(1500)
@@ -91,7 +91,7 @@ async function actualizarEmpresaB2B(page: Parameters<typeof loginYObtenerToken>[
 const BASE_URL = BASE
 
 async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0], email: string, password: string, nombre: string): Promise<boolean> {
-  await page.goto(`${BASE_URL}/#/registro-caficultor`)
+  await page.goto(`${BASE_URL}/registro-caficultor`)
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(800)
 
@@ -150,7 +150,7 @@ async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0
 test.describe.configure({ mode: 'serial' })
 
 test('setup: barista (buyer_b2b APPROVED)', async ({ page }) => {
-  await page.goto(`${BASE}/#/login`)
+  await page.goto(`${BASE}/login`)
   await page.waitForLoadState('networkidle')
   const data = await loginYObtenerToken(page, 'barista@tunaywasi.qa', 'Tunay2026!')
   expect(data, 'No se pudo loguear barista — verificar que el usuario existe').not.toBeNull()
@@ -160,7 +160,7 @@ test('setup: barista (buyer_b2b APPROVED)', async ({ page }) => {
 
 test('setup: b2b-pending (buyer_b2b PENDING_APPROVAL)', async ({ page }) => {
   // Cerrar sesión anterior — navegar primero para que localStorage sea accesible
-  await page.goto(`${BASE}/#/login`)
+  await page.goto(`${BASE}/login`)
   await page.waitForLoadState('networkidle')
   await page.evaluate(() => { try { localStorage.clear() } catch {} })
   await page.waitForTimeout(500)
@@ -173,13 +173,13 @@ test('setup: b2b-pending (buyer_b2b PENDING_APPROVAL)', async ({ page }) => {
 
 test('setup: caficultor (seller) — registrar en app si no existe', async ({ page }) => {
   // Cerrar sesión
-  await page.goto(`${BASE}/#/login`)
+  await page.goto(`${BASE}/login`)
   await page.waitForLoadState('networkidle')
   await page.evaluate(() => { try { localStorage.clear() } catch {} })
   await page.waitForTimeout(500)
 
   // Intentar login — si falla, registrar
-  await page.goto(`${BASE}/#/login`)
+  await page.goto(`${BASE}/login`)
   await page.waitForLoadState('networkidle')
   const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -193,10 +193,10 @@ test('setup: caficultor (seller) — registrar en app si no existe', async ({ pa
 
   // Esperar resultado: si entra → ya existe, si muestra error → no existe, registrar
   await page.waitForTimeout(4000)
-  const hash = await page.evaluate(() => window.location.hash)
+  const path = await page.evaluate(() => window.location.pathname)
   const bodyLogin = await page.locator('body').textContent() ?? ''
 
-  if (!hash.startsWith('#/login') && !bodyLogin.match(/contraseña.*incorrecta|no.*encontr/i)) {
+  if (!path.startsWith('/login') && !bodyLogin.match(/contraseña.*incorrecta|no.*encontr/i)) {
     // Ya existe y pudo loguear
     console.log('  ✅ caficultor ya existe y puede loguear')
     return

@@ -642,8 +642,8 @@ export async function generarKit(
   productos: KitIdentidadONE['productos'],
   caficultorId?: string
 ): Promise<string> {
-  const origin = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : ''
-  const qrUrl = caficultorId ? `${origin}#/caficultor/${caficultorId}` : undefined
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const qrUrl = caficultorId ? `${origin}/caficultor/${caficultorId}` : undefined
 
   const kitData: Omit<KitIdentidadONE, 'id'> = {
     pedidoId,
@@ -835,7 +835,7 @@ export async function fetchMenusByNegocio(negocioId: string): Promise<MenuONE[]>
 }
 
 export async function createMenu(input: CreateMenuInput): Promise<string> {
-  const qrUrl = `${window.location.origin}${window.location.pathname}#/negocio/${input.negocioId}?menu=`
+  const qrUrl = `${window.location.origin}/negocio/${input.negocioId}?menu=`
   const docRef = await addDoc(collection(db, ONE_COLLECTIONS.MENUS), {
     negocioId: input.negocioId,
     nombre: input.nombre,

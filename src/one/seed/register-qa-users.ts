@@ -16,7 +16,7 @@ const BASE = 'http://localhost:5173'
 
 // ── Registrar buyer_b2c via #/registro ────────────────────────────────────────
 async function registrarConsumidor(page: Page, email: string, password: string, nombre: string) {
-  await page.goto(`${BASE}/#/registro`)
+  await page.goto(`${BASE}/registro`)
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(800)
 
@@ -56,7 +56,7 @@ async function registrarConsumidor(page: Page, email: string, password: string, 
 async function cerrarSesion(page: Page) {
   // Limpiar localStorage y recargar — fuerza estado guest
   await page.evaluate(() => localStorage.clear())
-  await page.goto('http://localhost:5173/#/login')
+  await page.goto('http://localhost:5173/login')
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(1000)
 }
@@ -137,7 +137,7 @@ async function registrarB2BSimple(page: Page, email: string, password: string, n
 
 // ── Registrar seller vía #/registro-caficultor ────────────────────────────────
 async function registrarCaficultor(page: Page, email: string, password: string, nombre: string) {
-  await page.goto(`${BASE}/#/registro-caficultor`)
+  await page.goto(`${BASE}/registro-caficultor`)
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(800)
 

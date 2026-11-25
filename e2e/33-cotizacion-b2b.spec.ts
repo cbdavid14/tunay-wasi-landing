@@ -7,7 +7,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('1 — B2B APPROVED ve opción de cotizar en producto NEGOTIABLE (US-16 · PR-01)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -37,7 +37,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('2 — B2B APPROVED ve aviso de precio NEGOTIABLE en ficha (PR-01 UX)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -54,7 +54,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('3 — B2B PENDING no puede hacer ofertas en NEGOTIABLE (B2B-01 · PR-01)', async ({ page }) => {
     await loginEmail(page, USERS.pending.email, USERS.pending.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -73,7 +73,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('4 — B2C no puede hacer ofertas en productos NEGOTIABLE (US-16 restricción)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -88,7 +88,8 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('5 — Portal negocio tab Ofertas carga lista de cotizaciones (US-16 B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '#/portal')
+    await irA(page, '/portal')
+    await esperarCarga(page)
     await page.waitForFunction(
       () => !document.body.textContent?.includes('Cargando tu portal'),
       { timeout: 15_000 }
@@ -98,7 +99,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
     if (await tabOfertas.isVisible()) {
       await tabOfertas.evaluate((el: HTMLElement) => el.click())
       await page.waitForTimeout(500)
-      expect(page.url()).not.toMatch(/#\/login/)
+      expect(page.url()).not.toMatch(/\/login/)
       const body = await page.locator('body').textContent() ?? ''
       // Muestra lista de ofertas o estado vacío
       expect(body).toMatch(/oferta|cotizac|no tienes|aún no|sin ofertas/i)
@@ -111,7 +112,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('6 — Producto NEGOTIABLE no muestra precio numérico SCA en tarjeta (INV-04)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -125,7 +126,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
   })
 
   test('7 — Guest ve login gate al intentar cotizar (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })

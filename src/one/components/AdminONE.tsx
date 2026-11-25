@@ -8,6 +8,7 @@
  * Tab 4 — Perfil: identidad + detección de pagos + cerrar sesión
  */
 import React, { useState, useEffect, useCallback } from 'react'
+import { navigate } from '@/router'
 import { auth } from '@/shared/firebase'
 import {
   fetchPedidosAdmin,
@@ -616,7 +617,7 @@ const TabSoporte: React.FC<{ pedidos: PedidoONE[] }> = ({ pedidos }) => {
 
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <a
-                  href={`#/soporte-chat/${p.id}`}
+                  href={`/soporte-chat/${p.id}`}
                   onClick={e => { e.preventDefault(); setChatPedidoId(p.id) }}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -630,7 +631,8 @@ const TabSoporte: React.FC<{ pedidos: PedidoONE[] }> = ({ pedidos }) => {
                   💬 Ver chat
                 </a>
                 <a
-                  href={`#/historial/${p.id}`}
+                  href={`/historial/${p.id}`}
+                  onClick={(e) => e.preventDefault()}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     padding: '7px 14px', borderRadius: 8,
@@ -1903,7 +1905,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
           pendingB2B={pendingB2B}
           pendingReviewer={pendingReviewer}
           pendingDisputas={pendingDisputas}
-          onLogout={() => logout().then(() => { window.location.hash = '#/' })}
+          onLogout={() => logout().then(() => { navigate('/') })}
           collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(prev => !prev)}
         />
       </div>
@@ -1963,7 +1965,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
               {tab === 'cuentas_b2b' && <TabCuentasB2B onToast={toast} />}
               {tab === 'reviewer'    && <TabReviewer   onToast={toast} />}
               {tab === 'disputas'    && <TabDisputas   onToast={toast} />}
-              {tab === 'perfil'      && <TabPerfil     onLogout={() => logout().then(() => { window.location.hash = '#/' })} />}
+              {tab === 'perfil'      && <TabPerfil     onLogout={() => logout().then(() => { navigate('/') })} />}
             </>
           )}
         </div>

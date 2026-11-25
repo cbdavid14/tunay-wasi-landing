@@ -3,6 +3,7 @@
  * Dark mode Netflix-style con sidebar navigation y CRUD completo
  */
 import React, { useEffect, useState } from 'react'
+import { navigate } from '@/router'
 import {
   fetchPedidosByNegocio,
   crearCalificacionCaficultor,
@@ -1307,7 +1308,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
                 <p style={{ fontSize: 36, marginBottom: 12 }}>📦</p>
                 <p style={{ fontSize: 16, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, marginBottom: 8 }}>Sin pedidos activos</p>
                 <p style={{ fontSize: 13, color: 'var(--tw-text-muted)', marginBottom: 20 }}>Cuando realices un pedido aparecerá aquí</p>
-                <a href="#/" style={{ display: 'inline-block', padding: '12px 24px', borderRadius: 10, background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>Ver catálogo →</a>
+                <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ display: 'inline-block', padding: '12px 24px', borderRadius: 10, background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>Ver catálogo →</a>
               </>
             ) : (
               <p style={{ fontSize: 13, color: 'var(--tw-text-muted)' }}>Sin pedidos con este filtro</p>
@@ -5788,7 +5789,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
                 🔔
                 {(() => { const unread = generarNotificaciones().filter(n => !n.leida).length; return unread > 0 ? <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: '50%', background: 'var(--tw-terra)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{unread > 9 ? '9+' : unread}</span> : null })()}
               </button>
-              <a href="#/" style={{ fontSize: 12, padding: '10px 16px', borderRadius: 8, background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', textDecoration: 'none', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>+ Pedido</a>
+              <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ fontSize: 12, padding: '10px 16px', borderRadius: 8, background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', textDecoration: 'none', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>+ Pedido</a>
             </div>
           </div>
 

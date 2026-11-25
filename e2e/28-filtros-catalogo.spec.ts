@@ -6,7 +6,7 @@ import { loginEmail, irA, esperarCarga, USERS } from './helpers'
 test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', () => {
 
   test('1 — Catálogo carga con tarjetas en modo demo (baseline)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
@@ -15,7 +15,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('2 — Filtro Tostado (TYPE_B) muestra tarjetas de café tostado (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Chip "Tostado"
@@ -37,7 +37,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('3 — Filtro Molido (TYPE_C) muestra tarjetas de café molido (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const chipMolido = page.getByRole('button', { name: /molido/i }).first()
@@ -52,7 +52,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   test('4 — Filtro Verde (TYPE_A) requiere B2B — B2C no ve tarjetas TYPE_A (INV restricción)', async ({ page }) => {
     // Como B2C
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Intentar click en filtro Verde
@@ -77,7 +77,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('5 — Limpiar filtro vuelve al catálogo completo (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const countInicial = await page.locator('.sc-product-card').count()
@@ -99,7 +99,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('6 — Búsqueda por texto filtra resultados (US-07)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Input de búsqueda
@@ -113,7 +113,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('7 — Búsqueda sin resultados muestra mensaje vacío (US-07)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const inputBusqueda = page.getByPlaceholder(/buscar|café|search/i).first()
@@ -131,7 +131,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
 
   test('8 — B2B APPROVED puede ver filtro Verde (TYPE_A) con lotes disponibles (US-05 · B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // B2B puede filtrar por Verde
@@ -147,7 +147,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
 
   test('9 — B2C NO ve tarjetas TYPE_A en catálogo (INV-04 restricción visibilidad)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     // La lógica: `if (rolUsuario !== 'buyer_b2b' && m.productType === 'TYPE_A') return`
     // B2C no debe ver tarjetas de café verde (TYPE_A) en el catálogo
@@ -168,7 +168,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('10 — Ordenamiento por precio muestra orden correcto (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Buscar selector/botón de ordenamiento
@@ -184,7 +184,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('11 — Chip de filtro activo se muestra visualmente (US-05 UX)', async ({ page }) => {
-    await page.goto('/?demo=1#/')
+    await page.goto('/?demo=1')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Aplicar filtro Tostado

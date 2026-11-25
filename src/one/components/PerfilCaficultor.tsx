@@ -3,6 +3,7 @@
  * Destino del QR de trazabilidad que está en las mesas de las cafeterías
  */
 import React, { useEffect, useState } from 'react'
+import { navigate } from '@/router'
 import { fetchCaficultor, fetchProductos, crearCalificacionCafeteria } from '../service'
 import { demoFetchCaficultor, demoFetchProductosByCaficultor, demoCrearCalificacionCafeteria } from '../demoService'
 import type { CaficultorONE, ProductoONE } from '../types'
@@ -121,12 +122,12 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
         background: 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <a href="#/" style={{ textDecoration: 'none' }}>
+        <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{ textDecoration: 'none' }}>
           <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--tw-terra)', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.08em' }}>
             TUNAY WASI
           </span>
         </a>
-        <a href="#/" style={{
+        <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{
           color: 'var(--tw-text)', fontSize: 12, textDecoration: 'none',
           fontFamily: 'Montserrat, sans-serif', fontWeight: 600,
           padding: '6px 16px', borderRadius: 4, background: 'var(--tw-terra)',
@@ -279,7 +280,7 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
                     <button
                       onClick={() => {
                         sessionStorage.setItem('one_carrito_producto', JSON.stringify(p))
-                        window.location.hash = '#/checkout'
+                        navigate('/checkout')
                       }}
                       style={{
                         display: 'inline-block', marginTop: 8,
