@@ -35,6 +35,10 @@ const FAQ = [
     p: '¿Qué pasa si tengo un problema con mi pedido?',
     r: 'Tienes hasta 7 días calendario desde la entrega para reportar un problema. Para cuentas persona: respondemos en 48 horas hábiles. Para cuentas empresa: en 72 horas hábiles. Los casos complejos se resuelven en hasta 7 días hábiles con mediación de TunayWasi. El dinero queda retenido en escrow hasta que haya resolución.',
   },
+  {
+    p: '¿Puedo comprar café verde sin tostar para tostarlo yo mismo?',
+    r: 'Sí. TunayWasi permite comprar café verde sin tostar (tipo TYPE_A) para negocios con cuenta empresa B2B aprobada — ideal para tostadores artesanales, cafeterías con tostadora propia o importadores. Solo necesitas registrar tu negocio con RUC y esperar la aprobación del equipo (hasta 2 días hábiles). Los cafés tostados en grano o molidos están disponibles para cualquier comprador.',
+  },
 ]
 
 // ─── Átomos ───────────────────────────────────────────────────────────────────
@@ -206,8 +210,8 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
           fontWeight: 700, color: 'var(--tw-text)',
           margin: '20px 0 18px', lineHeight: 1.05,
         }}>
-          Café de origen directo<br />
-          <span style={{ color: 'var(--tw-terra)' }}>al productor.<br />Sin intermediarios.</span>
+          Café de especialidad peruano<br />
+          <span style={{ color: 'var(--tw-terra)' }}>directo del productor.<br />Sin intermediarios.</span>
         </h1>
 
         <p style={{

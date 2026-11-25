@@ -937,7 +937,7 @@ const AppONE: React.FC = () => {
   if (path === '/para-caficultores') {
     return withHeader(
       <>
-        <PageMeta title="Vende tu café a precio real — Para caficultores" description="Únete a Tunay Wasi y vende tu café de especialidad directamente a cafeterías y negocios." canonical={`${BASE_URL}/para-caficultores`} />
+        <PageMeta title="Vende tu café de especialidad en Perú — Para caficultores peruanos" description="Publica tu lote de café en Tunay Wasi y vende online a cafeterías y negocios de todo el país. Café verde, tostado o molido. 0% comisión en fase beta. Cajamarca, Junín, Cusco, San Martín y más." canonical={`${BASE_URL}/para-caficultores`} />
         <LandingCaficultores />
       </>
     )
@@ -946,7 +946,7 @@ const AppONE: React.FC = () => {
   if (path === '/para-cafeterias') {
     return withHeader(
       <>
-        <PageMeta title="Abastece tu cafetería con café de especialidad — Para emprendedores" description="Compra café de especialidad directamente del caficultor peruano." canonical={`${BASE_URL}/para-cafeterias`} />
+        <PageMeta title="Compra café de especialidad al por mayor en Perú — Para cafeterías y negocios" description="Marketplace de café de especialidad peruano para cafeterías, restaurantes y negocios. Compra café verde sin tostar, tostado en grano o molido directamente del caficultor. Envío a Lima y provincias." canonical={`${BASE_URL}/para-cafeterias`} />
         <LandingEmprendedor />
       </>
     )
@@ -964,7 +964,7 @@ const AppONE: React.FC = () => {
   if (path === '/soporte') {
     return withHeader(
       <>
-        <PageMeta title="Soporte" description="¿Tienes alguna duda? El equipo de Tunay Wasi está aquí para ayudarte." canonical={`${BASE_URL}/soporte`} />
+        <PageMeta title="Soporte — Tunay Wasi | Marketplace de Café de Especialidad Peruano" description="¿Tienes alguna duda? El equipo de Tunay Wasi está aquí para ayudarte. Soporte para caficultores y negocios compradores." canonical={`${BASE_URL}/soporte`} />
         <SoporteONE />
       </>
     )

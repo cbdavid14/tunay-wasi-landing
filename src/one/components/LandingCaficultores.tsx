@@ -46,6 +46,10 @@ const FAQ = [
     p: '¿Tengo que tostar yo o puedo vender verde?',
     r: 'Puedes publicar café verde (sin tostar), tostado en grano o tostado y molido. Los tres tipos son bienvenidos. El café verde solo puede comprarlo un comprador empresa B2B registrado y aprobado; los tostados también los pueden adquirir consumidores finales. No necesitas certificación de proceso para publicar.',
   },
+  {
+    p: '¿Desde qué región del Perú puedo vender?',
+    r: 'TunayWasi está abierto a caficultores de todas las regiones cafetaleras del Perú: Cajamarca (Jaén, San Ignacio, La Coipa), Junín (Valle del Mantaro, Chanchamayo), Cusco (La Convención), San Martín (Lamas, El Dorado), Puno (Sandia), Amazonas, Ucayali y más. Si produces café de especialidad en Perú, tienes lugar aquí.',
+  },
 ]
 
 // ─── Átomos ───────────────────────────────────────────────────────────────────
@@ -215,8 +219,8 @@ const Hero: React.FC<{ onRegistrar: () => void }> = ({ onRegistrar }) => {
           fontWeight: 700, color: 'var(--tw-text)',
           margin: '20px 0 18px', lineHeight: 1.05,
         }}>
-          Tu café, visible<br />
-          <span style={{ color: 'var(--tw-terra)' }}>a nivel nacional.</span>
+          Tu café peruano,<br />
+          <span style={{ color: 'var(--tw-terra)' }}>en manos de los mejores negocios.</span>
         </h1>
 
         <p style={{
@@ -225,8 +229,8 @@ const Hero: React.FC<{ onRegistrar: () => void }> = ({ onRegistrar }) => {
           color: 'var(--tw-text-muted)', lineHeight: 1.75,
           maxWidth: 520, margin: '0 0 24px',
         }}>
-          Ya produces con calidad. TunayWasi te da el canal para llegar a cafeterías
-          y negocios en todo el país — con tu perfil de finca, tus lotes publicados
+          Vende tu café de especialidad online — verde, tostado o molido — directamente
+          a cafeterías y negocios en todo el Perú. Con tu perfil de finca, tus lotes publicados
           y pagos confirmados automáticamente en tu celular.
         </p>
 
