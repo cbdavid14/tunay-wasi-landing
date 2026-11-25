@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import { useCafiLandingConfig, STATIC_DATA } from '@/features/caficultores/useCafiLandingConfig';
 
 const fmtPEN = (n: number) => 'S/ ' + Math.round(n).toLocaleString('es-PE');
 
+const ACOP_PRICE_PER_KG = 18;
+const SLIDER_MIN = 50;
+const SLIDER_MAX = 3000;
+const SLIDER_STEP = 50;
+
 export default function CafiCalculator() {
-  const { data = STATIC_DATA } = useCafiLandingConfig();
-  const { calculator } = data;
+  const [kg, setKg] = useState(300);
+  const [precioKg, setPrecioKg] = useState(55);
 
-  const [kg, setKg] = useState(calculator.defaultKg);
-  const [tier, setTier] = useState(calculator.defaultTierIndex);
-
-  const t = calculator.tiers[tier] ?? calculator.tiers[0];
-  const acopMid = (t.acopMin + t.acopMax) / 2;
-  const acopTotal = kg * acopMid;
-  const tunayTotal = kg * t.tunay;
+  const acopTotal = kg * ACOP_PRICE_PER_KG;
+  const tunayTotal = kg * precioKg;
   const delta = Math.round((tunayTotal / acopTotal - 1) * 100);
-  const pct = ((kg - calculator.sliderMinKg) / (calculator.sliderMaxKg - calculator.sliderMinKg)) * 100;
+  const pctKg = ((kg - SLIDER_MIN) / (SLIDER_MAX - SLIDER_MIN)) * 100;
+  const pctPrecio = ((precioKg - 20) / (150 - 20)) * 100;
 
   return (
     <section id="calculadora" style={{
@@ -52,8 +52,8 @@ export default function CafiCalculator() {
             fontFamily: 'Montserrat, sans-serif', fontSize: 15, lineHeight: 1.65,
             color: '#c4b297', maxWidth: 660, margin: '0 auto',
           }}>
-            El acopiador compra café. Tunay Wasi vende tu historia — tu nombre, tu finca
-            y tu proceso en cada bolsa que llega al consumidor.
+            El acopiador compra a precio de mayorista. En TunayWasi, tú fijas el precio
+            y el negocio compra directamente tu lote.
           </p>
         </div>
 
@@ -63,8 +63,9 @@ export default function CafiCalculator() {
           borderRadius: 24,
           padding: 36,
           boxShadow: '0 30px 60px -28px #000000aa',
+          display: 'flex', flexDirection: 'column', gap: 32,
         }}>
-          <div style={{ marginBottom: 32 }}>
+          <div>
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
               marginBottom: 16, flexWrap: 'wrap', gap: 8,
@@ -80,16 +81,16 @@ export default function CafiCalculator() {
             </div>
             <input
               type="range"
-              min={calculator.sliderMinKg}
-              max={calculator.sliderMaxKg}
-              step={calculator.sliderStepKg}
+              min={SLIDER_MIN}
+              max={SLIDER_MAX}
+              step={SLIDER_STEP}
               value={kg}
               onChange={(e) => setKg(Number(e.target.value))}
               className="tw-cafi-slider"
               style={{
                 width: '100%', height: 6, borderRadius: 999,
                 appearance: 'none',
-                background: `linear-gradient(90deg, #c96e4b 0%, #8faf8a ${pct}%, #f2e0cc1a ${pct}%, #f2e0cc1a 100%)`,
+                background: `linear-gradient(90deg, #c96e4b 0%, #8faf8a ${pctKg}%, #f2e0cc1a ${pctKg}%, #f2e0cc1a 100%)`,
                 outline: 'none',
               }}
             />
@@ -98,31 +99,51 @@ export default function CafiCalculator() {
               fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.18em',
               color: '#c4b29799',
             }}>
-              <span>{calculator.sliderMinKg} kg</span>
+              <span>{SLIDER_MIN} kg</span>
               <span>1 000 kg</span>
               <span>2 000 kg</span>
-              <span>{calculator.sliderMaxKg.toLocaleString('es-PE')} kg</span>
+              <span>{SLIDER_MAX.toLocaleString('es-PE')} kg</span>
             </div>
           </div>
 
           <div>
             <div style={{
-              fontFamily: 'Montserrat, sans-serif', fontSize: 14, fontWeight: 600,
-              color: '#f2e0cc', marginBottom: 14, letterSpacing: '0.02em',
-            }}>¿Cuál es tu puntaje SCA estimado?</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {calculator.tiers.map((s, i) => (
-                <button key={s.label} onClick={() => setTier(i)} style={{
-                  flex: '1 1 140px',
-                  fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 600,
-                  padding: '12px 16px', borderRadius: 999, cursor: 'pointer',
-                  background: tier === i ? '#c96e4b' : '#0f1a14',
-                  color: tier === i ? '#f2e0cc' : '#c4b297',
-                  border: `1px solid ${tier === i ? '#c96e4b' : '#c4b29733'}`,
-                  letterSpacing: '0.02em',
-                  transition: 'all .25s ease',
-                }}>{s.label}</button>
-              ))}
+              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              marginBottom: 16, flexWrap: 'wrap', gap: 8,
+            }}>
+              <div style={{
+                fontFamily: 'Montserrat, sans-serif', fontSize: 14, fontWeight: 600,
+                color: '#f2e0cc', letterSpacing: '0.02em',
+              }}>¿A qué precio por kg quieres publicar tu lote?</div>
+              <div style={{
+                fontFamily: 'Cormorant Garamond, serif', fontSize: 36, fontWeight: 700,
+                color: '#c96e4b', lineHeight: 1,
+              }}>S/ {precioKg} <span style={{ fontSize: 16, color: '#c4b297', fontWeight: 500 }}>/kg</span></div>
+            </div>
+            <input
+              type="range"
+              min={20}
+              max={150}
+              step={5}
+              value={precioKg}
+              onChange={(e) => setPrecioKg(Number(e.target.value))}
+              className="tw-cafi-slider"
+              style={{
+                width: '100%', height: 6, borderRadius: 999,
+                appearance: 'none',
+                background: `linear-gradient(90deg, #c96e4b 0%, #c96e4b ${pctPrecio}%, #f2e0cc1a ${pctPrecio}%, #f2e0cc1a 100%)`,
+                outline: 'none',
+              }}
+            />
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', marginTop: 8,
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.18em',
+              color: '#c4b29799',
+            }}>
+              <span>S/ 20</span>
+              <span>S/ 55</span>
+              <span>S/ 100</span>
+              <span>S/ 150</span>
             </div>
           </div>
         </div>
@@ -137,8 +158,6 @@ export default function CafiCalculator() {
             borderRadius: 20,
             padding: 36,
             textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden',
           }}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>😔</div>
             <div style={{
@@ -153,11 +172,7 @@ export default function CafiCalculator() {
             <div style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#c4b297',
               marginTop: 18,
-            }}>S/ {t.acopMin} – S/ {t.acopMax} por kg ({t.label})</div>
-            <div style={{
-              fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.18em',
-              color: '#c4b29766', textTransform: 'uppercase', marginTop: 10,
-            }}>{calculator.footnote}</div>
+            }}>≈ S/ {ACOP_PRICE_PER_KG} por kg (precio mayorista referencial)</div>
           </div>
 
           <div className="tw-cafi-arrow" style={{
@@ -187,7 +202,7 @@ export default function CafiCalculator() {
             <div style={{
               fontFamily: 'Bowlby One SC, sans-serif', fontSize: 10, letterSpacing: '0.28em',
               color: '#8faf8a', textTransform: 'uppercase', marginBottom: 18,
-            }}>Con Tunay Wasi</div>
+            }}>Publicando en Tunay Wasi</div>
             <div style={{
               fontFamily: 'Cormorant Garamond, serif', fontWeight: 700,
               fontSize: 56, color: '#f2e0cc', lineHeight: 1,
@@ -196,14 +211,16 @@ export default function CafiCalculator() {
             <div style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: '#f2e0cc',
               marginTop: 18,
-            }}>≈ S/ {t.tunay.toFixed(2)} por kg de café verde ({t.label})</div>
-            <div style={{
-              display: 'inline-block', marginTop: 14,
-              padding: '6px 14px', borderRadius: 999,
-              background: '#8faf8a33', border: '1px solid #8faf8a99',
-              fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700,
-              color: '#8faf8a', letterSpacing: '0.04em',
-            }}>+{delta}% más que el acopiador</div>
+            }}>S/ {precioKg} por kg — precio que tú fijas</div>
+            {delta > 0 && (
+              <div style={{
+                display: 'inline-block', marginTop: 14,
+                padding: '6px 14px', borderRadius: 999,
+                background: '#8faf8a33', border: '1px solid #8faf8a99',
+                fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700,
+                color: '#8faf8a', letterSpacing: '0.04em',
+              }}>+{delta}% más que el acopiador</div>
+            )}
           </div>
         </div>
 
@@ -213,8 +230,9 @@ export default function CafiCalculator() {
           fontFamily: 'Montserrat, sans-serif', fontSize: 12, lineHeight: 1.65,
           color: '#c4b297', textAlign: 'center',
         }}>
-          <strong style={{ color: '#f2e0cc' }}>Cálculo ({t.label}):</strong> 1 kg verde → ~0.83 kg tostado → precio según puntaje SCA = <strong style={{ color: '#8faf8a' }}>S/ {t.tunay.toFixed(2)}/kg</strong>.
-          {' '}{calculator.footnote}.
+          <strong style={{ color: '#f2e0cc' }}>Nota:</strong> En fase beta, TunayWasi no cobra comisión — recibes el 100% de tu precio.
+          Post-beta se aplicará una comisión del 5% + IGV sobre la venta, descontada en la liquidación.
+          El precio mayorista referencial del acopiador es estimado y puede variar según región y temporada.
         </div>
       </div>
 

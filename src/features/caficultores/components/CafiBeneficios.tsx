@@ -1,20 +1,20 @@
 const BENEFITS = [
   {
     icon: '💰',
-    title: 'Precio Justo por Puntaje SCA',
-    desc: 'Pagamos según la calidad real de tu café: desde S/ 34.65 por kg verde (82 pts) hasta S/ 85.78 por kg (90+ pts). No el precio spot del mercado.',
+    title: 'Tú fijas el precio — nadie más',
+    desc: 'Publicas a S/ 55, S/ 70, S/ 90/kg o lo que tú decidas. El negocio ve tu precio, compra y paga. TunayWasi custodia los fondos y te los libera cuando llega la entrega — o automáticamente a los 7 días sin reclamo.',
     color: '#c96e4b',
   },
   {
-    icon: '⚡',
-    title: 'Pago al Recepcionar tu Lote',
-    desc: 'Te pagamos dentro de las 48h de recepcionar tu microlote en Lima y confirmar el puntaje SCA. Sin esperar semanas ni depender de cuándo llega el dinero.',
+    icon: '📦',
+    title: 'Escrow: cobras seguro',
+    desc: 'El pago va a TunayWasi al confirmar el pedido. Cuando el courier registra la entrega y el comprador acepta (o pasan 7 días sin reclamo), los fondos se transfieren a tu Yape o cuenta bancaria.',
     color: '#8faf8a',
   },
   {
     icon: '🎯',
-    title: 'Tu Historia en Cada Bolsa',
-    desc: 'Los clientes ven tu nombre, tu finca, tu historia. Construyes tu marca directamente — no eres un grano anónimo en un saco.',
+    title: 'Tu historia en cada bolsa',
+    desc: 'Los clientes ven tu nombre, tu finca, tu región y tu proceso. Construyes tu marca directamente — no eres un grano anónimo en un saco de exportación.',
     color: '#c4b297',
   },
 ] as const;

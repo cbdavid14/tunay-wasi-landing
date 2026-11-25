@@ -9,16 +9,16 @@ const pasos = [
     meta: 'Día 0',
   },
   {
-    n: '02', titulo: 'Coordinamos el flete',
-    sub: 'Finca → Lima → tu tostadora',
-    desc: 'Gestionamos el transporte desde la chacra hasta tu local, en Lima o provincias. Sacos sellados, control de humedad y temperatura.',
-    meta: 'Día 3 — 7',
+    n: '02', titulo: 'El caficultor despacha',
+    sub: 'Finca → agencia → tu local',
+    desc: 'El caficultor lleva el lote a la agencia courier de su elección (Olva, Shalom, etc.) y te comparte el código de tracking en el chat del pedido para seguimiento en tiempo real.',
+    meta: 'Día 2 — 5',
   },
   {
-    n: '03', titulo: 'Recibes el lote certificado',
-    sub: 'Pasaporte de cata incluido',
-    desc: 'Cada saco llega con su certificado Q‑Grader, ficha de trazabilidad, datos del caficultor y nota de cata. Listo para tu mesa de tueste.',
-    meta: 'Día 7 — 10',
+    n: '03', titulo: 'Recibes y confirmas',
+    sub: 'Entrega + liberación de pago',
+    desc: 'Al recibir el lote, confirmas la entrega en la app. TunayWasi libera el pago al caficultor. Los lotes con evidencia N3 incluyen informe de catación verificado.',
+    meta: 'Día 5 — 10',
   },
 ] as const;
 

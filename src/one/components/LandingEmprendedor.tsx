@@ -24,7 +24,7 @@ const FAQ = [
   },
   {
     p: '¿Cómo pago?',
-    r: 'Puedes pagar por Yape, Plin o efectivo directamente al caficultor. Para pagos digitales la app te muestra el número de destino y puedes subir la captura del comprobante como respaldo.',
+    r: 'El pago va a la cuenta escrow de TunayWasi — no directamente al caficultor. Puedes pagar por Yape o transferencia bancaria. La app te muestra los datos y puedes subir la captura del comprobante. TunayWasi custodia los fondos y los libera al caficultor cuando confirmas la entrega (o automáticamente a los 7 días sin reclamo).',
   },
   {
     p: '¿Puedo pedir poco para probar?',
@@ -356,7 +356,7 @@ const INSTALACION_PASOS_EMP = [
   {
     n: '2',
     titulo: 'Crea tu cuenta de negocio',
-    texto: 'Ingresa con tu cuenta Google o con tu correo. Selecciona el rol "Negocio" y completa tu perfil con el nombre de tu local y tu distrito.',
+    texto: 'Ingresa con tu cuenta Google o con tu correo. Selecciona el rol "Negocio" y completa tu perfil con RUC, nombre de tu empresa y dirección de envío. Las cuentas empresa requieren revisión de hasta 2 días hábiles antes de tener acceso completo al catálogo mayorista.',
     color: '#c96e4b',
   },
   {
@@ -374,7 +374,7 @@ const INSTALACION_PASOS_EMP = [
   {
     n: '5',
     titulo: 'Coordina y recibe',
-    texto: 'TunayWasi confirma el pago, coordina el despacho con el caficultor y te comparte el código de tracking en el chat del pedido. Al recibir tu café, califica al productor con 1 a 5 estrellas.',
+    texto: 'El caficultor despacha el pedido por su agencia courier y te comparte el código de tracking en el chat del pedido. Al recibir tu café, confirma la entrega en la app y el pago se libera al caficultor. Puedes calificar al productor con 1 a 5 estrellas.',
     color: '#8faf8a',
   },
 ]
