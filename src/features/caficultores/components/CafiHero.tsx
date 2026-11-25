@@ -1,15 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useCafiLandingConfig } from '@/features/caficultores/useCafiLandingConfig';
 
 export default function CafiHero() {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { setLoaded(true); }, []);
-
-  const { data } = useCafiLandingConfig();
-  const minPrice = data?.hero.minPricePerKg.toFixed(2) ?? '34.65';
-  const maxPrice = data?.hero.maxPricePerKg.toFixed(2) ?? '85.78';
-  const minLabel = data?.hero.minScaLabel ?? '82 pts';
-  const maxLabel = data?.hero.maxScaLabel ?? '90+ pts';
 
   const fade = (delay: number): React.CSSProperties => ({
     opacity: loaded ? 1 : 0,
@@ -102,10 +95,10 @@ export default function CafiHero() {
           color: '#c4b297', maxWidth: 720, margin: '36px auto 0',
           ...fade(0.3),
         }}>
-          Te pagamos al recepcionar tu microlote en Lima, según el puntaje SCA de tu café.
-          Desde <strong style={{ color: '#f2e0cc' }}>S/ {minPrice} por kg verde</strong> ({minLabel}) hasta
-          {' '}<strong style={{ color: '#8faf8a' }}>S/ {maxPrice} por kg</strong> ({maxLabel}).
-          {' '}Sin intermediarios.
+          Publica tu lote — café verde, tostado o molido — en el marketplace y conecta directamente
+          con cafeterías y negocios. <strong style={{ color: '#f2e0cc' }}>Tú fijas el precio</strong>.
+          Cuando el comprador confirma la entrega, el pago llega a tu cuenta.
+          Sin intermediarios. Sin acopiadores.
         </p>
 
         <div style={{

@@ -43,7 +43,7 @@ const FAQ = [
   },
   {
     p: '¿Tengo que tostar yo o puedo vender verde?',
-    r: 'Por ahora solo café tostado y molido — porque las cafeterías lo necesitan listo para barra. Si no tienes tostadora propia, puedes asociarte con un tostador local y publicar el lote terminado. No necesitas certificación de proceso.',
+    r: 'Puedes publicar café verde (sin tostar), tostado en grano o tostado y molido. Los tres tipos son bienvenidos. El café verde solo puede comprarlo un comprador empresa B2B registrado y aprobado; los tostados también los pueden adquirir consumidores finales. No necesitas certificación de proceso para publicar.',
   },
 ]
 

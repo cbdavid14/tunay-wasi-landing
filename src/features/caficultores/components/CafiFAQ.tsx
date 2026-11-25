@@ -11,51 +11,49 @@ const ans: React.CSSProperties = {
 
 const FAQS: { q: string; a: ReactNode }[] = [
   {
-    q: '¿Mi café califica?',
-    a: <p style={ans}>Necesitas café de especialidad con puntaje SCA de 82 puntos o más. Si estás entre los primeros 15, tendrás acceso prioritario a nuestro tostador Q-Grader para validar y vender tu café.</p>,
+    q: '¿Qué tipos de café puedo publicar?',
+    a: <p style={ans}>Puedes publicar café verde (sin tostar), tostado en grano o tostado y molido. Los tres tipos son bienvenidos. El café verde solo puede comprarlo un comprador empresa B2B registrado y aprobado; los tostados también los pueden comprar consumidores finales.</p>,
   },
   {
-    q: '¿Qué criterios evalúa el puntaje SCA?',
-    a: <p style={ans}>El sistema SCA evalúa 10 atributos: fragancia y aroma, sabor, postgusto, acidez, cuerpo, equilibrio, dulzor, taza limpia, uniformidad y puntuación general — en una escala del 0 al 100.</p>,
-  },
-  {
-    q: '¿Qué puntaje necesita mi café?',
-    a: (
-      <div style={{ ...ans, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span><strong style={{ color: '#f2e0cc' }}>90–100 pts</strong> — exquisito</span>
-        <span><strong style={{ color: '#f2e0cc' }}>85–89 pts</strong> — excelente</span>
-        <span><strong style={{ color: '#f2e0cc' }}>82–84 pts</strong> — muy bueno ✓ <em>mínimo requerido</em></span>
-        <span style={{ opacity: 0.55 }}><strong>Menos de 82</strong> — no es especialidad</span>
-      </div>
-    ),
-  },
-  {
-    q: '¿Cómo es el proceso de cata?',
-    a: <p style={ans}>Nuestro tostador Q-Grader evalúa 5 tazas siguiendo el protocolo SCA, dentro de las 24 horas posteriores al tueste y con mínimo 8 horas de reposo. Perfil de tueste ligero o medio claro.</p>,
-  },
-  {
-    q: '¿Cuánto me pagan y cuándo?',
+    q: '¿Cómo funciona el pago?',
     a: (
       <div style={{ ...ans, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ margin: 0 }}>Te pagamos <strong style={{ color: '#f2e0cc' }}>al recepcionar tu microlote en Lima</strong>, no al momento de la venta final.</p>
-        <ul style={{ margin: '4px 0 0', paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <li><strong style={{ color: '#f2e0cc' }}>82.0 – 83.4 pts</strong> (Selecto) — S/ 28.00 / kg verde <span style={{ opacity: 0.6 }}>(flete a tu cargo)</span></li>
-          <li><strong style={{ color: '#f2e0cc' }}>83.5 – 85.4 pts</strong> (Especialidad Estándar) — S/ 32.00 / kg verde <span style={{ opacity: 0.6 }}>(flete a tu cargo)</span></li>
-          <li><strong style={{ color: '#f2e0cc' }}>85.5 – 87.4 pts</strong> (Especialidad Alta) — S/ 46.00 / kg verde <span style={{ color: '#8faf8a' }}>✅ reembolsamos flete</span></li>
-          <li><strong style={{ color: '#f2e0cc' }}>87.5 – 89.4 pts</strong> (Joya de Finca) — S/ 56.00 / kg verde <span style={{ color: '#8faf8a' }}>✅ reembolsamos flete</span></li>
-          <li><strong style={{ color: '#f2e0cc' }}>89.5+ pts</strong> (Exclusivo / Geisha) — S/ 72.00+ / kg verde <span style={{ color: '#8faf8a' }}>✅ reembolsamos flete</span></li>
-        </ul>
-        <p style={{ margin: '4px 0 0' }}>Sin costos de registro. Si tu café no califica (&lt;82 pts), te lo comunicamos sin cargo.</p>
+        <p style={{ margin: 0 }}>TunayWasi <strong style={{ color: '#f2e0cc' }}>no te compra el café</strong> — somos el marketplace que conecta tu lote con cafeterías y negocios.</p>
+        <p style={{ margin: 0 }}>Cuando un negocio confirma su pedido, el pago va directamente a la cuenta escrow de TunayWasi. Cuando el courier registra que el pedido llegó y el comprador acepta la entrega (o pasan 7 días calendario sin reclamo), los fondos se liberan a tu Yape o cuenta bancaria.</p>
+        <p style={{ margin: 0 }}><strong style={{ color: '#f2e0cc' }}>Tú fijas el precio</strong> de tu lote — TunayWasi no te impone tabla de precios ni negocia por ti.</p>
       </div>
     ),
   },
   {
-    q: '¿Se aplican descuentos al pago?',
-    a: <p style={ans}>Solo descontamos defectos mayores (granos negros, agrios, fermentados). El flete a Lima es por tu cuenta o lo deducimos del pago según acuerdo. No hay comisiones ocultas — todo está en el contrato.</p>,
+    q: '¿Hay comisión para el caficultor?',
+    a: <p style={ans}>Durante la fase beta la plataforma no cobra comisión — vendes y cobras el 100% de tu precio. Post-beta se aplicará una comisión del 5 % + IGV sobre el valor de la venta, descontada en la liquidación. Te avisaremos con 30 días de anticipación antes de cualquier cambio.</p>,
   },
   {
-    q: '¿Cuánto café debo producir?',
-    a: <p style={ans}>El lote mínimo es de <strong style={{ color: '#f2e0cc' }}>12 kg de café verde</strong>. Comenzamos con microlotes pequeños con enfoque en calidad.</p>,
+    q: '¿Cómo despacho el pedido?',
+    a: (
+      <div style={{ ...ans, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ margin: 0 }}>Tú contratas y llevas el pedido a la agencia de courier que elijas (Olva, Shalom, Cruz del Sur). TunayWasi no gestiona ni opera la logística.</p>
+        <p style={{ margin: 0 }}>Desde la app registras el código de guía para que el comprador lo pueda rastrear. El riesgo sobre el producto pasa al comprador cuando el courier registra la recepción del paquete.</p>
+      </div>
+    ),
+  },
+  {
+    q: '¿Qué necesito para registrarme?',
+    a: (
+      <div style={{ ...ans, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ margin: 0 }}>Puedes registrarte como caficultor de tres formas:</p>
+        <ul style={{ margin: '4px 0 0', paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <li><strong style={{ color: '#f2e0cc' }}>Solo DNI</strong> — Persona natural. Solo puedes publicar café verde (TYPE_A).</li>
+          <li><strong style={{ color: '#f2e0cc' }}>RUC propio</strong> — Negocio o microempresa. Puedes publicar los tres tipos de café.</li>
+          <li><strong style={{ color: '#f2e0cc' }}>Cooperativa</strong> — La cooperativa emite los comprobantes y gestiona la cuenta.</li>
+        </ul>
+        <p style={{ margin: '4px 0 0' }}>No se requiere certificación SCA ni puntaje mínimo para publicar.</p>
+      </div>
+    ),
+  },
+  {
+    q: '¿Cómo muestro la calidad de mi café?',
+    a: <p style={ans}>Puedes subir evidencias de calidad en 3 niveles: N1 (fotos de finca y proceso), N2 (análisis físico o granos), N3 (informe de catación verificado por un reviewer). A mayor nivel, más visible tu lote para compradores B2B que buscan garantías de calidad.</p>,
   },
 ];
 

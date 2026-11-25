@@ -169,7 +169,7 @@ export default function SupplyHero() {
               <span style={{
                 fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.18em',
                 color: '#c96e4b',
-              }}>{lote.sca} SCA</span>
+              }}>N1</span>
             </div>
             <div style={{
               fontFamily: 'Cormorant Garamond, serif', fontSize: 38, fontWeight: 600,
@@ -206,7 +206,7 @@ export default function SupplyHero() {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.22em' }}>
-                FOB LIMA / KG
+                PRECIO / KG
               </span>
               <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 28, fontWeight: 600 }}>
                 S/ {lote.precio.toFixed(2)}

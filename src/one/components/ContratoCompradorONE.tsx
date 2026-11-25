@@ -31,7 +31,7 @@ export default function ContratoCompradorONE() {
         {
           title: '4. Escrow y confirmación de entrega',
           body: [
-            'El importe abonado queda retenido por Tunay Wasi hasta que el comprador confirme la recepción conforme, o hasta que transcurran 72 h desde la entrega registrada por el courier sin reclamación.',
+            'El importe abonado queda retenido por Tunay Wasi hasta que el comprador confirme la recepción conforme, o hasta que transcurran 7 días calendario desde la entrega registrada por el courier sin reclamación.',
             'Pasado ese plazo sin reclamación, el pago se libera automáticamente al caficultor.',
           ],
         },

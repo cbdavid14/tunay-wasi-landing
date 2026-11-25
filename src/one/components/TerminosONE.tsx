@@ -30,7 +30,7 @@ export default function TerminosONE() {
         {
           title: '4. Proceso de compra y pago',
           body: [
-            'El precio de cada lote es fijado por el caficultor y mostrado en la plataforma con IGV incluido.',
+            'El precio de cada lote es fijado por el caficultor. Los lotes de café verde (sin tostar) están exonerados de IGV conforme a la legislación peruana vigente; los lotes de café tostado en grano o tostado y molido incluyen IGV (18 %). El precio mostrado en la plataforma indica en cada caso si incluye o no IGV.',
             'Los pagos se procesan mediante los métodos disponibles (Yape, transferencia bancaria, tarjeta Niubiz). El dinero queda retenido en custodia (escrow) hasta confirmar la entrega conforme.',
             'Una vez confirmada la entrega, el pago neto se transfiere al caficultor según el calendario de liquidación vigente.',
           ],
@@ -45,7 +45,7 @@ export default function TerminosONE() {
         {
           title: '6. Devoluciones y reclamaciones',
           body: [
-            'El comprador puede iniciar un reclamo dentro de las 48 h siguientes a la entrega (negocios) o 72 h (consumidor final) si el producto no coincide con la descripción publicada.',
+            'El comprador puede iniciar un reclamo dentro de las 48 h siguientes a la entrega (consumidor final) o 72 h (compradores empresa) si el producto no coincide con la descripción publicada.',
             'El Libro de Reclamaciones digital está disponible en tunay-wasi.com/#/reclamaciones conforme al D.Leg. 1510.',
           ],
         },
