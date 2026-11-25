@@ -14,6 +14,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const dbName = import.meta.env.VITE_FIRESTORE_DATABASE
-export const db = dbName ? getFirestore(app, dbName) : getFirestore(app);
+export const db = dbName ? getFirestore(app, dbName) : getFirestore(app, '(default)');
 export const auth = getAuth(app);
 export const storage = getStorage(app);
