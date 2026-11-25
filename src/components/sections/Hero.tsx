@@ -158,15 +158,15 @@ export default function Hero() {
 
           {/* Main heading */}
           <h1 className={`tw-hero-h1${loaded ? ' loaded' : ''}`}>
-            Del caficultor<br />
+            Del caficultor peruano<br />
             <span style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--tw-terra)' }}>
-              a tu local.
+              a tu negocio.
             </span>
           </h1>
 
           {/* Subtitle */}
           <p className={`tw-hero-sub${loaded ? ' loaded' : ''}`}>
-            Lotes con trazabilidad completa — región, altitud,
+            Café de especialidad con trazabilidad completa — región, altitud,
             variedad y proceso — directamente de la finca.
           </p>
 

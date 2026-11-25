@@ -627,11 +627,25 @@ function trackCarritoMeta(paso: string, extra?: Record<string, unknown>) {
 const BASE_URL = 'https://tunaywasi.com'
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.jpg`
 
-function PageMeta({ title, description, image, canonical }: {
+function breadcrumbLD(items: { name: string; url: string }[]) {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  })
+}
+
+function PageMeta({ title, description, image, canonical, breadcrumb }: {
   title: string
   description: string
   image?: string
   canonical?: string
+  breadcrumb?: { name: string; url: string }[]
 }) {
   const fullTitle = title.includes('Tunay Wasi') ? title : `${title} | Tunay Wasi`
   const img = image ?? DEFAULT_OG_IMAGE
@@ -648,6 +662,9 @@ function PageMeta({ title, description, image, canonical }: {
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={img} />
+      {breadcrumb && (
+        <script type="application/ld+json">{breadcrumbLD(breadcrumb)}</script>
+      )}
     </Helmet>
   )
 }
@@ -937,7 +954,7 @@ const AppONE: React.FC = () => {
   if (path === '/para-caficultores') {
     return withHeader(
       <>
-        <PageMeta title="Vende tu café de especialidad en Perú — Para caficultores peruanos" description="Publica tu lote de café en Tunay Wasi y vende online a cafeterías y negocios de todo el país. Café verde, tostado o molido. 0% comisión en fase beta. Cajamarca, Junín, Cusco, San Martín y más." canonical={`${BASE_URL}/para-caficultores`} />
+        <PageMeta title="Vende tu café de especialidad en Perú — Para caficultores peruanos" description="Publica tu lote de café en Tunay Wasi y vende online a cafeterías y negocios de todo el país. Café verde, tostado o molido. 0% comisión en fase beta. Cajamarca, Junín, Cusco, San Martín y más." canonical={`${BASE_URL}/para-caficultores`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Para caficultores', url: `${BASE_URL}/para-caficultores` }]} />
         <LandingCaficultores />
       </>
     )
@@ -946,7 +963,7 @@ const AppONE: React.FC = () => {
   if (path === '/para-cafeterias') {
     return withHeader(
       <>
-        <PageMeta title="Compra café de especialidad al por mayor en Perú — Para cafeterías y negocios" description="Marketplace de café de especialidad peruano para cafeterías, restaurantes y negocios. Compra café verde sin tostar, tostado en grano o molido directamente del caficultor. Envío a Lima y provincias." canonical={`${BASE_URL}/para-cafeterias`} />
+        <PageMeta title="Compra café de especialidad al por mayor en Perú — Para cafeterías y negocios" description="Marketplace de café de especialidad peruano para cafeterías, restaurantes y negocios. Compra café verde sin tostar, tostado en grano o molido directamente del caficultor. Envío a Lima y provincias." canonical={`${BASE_URL}/para-cafeterias`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Para cafeterías', url: `${BASE_URL}/para-cafeterias` }]} />
         <LandingEmprendedor />
       </>
     )
@@ -955,7 +972,7 @@ const AppONE: React.FC = () => {
   if (path === '/docs' || path.startsWith('/docs/')) {
     return withHeader(
       <>
-        <PageMeta title="Documentación" description="Guías y documentación para caficultores y emprendedores en Tunay Wasi." canonical={`${BASE_URL}/docs`} />
+        <PageMeta title="Documentación" description="Guías y documentación para caficultores y emprendedores en Tunay Wasi." canonical={`${BASE_URL}/docs`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Documentación', url: `${BASE_URL}/docs` }]} />
         <DocsONE path={path} />
       </>
     )
@@ -964,26 +981,26 @@ const AppONE: React.FC = () => {
   if (path === '/soporte') {
     return withHeader(
       <>
-        <PageMeta title="Soporte — Tunay Wasi | Marketplace de Café de Especialidad Peruano" description="¿Tienes alguna duda? El equipo de Tunay Wasi está aquí para ayudarte. Soporte para caficultores y negocios compradores." canonical={`${BASE_URL}/soporte`} />
+        <PageMeta title="Soporte — Tunay Wasi | Marketplace de Café de Especialidad Peruano" description="¿Tienes alguna duda? El equipo de Tunay Wasi está aquí para ayudarte. Soporte para caficultores y negocios compradores." canonical={`${BASE_URL}/soporte`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Soporte', url: `${BASE_URL}/soporte` }]} />
         <SoporteONE />
       </>
     )
   }
 
   if (path === '/terminos') {
-    return withHeader(<><PageMeta title="Términos y Condiciones — Tunay Wasi" description="Condiciones de uso de la plataforma Tunay Wasi." canonical={`${BASE_URL}/terminos`} /><TerminosONE /></>)
+    return withHeader(<><PageMeta title="Términos y Condiciones — Tunay Wasi" description="Condiciones de uso de la plataforma Tunay Wasi." canonical={`${BASE_URL}/terminos`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Términos y Condiciones', url: `${BASE_URL}/terminos` }]} /><TerminosONE /></>)
   }
 
   if (path === '/contrato') {
-    return withHeader(<><PageMeta title="Contrato de Comprador — Tunay Wasi" description="Condiciones específicas para compradores en Tunay Wasi." canonical={`${BASE_URL}/contrato`} /><ContratoCompradorONE /></>)
+    return withHeader(<><PageMeta title="Contrato de Comprador — Tunay Wasi" description="Condiciones específicas para compradores en Tunay Wasi." canonical={`${BASE_URL}/contrato`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Contrato de Comprador', url: `${BASE_URL}/contrato` }]} /><ContratoCompradorONE /></>)
   }
 
   if (path === '/privacidad') {
-    return withHeader(<><PageMeta title="Política de Privacidad — Tunay Wasi" description="Cómo tratamos tus datos personales en Tunay Wasi." canonical={`${BASE_URL}/privacidad`} /><PrivacidadONE /></>)
+    return withHeader(<><PageMeta title="Política de Privacidad — Tunay Wasi" description="Cómo tratamos tus datos personales en Tunay Wasi." canonical={`${BASE_URL}/privacidad`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Política de Privacidad', url: `${BASE_URL}/privacidad` }]} /><PrivacidadONE /></>)
   }
 
   if (path === '/reclamaciones') {
-    return withHeader(<><PageMeta title="Libro de Reclamaciones — Tunay Wasi" description="Registra tu reclamo o queja conforme al D.Leg. 1510 y Ley 29571." canonical={`${BASE_URL}/reclamaciones`} /><LibroReclamacionesONE /></>)
+    return withHeader(<><PageMeta title="Libro de Reclamaciones — Tunay Wasi" description="Registra tu reclamo o queja conforme al D.Leg. 1510 y Ley 29571." canonical={`${BASE_URL}/reclamaciones`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Libro de Reclamaciones', url: `${BASE_URL}/reclamaciones` }]} /><LibroReclamacionesONE /></>)
   }
 
   if (path === '/armar-kit') {

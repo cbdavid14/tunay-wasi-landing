@@ -65,6 +65,15 @@
     <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/terminos" />
   </url>
 
+  <!-- Contrato de comprador -->
+  <url>
+    <loc>https://tunaywasi.com/contrato</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/contrato" />
+  </url>
+
   <!-- Privacidad -->
   <url>
     <loc>https://tunaywasi.com/privacidad</loc>
