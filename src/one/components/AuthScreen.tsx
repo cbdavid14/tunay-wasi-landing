@@ -157,6 +157,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
       }
     }).catch((e: unknown) => {
       const code = (e as { code?: string }).code ?? ''
+      console.error('[AuthScreen] Google login error:', code, e)
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
         setPaso('inicio'); return
       }
