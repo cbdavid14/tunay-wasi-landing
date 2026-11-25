@@ -24,10 +24,16 @@ export const ONE_CONFIG = {
 
 // Precio al negocio = exactamente lo que fija el caficultor por kg × cantidad
 // El caficultor ya incluyó tueste, empaque y su margen en precioBaseKgCents.
-export function calcularPrecioFinal(precioBaseKgCents: number, formato: '250g' | '500g' | '1kg' | '5kg' | '10kg' | '25kg'): number {
-  const kgs: Record<string, number> = { '250g': 0.25, '500g': 0.5, '1kg': 1, '5kg': 5, '10kg': 10, '25kg': 25 }
+export function calcularPrecioFinal(precioBaseKgCents: number, formato: '250g' | '500g' | '1kg' | '5kg' | '10kg' | '20kg' | '1quintal' | '1saco'): number {
+  const kgs: Record<string, number> = { '250g': 0.25, '500g': 0.5, '1kg': 1, '5kg': 5, '10kg': 10, '20kg': 20, '1quintal': 46, '1saco': 60 }
   return Math.round(precioBaseKgCents * (kgs[formato] ?? 1))
 }
+
+// Presentaciones para lotes FIXED (B2C + B2B pequeño volumen)
+export const FORMATOS_FIXED: readonly string[] = ['250g', '500g', '1kg', '5kg', '10kg']
+
+// Volúmenes para lotes NEGOTIABLE (B2B, siempre mayorista) — PR-05
+export const FORMATOS_NEGOTIABLE: readonly string[] = ['10kg', '20kg', '1quintal', '1saco']
 
 // Colecciones Firestore
 export const ONE_COLLECTIONS = {
@@ -41,6 +47,11 @@ export const ONE_COLLECTIONS = {
   MENUS: 'one_menus',
   MENSAJES: 'one_mensajes',
   UBIGEOS: 'ubigeos',
+  COTIZACIONES: 'one_cotizaciones',
+  PAGOS_CAFICULTOR: 'one_pagos_caficultor',
+  EVIDENCIAS: 'one_evidencias',
+  RECLAMOS: 'one_reclamos',
+  REPOSICIONES: 'one_reposiciones',
 } as const
 
 // ─── Design system dark unificado ───────────────────────────────────────────
@@ -76,12 +87,14 @@ export const PROCESO_LABELS: Record<string, string> = {
 
 // Etiquetas de formato para UI
 export const FORMATO_LABELS: Record<string, string> = {
-  '250g': '250 g',
-  '500g': '500 g',
-  '1kg': '1 kg',
-  '5kg': '5 kg',
-  '10kg': '10 kg',
-  '25kg': '25 kg',
+  '250g':     '250 g',
+  '500g':     '500 g',
+  '1kg':      '1 kg',
+  '5kg':      '5 kg',
+  '10kg':     '10 kg',
+  '20kg':     '20 kg',
+  '1quintal': '1 quintal (46 kg)',
+  '1saco':    '1 saco (~60 kg)',
 }
 
 // Etiquetas de estado de pago para UI

@@ -5,22 +5,6 @@
  */
 import React, { useState, useEffect, useRef } from 'react'
 
-const C = {
-  bg:         '#0a0a0a',
-  bgCard:     '#141414',
-  bgSection:  '#111111',
-  cream:      '#f2e0cc',
-  creamDim:   '#c4b297',
-  terra:      '#c96e4b',
-  terraLight: '#d4825f',
-  sage:       '#8faf8a',
-  green:      '#1f3028',
-  border:     '#222222',
-  muted:      '#555555',
-  mutedLight: '#777777',
-  white:      '#ffffff',
-}
-
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Paso {
@@ -50,7 +34,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'negocio',
     titulo: 'Para Negocios',
-    color: C.terra,
+    color: 'var(--tw-terra)',
     articulos: [
       {
         slug: 'neg-cuenta',
@@ -185,7 +169,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'caficultor',
     titulo: 'Para Caficultores',
-    color: C.sage,
+    color: 'var(--tw-sage)',
     articulos: [
       {
         slug: 'caf-cuenta',
@@ -348,8 +332,8 @@ const SECCIONES: Seccion[] = [
 const NavBar: React.FC = () => (
   <nav style={{
     position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
-    background: `${C.bg}f0`, backdropFilter: 'blur(12px)',
-    borderBottom: `1px solid ${C.border}`,
+    background: `${"var(--tw-bg)"}f0`, backdropFilter: 'blur(12px)',
+    borderBottom: `1px solid ${"var(--tw-border)"}`,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '0 20px', height: 56,
   }}>
@@ -357,14 +341,14 @@ const NavBar: React.FC = () => (
       <button onClick={() => { window.location.hash = '#/' }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Cormorant Garamond, serif',
-        fontSize: 20, fontWeight: 700, color: C.cream,
+        fontSize: 20, fontWeight: 700, color: 'var(--tw-text)',
       }}>
         TunayWasi
       </button>
-      <span className="docs-nav-sep" style={{ color: C.border, fontSize: 20 }}>·</span>
+      <span className="docs-nav-sep" style={{ color: 'var(--tw-border)', fontSize: 20 }}>·</span>
       <span className="docs-nav-subtitle" style={{
         fontFamily: 'Montserrat, sans-serif',
-        fontSize: 13, fontWeight: 600, color: C.terra,
+        fontSize: 13, fontWeight: 600, color: 'var(--tw-terra)',
         letterSpacing: '0.05em',
       }}>
         Documentación
@@ -373,13 +357,13 @@ const NavBar: React.FC = () => (
     <div className="docs-nav-links" style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
       <button onClick={() => { window.location.hash = '#/' }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
-        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.mutedLight,
+        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
       }}>
         Catálogo
       </button>
       <button onClick={() => { window.location.hash = '#/soporte' }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
-        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.sage,
+        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-sage)',
         fontWeight: 600,
       }}>
         Soporte
@@ -403,14 +387,14 @@ const ArticuloView: React.FC<{ articulo: Articulo; color: string }> = ({ articul
         <h1 style={{
           fontFamily: 'Cormorant Garamond, serif',
           fontSize: 'clamp(28px, 3.5vw, 42px)',
-          fontWeight: 700, color: C.cream,
+          fontWeight: 700, color: 'var(--tw-text)',
           margin: '0 0 8px', lineHeight: 1.15,
         }}>
           {articulo.titulo}
         </h1>
         <p style={{
           fontFamily: 'Montserrat, sans-serif',
-          fontSize: 15, color: C.creamDim,
+          fontSize: 15, color: 'var(--tw-text-muted)',
           margin: '0 0 40px', lineHeight: 1.6,
         }}>
           {articulo.subtitulo}
@@ -439,7 +423,7 @@ const ArticuloView: React.FC<{ articulo: Articulo; color: string }> = ({ articul
               {/* Círculo numerado */}
               <div style={{
                 width: 44, height: 44, borderRadius: '50%',
-                background: C.bgCard,
+                background: 'var(--tw-card)',
                 border: `2px solid ${color}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'Cormorant Garamond, serif',
@@ -454,13 +438,13 @@ const ArticuloView: React.FC<{ articulo: Articulo; color: string }> = ({ articul
                 <h3 style={{
                   fontFamily: 'Montserrat, sans-serif',
                   fontSize: 14, fontWeight: 700,
-                  color: C.cream, margin: '0 0 6px',
+                  color: 'var(--tw-text)', margin: '0 0 6px',
                 }}>
                   {paso.titulo}
                 </h3>
                 <p style={{
                   fontFamily: 'Montserrat, sans-serif',
-                  fontSize: 13, color: C.creamDim,
+                  fontSize: 13, color: 'var(--tw-text-muted)',
                   lineHeight: 1.75, margin: 0,
                 }}>
                   {paso.texto}
@@ -470,7 +454,7 @@ const ArticuloView: React.FC<{ articulo: Articulo; color: string }> = ({ articul
                     marginTop: 10, padding: '10px 14px',
                     borderRadius: 8,
                     background: paso.notaTipo === 'advertencia' ? '#3d1a0622' : '#0d2a1a',
-                    border: `1px solid ${paso.notaTipo === 'advertencia' ? C.terra + '44' : C.sage + '44'}`,
+                    border: `1px solid ${paso.notaTipo === 'advertencia' ? 'var(--tw-terra)' + '44' : 'var(--tw-sage)' + '44'}`,
                     display: 'flex', gap: 10, alignItems: 'flex-start',
                   }}>
                     <span style={{ fontSize: 14, flexShrink: 0 }}>
@@ -478,7 +462,7 @@ const ArticuloView: React.FC<{ articulo: Articulo; color: string }> = ({ articul
                     </span>
                     <p style={{
                       fontFamily: 'Montserrat, sans-serif',
-                      fontSize: 12, color: paso.notaTipo === 'advertencia' ? C.terraLight : C.sage,
+                      fontSize: 12, color: paso.notaTipo === 'advertencia' ? 'var(--tw-terra-h)' : 'var(--tw-sage)',
                       lineHeight: 1.6, margin: 0,
                     }}>
                       {paso.nota}
@@ -494,14 +478,14 @@ const ArticuloView: React.FC<{ articulo: Articulo; color: string }> = ({ articul
       {/* Tabla de contenidos */}
       <div className="docs-toc" style={{
         position: 'sticky', top: 72,
-        background: C.bgCard,
-        border: `1px solid ${C.border}`,
+        background: 'var(--tw-card)',
+        border: `1px solid ${"var(--tw-border)"}`,
         borderRadius: 12, padding: '16px 18px',
       }}>
         <p style={{
           fontFamily: 'Montserrat, sans-serif',
           fontSize: 10, fontWeight: 700,
-          color: C.muted, letterSpacing: '0.12em',
+          color: 'var(--tw-text-faint)', letterSpacing: '0.12em',
           textTransform: 'uppercase', margin: '0 0 12px',
         }}>
           Contenido
@@ -515,12 +499,12 @@ const ArticuloView: React.FC<{ articulo: Articulo; color: string }> = ({ articul
                 background: 'none', border: 'none', cursor: 'pointer',
                 textAlign: 'left', padding: '4px 0',
                 fontFamily: 'Montserrat, sans-serif',
-                fontSize: 12, color: C.mutedLight,
+                fontSize: 12, color: 'var(--tw-text-muted)',
                 lineHeight: 1.4,
                 transition: 'color 0.15s',
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = color }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = C.mutedLight }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--tw-text-muted)' }}
             >
               {i + 1}. {paso.titulo}
             </button>
@@ -537,7 +521,7 @@ const SECCIONES_WEB: Seccion[] = [
   {
     id: 'web-negocio',
     titulo: 'Para Negocios',
-    color: C.terra,
+    color: 'var(--tw-terra)',
     articulos: [
       {
         slug: 'web-neg-cuenta',
@@ -650,7 +634,7 @@ const SECCIONES_WEB: Seccion[] = [
   {
     id: 'web-caficultor',
     titulo: 'Para Caficultores',
-    color: C.sage,
+    color: 'var(--tw-sage)',
     articulos: [
       {
         slug: 'web-caf-cuenta',
@@ -774,14 +758,14 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
   const articuloActualObj = seccionActiva?.articulos.find(a => a.slug === articuloActivo)
 
   return (
-    <div style={{ background: C.bg, minHeight: '100vh' }}>
+    <div style={{ background: 'var(--tw-bg)', minHeight: '100vh' }}>
       <NavBar />
 
       {/* ── Toggle de plataforma ── */}
       <div style={{
         position: 'sticky', top: 56, zIndex: 100,
-        background: `${C.bg}f8`, backdropFilter: 'blur(8px)',
-        borderBottom: `1px solid ${C.border}`,
+        background: `${"var(--tw-bg)"}f8`, backdropFilter: 'blur(8px)',
+        borderBottom: `1px solid ${"var(--tw-border)"}`,
       }}>
         <div className="docs-toggle-bar" style={{
           maxWidth: 1140, margin: '0 auto',
@@ -797,7 +781,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
                 style={{
                   padding: '12px 24px',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  borderBottom: activo ? `2px solid ${C.terra}` : '2px solid transparent',
+                  borderBottom: activo ? `2px solid ${"var(--tw-terra)"}` : '2px solid transparent',
                   display: 'flex', alignItems: 'center', gap: 7,
                   transition: 'all 0.15s',
                 }}
@@ -806,7 +790,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
                 <span style={{
                   fontFamily: 'Montserrat, sans-serif',
                   fontSize: 13, fontWeight: activo ? 700 : 400,
-                  color: activo ? C.cream : C.muted,
+                  color: activo ? 'var(--tw-text)' : 'var(--tw-text-faint)',
                   letterSpacing: '0.04em',
                 }}>
                   {p === 'android' ? 'Android' : 'Web'}
@@ -818,7 +802,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
             <span style={{
               marginLeft: 12, fontSize: 11,
               fontFamily: 'Montserrat, sans-serif',
-              color: C.muted,
+              color: 'var(--tw-text-faint)',
             }}>
               App nativa · Android 8.0+
             </span>
@@ -827,7 +811,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
             <span style={{
               marginLeft: 12, fontSize: 11,
               fontFamily: 'Montserrat, sans-serif',
-              color: C.muted,
+              color: 'var(--tw-text-faint)',
             }}>
               Portal en navegador · tunaywasi.com
             </span>
@@ -836,7 +820,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
       </div>
 
         {/* ── Selector mobile (sustituye al sidebar en pantallas pequeñas) ── */}
-        <div className="docs-mobile-nav" style={{ display: 'none', padding: '12px 16px', borderBottom: `1px solid ${C.border}`, maxWidth: 1140, margin: '0 auto' }}>
+        <div className="docs-mobile-nav" style={{ display: 'none', padding: '12px 16px', borderBottom: `1px solid ${"var(--tw-border)"}`, maxWidth: 1140, margin: '0 auto' }}>
           <select
             value={articuloActivo}
             onChange={e => {
@@ -852,8 +836,8 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
             }}
             style={{
               width: '100%', padding: '10px 12px', borderRadius: 8,
-              border: `1px solid ${C.border}`, background: C.bgCard,
-              color: C.cream, fontSize: 13, fontFamily: 'Montserrat, sans-serif',
+              border: `1px solid ${"var(--tw-border)"}`, background: 'var(--tw-card)',
+              color: 'var(--tw-text)', fontSize: 13, fontFamily: 'Montserrat, sans-serif',
               outline: 'none',
             }}
           >
@@ -876,7 +860,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
       }}>
         {/* ── Sidebar ── */}
         <aside className="docs-aside" style={{
-          borderRight: `1px solid ${C.border}`,
+          borderRight: `1px solid ${"var(--tw-border)"}`,
           padding: '32px 0',
           position: 'sticky', top: 100,
           height: 'calc(100vh - 100px)',
@@ -902,7 +886,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
                 }}>
                   {sec.titulo}
                 </span>
-                <span style={{ color: C.muted, fontSize: 12, flexShrink: 0 }}>
+                <span style={{ color: 'var(--tw-text-faint)', fontSize: 12, flexShrink: 0 }}>
                   {seccionAbierta === sec.id ? '▾' : '▸'}
                 </span>
               </button>
@@ -934,7 +918,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
                         <span style={{
                           fontFamily: 'Montserrat, sans-serif',
                           fontSize: 13,
-                          color: activo ? sec.color : C.creamDim,
+                          color: activo ? sec.color : 'var(--tw-text-muted)',
                           fontWeight: activo ? 600 : 400,
                         }}>
                           {art.titulo}
@@ -949,13 +933,13 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
 
           {/* Link a soporte */}
           <div style={{ marginTop: 24, padding: '0 20px' }}>
-            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 20 }}>
+            <div style={{ borderTop: `1px solid ${"var(--tw-border)"}`, paddingTop: 20 }}>
               <button
                 onClick={() => { window.location.hash = '#/soporte' }}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontFamily: 'Montserrat, sans-serif',
-                  fontSize: 12, color: C.mutedLight,
+                  fontSize: 12, color: 'var(--tw-text-muted)',
                   display: 'flex', alignItems: 'center', gap: 6,
                 }}
               >
@@ -973,7 +957,7 @@ const DocsONE: React.FC<{ hash?: string }> = ({ hash = '#/docs' }) => {
               color={seccionActiva.color}
             />
           ) : (
-            <div style={{ color: C.creamDim, fontFamily: 'Montserrat, sans-serif' }}>
+            <div style={{ color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
               Selecciona un artículo del menú izquierdo.
             </div>
           )}

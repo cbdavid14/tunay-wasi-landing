@@ -7,22 +7,6 @@
 import React, { useState } from 'react'
 import { BetaRegistro } from './BetaRegistro'
 
-const C = {
-  bg:         '#0a0a0a',
-  bgCard:     '#141414',
-  bgSection:  '#0f0f0f',
-  cream:      '#f2e0cc',
-  creamDim:   '#c4b297',
-  terra:      '#c96e4b',
-  terraLight: '#d4825f',
-  sage:       '#8faf8a',
-  green:      '#1f3028',
-  white:      '#ffffff',
-  border:     '#222222',
-  muted:      '#555555',
-  mutedLight: '#777777',
-}
-
 // ─── Datos ────────────────────────────────────────────────────────────────────
 
 const FAQ = [
@@ -50,7 +34,7 @@ const FAQ = [
 
 // ─── Átomos ───────────────────────────────────────────────────────────────────
 
-const Chip: React.FC<{ children: React.ReactNode; color?: string }> = ({ children, color = C.terra }) => (
+const Chip: React.FC<{ children: React.ReactNode; color?: string }> = ({ children, color = 'var(--tw-terra)' }) => (
   <span style={{
     display: 'inline-block', padding: '4px 14px', borderRadius: 20,
     background: `${color}18`, border: `1px solid ${color}44`,
@@ -65,13 +49,13 @@ const Chip: React.FC<{ children: React.ReactNode; color?: string }> = ({ childre
 const CTABtn: React.FC<{ onClick: () => void; children: React.ReactNode; secondary?: boolean; fullWidth?: boolean }> = ({ onClick, children, secondary, fullWidth }) => (
   <button onClick={onClick} style={{
     padding: '16px 36px', borderRadius: 10,
-    border: secondary ? `1px solid ${C.border}` : 'none',
-    background: secondary ? 'transparent' : `linear-gradient(135deg, ${C.terra} 0%, ${C.terraLight} 100%)`,
-    color: secondary ? C.creamDim : C.white,
+    border: secondary ? `1px solid ${"var(--tw-border)"}` : 'none',
+    background: secondary ? 'transparent' : `linear-gradient(135deg, ${"var(--tw-terra)"} 0%, ${"var(--tw-terra-h)"} 100%)`,
+    color: secondary ? 'var(--tw-text-muted)' : 'var(--tw-text-inverse)',
     fontSize: 15, fontWeight: 700,
     fontFamily: 'Montserrat, sans-serif',
     cursor: 'pointer', letterSpacing: '0.04em',
-    boxShadow: secondary ? 'none' : `0 4px 24px ${C.terra}44`,
+    boxShadow: secondary ? 'none' : `0 4px 24px ${"var(--tw-terra)"}44`,
     width: fullWidth ? '100%' : undefined,
     transition: 'opacity 0.15s',
     display: 'inline-flex', alignItems: 'center', gap: 10,
@@ -87,7 +71,7 @@ const H2: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <h2 style={{
     fontFamily: 'Cormorant Garamond, serif',
     fontSize: 'clamp(28px, 4vw, 46px)',
-    fontWeight: 700, color: C.cream,
+    fontWeight: 700, color: 'var(--tw-text)',
     margin: '16px 0 0', lineHeight: 1.15,
   }}>
     {children}
@@ -102,8 +86,8 @@ const Nav: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => {
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      background: `${C.bg}ee`, backdropFilter: 'blur(12px)',
-      borderBottom: `1px solid ${C.border}`,
+      background: `${"var(--tw-bg)"}ee`, backdropFilter: 'blur(12px)',
+      borderBottom: `1px solid ${"var(--tw-border)"}`,
     }}>
       {/* Barra principal */}
       <div style={{
@@ -113,17 +97,17 @@ const Nav: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => {
         <button onClick={() => { window.location.hash = '#/'; close() }} style={{
           background: 'none', border: 'none', cursor: 'pointer',
           fontFamily: 'Cormorant Garamond, serif',
-          fontSize: 22, fontWeight: 700, color: C.cream,
+          fontSize: 22, fontWeight: 700, color: 'var(--tw-text)',
         }}>
           TunayWasi
         </button>
 
         {/* Desktop links */}
         <div className="emp-nav-desktop" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button onClick={() => { window.location.hash = '#/' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: C.mutedLight }}>Ver catálogo</button>
-          <button onClick={() => { window.location.hash = '#/docs' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: C.mutedLight }}>Docs</button>
-          <button onClick={() => { window.location.hash = '#/soporte' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: C.sage, fontWeight: 600 }}>Soporte</button>
-          <button onClick={onEmpezar} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: C.terra, color: C.white, fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+          <button onClick={() => { window.location.hash = '#/' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Ver catálogo</button>
+          <button onClick={() => { window.location.hash = '#/docs' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Docs</button>
+          <button onClick={() => { window.location.hash = '#/soporte' }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-sage)', fontWeight: 600 }}>Soporte</button>
+          <button onClick={onEmpezar} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.3.17.64.24.97.24.37 0 .73-.1 1.05-.29l13.54-7.8-3.06-3.06-12.5 10.91zm-1.68-21.5C1.19 2.61 1 3.07 1 3.58v16.84c0 .51.19.97.5 1.32l.07.07L10.93 12l-9.36-9.81-.07.07zM20.8 9.4l-2.44-1.41-3.41 3.41 3.41 3.41 2.47-1.43c.7-.41.7-1.57-.03-1.98zm-17.6-7.3l12.5 10.91 3.06-3.06L5.22.56C4.9.37 4.54.27 4.17.27c-.33 0-.67.07-.97.24L3.2 2.1z"/></svg>
             Descargar app
           </button>
@@ -132,7 +116,7 @@ const Nav: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => {
         {/* Hamburger mobile */}
         <button className="emp-nav-hamburger" onClick={() => setOpen(o => !o)} style={{
           display: 'none', background: 'none', border: 'none', cursor: 'pointer',
-          padding: 8, color: C.cream,
+          padding: 8, color: 'var(--tw-text)',
         }}>
           {open
             ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -147,13 +131,13 @@ const Nav: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => {
           display: 'none',
           flexDirection: 'column',
           padding: '12px 24px 20px',
-          borderTop: `1px solid ${C.border}`,
+          borderTop: `1px solid ${"var(--tw-border)"}`,
           gap: 4,
         }}>
-          <button onClick={() => { window.location.hash = '#/'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: C.mutedLight, textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${C.border}22` }}>Ver catálogo</button>
-          <button onClick={() => { window.location.hash = '#/docs'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: C.mutedLight, textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${C.border}22` }}>Docs</button>
-          <button onClick={() => { window.location.hash = '#/soporte'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: C.sage, fontWeight: 600, textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${C.border}22` }}>Soporte</button>
-          <button onClick={() => { onEmpezar(); close() }} style={{ marginTop: 8, padding: '13px', borderRadius: 8, border: 'none', background: C.terra, color: C.white, fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <button onClick={() => { window.location.hash = '#/'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Ver catálogo</button>
+          <button onClick={() => { window.location.hash = '#/docs'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Docs</button>
+          <button onClick={() => { window.location.hash = '#/soporte'; close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-sage)', fontWeight: 600, textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${"var(--tw-border)"}22` }}>Soporte</button>
+          <button onClick={() => { onEmpezar(); close() }} style={{ marginTop: 8, padding: '13px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.3.17.64.24.97.24.37 0 .73-.1 1.05-.29l13.54-7.8-3.06-3.06-12.5 10.91zm-1.68-21.5C1.19 2.61 1 3.07 1 3.58v16.84c0 .51.19.97.5 1.32l.07.07L10.93 12l-9.36-9.81-.07.07zM20.8 9.4l-2.44-1.41-3.41 3.41 3.41 3.41 2.47-1.43c.7-.41.7-1.57-.03-1.98zm-17.6-7.3l12.5 10.91 3.06-3.06L5.22.56C4.9.37 4.54.27 4.17.27c-.33 0-.67.07-.97.24L3.2 2.1z"/></svg>
             Descargar app (Android)
           </button>
@@ -189,7 +173,7 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
     {/* Overlay gradiente */}
     <div style={{
       position: 'absolute', inset: 0,
-      background: `linear-gradient(135deg, ${C.bg} 0%, ${C.green}88 60%, transparent 100%)`,
+      background: `linear-gradient(135deg, ${"var(--tw-bg)"} 0%, ${"var(--tw-section-dark)"}88 60%, transparent 100%)`,
     }} />
 
     {/* Grid de dos columnas */}
@@ -214,17 +198,17 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
         <h1 style={{
           fontFamily: 'Cormorant Garamond, serif',
           fontSize: 'clamp(38px, 5.5vw, 68px)',
-          fontWeight: 700, color: C.cream,
+          fontWeight: 700, color: 'var(--tw-text)',
           margin: '20px 0 18px', lineHeight: 1.05,
         }}>
           Café de origen directo<br />
-          <span style={{ color: C.terra }}>al productor.<br />Sin intermediarios.</span>
+          <span style={{ color: 'var(--tw-terra)' }}>al productor.<br />Sin intermediarios.</span>
         </h1>
 
         <p style={{
           fontFamily: 'Montserrat, sans-serif',
           fontSize: 'clamp(14px, 1.6vw, 17px)',
-          color: C.creamDim, lineHeight: 1.75,
+          color: 'var(--tw-text-muted)', lineHeight: 1.75,
           maxWidth: 460, margin: '0 0 36px',
         }}>
           Explora el catálogo de caficultores peruanos, ve la ficha técnica completa
@@ -246,7 +230,7 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               fontFamily: 'Montserrat, sans-serif', fontSize: 13,
-              color: C.mutedLight, textDecoration: 'underline', padding: 0,
+              color: 'var(--tw-text-muted)', textDecoration: 'underline', padding: 0,
             }}
           >
             ¿Quieres calcular tus costos primero? Descarga la plantilla de menú gratis →
@@ -256,7 +240,7 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
         <p style={{
           marginTop: 14,
           fontFamily: 'Montserrat, sans-serif', fontSize: 12,
-          color: C.muted,
+          color: 'var(--tw-text-faint)',
         }}>
           Café directo del productor · sin intermediarios · sin contrato
         </p>
@@ -266,7 +250,7 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
       <div className="emp-hero-card" style={{ boxShadow: '0 16px 64px rgba(0,0,0,0.7)' }}>
         <BetaRegistro
           rolDefecto="emprendedor"
-          acento={C.terra}
+          acento={'var(--tw-terra)'}
           titulo="Únete a la beta"
           subtitulo="Regístrate y te enviamos el link de descarga directo a tu correo."
           origen="landing-emprendedor"
@@ -283,7 +267,7 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
     }}>
       <BetaRegistro
         rolDefecto="emprendedor"
-        acento={C.terra}
+        acento={'var(--tw-terra)'}
         titulo="Únete a la beta"
         subtitulo="Regístrate y te enviamos el link de descarga directo a tu correo."
         origen="landing-emprendedor-mobile"
@@ -311,7 +295,7 @@ const Hero: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
 const SeccionFAQ: React.FC = () => {
   const [abierto, setAbierto] = useState<number | null>(null)
   return (
-    <section style={{ background: C.bgSection, padding: '80px 24px' }}>
+    <section style={{ background: 'var(--tw-bg-alt)', padding: '80px 24px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <Chip>Preguntas frecuentes</Chip>
@@ -320,8 +304,8 @@ const SeccionFAQ: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {FAQ.map((f, i) => (
             <div key={i} style={{
-              background: C.bgCard,
-              border: `1px solid ${abierto === i ? C.terra + '44' : C.border}`,
+              background: 'var(--tw-card)',
+              border: `1px solid ${abierto === i ? 'var(--tw-terra)' + '44' : 'var(--tw-border)'}`,
               borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s',
             }}>
               <button onClick={() => setAbierto(abierto === i ? null : i)} style={{
@@ -333,11 +317,11 @@ const SeccionFAQ: React.FC = () => {
                 <span style={{
                   fontFamily: 'Montserrat, sans-serif',
                   fontSize: 14, fontWeight: 600,
-                  color: C.cream, textAlign: 'left',
+                  color: 'var(--tw-text)', textAlign: 'left',
                 }}>
                   {f.p}
                 </span>
-                <span style={{ color: C.terra, fontSize: 18, flexShrink: 0 }}>
+                <span style={{ color: 'var(--tw-terra)', fontSize: 18, flexShrink: 0 }}>
                   {abierto === i ? '−' : '+'}
                 </span>
               </button>
@@ -345,7 +329,7 @@ const SeccionFAQ: React.FC = () => {
                 <div style={{ padding: '0 22px 18px' }}>
                   <p style={{
                     fontFamily: 'Montserrat, sans-serif',
-                    fontSize: 14, color: C.creamDim,
+                    fontSize: 14, color: 'var(--tw-text-muted)',
                     lineHeight: 1.7, margin: 0,
                   }}>
                     {f.r}
@@ -405,14 +389,14 @@ const FUNCIONALIDADES_EMP = [
 ]
 
 const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar }) => (
-  <section style={{ background: '#0a0a0a', padding: '80px 24px' }}>
+  <section style={{ background: 'var(--tw-bg)', padding: '80px 24px' }}>
     <div style={{ maxWidth: 960, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 60 }}>
-        <Chip color='#c96e4b'>Cómo instalar</Chip>
+        <Chip color={'var(--tw-terra)'}>Cómo instalar</Chip>
         <H2>Tu primer pedido de café<br />de origen en 5 pasos</H2>
         <p style={{
           fontFamily: 'Montserrat, sans-serif', fontSize: 15,
-          color: '#c4b297', lineHeight: 1.7,
+          color: 'var(--tw-text-muted)', lineHeight: 1.7,
           maxWidth: 480, margin: '16px auto 0',
         }}>
           Solo necesitas un celular Android con Android 8.0 o superior y tu cuenta Google.
@@ -436,7 +420,7 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
             )}
             <div style={{
               width: 48, height: 48, borderRadius: '50%',
-              background: '#141414', border: `2px solid ${paso.color}`,
+              background: 'var(--tw-card)', border: `2px solid ${paso.color}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: 'Cormorant Garamond, serif',
               fontSize: 18, fontWeight: 700, color: paso.color, flexShrink: 0,
@@ -446,13 +430,13 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
             <div style={{ paddingTop: 10 }}>
               <h3 style={{
                 fontFamily: 'Montserrat, sans-serif',
-                fontSize: 15, fontWeight: 700, color: '#f2e0cc', marginBottom: 6,
+                fontSize: 15, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 6,
               }}>
                 {paso.titulo}
               </h3>
               <p style={{
                 fontFamily: 'Montserrat, sans-serif',
-                fontSize: 13, color: '#c4b297', lineHeight: 1.7, margin: 0,
+                fontSize: 13, color: 'var(--tw-text-muted)', lineHeight: 1.7, margin: 0,
               }}>
                 {paso.texto}
               </p>
@@ -474,23 +458,23 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
       }}>
         {FUNCIONALIDADES_EMP.map(f => (
           <div key={f.titulo} style={{
-            background: '#141414', border: '1px solid #222',
+            background: 'var(--tw-card)', border: `1px solid ${"var(--tw-border)"}`,
             borderRadius: 14, padding: 24,
             transition: 'border-color 0.2s',
           }}
-            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#c96e4b55' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#222' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `${"var(--tw-terra)"}55` }}
+            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--tw-border)' }}
           >
             <div style={{ fontSize: 28, marginBottom: 10 }}>{f.icono}</div>
             <h3 style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: 14,
-              fontWeight: 700, color: '#f2e0cc', marginBottom: 6,
+              fontWeight: 700, color: 'var(--tw-text)', marginBottom: 6,
             }}>
               {f.titulo}
             </h3>
             <p style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: 13,
-              color: '#c4b297', lineHeight: 1.65, margin: 0,
+              color: 'var(--tw-text-muted)', lineHeight: 1.65, margin: 0,
             }}>
               {f.texto}
             </p>
@@ -499,21 +483,21 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
       </div>
 
       <div style={{
-        background: 'linear-gradient(135deg, #1a0d05 0%, #0d0605 100%)',
-        border: '1px solid #c96e4b44',
+        background: 'var(--tw-terra-muted, rgba(201,110,75,.08))',
+        border: `1px solid ${"var(--tw-terra)"}44`,
         borderRadius: 16, padding: '32px 28px',
         textAlign: 'center',
         maxWidth: 480, margin: '0 auto',
       }}>
         <p style={{
           fontFamily: 'Montserrat, sans-serif', fontSize: 13,
-          color: '#c4b297', marginBottom: 6,
+          color: 'var(--tw-text-muted)', marginBottom: 6,
         }}>
           Requiere Android 8.0 o superior · Gratis
         </p>
         <p style={{
           fontFamily: 'Montserrat, sans-serif', fontSize: 12,
-          color: '#555', marginBottom: 20,
+          color: 'var(--tw-text-faint)', marginBottom: 20,
         }}>
           App gratuita · Sin membresía · Repones cuando quieras
         </p>
@@ -522,11 +506,11 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
           style={{
             width: '100%', padding: '16px',
             borderRadius: 10, border: 'none',
-            background: 'linear-gradient(135deg, #c96e4b, #d4825f)',
+            background: `linear-gradient(135deg, ${"var(--tw-terra)"}, ${"var(--tw-terra-h)"})`,
             color: '#fff', fontSize: 15, fontWeight: 700,
             fontFamily: 'Montserrat, sans-serif',
             cursor: 'pointer',
-            boxShadow: '0 4px 20px #c96e4b44',
+            boxShadow: `0 4px 20px ${"var(--tw-terra)"}44`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
@@ -542,22 +526,22 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
 
 const SeccionCTA: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
   <section style={{
-    background: `linear-gradient(135deg, ${C.green} 0%, #081a0e 100%)`,
+    background: `linear-gradient(135deg, ${"var(--tw-section-dark)"} 0%, '#081a0e' 100%)`,
     padding: '90px 24px', textAlign: 'center',
   }}>
     <div style={{ maxWidth: 520, margin: '0 auto' }}>
       <h2 style={{
         fontFamily: 'Cormorant Garamond, serif',
         fontSize: 'clamp(34px, 5vw, 56px)',
-        fontWeight: 700, color: C.cream,
+        fontWeight: 700, color: 'var(--tw-text)',
         marginBottom: 16, lineHeight: 1.15,
       }}>
         Encuentra tu caficultor.<br />
-        <span style={{ color: C.terra }}>Haz tu primer pedido hoy.</span>
+        <span style={{ color: 'var(--tw-terra)' }}>Haz tu primer pedido hoy.</span>
       </h2>
       <p style={{
         fontFamily: 'Montserrat, sans-serif', fontSize: 15,
-        color: C.creamDim, lineHeight: 1.7, marginBottom: 36,
+        color: 'var(--tw-text-muted)', lineHeight: 1.7, marginBottom: 36,
       }}>
         Explora el catálogo, elige el lote que te interesa y coordina el despacho
         directo con el productor desde la app.
@@ -569,7 +553,7 @@ const SeccionCTA: React.FC<{ onEmpezar: () => void }> = ({ onEmpezar }) => (
       <p style={{
         marginTop: 16,
         fontFamily: 'Montserrat, sans-serif', fontSize: 12,
-        color: C.muted,
+        color: 'var(--tw-text-faint)',
       }}>
         Sin contrato · Sin membresía · Repones cuando quieras
       </p>
@@ -594,7 +578,7 @@ const LandingEmprendedor: React.FC = () => {
   }
 
   return (
-    <div style={{ background: C.bg, minHeight: '100vh' }}>
+    <div style={{ background: 'var(--tw-bg)', minHeight: '100vh' }}>
       <Nav onEmpezar={irAFormulario} />
       <Hero onEmpezar={irAFormulario} />
       <SeccionInstalacion onDescargar={irAFormulario} />

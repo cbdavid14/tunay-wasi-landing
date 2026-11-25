@@ -3,13 +3,13 @@
  * Dark mode Netflix-style con sidebar navigation, CRUD de productos, toast
  */
 import React, { useEffect, useState, useRef } from 'react'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { storage } from '../../shared/firebase'
 import {
   fetchPedidosByCaficultor, fetchProductos, fetchCaficultor,
   fetchCalificacionesByCaficultor, updateStock,
   crearProducto, updateProducto, updateCaficultor, despacharAgencia,
   fetchUbigeos, fetchLogisticaCaficultor, saveLogisticaCaficultor,
+  fetchCotizacionesCaficultor, responderCotizacion,
+  fetchPagosByCaficultor,
 } from '../service'
 import {
   demoFetchPedidosByCaficultor, demoFetchProductosByCaficultorLive,
@@ -18,32 +18,16 @@ import {
   demoDespacharAgencia,
   demoFetchUbigeos, demoFetchLogisticaCaficultor, demoSaveLogisticaCaficultor,
 } from '../demoService'
-import { logout } from '../authService'
-import { PROCESO_LABELS, calcularPrecioFinal } from '../config'
-import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE } from '../types'
+import { PROCESO_LABELS, calcularPrecioFinal, FORMATOS_FIXED, FORMATOS_NEGOTIABLE, FORMATO_LABELS } from '../config'
+import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE, AgenciaLogisticaONE, CotizacionONE, PagoCaficultorONE, FormatoONE, LogisticaStatusONE } from '../types'
 import ChatPedido from './ChatPedido'
+import WasiChat from './WasiChat'
+import { type DireccionONE } from './ModalDireccion'
+import NotificacionesCaficultor from './NotificacionesCaficultor'
 
-// ─── Design system dark ───────────────────────────────────────────────────────
-const C = {
-  bg: '#0a0a0a',
-  card: '#141414',
-  cardHover: '#1e1e1e',
-  border: '#2a2a2a',
-  cream: '#f2e0cc',
-  creamMuted: '#a09080',
-  terra: '#c96e4b',
-  sage: '#8faf8a',
-  white: '#ffffff',
-  yellow: '#f39c12',
-  red: '#e74c3c',
-  blue: '#4a90c4',
-  text: '#e8e0d8',
-  textSub: '#888888',
-  muted: '#555555',
-}
 
 const PROCESO_COLORS: Record<string, string> = {
-  lavado: C.blue, natural: C.terra, honey: C.yellow, anaerobico: '#9b59b6',
+  lavado: '#4a90c4', natural: 'var(--tw-terra)', honey: '#f39c12', anaerobico: '#9b59b6',
 }
 
 // ─── Cosecha: lista de mes/año (año actual + año anterior) ────────────────────
@@ -57,11 +41,18 @@ function generarOpcionesCosecha(): string[] {
 }
 const OPCIONES_COSECHA = generarOpcionesCosecha()
 
-// ─── Helper: subir foto a Firebase Storage ────────────────────────────────────
-async function subirFotoStorage(file: File, ruta: string): Promise<string> {
-  const r = storageRef(storage, ruta)
-  await uploadBytes(r, file)
-  return getDownloadURL(r)
+// ─── Helper: subir foto a Cloudinary ─────────────────────────────────────────
+async function subirFotoStorage(file: File, _ruta: string): Promise<string> {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', uploadPreset)
+  fd.append('folder', 'one_caficultor')
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: fd })
+  const data = await res.json()
+  if (!data.secure_url) throw new Error(data.error?.message ?? 'Cloudinary upload failed')
+  return data.secure_url
 }
 
 // ─── Componente reutilizable: botón upload foto ───────────────────────────────
@@ -93,13 +84,13 @@ const UploadFoto: React.FC<{
 
   return (
     <div style={{ marginBottom: 12 }}>
-      <label style={{ fontSize: 11, color: C.textSub, display: 'block', marginBottom: 6 }}>{label}</label>
+      <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 6 }}>{label}</label>
       <div
         onClick={() => !subiendo && inputRef.current?.click()}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         style={{
-          position: 'relative', borderRadius: 10, border: `2px dashed ${url ? C.terra : (hover ? C.creamMuted : C.border)}`,
+          position: 'relative', borderRadius: 10, border: `2px dashed ${url ? 'var(--tw-terra)' : (hover ? 'var(--tw-text-muted)' : 'var(--tw-border)')}`,
           background: '#0a0a0a', cursor: subiendo ? 'wait' : 'pointer',
           overflow: 'hidden', aspectRatio, display: 'flex', alignItems: 'center', justifyContent: 'center',
           minHeight: 80, transition: 'border-color 0.2s',
@@ -120,14 +111,14 @@ const UploadFoto: React.FC<{
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: 16 }}>
             <span style={{ fontSize: 28 }}>📷</span>
-            <span style={{ fontSize: 12, color: C.textSub }}>{placeholder}</span>
-            <span style={{ fontSize: 10, color: C.muted }}>JPG · PNG · WEBP</span>
+            <span style={{ fontSize: 12, color: 'var(--tw-text-muted)' }}>{placeholder}</span>
+            <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>JPG · PNG · WEBP</span>
           </div>
         )}
         {subiendo && (
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <span style={{ fontSize: 22 }}>⏳</span>
-            <span style={{ fontSize: 12, color: C.cream }}>Subiendo...</span>
+            <span style={{ fontSize: 12, color: 'var(--tw-text)' }}>Subiendo...</span>
           </div>
         )}
       </div>
@@ -142,22 +133,24 @@ const UploadFoto: React.FC<{
   )
 }
 
-type Tab = 'productos' | 'pedidos' | 'historial' | 'perfil'
+type Tab = 'productos' | 'pedidos' | 'historial' | 'pagos' | 'perfil' | 'wasi' | 'alertas'
+type PedidoSubTab = 'ofertas' | 'activos' | 'historial'
+type SettingsTab = 'perfil' | 'finca' | 'cobros' | 'envio' | 'direcciones' | 'notificaciones' | 'seguridad' | null
 
 // ─── Filter bar shared component ──────────────────────────────────────────────
 
 const FilterBar: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18, padding: '14px 16px', background: '#0d0d0d', borderRadius: 12, border: `1px solid ${C.border}`, alignItems: 'center' }}>
+  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18, padding: '14px 16px', background: '#0d0d0d', borderRadius: 12, border: `1px solid var(--tw-border)`, alignItems: 'center' }}>
     {children}
   </div>
 )
 
 const FilterChip: React.FC<{ label: string; active: boolean; color?: string; onClick: () => void }> = ({ label, active, color, onClick }) => {
-  const col = color ?? C.terra
+  const col = color ?? 'var(--tw-terra)'
   return (
     <button onClick={onClick} style={{
-      padding: '5px 13px', borderRadius: 20, border: `1px solid ${active ? col : C.border}`,
-      background: active ? col + '22' : 'none', color: active ? col : C.textSub,
+      padding: '5px 13px', borderRadius: 20, border: `1px solid ${active ? col : 'var(--tw-border)'}`,
+      background: active ? col + '22' : 'none', color: active ? col : 'var(--tw-text-muted)',
       fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer',
       fontFamily: 'Montserrat, sans-serif', transition: 'all 0.15s',
     }}>
@@ -170,9 +163,9 @@ const SearchInput: React.FC<{ value: string; onChange: (v: string) => void; plac
   <input value={value} onChange={e => onChange(e.target.value)}
     placeholder={placeholder ?? 'Buscar...'}
     style={{
-      padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.border}`,
-      background: '#141414', color: C.cream, fontSize: 12,
-      fontFamily: 'Montserrat, sans-serif', outline: 'none', width: 180,
+      padding: '6px 12px', borderRadius: 8, border: `1px solid var(--tw-border)`,
+      background: '#141414', color: 'var(--tw-text)', fontSize: 12,
+      fontFamily: 'Montserrat, sans-serif', outline: 'none', width: 'min(180px, 100%)',
     }}
   />
 )
@@ -183,9 +176,9 @@ function formatFecha(iso: string): string {
   catch { return iso }
 }
 function colorStock(kg: number): string {
-  if (kg > 20) return C.sage
-  if (kg > 10) return C.yellow
-  return C.red
+  if (kg > 20) return 'var(--tw-sage)'
+  if (kg > 10) return '#f39c12'
+  return '#e74c3c'
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -193,12 +186,12 @@ function colorStock(kg: number): string {
 interface ToastMsg { id: number; text: string; tipo: 'ok' | 'error' | 'info' }
 
 const Toast: React.FC<{ msgs: ToastMsg[]; onRemove: (id: number) => void }> = ({ msgs, onRemove }) => (
-  <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 500, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none', width: 'min(90vw, 360px)' }}>
+  <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 500, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none', width: 'min(90vw, 360px)' }}>
     {msgs.map(m => (
       <div key={m.id} onClick={() => onRemove(m.id)} style={{
         padding: '12px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-        background: m.tipo === 'ok' ? C.sage : m.tipo === 'error' ? C.red : C.yellow,
-        color: m.tipo === 'info' ? '#000' : C.white,
+        background: m.tipo === 'ok' ? 'var(--tw-sage)' : m.tipo === 'error' ? '#e74c3c' : '#f39c12',
+        color: m.tipo === 'info' ? '#000' : '#fff',
         pointerEvents: 'all', cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
         fontFamily: 'Montserrat, sans-serif',
       }}>
@@ -211,10 +204,24 @@ const Toast: React.FC<{ msgs: ToastMsg[]; onRemove: (id: number) => void }> = ({
 // ─── Modal producto (crear/editar) ────────────────────────────────────────────
 
 interface ProductoFormData {
-  nombre: string; variedad: string; proceso: string; altitudMsnm: string; cosecha: string
+  nombre: string; variedad: string; proceso: string; tipoCafe: 'verde' | 'tostado' | 'molido' | 'ambos'
+  altitudMsnm: string; cosecha: string
   notasSabor: string; descripcion: string; puntajeReferencial: string
   precioBaseKgSoles: string; kgDisponibles: string; fotos: string[]
+  pricingMode: 'FIXED' | 'NEGOTIABLE'
+  formatosDisponibles: FormatoONE[]
+  reposicionActiva: boolean; kgMinReserva: string; frecuenciaReposicion: number | null; prioridadTueste: boolean
+  // Campos café verde (TYPE_A)
+  humedad: string; densidad: string; criba: string; kgMinPedido: string
 }
+
+const TIPOS_CAFE: { value: ProductoFormData['tipoCafe']; label: string }[] = [
+  { value: 'verde',   label: 'Café verde' },
+  { value: 'tostado', label: 'Tostado en grano' },
+  { value: 'molido',  label: 'Tostado y Molido' },
+]
+
+const CRIBA_OPTS = ['14', '15', '16', '17/18', '18/19', '19/20', '20+']
 
 const PROCESOS: { value: string; label: string }[] = [
   { value: 'lavado', label: 'Lavado' },
@@ -235,6 +242,7 @@ const ModalProducto: React.FC<{
     nombre: producto?.nombre ?? '',
     variedad: producto?.variedad ?? '',
     proceso: producto?.proceso ?? 'lavado',
+    tipoCafe: ((producto as any)?.tipoCafe ?? 'tostado') as ProductoFormData['tipoCafe'],
     altitudMsnm: String(producto?.altitudMsnm ?? ''),
     cosecha: producto?.cosecha ?? '',
     notasSabor: producto?.notasSabor?.join(', ') ?? '',
@@ -243,8 +251,20 @@ const ModalProducto: React.FC<{
     precioBaseKgSoles: producto ? String(Math.round(producto.precioBaseKgCents / 100)) : '',
     kgDisponibles: String(producto?.kgDisponibles ?? ''),
     fotos: producto?.fotos?.length ? producto.fotos : (producto?.foto ? [producto.foto] : ['']),
+    pricingMode: ((producto as any)?.pricingMode ?? 'FIXED') as 'FIXED' | 'NEGOTIABLE',
+    formatosDisponibles: ((producto as any)?.formatosDisponibles as FormatoONE[]) ?? ['250g', '500g', '1kg'],
+    reposicionActiva: !!(producto as any)?.reposicion?.activa,
+    kgMinReserva: String((producto as any)?.reposicion?.kgMin ?? ''),
+    frecuenciaReposicion: (producto as any)?.reposicion?.frecuenciaDias ?? null,
+    prioridadTueste: !!(producto as any)?.reposicion?.prioridadTueste,
+    humedad: String((producto as any)?.humedad ?? ''),
+    densidad: String((producto as any)?.densidad ?? ''),
+    criba: (producto as any)?.criba ?? '',
+    kgMinPedido: String((producto as any)?.kgMinPedido ?? ''),
   })
   const [guardando, setGuardando] = useState(false)
+  const [notaInput, setNotaInput] = useState('')
+  const [estadoProducto, setEstadoProducto] = useState<'activo' | 'pausado' | 'agotado'>(producto?.status as 'activo' | 'pausado' | 'agotado' ?? 'activo')
 
   function set(field: keyof ProductoFormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -270,6 +290,7 @@ const ModalProducto: React.FC<{
         nombre: form.nombre.trim(),
         variedad: form.variedad.trim(),
         proceso: form.proceso as ProductoONE['proceso'],
+        tipoCafe: form.tipoCafe,
         presentacion: (producto?.presentacion ?? 'tostado_grano') as ProductoONE['presentacion'],
         nivelTueste: (producto?.nivelTueste ?? 'medio') as ProductoONE['nivelTueste'],
         costos: producto?.costos ?? { precioVerdeKgCents: precioBaseCents, costoTuesteKgCents: 0, costoBolsaUndCents: 0, margenPct: 0 },
@@ -277,15 +298,29 @@ const ModalProducto: React.FC<{
         cosecha: form.cosecha.trim(),
         notasSabor,
         descripcion: form.descripcion.trim(),
-        puntajeReferencial: form.puntajeReferencial ? parseInt(form.puntajeReferencial) : undefined,
+        puntajeReferencial: form.puntajeReferencial ? parseInt(form.puntajeReferencial) : null,
         notaReferencial: 'Puntaje referencial declarado por el caficultor',
         precioBaseKgCents: precioBaseCents,
         kgDisponibles: kg,
         kgReservados: producto?.kgReservados ?? 0,
-        status: producto?.status ?? 'activo',
+        status: estadoProducto,
         foto: fotosPrincipal,
         fotos: fotosValidas,
-      }
+        pricingMode: form.pricingMode,
+        ...(form.tipoCafe !== 'verde' ? { formatosDisponibles: form.formatosDisponibles } : {}),
+        reposicion: form.reposicionActiva ? {
+          activa: true,
+          kgMin: parseInt(form.kgMinReserva) || 10,
+          frecuenciaDias: form.frecuenciaReposicion,
+          prioridadTueste: form.prioridadTueste,
+        } : { activa: false, kgMin: 0, frecuenciaDias: null, prioridadTueste: false },
+        ...(form.tipoCafe === 'verde' ? {
+          humedad: parseFloat(form.humedad) || null,
+          densidad: parseInt(form.densidad) || null,
+          criba: form.criba || null,
+          kgMinPedido: parseInt(form.kgMinPedido) || null,
+        } : {}),
+      } as any
 
       if (esEdicion && producto) {
         if (isDemo) await demoUpdateProducto(producto.id, data)
@@ -298,7 +333,7 @@ const ModalProducto: React.FC<{
         onToast('Producto creado', 'ok')
       }
       onClose()
-    } catch {
+    } catch (e) {
       onToast('Error al guardar el producto', 'error')
     } finally {
       setGuardando(false)
@@ -307,21 +342,18 @@ const ModalProducto: React.FC<{
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: 8,
-    border: `1px solid ${C.border}`, background: '#0f0f0f',
-    fontSize: 13, fontFamily: 'Montserrat, sans-serif', color: C.cream,
+    border: `1px solid var(--tw-border)`, background: '#0f0f0f',
+    fontSize: 13, fontFamily: 'Montserrat, sans-serif', color: 'var(--tw-text)',
     outline: 'none', boxSizing: 'border-box', marginBottom: 12,
   }
-  const labelStyle: React.CSSProperties = { fontSize: 11, color: C.textSub, display: 'block', marginBottom: 4 }
+  const labelStyle: React.CSSProperties = { fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }
 
   const precioBaseSoles = parseFloat(form.precioBaseKgSoles) || 0
-  const precioBaseCentsPreview = Math.round(precioBaseSoles * 100)
-  const notasArray = form.notasSabor.split(',').map(s => s.trim()).filter(Boolean)
-  const procesoColor = PROCESO_COLORS[form.proceso] ?? C.terra
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: C.bg, overflowY: 'auto', fontFamily: 'Montserrat, sans-serif' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'var(--tw-bg)', overflowY: 'auto', fontFamily: 'Montserrat, sans-serif' }}>
       <style>{`
-        @media (max-width: 720px) { .modal-producto-preview { display: none !important; } }
+        @media (max-width: 720px) { .modal-producto-sidebar { display: none !important; } }
         @media (max-width: 640px) {
           .modal-producto-layout {
             grid-template-columns: 1fr !important;
@@ -335,43 +367,152 @@ const ModalProducto: React.FC<{
       `}</style>
 
       {/* Header sticky */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.textSub, fontSize: 13, cursor: 'pointer', padding: 0 }}>← Volver</button>
-        <span style={{ color: C.border }}>|</span>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif' }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--tw-bg)', borderBottom: `1px solid var(--tw-border)`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', fontSize: 13, cursor: 'pointer', padding: 0 }}>← Volver</button>
+        <span style={{ color: 'var(--tw-border)' }}>|</span>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>
           {esEdicion ? 'Editar producto' : 'Nuevo producto'}
         </p>
       </header>
 
       {/* Layout dos columnas */}
-      <div className="modal-producto-layout" style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 24px 80px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 48, alignItems: 'start' }}>
+      <div className="modal-producto-layout" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px 80px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: 32, alignItems: 'start' }}>
 
         {/* ── Columna izquierda: formulario ── */}
         <div>
-          <p style={{ margin: '0 0 4px', fontSize: 11, color: C.sage, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--tw-sage)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             {esEdicion ? 'Editar producto' : 'Nuevo producto'}
           </p>
-          <h2 style={{ margin: '0 0 24px', fontSize: 26, color: C.cream, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>
+          <h2 style={{ margin: '0 0 20px', fontSize: 26, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>
             {form.nombre || 'Tu café'}
           </h2>
+
+          {/* Fotos — primero */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <label style={labelStyle}>Fotos del producto</label>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-terra)' }}>{form.fotos.filter(Boolean).length} / 5</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {form.fotos.map((url, idx) => (
+                <div key={idx} style={{ position: 'relative', width: 80, height: 80 }}>
+                  <UploadFoto
+                    url={url}
+                    onUrl={newUrl => setForm(prev => { const fotos = [...prev.fotos]; fotos[idx] = newUrl; return { ...prev, fotos } })}
+                    label={idx === 0 ? 'Foto principal' : `Foto ${idx + 1}`}
+                    ruta={`productos/${caficultorId}`}
+                    placeholder={idx === 0 ? 'Principal' : `Foto ${idx + 1}`}
+                    aspectRatio="1/1"
+                  />
+                  {form.fotos.length > 1 && (
+                    <button
+                      onClick={() => setForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== idx) }))}
+                      style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}
+                    >×</button>
+                  )}
+                </div>
+              ))}
+              {form.fotos.length < 5 && (
+                <div
+                  onClick={() => setForm(prev => ({ ...prev, fotos: [...prev.fotos, ''] }))}
+                  style={{ width: 80, height: 80, border: `1.5px dashed var(--tw-border)`, borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2 }}
+                >
+                  <span style={{ fontSize: 20, color: 'var(--tw-text-muted)' }}>＋</span>
+                </div>
+              )}
+            </div>
+            <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>Mínimo 4 fotos · hasta 5 · JPG o PNG</p>
+          </div>
 
           <label style={labelStyle}>Nombre del café *</label>
           <input value={form.nombre} onChange={e => set('nombre', e.target.value)} style={inputStyle} placeholder="Bourbon Lavado — Finca La Coipa" maxLength={80} />
 
-          <div className="modal-prod-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div className="modal-prod-grid-2" style={{ marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Variedad *</label>
               <input value={form.variedad} onChange={e => set('variedad', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="Bourbon" />
             </div>
             <div>
               <label style={labelStyle}>Proceso *</label>
-              <select value={form.proceso} onChange={e => set('proceso', e.target.value)} style={{ ...inputStyle, marginBottom: 0, cursor: 'pointer' }}>
-                {PROCESOS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-              </select>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {PROCESOS.map(p => {
+                  const sel = form.proceso === p.value
+                  const col = PROCESO_COLORS[p.value] ?? 'var(--tw-terra)'
+                  return (
+                    <button key={p.value} type="button" onClick={() => set('proceso', p.value)} style={{
+                      padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      border: `1px solid ${sel ? col : 'var(--tw-border)'}`,
+                      background: sel ? col + '22' : 'transparent',
+                      color: sel ? col : 'var(--tw-text-muted)',
+                      fontFamily: 'Montserrat, sans-serif',
+                    }}>{p.label}</button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="modal-prod-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          {/* Tipo de café */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>Tipo de café *</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {TIPOS_CAFE.map(t => {
+                const sel = form.tipoCafe === t.value
+                const esVerde = t.value === 'verde'
+                const col = esVerde ? 'var(--tw-sage)' : 'var(--tw-terra)'
+                return (
+                  <button key={t.value} type="button" onClick={() => setForm(prev => ({
+                    ...prev,
+                    tipoCafe: t.value,
+                    // TYPE_B y TYPE_C solo FIXED (PR-04) — resetear si venía de verde con NEGOTIABLE
+                    pricingMode: t.value !== 'verde' ? 'FIXED' : prev.pricingMode,
+                  }))} style={{
+                    padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    border: `1px solid ${sel ? col : 'var(--tw-border)'}`,
+                    background: sel ? col + '22' : 'transparent',
+                    color: sel ? col : 'var(--tw-text-muted)',
+                    fontFamily: 'Montserrat, sans-serif',
+                  }}>{t.label}</button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Campos condicionales — solo café verde */}
+          {form.tipoCafe === 'verde' && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ background: 'rgba(100,149,237,0.07)', border: '1px solid rgba(100,149,237,0.2)', borderRadius: 9, padding: '9px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>🫘</span>
+                <span style={{ fontSize: 11, color: '#6495ED', fontWeight: 600 }}>Café verde requiere especificar humedad, densidad y tamaño de criba</span>
+              </div>
+              <label style={labelStyle}>Especificaciones del grano verde</label>
+              <div className="modal-prod-grid-2" style={{ marginBottom: 10 }}>
+                <div>
+                  <label style={{ ...labelStyle, marginBottom: 4 }}>Humedad (%)</label>
+                  <input type="number" step="0.1" min="9" max="13" value={form.humedad} onChange={e => set('humedad', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="11.2" />
+                </div>
+                <div>
+                  <label style={{ ...labelStyle, marginBottom: 4 }}>Densidad (g/L)</label>
+                  <input type="number" step="1" value={form.densidad} onChange={e => set('densidad', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="812" />
+                </div>
+              </div>
+              <div className="modal-prod-grid-2">
+                <div>
+                  <label style={{ ...labelStyle, marginBottom: 4 }}>Criba / Screen (mesh)</label>
+                  <select value={form.criba} onChange={e => set('criba', e.target.value)} style={{ ...inputStyle, marginBottom: 0, cursor: 'pointer' }}>
+                    <option value="">Seleccionar...</option>
+                    {CRIBA_OPTS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ ...labelStyle, marginBottom: 4 }}>Pedido mínimo (kg)</label>
+                  <input type="number" min="1" value={form.kgMinPedido} onChange={e => set('kgMinPedido', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="20" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="modal-prod-grid-2" style={{ marginBottom: 12 }}>
             <div>
               <label style={labelStyle}>Altitud (msnm)</label>
               <input type="number" value={form.altitudMsnm} onChange={e => set('altitudMsnm', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="1800" />
@@ -384,156 +525,286 @@ const ModalProducto: React.FC<{
             </div>
           </div>
 
-          <label style={labelStyle}>Notas de sabor (separadas por coma)</label>
-          <input value={form.notasSabor} onChange={e => set('notasSabor', e.target.value)} style={inputStyle} placeholder="chocolate negro, avellana, mandarina" />
+          <label style={labelStyle}>Notas de sabor</label>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {form.notasSabor.split(',').map(s => s.trim()).filter(Boolean).map((nota, i) => (
+                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(201,110,75,0.12)', border: '1px solid rgba(201,110,75,0.25)', fontSize: 12, color: 'var(--tw-terra)' }}>
+                  {nota}
+                  <button type="button" onClick={() => {
+                    const notas = form.notasSabor.split(',').map(s => s.trim()).filter(Boolean)
+                    notas.splice(i, 1)
+                    set('notasSabor', notas.join(', '))
+                  }} style={{ background: 'none', border: 'none', color: 'var(--tw-terra)', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1, opacity: 0.7 }}>×</button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={notaInput}
+                onChange={e => setNotaInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault()
+                    const nueva = notaInput.trim()
+                    if (!nueva) return
+                    const notas = form.notasSabor.split(',').map(s => s.trim()).filter(Boolean)
+                    if (!notas.includes(nueva)) set('notasSabor', [...notas, nueva].join(', '))
+                    setNotaInput('')
+                  }
+                }}
+                style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
+                placeholder="chocolate negro, Enter para agregar"
+              />
+              <button type="button" onClick={() => {
+                const nueva = notaInput.trim()
+                if (!nueva) return
+                const notas = form.notasSabor.split(',').map(s => s.trim()).filter(Boolean)
+                if (!notas.includes(nueva)) set('notasSabor', [...notas, nueva].join(', '))
+                setNotaInput('')
+              }} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 13, whiteSpace: 'nowrap' }}>
+                + Agregar
+              </button>
+            </div>
+          </div>
 
           <label style={labelStyle}>Descripción breve</label>
           <textarea value={form.descripcion} onChange={e => set('descripcion', e.target.value)} maxLength={200} style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }} placeholder="Perfil del café, origen, proceso..." />
-
-          {/* Precio */}
-          <div style={{ background: '#0d0d0d', border: `1px solid ${C.border}`, borderRadius: 12, padding: '18px 20px', marginBottom: 16 }}>
-            <p style={{ margin: '0 0 14px', fontSize: 11, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Precio de venta</p>
-            <div className="modal-prod-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={labelStyle}>Precio /kg (S/) *</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: C.textSub, pointerEvents: 'none' }}>S/</span>
-                  <input type="number" min="1" step="0.5" value={form.precioBaseKgSoles} onChange={e => set('precioBaseKgSoles', e.target.value)} style={{ ...inputStyle, marginBottom: 0, paddingLeft: 28 }} placeholder="66" />
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Stock disponible (kg)</label>
-                <input type="number" value={form.kgDisponibles} onChange={e => set('kgDisponibles', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="100" />
-              </div>
-              <div>
-                <label style={labelStyle}>Puntaje ref. (SCA)</label>
-                <input type="number" value={form.puntajeReferencial} onChange={e => set('puntajeReferencial', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="85" min="0" max="100" />
-              </div>
-            </div>
-            {precioBaseSoles > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <p style={{ margin: '0 0 8px', fontSize: 11, color: C.textSub }}>Lo que recibe la cafetería:</p>
-                <div className="modal-prod-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
-                  {([['1 kg', precioBaseCentsPreview], ['5 kg', precioBaseCentsPreview * 5], ['10 kg', precioBaseCentsPreview * 10], ['25 kg', precioBaseCentsPreview * 25]] as [string, number][]).map(([fmt, val]) => (
-                    <div key={fmt} style={{ background: C.card, borderRadius: 8, padding: '8px', textAlign: 'center' }}>
-                      <p style={{ margin: 0, fontSize: 10, color: C.textSub }}>{fmt}</p>
-                      <p style={{ margin: '2px 0 0', fontSize: 14, fontWeight: 700, color: C.terra }}>S/ {(val/100).toFixed(0)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <label style={labelStyle}>Fotos del lote (hasta 5)</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8, marginBottom: 12 }}>
-            {form.fotos.map((url, idx) => (
-              <div key={idx} style={{ position: 'relative' }}>
-                <UploadFoto
-                  url={url}
-                  onUrl={newUrl => setForm(prev => { const fotos = [...prev.fotos]; fotos[idx] = newUrl; return { ...prev, fotos } })}
-                  label={idx === 0 ? 'Foto principal' : `Foto ${idx + 1}`}
-                  ruta={`productos/${caficultorId}`}
-                  placeholder={idx === 0 ? 'Principal' : `Foto ${idx + 1}`}
-                  aspectRatio="1/1"
-                />
-                {form.fotos.length > 1 && (
-                  <button
-                    onClick={() => setForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== idx) }))}
-                    style={{ position: 'absolute', top: 22, right: 4, width: 20, height: 20, borderRadius: '50%', border: 'none', background: C.red, color: '#fff', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}
-                  >×</button>
-                )}
-              </div>
-            ))}
-            {form.fotos.length < 5 && (
-              <div
-                onClick={() => setForm(prev => ({ ...prev, fotos: [...prev.fotos, ''] }))}
-                style={{ aspectRatio: '1/1', border: `2px dashed ${C.border}`, borderRadius: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 4, marginTop: 18 }}
-              >
-                <span style={{ fontSize: 22, color: C.textSub }}>+</span>
-                <span style={{ fontSize: 10, color: C.textSub }}>Agregar</span>
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: '14px 0', borderRadius: 10, border: `1px solid ${C.border}`, background: 'none', fontSize: 14, fontWeight: 600, color: C.textSub, cursor: 'pointer' }}>Cancelar</button>
-            <button onClick={guardar} disabled={guardando} style={{ flex: 2, padding: '14px 0', borderRadius: 10, border: 'none', background: C.terra, fontSize: 14, fontWeight: 700, color: C.white, cursor: guardando ? 'not-allowed' : 'pointer', opacity: guardando ? 0.7 : 1 }}>
-              {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Crear producto'}
-            </button>
-          </div>
         </div>
 
-        {/* ── Columna derecha: preview ── */}
-        <div className="modal-producto-preview">
+        {/* ── Columna derecha: precio, estado, reposición, guardar ── */}
+        <div className="modal-producto-sidebar">
           <div style={{ position: 'sticky', top: 76 }}>
-            <p style={{ margin: '0 0 14px', fontSize: 11, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-              Así lo verán las cafeterías
-            </p>
 
-            {/* Card producto */}
-            <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', marginBottom: 12 }}>
-              {form.fotos[0] && (
-                <div style={{ height: 150, background: '#0a0a0a', overflow: 'hidden' }}>
-                  <img src={form.fotos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            {/* Card: Precio y disponibilidad */}
+            <div style={{ background: 'var(--tw-card)', border: `1px solid var(--tw-border)`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+              <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Precio y disponibilidad</p>
+              {/* Toggle FIXED/NEGOTIABLE solo para café verde (PR-04) */}
+              {form.tipoCafe === 'verde' ? (
+                <div style={{ display: 'flex', gap: 0, borderRadius: 8, overflow: 'hidden', border: `1px solid var(--tw-border)`, marginBottom: 12 }}>
+                  {(['FIXED', 'NEGOTIABLE'] as const).map(mode => {
+                    const sel = form.pricingMode === mode
+                    return (
+                      <button key={mode} type="button"
+                        onClick={() => setForm(prev => ({
+                          ...prev,
+                          pricingMode: mode,
+                          formatosDisponibles: [],
+                        }))}
+                        style={{ flex: 1, padding: '7px 4px', fontSize: 10, fontWeight: 700, cursor: 'pointer', border: 'none', fontFamily: 'Montserrat, sans-serif', textAlign: 'center',
+                          background: sel ? (mode === 'FIXED' ? 'var(--tw-terra)' : 'var(--tw-sage)') : 'transparent',
+                          color: sel ? '#fff' : 'var(--tw-text-muted)',
+                        }}
+                      >{mode === 'FIXED' ? 'Precio fijo' : 'Negociable'}</button>
+                    )
+                  })}
+                </div>
+              ) : null}
+              {form.pricingMode === 'NEGOTIABLE' && (
+                <div style={{ background: 'rgba(201,110,75,0.06)', border: '1px solid rgba(201,110,75,0.2)', borderRadius: 7, padding: '7px 10px', marginBottom: 12 }}>
+                  <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.5 }}>
+                    Solo compradores B2B pueden hacer ofertas. El precio es de referencia.
+                  </p>
                 </div>
               )}
-              <div style={{ padding: '16px 18px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ padding: '3px 9px', borderRadius: 5, background: procesoColor + '22', color: procesoColor, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {PROCESO_LABELS[form.proceso] ?? form.proceso}
-                  </span>
-                  {form.puntajeReferencial && (
-                    <span style={{ fontSize: 11, color: C.sage }}>~{form.puntajeReferencial} pts</span>
+
+              {/* Presentaciones disponibles — solo para tostado/molido */}
+              {form.tipoCafe !== 'verde' && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>
+                    {form.pricingMode === 'NEGOTIABLE' ? 'Volúmenes disponibles' : 'Presentaciones disponibles'}
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {(form.pricingMode === 'NEGOTIABLE' ? FORMATOS_NEGOTIABLE : FORMATOS_FIXED).map(fmt => {
+                      const sel = form.formatosDisponibles.includes(fmt as FormatoONE)
+                      return (
+                        <button key={fmt} type="button"
+                          onClick={() => setForm(prev => ({
+                            ...prev,
+                            formatosDisponibles: sel
+                              ? prev.formatosDisponibles.filter(f => f !== fmt)
+                              : [...prev.formatosDisponibles, fmt as FormatoONE],
+                          }))}
+                          style={{
+                            padding: '5px 11px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            border: `1px solid ${sel ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
+                            background: sel ? 'rgba(201,110,75,0.15)' : 'transparent',
+                            color: sel ? 'var(--tw-terra)' : 'var(--tw-text-muted)',
+                            fontFamily: 'Montserrat, sans-serif',
+                          }}
+                        >{FORMATO_LABELS[fmt] ?? fmt}</button>
+                      )
+                    })}
+                  </div>
+                  {/* Formato personalizado adicional */}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                    <input
+                      type="text"
+                      placeholder="Otro formato, ej. 2kg, 1 saco 69kg…"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const val = (e.target as HTMLInputElement).value.trim()
+                          if (val && !form.formatosDisponibles.includes(val as FormatoONE)) {
+                            setForm(prev => ({ ...prev, formatosDisponibles: [...prev.formatosDisponibles, val as FormatoONE] }));
+                            (e.target as HTMLInputElement).value = ''
+                          }
+                        }
+                      }}
+                      style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
+                    />
+                    <button type="button"
+                      onClick={e => {
+                        const input = e.currentTarget.previousSibling as HTMLInputElement
+                        const val = input.value.trim()
+                        if (val && !form.formatosDisponibles.includes(val as FormatoONE)) {
+                          setForm(prev => ({ ...prev, formatosDisponibles: [...prev.formatosDisponibles, val as FormatoONE] }))
+                          input.value = ''
+                        }
+                      }}
+                      style={{ padding: '0 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'var(--tw-card)', color: 'var(--tw-cream)', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >+ Agregar</button>
+                  </div>
+                  {/* Chips de formatos personalizados agregados */}
+                  {form.formatosDisponibles.some(f => ![...FORMATOS_FIXED, ...FORMATOS_NEGOTIABLE].includes(f)) && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                      {form.formatosDisponibles
+                        .filter(f => ![...FORMATOS_FIXED, ...FORMATOS_NEGOTIABLE].includes(f))
+                        .map(fmt => (
+                          <span key={fmt} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                            padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+                            border: '1px solid var(--tw-terra)',
+                            background: 'rgba(201,110,75,0.15)',
+                            color: 'var(--tw-terra)',
+                          }}>
+                            {fmt}
+                            <button type="button"
+                              onClick={() => setForm(prev => ({ ...prev, formatosDisponibles: prev.formatosDisponibles.filter(f => f !== fmt) }))}
+                              style={{ background: 'none', border: 'none', color: 'var(--tw-terra)', cursor: 'pointer', fontSize: 13, padding: 0, lineHeight: 1 }}
+                            >✕</button>
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                  {form.formatosDisponibles.length === 0 && (
+                    <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--tw-terra)' }}>Selecciona al menos una presentación</p>
                   )}
                 </div>
-                <p style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1.2 }}>
-                  {form.nombre || 'Nombre del café'}
-                </p>
-                <p style={{ margin: '0 0 8px', fontSize: 12, color: C.textSub }}>
-                  {[form.variedad, form.cosecha].filter(Boolean).join(' · ') || 'Variedad · Cosecha'}
-                  {form.altitudMsnm ? ` · ${form.altitudMsnm} msnm` : ''}
-                </p>
-                {notasArray.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
-                    {notasArray.map(n => (
-                      <span key={n} style={{ padding: '2px 8px', borderRadius: 20, background: '#1a1a1a', color: C.creamMuted, fontSize: 11 }}>{n}</span>
-                    ))}
-                  </div>
-                )}
-                {form.descripcion && (
-                  <p style={{ margin: '0 0 12px', fontSize: 12, color: C.textSub, fontStyle: 'italic', lineHeight: 1.6 }}>
-                    "{form.descripcion}"
+              )}
+
+              <label style={labelStyle}>Precio por kg (S/)</label>
+              <div style={{ position: 'relative', marginBottom: 10 }}>
+                <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--tw-text-muted)', pointerEvents: 'none' }}>S/</span>
+                <input type="number" min="1" step="0.5" value={form.precioBaseKgSoles} onChange={e => set('precioBaseKgSoles', e.target.value)} style={{ ...inputStyle, marginBottom: 0, paddingLeft: 28 }} placeholder="66" />
+              </div>
+              <label style={labelStyle}>Stock disponible (kg)</label>
+              <input type="number" value={form.kgDisponibles} onChange={e => set('kgDisponibles', e.target.value)} style={{ ...inputStyle, marginBottom: 10 }} placeholder="100" />
+              <label style={labelStyle}>Puntaje ref. (SCA)</label>
+              <input type="number" value={form.puntajeReferencial} onChange={e => set('puntajeReferencial', e.target.value)} style={{ ...inputStyle, marginBottom: 0 }} placeholder="85" min="0" max="100" />
+              {precioBaseSoles > 0 && (parseInt(form.kgDisponibles) || 0) > 0 && (
+                <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(143,175,138,0.08)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 7 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: 10, color: 'var(--tw-text-muted)' }}>Valor del lote estimado</p>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--tw-sage)' }}>
+                    S/ {((parseInt(form.kgDisponibles) || 0) * precioBaseSoles).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </p>
-                )}
-                {precioBaseSoles > 0 && (
-                  <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
-                    <p style={{ margin: '0 0 2px', fontSize: 11, color: C.textSub }}>Desde</p>
-                    <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.terra }}>
-                      S/ {precioBaseSoles.toFixed(0)} <span style={{ fontSize: 12, color: C.textSub, fontWeight: 400 }}>/ kg</span>
-                    </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 9, color: 'var(--tw-text-muted)' }}>{form.kgDisponibles} kg × S/ {precioBaseSoles.toFixed(2)}</p>
+                </div>
+              )}
+              {precioBaseSoles > 0 && form.formatosDisponibles.length > 0 && form.tipoCafe !== 'verde' && (
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ margin: '0 0 6px', fontSize: 10, color: 'var(--tw-text-muted)' }}>Precios por formato:</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+                    {form.formatosDisponibles.map(fmt => {
+                      const kgs: Record<string, number> = { '250g': 0.25, '500g': 0.5, '1kg': 1, '5kg': 5, '10kg': 10, '20kg': 20, '1quintal': 46, '1saco': 60 }
+                      const val = Math.round(precioBaseSoles * (kgs[fmt] ?? 1) * 100)
+                      return (
+                        <div key={fmt} style={{ background: 'var(--tw-bg)', borderRadius: 8, padding: '6px 4px', textAlign: 'center', border: `1px solid var(--tw-border)` }}>
+                          <p style={{ margin: 0, fontSize: 9, color: 'var(--tw-text-muted)' }}>{FORMATO_LABELS[fmt] ?? fmt}</p>
+                          <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 700, color: 'var(--tw-terra)' }}>S/ {(val/100).toFixed(0)}</p>
+                        </div>
+                      )
+                    })}
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+
+            {/* Card: Estado del lote */}
+            <div style={{ background: 'var(--tw-card)', border: `1px solid var(--tw-border)`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+              <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Estado del lote</p>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {(['activo', 'pausado', 'agotado'] as const).map(e => {
+                  const sel = estadoProducto === e
+                  const col = e === 'activo' ? 'var(--tw-sage)' : e === 'pausado' ? '#f59e0b' : '#ef4444'
+                  const labels = { activo: 'Activo', pausado: 'Pausado', agotado: 'Agotado' }
+                  return (
+                    <button key={e} type="button" onClick={() => setEstadoProducto(e)} style={{
+                      flex: 1, padding: '7px 0', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', textAlign: 'center',
+                      border: `1px solid ${sel ? col : 'var(--tw-border)'}`,
+                      background: sel ? col + '22' : 'transparent',
+                      color: sel ? col : 'var(--tw-text-muted)',
+                      fontFamily: 'Montserrat, sans-serif',
+                    }}>{labels[e]}</button>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Stats del caficultor */}
-            <div style={{ background: C.card, borderRadius: 12, border: `1px solid ${C.border}`, padding: '14px 16px' }}>
-              <p style={{ margin: '0 0 12px', fontSize: 11, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tu ventaja competitiva</p>
-              {[
-                { icon: '📍', texto: 'Trazabilidad verificada — el negocio sabe exactamente de dónde viene el café' },
-                { icon: '💰', texto: 'Precio justo directo — sin intermediarios, más margen para ti' },
-              ].map(b => (
-                <div key={b.icon} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: 16, flexShrink: 0 }}>{b.icon}</span>
-                  <p style={{ margin: 0, fontSize: 11, color: C.textSub, lineHeight: 1.5 }}>{b.texto}</p>
+            {/* Card: Reposición programada */}
+            <div style={{ background: 'var(--tw-card)', border: `1px solid var(--tw-border)`, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Reposición programada</p>
+                <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--tw-sage)', background: 'rgba(143,175,138,0.12)', border: '1px solid rgba(143,175,138,0.25)', padding: '1px 6px', borderRadius: 4, whiteSpace: 'nowrap' }}>Solo para negocios</span>
+              </div>
+              <p style={{ margin: '0 0 10px', fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.5 }}>
+                Permite que negocios compradores reciban este lote automáticamente en un ciclo fijo.
+              </p>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 10 }}>
+                <input type="checkbox" checked={form.reposicionActiva}
+                  onChange={e => setForm(prev => ({ ...prev, reposicionActiva: e.target.checked }))}
+                  style={{ width: 14, height: 14, accentColor: 'var(--tw-sage)', cursor: 'pointer' }} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tw-text)' }}>Acepto pedidos de reposición</span>
+              </label>
+              {form.reposicionActiva && (
+                <div>
+                  <label style={labelStyle}>Stock mínimo reservado (kg)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <input type="number" min="1" value={form.kgMinReserva}
+                      onChange={e => setForm(prev => ({ ...prev, kgMinReserva: e.target.value }))}
+                      style={{ ...inputStyle, marginBottom: 0, width: 70 }} placeholder="10" />
+                    <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>kg reservados para reposiciones activas</span>
+                  </div>
+                  <label style={labelStyle}>Frecuencias permitidas</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
+                    {([15, 30, 45, 60] as const).map(dias => {
+                      const sel = form.frecuenciaReposicion === dias
+                      return (
+                        <button key={dias} type="button"
+                          onClick={() => setForm(prev => ({ ...prev, frecuenciaReposicion: sel ? null : dias }))}
+                          style={{ padding: '4px 9px', borderRadius: 20, fontSize: 10, fontWeight: 600, cursor: 'pointer', border: `1px solid ${sel ? 'var(--tw-sage)' : 'var(--tw-border)'}`, background: sel ? 'var(--tw-sage)22' : 'transparent', color: sel ? 'var(--tw-sage)' : 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}
+                        >Cada {dias} días</button>
+                      )
+                    })}
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '7px 9px', background: 'rgba(143,175,138,0.06)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 7 }}>
+                    <input type="checkbox" checked={form.prioridadTueste}
+                      onChange={e => setForm(prev => ({ ...prev, prioridadTueste: e.target.checked }))}
+                      style={{ width: 12, height: 12, accentColor: 'var(--tw-sage)', cursor: 'pointer' }} />
+                    <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>Prioridad de tueste — reservo este lote antes que pedidos nuevos</span>
+                  </label>
                 </div>
-              ))}
+              )}
             </div>
 
-            <p style={{ margin: '12px 0 0', fontSize: 11, color: C.muted, textAlign: 'center' }}>
-              El preview se actualiza en tiempo real
+            {/* Guardar */}
+            <button onClick={guardar} disabled={guardando} style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', fontSize: 13, fontWeight: 800, color: '#fff', cursor: guardando ? 'not-allowed' : 'pointer', opacity: guardando ? 0.7 : 1, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.03em' }}>
+              {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Publicar lote'}
+            </button>
+            <p style={{ margin: '8px 0 10px', fontSize: 10, color: 'var(--tw-text-muted)', textAlign: 'center' }}>
+              El lote será visible en el catálogo inmediatamente
             </p>
+            <button onClick={onClose} style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: `1px solid var(--tw-border)`, background: 'none', fontSize: 12, fontWeight: 600, color: 'var(--tw-text-muted)', cursor: 'pointer' }}>Cancelar</button>
           </div>
         </div>
 
@@ -584,36 +855,34 @@ const FormEditarPerfil: React.FC<{
     }
   }
 
-  const C_local = { border: '#2a2a2a', bg: '#0f0f0f', cream: '#f2e0cc', textSub: '#888888', terra: '#c96e4b', white: '#ffffff', card: '#141414' }
-
   return (
-    <div style={{ background: C_local.card, borderRadius: 16, padding: '24px', border: `1px solid ${C_local.border}`, maxWidth: 560 }}>
+    <div style={{ background: 'var(--tw-card)', borderRadius: 16, padding: '24px', border: `1px solid var(--tw-border)`, maxWidth: 560, width: '100%', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontSize: 20, fontFamily: 'Cormorant Garamond, serif', color: C_local.cream, fontWeight: 700 }}>Editar perfil</h2>
-        <button onClick={onCancel} style={{ background: 'none', border: 'none', color: C_local.textSub, fontSize: 20, cursor: 'pointer' }}>×</button>
+        <h2 style={{ margin: 0, fontSize: 20, fontFamily: 'Cormorant Garamond, serif', color: 'var(--tw-text)', fontWeight: 700 }}>Editar perfil</h2>
+        <button onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', fontSize: 20, cursor: 'pointer' }}>×</button>
       </div>
 
-      <label style={{ fontSize: 11, color: C_local.textSub, display: 'block', marginBottom: 4 }}>Nombre completo *</label>
+      <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Nombre completo *</label>
       <input value={nombre} onChange={e => setNombre(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} placeholder="Segundo Rojas Herrera" maxLength={80} />
 
-      <div className="perfil-caf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div className="perfil-caf-grid-2" style={{ display: 'grid', gap: 12, marginBottom: 12 }}>
         <div>
-          <label style={{ fontSize: 11, color: C_local.textSub, display: 'block', marginBottom: 4 }}>Región</label>
+          <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Región</label>
           <select value={region} onChange={e => setRegion(e.target.value)} style={{ ...inputStyle, cursor: 'pointer', appearance: 'none' as const }}>
             <option value="">Seleccionar...</option>
             {REGIONES_PERU.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, color: C_local.textSub, display: 'block', marginBottom: 4 }}>Distrito / localidad</label>
+          <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Distrito / localidad</label>
           <input value={distrito} onChange={e => setDistrito(e.target.value)} style={inputStyle} placeholder="San Ignacio" maxLength={60} />
         </div>
       </div>
 
-      <label style={{ fontSize: 11, color: C_local.textSub, display: 'block', marginBottom: 4 }}>Altitud (msnm)</label>
+      <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Altitud (msnm)</label>
       <input value={altitud} onChange={e => setAltitud(e.target.value)} type="number" min="500" max="3500" style={{ ...inputStyle, marginBottom: 12 }} placeholder="1800" />
 
-      <label style={{ fontSize: 11, color: C_local.textSub, display: 'block', marginBottom: 4 }}>Historia / descripción</label>
+      <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Historia / descripción</label>
       <textarea
         value={historia}
         onChange={e => setHistoria(e.target.value)}
@@ -632,10 +901,10 @@ const FormEditarPerfil: React.FC<{
       />
 
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={onCancel} style={{ flex: 1, padding: '13px 0', borderRadius: 10, border: `1px solid ${C_local.border}`, background: 'none', fontSize: 14, fontWeight: 600, color: C_local.textSub, cursor: 'pointer' }}>
+        <button onClick={onCancel} style={{ flex: 1, padding: '13px 0', borderRadius: 10, border: `1px solid var(--tw-border)`, background: 'none', fontSize: 14, fontWeight: 600, color: 'var(--tw-text-muted)', cursor: 'pointer' }}>
           Cancelar
         </button>
-        <button onClick={guardar} disabled={guardando} style={{ flex: 2, padding: '13px 0', borderRadius: 10, border: 'none', background: C_local.terra, fontSize: 14, fontWeight: 700, color: C_local.white, cursor: guardando ? 'not-allowed' : 'pointer', opacity: guardando ? 0.7 : 1 }}>
+        <button onClick={guardar} disabled={guardando} style={{ flex: 2, padding: '13px 0', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', fontSize: 14, fontWeight: 700, color: '#fff', cursor: guardando ? 'not-allowed' : 'pointer', opacity: guardando ? 0.7 : 1 }}>
           {guardando ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </div>
@@ -645,68 +914,6 @@ const FormEditarPerfil: React.FC<{
 
 // ─── Stepper pedido (perspectiva caficultor) ──────────────────────────────────
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-const NAV_ITEMS: { id: Tab; emoji: string; label: string }[] = [
-  { id: 'productos',  emoji: '🌱', label: 'Mis cafés' },
-  { id: 'pedidos',    emoji: '📦', label: 'Mis Ventas' },
-  { id: 'historial',  emoji: '📋', label: 'Historial' },
-  { id: 'perfil',     emoji: '⚙️', label: 'Perfil' },
-]
-
-const Sidebar: React.FC<{ tab: Tab; onChange: (t: Tab) => void; nombre: string; caficultorId: string; onLogout: () => void; collapsed?: boolean; onToggle: () => void }> = ({ tab, onChange, nombre, caficultorId, onLogout, collapsed = false, onToggle }) => (
-  <nav style={{
-    position: 'fixed', left: 0, top: 0, bottom: 0, width: collapsed ? 56 : 220,
-    background: '#0d0d0d', borderRight: `1px solid ${C.border}`,
-    display: 'flex', flexDirection: 'column', zIndex: 100,
-    fontFamily: 'Montserrat, sans-serif', transition: 'width 0.2s ease', overflow: 'hidden',
-  }}>
-    {/* Toggle button */}
-    <div style={{ padding: collapsed ? '14px 0' : '14px 16px 10px', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end', borderBottom: collapsed ? `1px solid ${C.border}` : 'none' }}>
-      <button onClick={onToggle} style={{ background: 'transparent', border: `1px solid ${C.border}`, color: C.textSub, borderRadius: 6, padding: '5px 8px', cursor: 'pointer', fontSize: 14, lineHeight: 1 }}>
-        {collapsed ? '☰' : '←'}
-      </button>
-    </div>
-
-    {/* Header: caficultor info (only when expanded) */}
-    {!collapsed && (
-      <div style={{ padding: '10px 20px 16px', borderBottom: `1px solid ${C.border}` }}>
-        <p style={{ margin: '0 0 2px', fontSize: 10, color: C.textSub, letterSpacing: '0.1em', textTransform: 'uppercase' }}>TUNAY WASI</p>
-        <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif' }}>{nombre}</p>
-        <a href={`#/caficultor/${caficultorId}`} style={{ fontSize: 11, color: C.terra, textDecoration: 'none', fontWeight: 600 }}>Ver perfil →</a>
-      </div>
-    )}
-
-    {/* Nav items */}
-    <div style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
-      {NAV_ITEMS.map(item => (
-        <button key={item.id} onClick={() => onChange(item.id)} style={{
-          width: '100%', display: 'flex', alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          gap: collapsed ? 0 : 12,
-          padding: collapsed ? '11px 0' : '11px 20px',
-          background: tab === item.id ? C.terra + '18' : 'none',
-          border: 'none', borderLeft: tab === item.id ? `3px solid ${C.terra}` : '3px solid transparent',
-          cursor: 'pointer', transition: 'all 0.15s', textAlign: 'left',
-        }}>
-          <span style={{ fontSize: 16 }}>{item.emoji}</span>
-          {!collapsed && (
-            <span style={{ fontSize: 13, fontWeight: tab === item.id ? 700 : 500, color: tab === item.id ? C.cream : C.textSub }}>{item.label}</span>
-          )}
-        </button>
-      ))}
-    </div>
-
-    {/* Logout */}
-    <div style={{ padding: collapsed ? '16px 8px' : '16px 20px', borderTop: `1px solid ${C.border}` }}>
-      {collapsed ? (
-        <button onClick={onLogout} style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center' }} title="Cerrar sesión">⏻</button>
-      ) : (
-        <button onClick={onLogout} style={{ width: '100%', padding: '10px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 13, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Cerrar sesión</button>
-      )}
-    </div>
-  </nav>
-)
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
@@ -714,10 +921,12 @@ interface Props {
   usuarioId: string
   caficultorId: string
   isDemo?: boolean
+  tab?: Tab
+  onTabChange?: (t: Tab) => void
 }
 
-const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId, isDemo = false }) => {
-  const [tab, setTab] = useState<Tab>('productos')
+const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId, isDemo = false, tab: tabProp }) => {
+  const tab: Tab = tabProp ?? 'productos'
   const [caficultor, setCaficultor] = useState<CaficultorONE | null>(null)
   const [pedidos, setPedidos] = useState<PedidoONE[]>([])
   const [productos, setProductos] = useState<ProductoONE[]>([])
@@ -728,10 +937,25 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
   const [stockValor, setStockValor] = useState<Record<string, string>>({})
   const [modalProducto, setModalProducto] = useState<{ abierto: boolean; editar?: ProductoONE }>({ abierto: false })
   const [editandoPerfil, setEditandoPerfil] = useState(false)
-  const [perfilEnviosAbierto, setPerfilEnviosAbierto] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>(null)
+  const [notifState, setNotifState] = useState({
+    nuevoPedido: true, pagoVerificado: true, pedidoEntregado: true,
+    mensajeNegocio: true, valoracionRecibida: true, stockBajo: false,
+    whatsapp: true, email: true, push: true,
+  })
   const [toasts, setToasts] = useState<ToastMsg[]>([])
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [direcciones, setDirecciones] = useState<DireccionONE[]>([])
+  const [dirFormAbierto, setDirFormAbierto] = useState(false)
+  const [dirFormEditar, setDirFormEditar] = useState<DireccionONE | undefined>(undefined)
+  const [dirFormTipo, setDirFormTipo] = useState('finca')
+  const [dirFormNombre, setDirFormNombre] = useState('')
+  const [dirFormDir, setDirFormDir] = useState('')
+  const [dirFormDistrito, setDirFormDistrito] = useState('')
+  const [dirFormProvincia, setDirFormProvincia] = useState('')
+  const [dirFormDpto, setDirFormDpto] = useState('Lima')
+  const [dirFormRef, setDirFormRef] = useState('')
+  const [dirFormTel, setDirFormTel] = useState('')
+  const [dirFormPrincipal, setDirFormPrincipal] = useState(false)
 
   // Filtros productos
   const [filtroProceso, setFiltroProceso] = useState<string>('todos')
@@ -740,10 +964,27 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
   // Filtros pedidos
   const [filtroPedidoEstado, setFiltroPedidoEstado] = useState<'todos' | 'preparando' | 'en_agencia'>('todos')
+  const [filtroPeriodo, setFiltroPeriodo] = useState<'semana' | 'mes' | 'tres_meses'>('mes')
   const [busquedaPedido, setBusquedaPedido] = useState('')
+  const [pedidoSubTab, setPedidoSubTab] = useState<PedidoSubTab>('ofertas')
+
+  // Cotizaciones B2B
+  const [cotizaciones, setCotizaciones] = useState<CotizacionONE[]>([])
+  const [cotizLoading, setCotizLoading] = useState(false)
+  const [modalCotiz, setModalCotiz] = useState<CotizacionONE | null>(null)
+  const [cotizAccion, setCotizAccion] = useState<'aceptar' | 'rechazar' | 'contraofertar' | null>(null)
+  const [cotizForm, setCotizForm] = useState({ kg: '', precioCents: '', plazo: '10 días', mensaje: '' })
+  const [cotizEnviando, setCotizEnviando] = useState(false)
+
+  // Pagos caficultor
+  const [pagos, setPagos] = useState<PagoCaficultorONE[]>([])
+  const [pagosLoading, setPagosLoading] = useState(false)
 
   // Drawer detalle pedido
   const [pedidoDetalle, setPedidoDetalle] = useState<PedidoONE | null>(null)
+
+  // Ficha lote evidencias
+  const [fichaLoteId, setFichaLoteId] = useState<string | null>(null)
 
   // Modal despacho por agencia
   const [modalDespacho, setModalDespacho] = useState<{ pedidoId: string; agencia: string } | null>(null)
@@ -769,6 +1010,17 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
   // Estado de agencias seleccionadas
   const [logAgenciasActivas, setLogAgenciasActivas] = useState<Record<string, boolean>>({})
   const [logAgenciasDomicilio, setLogAgenciasDomicilio] = useState<Record<string, boolean>>({})
+  const [logAgenciasDias, setLogAgenciasDias] = useState<Record<string, { min: string; max: string }>>({})
+  const [logAgenciasExtra, setLogAgenciasExtra] = useState<{ id: string; nombre: string }[]>([])
+  const [logAgenciaInputVal, setLogAgenciaInputVal] = useState('')
+  // Wizard: 2 pasos — A (Origen + agencias), B (Reglas gratis)
+  const [logConfigStep, setLogConfigStep] = useState<0 | 1>(0)
+  const [logGratisAgencia, setLogGratisAgencia] = useState(true)
+  const [logGratisAgenciaKg, setLogGratisAgenciaKg] = useState('5')
+  const [logGratisDomicilio, setLogGratisDomicilio] = useState(true)
+  const [logGratisDomicilioKg, setLogGratisDomicilioKg] = useState('15')
+  const [logTarifaAgencia, setLogTarifaAgencia] = useState('15')
+  const [logTarifaDomicilio, setLogTarifaDomicilio] = useState('25')
 
   function toast(text: string, tipo: 'ok' | 'error' | 'info' = 'ok') {
     const id = Date.now()
@@ -801,9 +1053,60 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
     cargar()
   }, [caficultorId, isDemo])
 
+  // Cargar cotizaciones cuando el usuario navega a la tab de pedidos
+  useEffect(() => {
+    if (tab !== 'pedidos' || isDemo) return
+    setCotizLoading(true)
+    fetchCotizacionesCaficultor(caficultorId)
+      .then(data => setCotizaciones(data))
+      .catch(() => toast('No se pudieron cargar las ofertas', 'error'))
+      .finally(() => setCotizLoading(false))
+  }, [tab, caficultorId, isDemo]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (tab !== 'pagos' || isDemo) return
+    setPagosLoading(true)
+    fetchPagosByCaficultor(caficultorId)
+      .then(data => setPagos(data))
+      .catch(() => toast('No se pudieron cargar los pagos', 'error'))
+      .finally(() => setPagosLoading(false))
+  }, [tab, caficultorId, isDemo]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleResponderCotizacion() {
+    if (!modalCotiz || !cotizAccion) return
+    setCotizEnviando(true)
+    try {
+      if (cotizAccion === 'contraofertar') {
+        const kg = parseFloat(cotizForm.kg)
+        const precio = parseFloat(cotizForm.precioCents)
+        if (!kg || !precio) { toast('Ingresa kg y precio', 'error'); return }
+        await responderCotizacion({
+          cotizacionId: modalCotiz.id,
+          autorRol: 'seller',
+          accion: 'contraofertar',
+          kgSolicitados: kg,
+          precioOfertadoCents: Math.round(precio * 100),
+          plazoEntrega: cotizForm.plazo,
+          mensaje: cotizForm.mensaje,
+        })
+      } else {
+        await responderCotizacion({ cotizacionId: modalCotiz.id, autorRol: 'seller', accion: cotizAccion })
+      }
+      toast(cotizAccion === 'aceptar' ? 'Oferta aceptada' : cotizAccion === 'rechazar' ? 'Oferta rechazada' : 'Contraoferta enviada', 'ok')
+      setModalCotiz(null)
+      setCotizAccion(null)
+      const updated = await fetchCotizacionesCaficultor(caficultorId)
+      setCotizaciones(updated)
+    } catch {
+      toast('Error al responder', 'error')
+    } finally {
+      setCotizEnviando(false)
+    }
+  }
+
   const productoIds = new Set(productos.map(p => p.id))
 
-  // Cargar ubigeos y logística al entrar al tab Perfil
+  // Cargar ubigeos y logística al entrar al tab Perfil o Settings (sub-tab Envío)
   useEffect(() => {
     if (tab !== 'perfil') return
     if (ubigeos.length > 0) return // ya cargado
@@ -821,6 +1124,20 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         setLogUbigeoSel(log.ubigeo)
         setLogAgenciasActivas(log.agenciasActivas ?? {})
         setLogAgenciasDomicilio(log.agenciasPermiteDomicilio ?? {})
+        // Pre-llenar días por agencia desde agenciasDetalle
+        if (log.agenciasDetalle) {
+          const dias: Record<string, { min: string; max: string }> = {}
+          for (const [id, det] of Object.entries(log.agenciasDetalle)) {
+            dias[id] = { min: String(det.diasMin ?? '2'), max: String(det.diasMax ?? '4') }
+          }
+          setLogAgenciasDias(dias)
+        }
+        if (log.gratisAgenciaActivo !== undefined) setLogGratisAgencia(log.gratisAgenciaActivo)
+        if (log.gratisAgenciaKg !== undefined) setLogGratisAgenciaKg(String(log.gratisAgenciaKg))
+        if (log.gratisDomicilioActivo !== undefined) setLogGratisDomicilio(log.gratisDomicilioActivo)
+        if (log.gratisDomicilioKg !== undefined) setLogGratisDomicilioKg(String(log.gratisDomicilioKg))
+        if (log.tarifaFijaAgenciaSoles !== undefined) setLogTarifaAgencia(String(log.tarifaFijaAgenciaSoles))
+        if (log.tarifaFijaDomicilioSoles !== undefined) setLogTarifaDomicilio(String(log.tarifaFijaDomicilioSoles))
       }
     }).catch(() => toast('Error al cargar datos de logística', 'error'))
       .finally(() => setLogisticaCargando(false))
@@ -829,9 +1146,31 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
     return pedido.items.filter(i => productoIds.has(i.productoId) || i.caficultorId === caficultorId)
   }
 
-  const paraDespachar = pedidos.filter(p => p.pagoStatus === 'verificado' && p.logisticaStatus === 'preparando')
-  const enCamino = pedidos.filter(p => p.logisticaStatus === 'en_agencia')
-  const entregados = pedidos.filter(p => p.logisticaStatus === 'entregado')
+  // Estado propio del caficultor en un pedido
+  // Nuevo modelo: pedido es solo del caficultor, usa campos raíz
+  // Legacy: si tiene enviosCaficultor, buscar por caficultorId dentro del mapa
+  function miStatusEnPedido(p: PedidoONE): LogisticaStatusONE {
+    // Nuevo modelo: pedido pertenece solo a este caficultor
+    if (p.caficultorId === caficultorId) return p.logisticaStatus
+    // Legacy: multi-caficultor con enviosCaficultor
+    if (p.enviosCaficultor?.[caficultorId]) return p.enviosCaficultor[caficultorId].logisticaStatus
+    // Fallback: estado global del pedido
+    return p.logisticaStatus
+  }
+
+  function miCodigoEnPedido(p: PedidoONE): string | undefined {
+    // Nuevo modelo: campos raíz
+    if (p.caficultorId === caficultorId) return p.codigoAgencia
+    // Legacy: multi-caficultor con enviosCaficultor
+    if (p.enviosCaficultor?.[caficultorId]) return p.enviosCaficultor[caficultorId].codigoAgencia
+    // Fallback: si no hay enviosCaficultor, usar codigoAgencia raíz
+    if (Object.keys(p.enviosCaficultor ?? {}).length === 0) return p.codigoAgencia
+    return undefined
+  }
+
+  const paraDespachar = pedidos.filter(p => p.pagoStatus === 'verificado' && miStatusEnPedido(p) === 'preparando')
+  const enCamino = pedidos.filter(p => miStatusEnPedido(p) === 'en_agencia')
+  const entregados = pedidos.filter(p => miStatusEnPedido(p) === 'entregado')
 
   const scorePromedio = calificaciones.length > 0
     ? Math.round(calificaciones.reduce((s, c) => s + c.estrellas, 0) / calificaciones.length * 10) / 10
@@ -851,11 +1190,33 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
     }
     setAccionando(modalDespacho.pedidoId)
     try {
-      const data = { codigoAgencia: codigoAgencia.trim(), fotoDespacho: fotoDespacho.trim() || undefined }
+      const pedidoActual = pedidos.find(p => p.id === modalDespacho.pedidoId)
+      // Nuevo modelo: pedido pertenece solo a este caficultor — no pasar caficultorId en data
+      const esNuevoModelo = pedidoActual?.caficultorId === caficultorId
+      const data = esNuevoModelo
+        ? { codigoAgencia: codigoAgencia.trim(), fotoDespacho: fotoDespacho.trim() || undefined }
+        : { codigoAgencia: codigoAgencia.trim(), fotoDespacho: fotoDespacho.trim() || undefined, caficultorId }
       if (isDemo) await demoDespacharAgencia(modalDespacho.pedidoId, data)
       else await despacharAgencia(modalDespacho.pedidoId, data)
       setPedidos(prev => prev.map(p => p.id === modalDespacho.pedidoId
-        ? { ...p, logisticaStatus: 'en_agencia', codigoAgencia: codigoAgencia.trim(), fotoDespacho: fotoDespacho.trim() || undefined }
+        ? {
+            ...p,
+            logisticaStatus: 'en_agencia',
+            codigoAgencia: codigoAgencia.trim(),
+            fotoDespacho: fotoDespacho.trim() || undefined,
+            // Legacy: también actualizar enviosCaficultor si era modelo antiguo
+            ...(esNuevoModelo ? {} : {
+              enviosCaficultor: {
+                ...(p.enviosCaficultor ?? {}),
+                [caficultorId]: {
+                  codigoAgencia: codigoAgencia.trim(),
+                  agencia: modalDespacho.agencia as any,
+                  fotoDespacho: fotoDespacho.trim() || undefined,
+                  logisticaStatus: 'en_agencia',
+                }
+              }
+            })
+          }
         : p
       ))
       setModalDespacho(null)
@@ -895,10 +1256,10 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: `3px solid ${C.terra}`, borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 0.8s linear infinite' }} />
-          <p style={{ color: C.textSub, fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>Cargando...</p>
+          <div style={{ width: 40, height: 40, border: `3px solid var(--tw-terra)`, borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 0.8s linear infinite' }} />
+          <p style={{ color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>Cargando...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
@@ -909,54 +1270,293 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
   // ─── Tabs ─────────────────────────────────────────────────────────────────
 
+  function renderOfertasCaf() {
+    const cardBase: React.CSSProperties = {
+      background: 'var(--tw-card)', borderRadius: 12, padding: '14px 16px',
+      border: `1px solid var(--tw-border)`, marginBottom: 10,
+    }
+    const btnPrimary: React.CSSProperties = {
+      padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)',
+      color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+    }
+    const btnWarn: React.CSSProperties = {
+      padding: '7px 14px', borderRadius: 8, border: `1px solid var(--tw-terra)`,
+      background: 'none', color: 'var(--tw-terra)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+    }
+    const btnGhost: React.CSSProperties = {
+      padding: '7px 10px', borderRadius: 8, border: `1px solid var(--tw-border)`,
+      background: 'none', color: 'var(--tw-text-muted)', fontSize: 11, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+    }
+
+    if (cotizLoading) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
+          <div style={{ width: 28, height: 28, border: `2px solid var(--tw-terra)`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      )
+    }
+
+    const activas = cotizaciones.filter(c => c.estado === 'ENVIADA' || c.estado === 'RESPONDIDA' || c.estado === 'CONTRAOFERTA')
+
+    if (activas.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '40px 16px' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>🤝</div>
+          <p style={{ fontSize: 13, color: 'var(--tw-text-muted)', margin: 0 }}>No tienes ofertas de cotización pendientes</p>
+        </div>
+      )
+    }
+
+    function horasRestantes(expiraAt?: string): { texto: string; urgente: boolean } {
+      if (!expiraAt) return { texto: '', urgente: false }
+      const diff = new Date(expiraAt).getTime() - Date.now()
+      if (diff <= 0) return { texto: 'Expirada', urgente: true }
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const urgente = h < 8
+      return { texto: `${h}h ${m}m`, urgente }
+    }
+
+    return (
+      <div>
+        {activas.map(cotiz => {
+          const ultimaRonda = cotiz.rondas[cotiz.rondas.length - 1]
+          const precioKg = ultimaRonda ? (ultimaRonda.precioOfertadoCents / 100).toFixed(2) : '—'
+          const totalS = ultimaRonda ? ((ultimaRonda.precioOfertadoCents * ultimaRonda.kgSolicitados) / 100).toFixed(2) : '—'
+          const { texto: tiempoTexto, urgente } = horasRestantes(cotiz.expiraAt)
+          const esContraoferta = cotiz.estado === 'CONTRAOFERTA'
+          const esPendientePropia = cotiz.estado === 'RESPONDIDA'
+
+          return (
+            <div key={cotiz.id} style={{ ...cardBase, borderLeft: esContraoferta ? '3px solid #f59e0b' : urgente ? '3px solid var(--tw-terra)' : `3px solid var(--tw-border)` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(201,110,75,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0 }}>☕</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)' }}>{cotiz.negocioNombre}{cotiz.negocioRazonSocial ? ` · ${cotiz.negocioRazonSocial}` : ''}</div>
+                  <div style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>{cotiz.productoNombre}</div>
+                </div>
+                {esContraoferta
+                  ? <div style={{ fontSize: 9, color: '#f59e0b', fontWeight: 700 }}>⚡ Contraoferta recibida</div>
+                  : esPendientePropia
+                  ? <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', fontWeight: 400 }}>⏳ Esperando al comprador</div>
+                  : tiempoTexto
+                  ? <div style={{ fontSize: 9, color: urgente ? 'var(--tw-terra)' : 'var(--tw-text-muted)', fontWeight: urgente ? 700 : 400 }}>⏰ Vence en {tiempoTexto}</div>
+                  : null
+                }
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 14, fontWeight: 800, color: esContraoferta ? '#f59e0b' : 'var(--tw-terra)' }}>S/ {precioKg}/kg</span>
+                <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>· {ultimaRonda?.kgSolicitados ?? '—'} kg</span>
+                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: 'var(--tw-text)' }}>Total: S/ {totalS}</span>
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginBottom: 10 }}>
+                Ronda {cotiz.rondaActual} de 3 · {esContraoferta ? 'Contraoferta del comprador' : esPendientePropia ? 'Esperando respuesta del comprador' : 'Solicitud inicial'}
+                {ultimaRonda?.mensaje ? ` — "${ultimaRonda.mensaje}"` : ''}
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: urgente ? 8 : 0 }}>
+                {!esPendientePropia && <button style={btnPrimary} onClick={() => { setModalCotiz(cotiz); setCotizAccion('aceptar') }}>✅ Aceptar</button>}
+                {!esPendientePropia && cotiz.rondaActual < 3 && (
+                  <button style={btnWarn} onClick={() => { setModalCotiz(cotiz); setCotizAccion('contraofertar'); setCotizForm({ kg: String(ultimaRonda?.kgSolicitados ?? ''), precioCents: String((ultimaRonda?.precioOfertadoCents ?? 0) / 100), plazo: ultimaRonda?.plazoEntrega ?? '10 días', mensaje: '' }) }}>↩ Contraofertar</button>
+                )}
+                <button style={btnGhost} onClick={() => { setModalCotiz(cotiz); setCotizAccion('rechazar') }}>✕ Rechazar</button>
+              </div>
+
+              {urgente && (
+                <div style={{ padding: '6px 10px', background: 'rgba(201,110,75,.05)', border: `1px solid rgba(201,110,75,.12)`, borderRadius: 7, fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 0 }}>
+                  🔴 Si no respondes antes de que expire, la oferta caduca automáticamente
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* Modal de acción */}
+        {modalCotiz && cotizAccion && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 16 }}>
+            <div style={{ background: 'var(--tw-card)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, border: `1px solid var(--tw-border)` }}>
+              <h3 style={{ margin: '0 0 16px', fontFamily: 'Cormorant Garamond, serif', fontSize: 20, color: 'var(--tw-text)' }}>
+                {cotizAccion === 'aceptar' ? '✅ Aceptar oferta' : cotizAccion === 'rechazar' ? '✕ Rechazar oferta' : '↩ Contraofertar'}
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--tw-text-muted)', marginBottom: 16 }}>
+                {modalCotiz.productoNombre} · {modalCotiz.negocioNombre}
+              </p>
+
+              {cotizAccion === 'contraofertar' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Kg ofertados</label>
+                    <input type="number" value={cotizForm.kg} onChange={e => setCotizForm(f => ({ ...f, kg: e.target.value }))}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 13, fontFamily: 'Montserrat, sans-serif' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Precio por kg (S/)</label>
+                    <input type="number" step="0.01" value={cotizForm.precioCents} onChange={e => setCotizForm(f => ({ ...f, precioCents: e.target.value }))}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 13, fontFamily: 'Montserrat, sans-serif' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Plazo de entrega</label>
+                    <input type="text" value={cotizForm.plazo} onChange={e => setCotizForm(f => ({ ...f, plazo: e.target.value }))}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 13, fontFamily: 'Montserrat, sans-serif' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', marginBottom: 4 }}>Mensaje (opcional)</label>
+                    <textarea rows={2} value={cotizForm.mensaje} onChange={e => setCotizForm(f => ({ ...f, mensaje: e.target.value }))}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 13, fontFamily: 'Montserrat, sans-serif', resize: 'vertical' }} />
+                  </div>
+                </div>
+              )}
+
+              {cotizAccion === 'rechazar' && (
+                <p style={{ fontSize: 12, color: 'var(--tw-text-muted)', padding: '10px 12px', background: 'rgba(231,76,60,.06)', borderRadius: 8, border: '1px solid rgba(231,76,60,.15)' }}>
+                  El negocio será notificado del rechazo. Esta acción no se puede deshacer.
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                <button onClick={handleResponderCotizacion} disabled={cotizEnviando}
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: cotizAccion === 'rechazar' ? '#e74c3c' : 'var(--tw-terra)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: cotizEnviando ? 'default' : 'pointer', opacity: cotizEnviando ? 0.6 : 1, fontFamily: 'Montserrat, sans-serif' }}>
+                  {cotizEnviando ? 'Enviando...' : cotizAccion === 'aceptar' ? 'Confirmar aceptación' : cotizAccion === 'rechazar' ? 'Confirmar rechazo' : 'Enviar contraoferta'}
+                </button>
+                <button onClick={() => { setModalCotiz(null); setCotizAccion(null) }}
+                  style={{ padding: '10px 16px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderPedidosTab() {
+    const tabStyle = (active: boolean): React.CSSProperties => ({
+      padding: '8px 16px', borderRadius: 0, border: 'none',
+      borderBottom: active ? `2px solid var(--tw-terra)` : '2px solid transparent',
+      background: 'none', color: active ? 'var(--tw-text)' : 'var(--tw-text-muted)',
+      fontSize: 14, fontWeight: active ? 700 : 500, cursor: 'pointer',
+      fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap',
+    })
+    const SUB_TABS: { id: PedidoSubTab; label: string }[] = [
+      { id: 'ofertas',  label: '🤝 Ofertas' },
+      { id: 'activos',  label: '📦 Pedidos activos' },
+      { id: 'historial', label: '📋 Historial' },
+    ]
+    return (
+      <div>
+        <div className="settings-tabs">
+          {SUB_TABS.map(s => (
+            <button key={s.id} onClick={() => setPedidoSubTab(s.id)} style={{ ...tabStyle(pedidoSubTab === s.id), flexShrink: 0 }}>
+              {s.label}
+              {s.id === 'ofertas' && cotizaciones.filter(c => c.estado === 'ENVIADA' || c.estado === 'RESPONDIDA' || c.estado === 'CONTRAOFERTA').length > 0 && (
+                <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 10, background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700 }}>
+                  {cotizaciones.filter(c => c.estado === 'ENVIADA' || c.estado === 'RESPONDIDA' || c.estado === 'CONTRAOFERTA').length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        {pedidoSubTab === 'ofertas'   && renderOfertasCaf()}
+        {pedidoSubTab === 'activos'   && renderPedidos()}
+        {pedidoSubTab === 'historial' && renderHistorial()}
+      </div>
+    )
+  }
 
   function renderPedidos() {
-    const todos = pedidos.filter(p => p.logisticaStatus !== 'entregado')
+    const todos = pedidos.filter(p => miStatusEnPedido(p) !== 'entregado')
     const filtrados = todos.filter(p => {
-      if (filtroPedidoEstado === 'preparando' && p.logisticaStatus !== 'preparando') return false
-      if (filtroPedidoEstado === 'en_agencia' && p.logisticaStatus !== 'en_agencia') return false
+      if (filtroPedidoEstado === 'preparando' && miStatusEnPedido(p) !== 'preparando') return false
+      if (filtroPedidoEstado === 'en_agencia' && miStatusEnPedido(p) !== 'en_agencia') return false
       if (busquedaPedido && !p.nombreLocal.toLowerCase().includes(busquedaPedido.toLowerCase()) && !p.id.includes(busquedaPedido)) return false
       return true
     })
 
+    const porCobrarCents = todos.filter(p => p.pagoStatus !== 'verificado').reduce((s, p) => s + p.totalCents, 0)
+    const cobradoMesCents = entregados.reduce((s, p) => s + p.totalCents, 0)
+
+    const kpis = [
+      { label: 'Pedidos activos', value: String(todos.length) },
+      { label: 'Por cobrar', value: porCobrarCents > 0 ? `S/ ${(porCobrarCents / 100).toLocaleString('es-PE', { minimumFractionDigits: 0 })}` : 'S/ 0' },
+      { label: 'Cobrado este mes', value: cobradoMesCents > 0 ? `S/ ${(cobradoMesCents / 100).toLocaleString('es-PE', { minimumFractionDigits: 0 })}` : 'S/ 0' },
+      { label: 'Calificación', value: scorePromedio > 0 ? `${scorePromedio.toFixed(1)} ⭐` : '— ⭐' },
+    ]
+
     return (
       <div>
+        {/* ── 4 KPI cards ── */}
+        <div className="grid-kpis" style={{ marginBottom: 16 }}>
+          {kpis.map(({ label, value }) => (
+            <div key={label} style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '12px 14px', border: `1px solid var(--tw-border)` }}>
+              <p style={{ margin: '0 0 3px', fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 700, color: 'var(--tw-text)', lineHeight: 1 }}>{value}</p>
+              <p style={{ margin: 0, fontSize: 9, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Filtros de período ── */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+          {([
+            { key: 'semana', label: '📅 Esta semana' },
+            { key: 'mes',    label: 'Este mes' },
+            { key: 'tres_meses', label: 'Últimos 3 meses' },
+          ] as const).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFiltroPeriodo(key)}
+              style={{
+                padding: '5px 12px', borderRadius: 20, border: `1px solid ${filtroPeriodo === key ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
+                background: 'none', color: filtroPeriodo === key ? 'var(--tw-terra)' : 'var(--tw-text-muted)',
+                fontSize: 11, fontWeight: filtroPeriodo === key ? 700 : 400, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+              }}
+            >{label}</button>
+          ))}
+        </div>
+
+        {/* ── Filtros de estado ── */}
         <FilterBar>
           <SearchInput value={busquedaPedido} onChange={setBusquedaPedido} placeholder="Buscar cafetería o ID..." />
-          <FilterChip label="Todos" active={filtroPedidoEstado === 'todos'} onClick={() => setFiltroPedidoEstado('todos')} />
-          <FilterChip label={`Preparando (${paraDespachar.length})`} color={C.yellow} active={filtroPedidoEstado === 'preparando'} onClick={() => setFiltroPedidoEstado('preparando')} />
-          <FilterChip label={`En agencia (${enCamino.length})`} color={C.blue} active={filtroPedidoEstado === 'en_agencia'} onClick={() => setFiltroPedidoEstado('en_agencia')} />
+          <FilterChip label={`Todos (${todos.length})`} active={filtroPedidoEstado === 'todos'} onClick={() => setFiltroPedidoEstado('todos')} />
+          <FilterChip label={`Preparando (${paraDespachar.length})`} color={'#f39c12'} active={filtroPedidoEstado === 'preparando'} onClick={() => setFiltroPedidoEstado('preparando')} />
+          <FilterChip label={`En agencia (${enCamino.length})`} color={'#4a90c4'} active={filtroPedidoEstado === 'en_agencia'} onClick={() => setFiltroPedidoEstado('en_agencia')} />
         </FilterBar>
 
         {filtrados.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <p style={{ fontSize: 13, color: C.textSub }}>Sin pedidos para estos filtros</p>
+            <p style={{ fontSize: 13, color: 'var(--tw-text-muted)' }}>Sin pedidos para estos filtros</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filtrados.map(p => {
-              const isPend = p.logisticaStatus === 'preparando'
-              const isAgencia = p.logisticaStatus === 'en_agencia'
+              const miStatus = miStatusEnPedido(p)
+              const isPend = miStatus === 'preparando'
+              const isAgencia = miStatus === 'en_agencia' || miStatus === 'en_disputa'
               const pagoOk = p.pagoStatus === 'verificado'
 
-              const statusColor = isPend && pagoOk ? C.sage
-                : isPend ? C.yellow
-                : C.blue
+              const statusColor = isPend && pagoOk ? 'var(--tw-sage)'
+                : isPend ? '#f39c12'
+                : miStatus === 'en_disputa' ? '#f59e0b'
+                : '#4a90c4'
               const statusLabel = isPend && pagoOk ? 'Pago OK · Listo para despachar'
                 : isPend ? 'Pago pendiente'
-                : 'En agencia'
+                : miStatus === 'en_disputa' ? '⚠ En disputa'
+                : 'En tránsito'
+
+              const miCodigo = miCodigoEnPedido(p)
 
               const total = misItems(p).reduce((s, i) => s + i.subtotalCents, 0)
               const fechaPedido = new Date(p.createdAt).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
 
               return (
                 <div key={p.id} style={{
-                  background: C.card, borderRadius: 12, overflow: 'hidden',
-                  border: `1px solid ${C.border}`,
+                  background: 'var(--tw-card)', borderRadius: 12, overflow: 'hidden',
+                  border: `1px solid var(--tw-border)`,
                 }}>
                   {/* ── Header ── */}
                   <div style={{
-                    padding: '12px 16px', borderBottom: `1px solid ${C.border}`,
+                    padding: '12px 16px', borderBottom: `1px solid var(--tw-border)`,
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -968,37 +1568,37 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                       }}>
                         {statusLabel}
                       </span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: C.cream }}>{p.nombreLocal}</span>
-                      <span style={{ fontSize: 11, color: C.textSub }}>{p.distritoLocal}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>{p.nombreLocal}</span>
+                      <span style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>{p.distritoLocal}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, color: C.textSub, fontFamily: 'JetBrains Mono, monospace' }}>{p.id.slice(-10).toUpperCase()}</span>
-                      <span style={{ fontSize: 11, color: C.textSub }}>{fechaPedido}</span>
+                      <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>{p.id.slice(-10).toUpperCase()}</span>
+                      <span style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>{fechaPedido}</span>
                     </div>
                   </div>
 
                   {/* ── Tracking ── */}
-                  {isAgencia && p.codigoAgencia && (
-                    <div style={{ padding: '8px 16px', background: C.blue + '10', borderBottom: `1px solid ${C.blue}25`, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: C.blue, fontWeight: 700 }}>📦 {p.agencia?.toUpperCase()}</span>
-                      <span style={{ width: 1, height: 12, background: C.border }} />
-                      <span style={{ fontSize: 11, color: C.blue, fontFamily: 'JetBrains Mono, monospace' }}>{p.codigoAgencia}</span>
+                  {isAgencia && miCodigo && (
+                    <div style={{ padding: '8px 16px', background: '#4a90c4' + '10', borderBottom: `1px solid ${'#4a90c4'}25`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: '#4a90c4', fontWeight: 700 }}>📦 {p.agencia?.toUpperCase()}</span>
+                      <span style={{ width: 1, height: 12, background: 'var(--tw-border)' }} />
+                      <span style={{ fontSize: 11, color: '#4a90c4', fontFamily: 'JetBrains Mono, monospace' }}>{miCodigo}</span>
                     </div>
                   )}
 
                   {/* ── Layout: productos + acciones ── */}
-                  <div style={{ display: 'flex', gap: 0 }}>
+                  <div className="pedido-card-body">
                     {/* Lista de productos */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       {misItems(p).map((item, i) => (
                         <div key={i} style={{
                           display: 'flex', gap: 12, padding: '14px 16px',
-                          borderBottom: i < misItems(p).length - 1 ? `1px solid ${C.border}` : 'none',
+                          borderBottom: i < misItems(p).length - 1 ? `1px solid var(--tw-border)` : 'none',
                           alignItems: 'flex-start',
                         }}>
                           <div style={{
                             width: 80, height: 80, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
-                            background: '#111', border: `1px solid ${C.border}`,
+                            background: '#111', border: `1px solid var(--tw-border)`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
                             {(item as any).fotoUrl
@@ -1007,51 +1607,47 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                             }
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: C.cream, lineHeight: 1.3 }}>{item.productoNombre}</p>
-                            <p style={{ margin: '0 0 2px', fontSize: 12, color: C.textSub }}>{item.presentacion}</p>
-                            <p style={{ margin: 0, fontSize: 12, color: C.textSub }}>Cantidad: <strong style={{ color: C.cream }}>{item.qty}</strong></p>
+                            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: 'var(--tw-text)', lineHeight: 1.3 }}>{item.productoNombre}</p>
+                            <p style={{ margin: '0 0 2px', fontSize: 12, color: 'var(--tw-text-muted)' }}>{item.presentacion}</p>
+                            <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-muted)' }}>Cantidad: <strong style={{ color: 'var(--tw-text)' }}>{item.qty}</strong></p>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <p style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 700, color: C.terra }}>{formatCents(item.subtotalCents)}</p>
-                            {item.qty > 1 && <p style={{ margin: 0, fontSize: 11, color: C.textSub }}>{formatCents(item.unitCents)} c/u</p>}
+                            <p style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 700, color: 'var(--tw-terra)' }}>{formatCents(item.subtotalCents)}</p>
+                            {item.qty > 1 && <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)' }}>{formatCents(item.unitCents)} c/u</p>}
                           </div>
                         </div>
                       ))}
                       {/* Total */}
-                      <div style={{ padding: '10px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end', gap: 16, alignItems: 'center' }}>
-                        <span style={{ fontSize: 12, color: C.textSub }}>{misItems(p).reduce((s, i) => s + i.qty, 0)} unidades</span>
-                        <span style={{ fontSize: 14, color: C.textSub }}>Total:</span>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: C.terra }}>{formatCents(total)}</span>
+                      <div style={{ padding: '10px 16px', borderTop: `1px solid var(--tw-border)`, display: 'flex', justifyContent: 'flex-end', gap: 16, alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, color: 'var(--tw-text-muted)' }}>{misItems(p).reduce((s, i) => s + i.qty, 0)} unidades</span>
+                        <span style={{ fontSize: 14, color: 'var(--tw-text-muted)' }}>Total:</span>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--tw-terra)' }}>{formatCents(total)}</span>
                       </div>
                     </div>
 
                     {/* ── Columna acciones ── */}
-                    <div style={{
-                      width: 160, flexShrink: 0, padding: '14px 12px',
-                      borderLeft: `1px solid ${C.border}`,
-                      display: 'flex', flexDirection: 'column', gap: 8,
-                    }}>
+                    <div className="pedido-acciones">
                       {isPend && pagoOk && (
                         <button
                           onClick={() => abrirDespacho(p)}
-                          style={{ padding: '10px 0', borderRadius: 8, border: 'none', background: C.terra, color: C.white, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', width: '100%' }}
+                          style={{ padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', width: '100%' }}
                         >
                           🚚 Despachar →
                         </button>
                       )}
                       {isPend && !pagoOk && (
-                        <div style={{ padding: '10px 0', borderRadius: 8, background: C.yellow + '15', border: `1px solid ${C.yellow}30`, fontSize: 11, color: C.yellow, textAlign: 'center' }}>
+                        <div style={{ padding: '10px 0', borderRadius: 8, background: '#f39c12' + '15', border: `1px solid ${'#f39c12'}30`, fontSize: 11, color: '#f39c12', textAlign: 'center' }}>
                           ⏳ Esperando pago
                         </div>
                       )}
                       {isAgencia && (
-                        <div style={{ padding: '10px 0', borderRadius: 8, background: C.blue + '15', border: `1px solid ${C.blue}30`, fontSize: 11, color: C.blue, textAlign: 'center' }}>
-                          En tránsito
+                        <div style={{ padding: '10px 0', borderRadius: 8, background: statusColor + '15', border: `1px solid ${statusColor}30`, fontSize: 11, color: statusColor, textAlign: 'center' }}>
+                          {miStatus === 'en_disputa' ? '⚠ En disputa' : 'En tránsito'}
                         </div>
                       )}
                       <button
                         onClick={() => setPedidoDetalle(p)}
-                        style={{ padding: '9px 0', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 12, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', width: '100%' }}
+                        style={{ padding: '9px 0', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', width: '100%' }}
                       >
                         Ver detalle
                       </button>
@@ -1063,127 +1659,6 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           </div>
         )}
 
-        {/* Drawer detalle pedido */}
-        {pedidoDetalle && (() => {
-          const p = pedidoDetalle
-          const isPend = p.logisticaStatus === 'preparando'
-          const isAgencia = p.logisticaStatus === 'en_agencia'
-          const pagoOk = p.pagoStatus === 'verificado'
-          const total = misItems(p).reduce((s, i) => s + i.subtotalCents, 0)
-
-          return (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex' }} onClick={() => setPedidoDetalle(null)}>
-              <div style={{ flex: 1, background: 'rgba(0,0,0,0.7)' }} />
-              <div
-                style={{ width: 'min(480px, 100vw)', background: C.card, borderLeft: `1px solid ${C.border}`, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
-                onClick={e => e.stopPropagation()}
-              >
-                {/* Header drawer */}
-                <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
-                  <div>
-                    <p style={{ margin: '0 0 2px', fontSize: 10, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{p.id}</p>
-                    <h2 style={{ margin: '0 0 2px', fontSize: 22, fontFamily: 'Cormorant Garamond, serif', color: C.cream, fontWeight: 700 }}>{p.nombreLocal}</h2>
-                    <p style={{ margin: 0, fontSize: 12, color: C.textSub }}>{p.distritoLocal} · {formatFecha(p.createdAt)}</p>
-                  </div>
-                  <button onClick={() => setPedidoDetalle(null)} style={{ background: 'none', border: 'none', color: C.textSub, fontSize: 22, cursor: 'pointer', padding: '0 0 0 16px', lineHeight: 1 }}>×</button>
-                </div>
-
-                <div style={{ padding: '20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {/* Estado pago */}
-                  <div style={{ padding: '12px 14px', borderRadius: 10, background: (pagoOk ? C.sage : C.yellow) + '11', border: `1px solid ${(pagoOk ? C.sage : C.yellow)}33` }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: pagoOk ? C.sage : C.yellow }}>
-                      {pagoOk ? '✓ Pago verificado' : p.pagoStatus === 'voucher_subido' ? '🔎 Voucher enviado — verificando' : '⏳ Pago pendiente'}
-                    </p>
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: C.textSub }}>
-                      Método: {p.metodoPago?.toUpperCase() ?? '—'}
-                      {p.voucherUrl ? <> · <a href={p.voucherUrl} target="_blank" rel="noopener noreferrer" style={{ color: C.terra }}>Ver voucher →</a></> : null}
-                    </p>
-                  </div>
-
-                  {/* Items */}
-                  <div>
-                    <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Productos</p>
-                    {misItems(p).map((item, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: C.bg, borderRadius: 8, marginBottom: 6 }}>
-                        <div>
-                          <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600, color: C.cream }}>{item.productoNombre}</p>
-                          <p style={{ margin: 0, fontSize: 11, color: C.textSub }}>{item.qty} × {item.presentacion}</p>
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: C.terra, flexShrink: 0, marginLeft: 12 }}>{formatCents(item.subtotalCents)}</span>
-                      </div>
-                    ))}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
-                      <span style={{ fontSize: 13, color: C.textSub }}>Envío</span>
-                      <span style={{ fontSize: 13, color: C.textSub }}>{formatCents(p.deliveryCents)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px' }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: C.cream }}>Total</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: C.terra }}>{formatCents(total + p.deliveryCents)}</span>
-                    </div>
-                  </div>
-
-                  {/* Dirección */}
-                  {p.direccionEntrega && (
-                    <div>
-                      <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Dirección de entrega</p>
-                      <p style={{ margin: 0, fontSize: 13, color: C.cream, padding: '10px 12px', background: C.bg, borderRadius: 8 }}>📍 {p.direccionEntrega}</p>
-                    </div>
-                  )}
-
-                  {/* Chat con el negocio */}
-                  <div>
-                    <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      Chat con el negocio
-                    </p>
-                    <ChatPedido
-                      pedidoId={p.id}
-                      usuarioId={caficultorId}
-                      usuarioNombre={caficultor?.nombre ?? 'Caficultor'}
-                      usuarioRol="caficultor"
-                      isDemo={isDemo}
-                      codigoTracking={p.codigoAgencia}
-                    />
-                  </div>
-
-                  {/* Código agencia si está en tránsito */}
-                  {isAgencia && p.codigoAgencia && (
-                    <div style={{ padding: '12px 14px', background: C.blue + '11', border: `1px solid ${C.blue}33`, borderRadius: 10 }}>
-                      <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: C.blue }}>🚚 En agencia {p.agencia?.toUpperCase()}</p>
-                      <p style={{ margin: 0, fontSize: 14, color: C.cream, fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>{p.codigoAgencia}</p>
-                    </div>
-                  )}
-
-                  {/* Teléfono negocio */}
-                  {p.negocioTelefono && (
-                    <a
-                      href={`https://wa.me/${p.negocioTelefono.replace(/\D/g, '')}?text=Hola, soy el caficultor de Tunay Wasi. Tu pedido ${p.id} está listo.`}
-                      target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, background: '#25D36622', border: `1px solid #25D36644`, textDecoration: 'none' }}
-                    >
-                      <span style={{ fontSize: 18 }}>💬</span>
-                      <div>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.cream }}>WhatsApp al negocio</p>
-                        <p style={{ margin: '2px 0 0', fontSize: 11, color: C.textSub }}>{p.negocioNombre} · {p.negocioTelefono}</p>
-                      </div>
-                    </a>
-                  )}
-                </div>
-
-                {/* Footer acción */}
-                {isPend && pagoOk && (
-                  <div style={{ padding: '16px 24px', borderTop: `1px solid ${C.border}`, flexShrink: 0 }}>
-                    <button
-                      onClick={() => { setPedidoDetalle(null); abrirDespacho(p) }}
-                      style={{ width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: C.terra, color: C.white, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
-                    >
-                      🚚 Ingresar código de agencia →
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })()}
       </div>
     )
   }
@@ -1205,11 +1680,11 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       <div>
         {/* Header con contador y botón */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <p style={{ margin: 0, fontSize: 13, color: C.textSub }}>
-            <span style={{ color: C.cream, fontWeight: 700 }}>{productos.length}</span> productos
-            {filtrados.length < productos.length && <span> · <span style={{ color: C.terra }}>{filtrados.length} mostrados</span></span>}
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--tw-text-muted)' }}>
+            <span style={{ color: 'var(--tw-text)', fontWeight: 700 }}>{productos.length}</span> productos
+            {filtrados.length < productos.length && <span> · <span style={{ color: 'var(--tw-terra)' }}>{filtrados.length} mostrados</span></span>}
           </p>
-          <button onClick={() => setModalProducto({ abierto: true })} style={{ fontSize: 13, color: C.white, background: C.terra, border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>+ Nuevo producto</button>
+          <button onClick={() => setModalProducto({ abierto: true })} style={{ fontSize: 13, color: '#fff', background: 'var(--tw-sage)', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>+ Agregar café</button>
         </div>
 
         {/* Filtros */}
@@ -1219,23 +1694,23 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           {procesosUsados.map(pr => (
             <FilterChip key={pr} label={PROCESO_LABELS[pr] ?? pr} color={PROCESO_COLORS[pr]} active={filtroProceso === pr} onClick={() => setFiltroProceso(pr)} />
           ))}
-          <span style={{ width: 1, height: 20, background: C.border, flexShrink: 0 }} />
-          <FilterChip label="Stock bajo" color={C.red} active={filtroStock === 'bajo'} onClick={() => setFiltroStock(filtroStock === 'bajo' ? 'todos' : 'bajo')} />
-          <FilterChip label="Stock ok" color={C.sage} active={filtroStock === 'ok'} onClick={() => setFiltroStock(filtroStock === 'ok' ? 'todos' : 'ok')} />
+          <span style={{ width: 1, height: 20, background: 'var(--tw-border)', flexShrink: 0 }} />
+          <FilterChip label="Stock bajo" color={'#e74c3c'} active={filtroStock === 'bajo'} onClick={() => setFiltroStock(filtroStock === 'bajo' ? 'todos' : 'bajo')} />
+          <FilterChip label="Stock ok" color={'var(--tw-sage)'} active={filtroStock === 'ok'} onClick={() => setFiltroStock(filtroStock === 'ok' ? 'todos' : 'ok')} />
         </FilterBar>
 
         {/* Empty state */}
         {productos.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <p style={{ fontSize: 48, marginBottom: 12 }}>🌱</p>
-            <p style={{ fontSize: 18, color: C.cream, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, marginBottom: 8 }}>Aún no tienes productos</p>
-            <p style={{ fontSize: 13, color: C.textSub, marginBottom: 20 }}>Agrega tu primer café para que las cafeterías puedan comprarlo</p>
-            <button onClick={() => setModalProducto({ abierto: true })} style={{ padding: '12px 28px', borderRadius: 10, border: 'none', background: C.terra, color: C.white, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-              Agregar primer producto
+            <p style={{ fontSize: 18, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, marginBottom: 8 }}>Aún no tienes productos</p>
+            <p style={{ fontSize: 13, color: 'var(--tw-text-muted)', marginBottom: 20 }}>Agrega tu primer café para que las cafeterías puedan comprarlo</p>
+            <button onClick={() => setModalProducto({ abierto: true })} style={{ padding: '12px 28px', borderRadius: 10, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+              Agregar primer café
             </button>
           </div>
         ) : ordenados.length === 0 ? (
-          <p style={{ textAlign: 'center', color: C.textSub, fontSize: 13, padding: '30px 0' }}>Sin resultados para estos filtros</p>
+          <p style={{ textAlign: 'center', color: 'var(--tw-text-muted)', fontSize: 13, padding: '30px 0' }}>Sin resultados para estos filtros</p>
         ) : (
           /* Netflix grid */
           <div className="grid-productos">
@@ -1244,53 +1719,56 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
               const stockColor = colorStock(p.kgDisponibles)
               const pct = Math.min(100, (p.kgDisponibles / Math.max(p.kgDisponibles + p.kgReservados, 1)) * 100)
               const isPaused = p.status === 'pausado'
-              const procesoColor = PROCESO_COLORS[p.proceso] ?? C.terra
+              const procesoColor = PROCESO_COLORS[p.proceso] ?? 'var(--tw-terra)'
 
               return (
                 <div key={p.id} style={{
-                  background: C.card, borderRadius: 14, overflow: 'hidden',
-                  border: `1px solid ${isPaused ? C.muted + '44' : C.border}`,
+                  background: 'var(--tw-card)', borderRadius: 14, overflow: 'hidden',
+                  border: `1px solid ${isPaused ? 'var(--tw-text-muted)' + '44' : 'var(--tw-border)'}`,
                   opacity: isPaused ? 0.65 : 1,
                   display: 'flex', flexDirection: 'column',
                 }}>
                   {/* Thumbnail */}
                   <div style={{ position: 'relative', height: 130, background: '#0a0a0a', overflow: 'hidden' }}>
                     {p.foto ? (
-                      <img src={p.foto} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                      <img src={p.foto} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isPaused ? 0.4 : 0.8 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, opacity: 0.4 }}>☕</div>
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, opacity: isPaused ? 0.25 : 0.4 }}>☕</div>
                     )}
-                    {/* Proceso badge */}
+                    {/* Proceso badge (top-left) */}
                     <span style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 5, background: procesoColor + 'dd', color: '#fff', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       {PROCESO_LABELS[p.proceso] ?? p.proceso}
                     </span>
-                    {/* Status badge */}
-                    {isPaused && (
-                      <span style={{ position: 'absolute', top: 8, right: 8, padding: '3px 8px', borderRadius: 5, background: '#000000cc', color: C.muted, fontSize: 9, fontWeight: 700 }}>PAUSADO</span>
-                    )}
-                    {/* Stock bajo overlay */}
-                    {p.kgDisponibles <= 10 && p.status === 'activo' && (
-                      <span style={{ position: 'absolute', bottom: 8, left: 8, padding: '3px 8px', borderRadius: 5, background: C.red + 'dd', color: '#fff', fontSize: 9, fontWeight: 700 }}>
-                        ⚠ {p.kgDisponibles} kg
-                      </span>
+                    {/* Status badge (top-right): Activo / Agotado / Pausado */}
+                    {isPaused ? (
+                      <span style={{ position: 'absolute', top: 8, right: 8, padding: '2px 8px', borderRadius: 4, background: '#f39c12', color: '#000', fontSize: 8, fontWeight: 700 }}>Agotado</span>
+                    ) : p.kgDisponibles <= 10 ? (
+                      <span style={{ position: 'absolute', top: 8, right: 8, padding: '2px 8px', borderRadius: 4, background: '#e74c3cdd', color: '#fff', fontSize: 8, fontWeight: 700 }}>Stock bajo</span>
+                    ) : (
+                      <span style={{ position: 'absolute', top: 8, right: 8, padding: '2px 8px', borderRadius: 4, background: 'var(--tw-sage)', color: '#fff', fontSize: 8, fontWeight: 700 }}>Activo</span>
                     )}
                   </div>
 
                   {/* Contenido */}
                   <div style={{ padding: '12px 14px', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <div>
-                      <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1.2 }}>{p.nombre}</p>
-                      <p style={{ margin: 0, fontSize: 11, color: C.textSub }}>
+                      <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', lineHeight: 1.2 }}>{p.nombre}</p>
+                      <p style={{ margin: '0 0 3px', fontSize: 11, color: 'var(--tw-text-muted)' }}>
                         {p.variedad}{p.puntajeReferencial ? ` · ~${p.puntajeReferencial} pts` : ''}
                       </p>
+                      {p.notasSabor && p.notasSabor.length > 0 && (
+                        <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-faint)', fontStyle: 'italic' }}>
+                          {p.notasSabor.slice(0, 3).join(', ')}
+                        </p>
+                      )}
                     </div>
 
                     {/* Precios 4 formatos */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 4 }}>
-                      {(['1kg', '5kg', '10kg', '25kg'] as const).map(fmt => (
-                        <div key={fmt} style={{ background: C.bg, borderRadius: 6, padding: '4px', textAlign: 'center' }}>
-                          <p style={{ margin: 0, fontSize: 9, color: C.muted }}>{fmt}</p>
-                          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: C.terra }}>{formatCents(calcularPrecioFinal(p.precioBaseKgCents, fmt))}</p>
+                      {(['1kg', '5kg', '10kg', '20kg'] as const).map(fmt => (
+                        <div key={fmt} style={{ background: 'var(--tw-bg)', borderRadius: 6, padding: '4px', textAlign: 'center' }}>
+                          <p style={{ margin: 0, fontSize: 9, color: 'var(--tw-text-muted)' }}>{fmt}</p>
+                          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'var(--tw-terra)' }}>{formatCents(calcularPrecioFinal(p.precioBaseKgCents, fmt))}</p>
                         </div>
                       ))}
                     </div>
@@ -1300,18 +1778,18 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                         <input type="number" value={stockValor[p.id] ?? String(p.kgDisponibles)}
                           onChange={e => setStockValor(prev => ({ ...prev, [p.id]: e.target.value }))}
-                          style={{ width: 56, padding: '4px 8px', borderRadius: 6, border: `1px solid ${C.border}`, background: C.card, color: C.cream, fontSize: 12, textAlign: 'right' }}
+                          style={{ width: 56, padding: '4px 8px', borderRadius: 6, border: `1px solid var(--tw-border)`, background: 'var(--tw-card)', color: 'var(--tw-text)', fontSize: 12, textAlign: 'right' }}
                         />
-                        <span style={{ fontSize: 10, color: C.textSub }}>kg</span>
-                        <button onClick={() => guardarStock(p.id)} disabled={accionando === p.id} style={{ padding: '4px 8px', borderRadius: 5, border: 'none', background: C.sage, color: '#000', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                        <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>kg</span>
+                        <button onClick={() => guardarStock(p.id)} disabled={accionando === p.id} style={{ padding: '4px 8px', borderRadius: 5, border: 'none', background: 'var(--tw-sage)', color: '#000', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
                           {accionando === p.id ? '...' : '✓'}
                         </button>
-                        <button onClick={() => setStockEditando(null)} style={{ padding: '4px 6px', borderRadius: 5, border: 'none', background: C.border, color: C.textSub, fontSize: 10, cursor: 'pointer' }}>✕</button>
+                        <button onClick={() => setStockEditando(null)} style={{ padding: '4px 6px', borderRadius: 5, border: 'none', background: 'var(--tw-border)', color: 'var(--tw-text-muted)', fontSize: 10, cursor: 'pointer' }}>✕</button>
                       </div>
                     ) : (
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                          <div style={{ flex: 1, height: 3, borderRadius: 2, background: C.border, overflow: 'hidden' }}>
+                          <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'var(--tw-border)', overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${pct}%`, background: stockColor, borderRadius: 2 }} />
                           </div>
                           <span style={{ fontSize: 10, color: stockColor, fontWeight: 700, flexShrink: 0 }}>{p.kgDisponibles} kg</span>
@@ -1320,14 +1798,17 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                     )}
 
                     {/* Acciones */}
-                    <div style={{ display: 'flex', gap: 6, marginTop: 'auto' }}>
-                      <button onClick={() => setModalProducto({ abierto: true, editar: p })} style={{ flex: 1, padding: '6px', borderRadius: 6, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 11, cursor: 'pointer' }}>Editar</button>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 'auto', flexWrap: 'wrap' }}>
+                      <button onClick={() => setModalProducto({ abierto: true, editar: p })} style={{ flex: 1, minWidth: 48, padding: '6px', borderRadius: 6, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 11, cursor: 'pointer' }}>Editar</button>
                       <button onClick={() => { setStockEditando(p.id); setStockValor(prev => ({ ...prev, [p.id]: String(p.kgDisponibles) })) }}
-                        style={{ flex: 1, padding: '6px', borderRadius: 6, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 11, cursor: 'pointer' }}>
+                        style={{ flex: 1, minWidth: 48, padding: '6px', borderRadius: 6, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 11, cursor: 'pointer' }}>
                         Stock
                       </button>
-                      <button onClick={() => toggleStatus(p)} disabled={accionando === p.id} style={{ flex: 1, padding: '6px', borderRadius: 6, border: `1px solid ${isPaused ? C.sage + '44' : C.muted + '44'}`, background: 'none', color: isPaused ? C.sage : C.muted, fontSize: 11, cursor: 'pointer' }}>
+                      <button onClick={() => toggleStatus(p)} disabled={accionando === p.id} style={{ flex: 1, minWidth: 48, padding: '6px', borderRadius: 6, border: `1px solid ${isPaused ? 'var(--tw-sage)' + '44' : 'var(--tw-text-muted)' + '44'}`, background: 'none', color: isPaused ? 'var(--tw-sage)' : 'var(--tw-text-muted)', fontSize: 11, cursor: 'pointer' }}>
                         {isPaused ? 'Activar' : 'Pausar'}
+                      </button>
+                      <button onClick={() => setFichaLoteId(p.id)} style={{ flex: 1, minWidth: 48, padding: '6px', borderRadius: 6, border: `1px solid var(--tw-terra)44`, background: 'none', color: 'var(--tw-terra)', fontSize: 11, cursor: 'pointer' }}>
+                        Evidencias
                       </button>
                     </div>
                   </div>
@@ -1355,35 +1836,35 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         {calificaciones.length === 0 && !caficultor?.scoreConfianza ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <p style={{ fontSize: 48, marginBottom: 12 }}>★</p>
-            <p style={{ fontSize: 18, color: C.cream, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, marginBottom: 8 }}>Sin calificaciones aún</p>
-            <p style={{ margin: 0, fontSize: 13, color: C.textSub }}>Se generan cuando un negocio califica tu café después de recibirlo</p>
+            <p style={{ fontSize: 18, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, marginBottom: 8 }}>Sin calificaciones aún</p>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--tw-text-muted)' }}>Se generan cuando un negocio califica tu café después de recibirlo</p>
           </div>
         ) : (
           <div>
             {/* Resumen + distribución */}
-            <div className="grid-score" style={{ marginBottom: 20, padding: '20px', background: C.card, borderRadius: 14, border: `1px solid ${C.border}` }}>
+            <div className="grid-score" style={{ marginBottom: 20, padding: '20px', background: 'var(--tw-card)', borderRadius: 14, border: `1px solid var(--tw-border)` }}>
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <p style={{ margin: '0 0 4px', fontSize: 52, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>
+                <p style={{ margin: '0 0 4px', fontSize: 52, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>
                   {scorePromedio > 0 ? scorePromedio.toFixed(1) : '—'}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginBottom: 6 }}>
                   {[1,2,3,4,5].map(n => (
-                    <span key={n} style={{ fontSize: 16, color: n <= Math.round(scorePromedio) ? C.yellow : C.border }}>★</span>
+                    <span key={n} style={{ fontSize: 16, color: n <= Math.round(scorePromedio) ? '#f39c12' : 'var(--tw-border)' }}>★</span>
                   ))}
                 </div>
-                <p style={{ margin: 0, fontSize: 11, color: C.textSub }}>
+                <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)' }}>
                   {calificaciones.length || caficultor?.totalCalificaciones || 0} reseñas
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'center' }}>
                 {distrib.map(({ n, count, pct }) => (
                   <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 11, color: C.textSub, width: 16, textAlign: 'right' }}>{n}</span>
-                    <span style={{ fontSize: 12, color: C.yellow }}>★</span>
-                    <div style={{ flex: 1, height: 6, borderRadius: 3, background: C.border, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: C.yellow, borderRadius: 3 }} />
+                    <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', width: 16, textAlign: 'right' }}>{n}</span>
+                    <span style={{ fontSize: 12, color: '#f39c12' }}>★</span>
+                    <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--tw-border)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: '#f39c12', borderRadius: 3 }} />
                     </div>
-                    <span style={{ fontSize: 11, color: C.textSub, width: 20, textAlign: 'right' }}>{count}</span>
+                    <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', width: 20, textAlign: 'right' }}>{count}</span>
                   </div>
                 ))}
               </div>
@@ -1393,27 +1874,110 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
             <FilterBar>
               <FilterChip label="Todas" active={filtroEstrellas === null} onClick={() => setFiltroEstrellas(null)} />
               {[5, 4, 3, 2, 1].map(n => (
-                <FilterChip key={n} label={`${'★'.repeat(n)} (${calificaciones.filter(c => c.estrellas === n).length})`} color={C.yellow} active={filtroEstrellas === n} onClick={() => setFiltroEstrellas(filtroEstrellas === n ? null : n)} />
+                <FilterChip key={n} label={`${'★'.repeat(n)} (${calificaciones.filter(c => c.estrellas === n).length})`} color={'#f39c12'} active={filtroEstrellas === n} onClick={() => setFiltroEstrellas(filtroEstrellas === n ? null : n)} />
               ))}
             </FilterBar>
 
             {/* Lista completa */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {calsFiltradas.length === 0 ? (
-                <p style={{ textAlign: 'center', color: C.textSub, fontSize: 13, padding: '20px 0' }}>Sin calificaciones con este filtro</p>
+                <p style={{ textAlign: 'center', color: 'var(--tw-text-muted)', fontSize: 13, padding: '20px 0' }}>Sin calificaciones con este filtro</p>
               ) : calsFiltradas.map(c => (
-                <div key={c.id} style={{ background: C.card, borderRadius: 10, padding: '14px 16px', border: `1px solid ${C.border}` }}>
+                <div key={c.id} style={{ background: 'var(--tw-card)', borderRadius: 10, padding: '14px 16px', border: `1px solid var(--tw-border)` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: c.comentario ? 6 : 0, alignItems: 'center' }}>
                     <div>
-                      <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600, color: C.cream }}>{c.nombreLocal}</p>
-                      <p style={{ margin: 0, fontSize: 11, color: C.textSub }}>{formatFecha(c.createdAt)}</p>
+                      <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600, color: 'var(--tw-text)' }}>{c.nombreLocal}</p>
+                      <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)' }}>{formatFecha(c.createdAt)}</p>
                     </div>
-                    <span style={{ fontSize: 15, color: C.yellow, letterSpacing: 1 }}>{'★'.repeat(c.estrellas)}{'☆'.repeat(5 - c.estrellas)}</span>
+                    <span style={{ fontSize: 15, color: '#f39c12', letterSpacing: 1 }}>{'★'.repeat(c.estrellas)}{'☆'.repeat(5 - c.estrellas)}</span>
                   </div>
-                  {c.comentario && <p style={{ margin: '8px 0 0', fontSize: 12, color: C.textSub, fontStyle: 'italic', lineHeight: 1.5 }}>"{c.comentario}"</p>}
+                  {c.comentario && <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--tw-text-muted)', fontStyle: 'italic', lineHeight: 1.5 }}>"{c.comentario}"</p>}
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderPagos() {
+    const estadoColor: Record<string, string> = {
+      LIBERADO: 'var(--tw-sage)',
+      PENDIENTE: 'var(--tw-amber, #e8b84b)',
+      RETENIDO: 'var(--tw-terra)',
+    }
+    const estadoLabel: Record<string, string> = {
+      LIBERADO: '✓ Liberado',
+      PENDIENTE: '⏳ Pendiente',
+      RETENIDO: '⚠ Retenido',
+    }
+    const totalLiberadoCents = pagos.filter(p => p.estado === 'LIBERADO').reduce((s, p) => s + p.montoNetoCents, 0)
+    const totalPendienteCents = pagos.filter(p => p.estado === 'PENDIENTE').reduce((s, p) => s + p.montoNetoCents, 0)
+
+    if (pagosLoading) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+          <div style={{ width: 28, height: 28, border: `2px solid var(--tw-terra)`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      )
+    }
+
+    return (
+      <div>
+        {/* KPI tiles */}
+        <div className="grid-kpis" style={{ marginBottom: 20 }}>
+          {[
+            { label: 'Total liberado', value: `S/ ${(totalLiberadoCents / 100).toFixed(0)}`, color: 'var(--tw-sage)' },
+            { label: 'Por cobrar', value: `S/ ${(totalPendienteCents / 100).toFixed(0)}`, color: 'var(--tw-amber, #e8b84b)' },
+            { label: 'Pagos', value: String(pagos.length), color: 'var(--tw-text)' },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '12px 14px', border: `1px solid var(--tw-border)` }}>
+              <p style={{ margin: '0 0 3px', fontSize: 24, fontWeight: 700, color, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1 }}>{value}</p>
+              <p style={{ margin: 0, fontSize: 9, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {pagos.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>💰</div>
+            <p style={{ fontSize: 14, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, color: 'var(--tw-text)', marginBottom: 6 }}>Sin pagos registrados</p>
+            <p style={{ fontSize: 12, color: 'var(--tw-text-muted)' }}>Tus pagos liberados aparecerán aquí</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {pagos.map(pago => (
+              <div key={pago.id} style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '12px 16px', border: `1px solid var(--tw-border)` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 2 }}>{pago.negocioNombre}</div>
+                    <div style={{ fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: 'var(--tw-text-muted)' }}>#{pago.pedidoRef}</div>
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: estadoColor[pago.estado] ?? 'var(--tw-text-muted)', padding: '2px 8px', borderRadius: 20, background: `${estadoColor[pago.estado] ?? '#fff'}18`, border: `1px solid ${estadoColor[pago.estado] ?? 'var(--tw-border)'}40` }}>
+                    {estadoLabel[pago.estado] ?? pago.estado}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>
+                      S/ {(pago.montoNetoCents / 100).toFixed(0)}
+                    </span>
+                    <span style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginLeft: 8 }}>
+                      {pago.metodoPago ? `via ${pago.metodoPago.replace('_', ' ')}` : ''}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>
+                    {pago.liberadoAt ? new Date(pago.liberadoAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date(pago.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+                {pago.motivo && (
+                  <div style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(201,110,75,.06)', borderRadius: 7, border: '1px solid rgba(201,110,75,.15)', fontSize: 10, color: 'var(--tw-terra)' }}>
+                    ⚠ {pago.motivo}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -1444,13 +2008,13 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         {/* Resumen */}
         {entregados.length > 0 && (
           <div className="grid-historial-kpis" style={{ marginBottom: 16 }}>
-            <div style={{ background: C.card, borderRadius: 12, padding: '14px 16px', border: `1px solid ${C.border}` }}>
-              <p style={{ margin: '0 0 4px', fontSize: 9, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Entregas completadas</p>
-              <p style={{ margin: 0, fontSize: 24, fontWeight: 700, color: C.sage, fontFamily: 'Cormorant Garamond, serif' }}>{entregados.length}</p>
+            <div style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '14px 16px', border: `1px solid var(--tw-border)` }}>
+              <p style={{ margin: '0 0 4px', fontSize: 9, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Entregas completadas</p>
+              <p style={{ margin: 0, fontSize: 24, fontWeight: 700, color: 'var(--tw-sage)', fontFamily: 'Cormorant Garamond, serif' }}>{entregados.length}</p>
             </div>
-            <div style={{ background: C.card, borderRadius: 12, padding: '14px 16px', border: `1px solid ${C.border}` }}>
-              <p style={{ margin: '0 0 4px', fontSize: 9, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total {histFiltrado.length < entregados.length ? 'filtrado' : 'cobrado'}</p>
-              <p style={{ margin: 0, fontSize: 24, fontWeight: 700, color: C.terra, fontFamily: 'Cormorant Garamond, serif' }}>{formatCents(totalHistorial)}</p>
+            <div style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '14px 16px', border: `1px solid var(--tw-border)` }}>
+              <p style={{ margin: '0 0 4px', fontSize: 9, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total {histFiltrado.length < entregados.length ? 'filtrado' : 'cobrado'}</p>
+              <p style={{ margin: 0, fontSize: 24, fontWeight: 700, color: 'var(--tw-terra)', fontFamily: 'Cormorant Garamond, serif' }}>{formatCents(totalHistorial)}</p>
             </div>
           </div>
         )}
@@ -1459,69 +2023,77 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         <FilterBar>
           <SearchInput value={busquedaHistorial} onChange={setBusquedaHistorial} placeholder="Buscar cafetería o ID..." />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <label style={{ fontSize: 11, color: C.textSub }}>Desde:</label>
+            <label style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>Desde:</label>
             <input type="date" value={historialDesde} onChange={e => setHistorialDesde(e.target.value)}
-              style={{ padding: '5px 8px', borderRadius: 6, border: `1px solid ${C.border}`, background: '#141414', color: C.cream, fontSize: 12, fontFamily: 'Montserrat, sans-serif', outline: 'none' }}
+              style={{ padding: '5px 8px', borderRadius: 6, border: `1px solid var(--tw-border)`, background: '#141414', color: 'var(--tw-text)', fontSize: 12, fontFamily: 'Montserrat, sans-serif', outline: 'none' }}
             />
           </div>
           {historialDesde && (
-            <button onClick={() => setHistorialDesde('')} style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 11, cursor: 'pointer' }}>✕ Quitar fecha</button>
+            <button onClick={() => setHistorialDesde('')} style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 11, cursor: 'pointer' }}>✕ Quitar fecha</button>
           )}
           <button onClick={() => setHistorialOrden(o => o === 'desc' ? 'asc' : 'desc')}
-            style={{ marginLeft: 'auto', padding: '5px 12px', borderRadius: 6, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 11, cursor: 'pointer' }}>
+            style={{ marginLeft: 'auto', padding: '5px 12px', borderRadius: 6, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 11, cursor: 'pointer' }}>
             {historialOrden === 'desc' ? '↓ Recientes' : '↑ Antiguos'}
           </button>
         </FilterBar>
 
         {entregados.length === 0 ? (
-          <p style={{ color: C.textSub, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>Sin entregas completadas aún</p>
+          <p style={{ color: 'var(--tw-text-muted)', fontSize: 13, textAlign: 'center', padding: '40px 0' }}>Sin entregas completadas aún</p>
         ) : histFiltrado.length === 0 ? (
-          <p style={{ color: C.textSub, fontSize: 13, textAlign: 'center', padding: '30px 0' }}>Sin resultados para estos filtros</p>
+          <p style={{ color: 'var(--tw-text-muted)', fontSize: 13, textAlign: 'center', padding: '30px 0' }}>Sin resultados para estos filtros</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {histFiltrado.map((p) => {
               const subtotal = misItems(p).reduce((s, i) => s + i.subtotalCents, 0)
               const fechaEntrega = new Date(p.updatedAt).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
               return (
-                <div key={p.id} style={{ background: C.card, borderRadius: 12, overflow: 'hidden', border: `1px solid ${C.border}` }}>
+                <div key={p.id} style={{ background: 'var(--tw-card)', borderRadius: 12, overflow: 'hidden', border: `1px solid var(--tw-border)` }}>
                   {/* Header */}
-                  <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: `1px solid var(--tw-border)`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.sage, padding: '3px 10px', borderRadius: 20, background: C.sage + '20', border: `1px solid ${C.sage}40`, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-sage)', padding: '3px 10px', borderRadius: 20, background: 'var(--tw-sage)' + '20', border: `1px solid var(--tw-sage)40`, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                         ✓ Entregado
                       </span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: C.cream }}>{p.nombreLocal}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>{p.nombreLocal}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, color: C.textSub, fontFamily: 'JetBrains Mono, monospace' }}>{p.id.slice(-10).toUpperCase()}</span>
-                      <span style={{ fontSize: 11, color: C.textSub }}>{fechaEntrega}</span>
+                      <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>{p.id.slice(-10).toUpperCase()}</span>
+                      <span style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>{fechaEntrega}</span>
                     </div>
                   </div>
                   {/* Productos */}
                   {misItems(p).map((item, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 16px', borderBottom: i < misItems(p).length - 1 ? `1px solid ${C.border}` : 'none', alignItems: 'flex-start' }}>
-                      <div style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#111', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 16px', borderBottom: i < misItems(p).length - 1 ? `1px solid var(--tw-border)` : 'none', alignItems: 'flex-start' }}>
+                      <div style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#111', border: `1px solid var(--tw-border)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {(item as any).fotoUrl
                           ? <img src={(item as any).fotoUrl} alt={item.productoNombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           : <span style={{ fontSize: 28 }}>☕</span>
                         }
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: C.cream, lineHeight: 1.3 }}>{item.productoNombre}</p>
-                        <p style={{ margin: '0 0 2px', fontSize: 12, color: C.textSub }}>{item.presentacion}</p>
-                        <p style={{ margin: 0, fontSize: 12, color: C.textSub }}>Cantidad: <strong style={{ color: C.cream }}>{item.qty}</strong></p>
+                        <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: 'var(--tw-text)', lineHeight: 1.3 }}>{item.productoNombre}</p>
+                        <p style={{ margin: '0 0 2px', fontSize: 12, color: 'var(--tw-text-muted)' }}>{item.presentacion}</p>
+                        <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-muted)' }}>Cantidad: <strong style={{ color: 'var(--tw-text)' }}>{item.qty}</strong></p>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <p style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 700, color: C.terra }}>{formatCents(item.subtotalCents)}</p>
-                        {item.qty > 1 && <p style={{ margin: 0, fontSize: 11, color: C.textSub }}>{formatCents(item.unitCents)} c/u</p>}
+                        <p style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 700, color: 'var(--tw-terra)' }}>{formatCents(item.subtotalCents)}</p>
+                        {item.qty > 1 && <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)' }}>{formatCents(item.unitCents)} c/u</p>}
                       </div>
                     </div>
                   ))}
                   {/* Total */}
-                  <div style={{ padding: '10px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end', gap: 16, alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: C.textSub }}>{misItems(p).reduce((s, i) => s + i.qty, 0)} unidades</span>
-                    <span style={{ fontSize: 14, color: C.textSub }}>Total cobrado:</span>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: C.terra }}>{formatCents(subtotal)}</span>
+                  <div style={{ padding: '10px 16px', borderTop: `1px solid var(--tw-border)`, display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: 'var(--tw-text-muted)' }}>{misItems(p).reduce((s, i) => s + i.qty, 0)} unidades</span>
+                      <span style={{ fontSize: 14, color: 'var(--tw-text-muted)' }}>Total cobrado:</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--tw-terra)' }}>{formatCents(subtotal)}</span>
+                    </div>
+                    <button
+                      onClick={() => setPedidoDetalle(p)}
+                      style={{ padding: '7px 16px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap' }}
+                    >
+                      Ver detalle →
+                    </button>
                   </div>
                 </div>
               )
@@ -1547,7 +2119,32 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       try {
         const ubObj = ubigeos.find(u => u.id === logUbigeoSel)!
         const agenciasMap: Record<string, string> = {}
-        for (const ag of ubObj.agencias) agenciasMap[ag.id] = ag.nombre
+        const agenciasDetalle: Record<string, AgenciaLogisticaONE> = {}
+        for (const ag of ubObj.agencias) {
+          agenciasMap[ag.id] = ag.nombre
+          if (logAgenciasActivas[ag.id]) {
+            const dias = logAgenciasDias[ag.id]
+            agenciasDetalle[ag.id] = {
+              ...ag,
+              permiteDomicilio: logAgenciasDomicilio[ag.id] ?? false,
+              diasMin: parseInt(dias?.min ?? '2') || 2,
+              diasMax: parseInt(dias?.max ?? '4') || 4,
+            }
+          }
+        }
+        for (const ag of logAgenciasExtra) {
+          agenciasMap[ag.id] = ag.nombre
+          if (logAgenciasActivas[ag.id]) {
+            const dias = logAgenciasDias[ag.id]
+            agenciasDetalle[ag.id] = {
+              id: ag.id,
+              nombre: ag.nombre,
+              permiteDomicilio: logAgenciasDomicilio[ag.id] ?? false,
+              diasMin: parseInt(dias?.min ?? '2') || 2,
+              diasMax: parseInt(dias?.max ?? '4') || 4,
+            }
+          }
+        }
         const input = {
           caficultorId,
           ubigeo: logUbigeoSel,
@@ -1558,6 +2155,13 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           agenciasMap,
           agenciasActivas: logAgenciasActivas,
           agenciasPermiteDomicilio: logAgenciasDomicilio,
+          agenciasDetalle,
+          gratisAgenciaActivo: logGratisAgencia,
+          gratisAgenciaKg: parseFloat(logGratisAgenciaKg) || 5,
+          gratisDomicilioActivo: logGratisDomicilio,
+          gratisDomicilioKg: parseFloat(logGratisDomicilioKg) || 15,
+          tarifaFijaAgenciaSoles: parseFloat(logTarifaAgencia) || 15,
+          tarifaFijaDomicilioSoles: parseFloat(logTarifaDomicilio) || 25,
         }
         if (isDemo) await demoSaveLogisticaCaficultor(input)
         else await saveLogisticaCaficultor(input)
@@ -1571,6 +2175,13 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           agenciasMap,
           agenciasActivas: logAgenciasActivas,
           agenciasPermiteDomicilio: logAgenciasDomicilio,
+          agenciasDetalle,
+          gratisAgenciaActivo: input.gratisAgenciaActivo,
+          gratisAgenciaKg: input.gratisAgenciaKg,
+          gratisDomicilioActivo: input.gratisDomicilioActivo,
+          gratisDomicilioKg: input.gratisDomicilioKg,
+          tarifaFijaAgenciaSoles: input.tarifaFijaAgenciaSoles,
+          tarifaFijaDomicilioSoles: input.tarifaFijaDomicilioSoles,
         })
         toast('Configuración de logística guardada', 'ok')
       } catch {
@@ -1580,198 +2191,393 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       }
     }
 
+    const stepTabs: { id: 0 | 1; label: string }[] = [
+      { id: 0, label: '0 · Origen y agencias' },
+      { id: 1, label: '1 · Envío gratis' },
+    ]
+
     return (
       <div style={{ maxWidth: 720 }}>
-        <div style={{ marginBottom: 28 }}>
-          <h2 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif' }}>
-            Configuración de logística
-          </h2>
-          <p style={{ margin: 0, fontSize: 13, color: C.textSub, fontFamily: 'Montserrat, sans-serif', lineHeight: 1.6 }}>
-            Define desde dónde despachas y qué agencias de envío están disponibles en tu zona. Los negocios verán estas agencias al hacer un pedido.
-          </p>
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>
+              Configuración de envío
+            </h2>
+          </div>
+          {logistica && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-sage)', background: 'rgba(143,175,138,0.15)', padding: '3px 8px', borderRadius: 5 }}>🟢 Activo</span>
+          )}
+        </div>
+
+        {/* Step tabs */}
+        <div className="log-steps" style={{ marginBottom: 20 }}>
+          {stepTabs.map(t => {
+            const done = logistica && t.id === 0
+            const active = logConfigStep === t.id
+            const locked = t.id > 0 && !logistica
+            return (
+              <button key={t.id}
+                onClick={() => !locked && setLogConfigStep(t.id)}
+                style={{
+                  flex: 1, padding: '7px 4px', border: 'none', borderRight: t.id < 1 ? '1px solid var(--tw-border)' : 'none',
+                  background: active ? 'var(--tw-terra)' : done ? 'rgba(143,175,138,0.1)' : 'var(--tw-card)',
+                  color: active ? '#fff' : done ? 'var(--tw-sage)' : locked ? 'var(--tw-border)' : 'var(--tw-text-muted)',
+                  fontSize: 10, fontWeight: 700, cursor: locked ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif',
+                  textAlign: 'center', whiteSpace: 'nowrap',
+                }}>
+                {done ? `0 ✓ Origen` : t.label}
+              </button>
+            )
+          })}
         </div>
 
         {logisticaCargando ? (
-          <p style={{ color: C.textSub, fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>Cargando...</p>
+          <p style={{ color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>Cargando...</p>
         ) : (
           <>
-            {/* Estado actual */}
-            {logistica && (
-              <div style={{ padding: '14px 18px', borderRadius: 10, background: '#0d1f0d', border: `1px solid ${C.sage}33`, marginBottom: 28 }}>
-                <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: C.sage, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Configuración activa
-                </p>
-                <p style={{ margin: '0 0 2px', fontSize: 14, color: C.cream, fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-                  📍 {logistica.origenTexto}
-                </p>
-                <p style={{ margin: 0, fontSize: 12, color: C.textSub, fontFamily: 'Montserrat, sans-serif' }}>
-                  Agencias: {Object.entries(logistica.agenciasMap ?? {}).filter(([id]) => logistica.agenciasActivas?.[id]).map(([, nombre]) => nombre).join(', ') || '—'}
-                </p>
-              </div>
-            )}
+            {/* ── PASO 0: Origen y agencias ── */}
+            {logConfigStep === 0 && (
+            <div className="grid-log-paso">
 
-            {/* Paso 1: Departamento */}
-            <div style={{ marginBottom: 20 }}>
-              <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: C.textSub, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                1 · Departamento de despacho
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {departamentos.map(dep => (
-                  <button key={dep} onClick={() => { setLogDepSel(dep); setLogProvSel(''); setLogUbigeoSel(''); setLogAgenciasActivas({}); setLogAgenciasDomicilio({}) }}
-                    style={{
-                      padding: '7px 16px', borderRadius: 20,
-                      border: `1px solid ${logDepSel === dep ? C.terra : C.border}`,
-                      background: logDepSel === dep ? C.terra + '22' : 'none',
-                      color: logDepSel === dep ? C.terra : C.textSub,
-                      fontSize: 13, fontWeight: logDepSel === dep ? 700 : 400,
-                      cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {dep}
-                  </button>
-                ))}
-              </div>
-            </div>
+              {/* ── Columna izquierda: geo + agencias ── */}
+              <div style={{ minWidth: 0 }}>
 
-            {/* Paso 2: Provincia */}
-            {logDepSel && (
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: C.textSub, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  2 · Provincia
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {provincias.map(prov => (
-                    <button key={prov} onClick={() => { setLogProvSel(prov); setLogUbigeoSel(''); setLogAgenciasActivas({}); setLogAgenciasDomicilio({}) }}
-                      style={{
-                        padding: '7px 16px', borderRadius: 20,
-                        border: `1px solid ${logProvSel === prov ? C.terra : C.border}`,
-                        background: logProvSel === prov ? C.terra + '22' : 'none',
-                        color: logProvSel === prov ? C.terra : C.textSub,
-                        fontSize: 13, fontWeight: logProvSel === prov ? 700 : 400,
-                        cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {prov}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                {/* Card 0a: Distrito de origen */}
+                <div style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'var(--tw-card)', marginBottom: 12 }}>
+                  <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tw-terra)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>0a</span>
+                    Distrito de origen
+                  </p>
 
-            {/* Paso 3: Distrito */}
-            {logProvSel && (
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: C.textSub, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  3 · Distrito
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {ubigeos.filter(u => u.departamento === logDepSel && u.provincia === logProvSel).map(u => (
-                    <button key={u.id} onClick={() => {
-                      setLogUbigeoSel(u.id)
-                      // Pre-seleccionar todas las agencias activas
-                      const activas: Record<string, boolean> = {}
-                      const domicilio: Record<string, boolean> = {}
-                      u.agencias.forEach(ag => { activas[ag.id] = true; domicilio[ag.id] = false })
-                      setLogAgenciasActivas(activas)
-                      setLogAgenciasDomicilio(domicilio)
-                    }}
-                      style={{
-                        padding: '7px 16px', borderRadius: 20,
-                        border: `1px solid ${logUbigeoSel === u.id ? C.terra : C.border}`,
-                        background: logUbigeoSel === u.id ? C.terra + '22' : 'none',
-                        color: logUbigeoSel === u.id ? C.terra : C.textSub,
-                        fontSize: 13, fontWeight: logUbigeoSel === u.id ? 700 : 400,
-                        cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {u.distrito}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Paso 4: Agencias */}
-            {logUbigeoSel && ubigeoSelObj && (
-              <div style={{ marginBottom: 28 }}>
-                <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: C.textSub, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  4 · Agencias disponibles en {ubigeoSelObj.distrito}
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {ubigeoSelObj.agencias.map(ag => (
-                    <div key={ag.id} style={{
-                      padding: '14px 16px', borderRadius: 10,
-                      border: `1px solid ${logAgenciasActivas[ag.id] ? C.sage + '66' : C.border}`,
-                      background: logAgenciasActivas[ag.id] ? '#0d1f0d' : C.card,
-                    }}>
-                      {/* Toggle activa */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: logAgenciasActivas[ag.id] ? 10 : 0 }}>
-                        <div>
-                          <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>
-                            {ag.nombre}
-                          </p>
-                          {ag.direccion && <p style={{ margin: 0, fontSize: 11, color: C.textSub, fontFamily: 'Montserrat, sans-serif' }}>{ag.direccion}{ag.horario ? ` · ${ag.horario}` : ''}</p>}
-                        </div>
-                        <button
-                          onClick={() => setLogAgenciasActivas(prev => ({ ...prev, [ag.id]: !prev[ag.id] }))}
-                          style={{
-                            padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                            background: logAgenciasActivas[ag.id] ? C.sage : C.border,
-                            color: logAgenciasActivas[ag.id] ? '#000' : C.textSub,
-                            fontSize: 11, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-                            flexShrink: 0, transition: 'all 0.15s',
+                  {/* Cascada 3 columnas */}
+                  <div className="grid-geo-3" style={{ marginBottom: 10 }}>
+                    {/* Departamento */}
+                    <div>
+                      <p style={{ margin: '0 0 6px', fontSize: 9, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'Montserrat, sans-serif' }}>Departamento</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 160, overflowY: 'auto' }}>
+                        {departamentos.map(dep => (
+                          <div key={dep} onClick={() => { setLogDepSel(dep); setLogProvSel(''); setLogUbigeoSel(''); setLogAgenciasActivas({}); setLogAgenciasDomicilio({}) }}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 8px', borderRadius: 6, cursor: 'pointer', background: logDepSel === dep ? 'rgba(201,110,75,0.1)' : 'transparent' }}>
+                            <span style={{ fontSize: 11, color: logDepSel === dep ? 'var(--tw-terra)' : 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', fontWeight: logDepSel === dep ? 700 : 400 }}>{dep}</span>
+                            {logDepSel === dep && <span style={{ fontSize: 10, color: 'var(--tw-terra)' }}>✓</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Provincia */}
+                    <div>
+                      <p style={{ margin: '0 0 6px', fontSize: 9, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'Montserrat, sans-serif' }}>Provincia</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 160, overflowY: 'auto' }}>
+                        {provincias.map(prov => (
+                          <div key={prov} onClick={() => { setLogProvSel(prov); setLogUbigeoSel(''); setLogAgenciasActivas({}); setLogAgenciasDomicilio({}) }}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 8px', borderRadius: 6, cursor: 'pointer', background: logProvSel === prov ? 'rgba(201,110,75,0.1)' : 'transparent' }}>
+                            <span style={{ fontSize: 11, color: logProvSel === prov ? 'var(--tw-terra)' : 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', fontWeight: logProvSel === prov ? 700 : 400 }}>{prov}</span>
+                            {logProvSel === prov && <span style={{ fontSize: 10, color: 'var(--tw-terra)' }}>✓</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Distrito */}
+                    <div>
+                      <p style={{ margin: '0 0 6px', fontSize: 9, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'Montserrat, sans-serif' }}>Distrito</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 160, overflowY: 'auto' }}>
+                        {ubigeos.filter(u => u.departamento === logDepSel && u.provincia === logProvSel).map(u => (
+                          <div key={u.id} onClick={() => {
+                            setLogUbigeoSel(u.id)
+                            const activas: Record<string, boolean> = {}
+                            const domicilio: Record<string, boolean> = {}
+                            u.agencias.forEach(ag => { activas[ag.id] = true; domicilio[ag.id] = false })
+                            setLogAgenciasActivas(activas)
+                            setLogAgenciasDomicilio(domicilio)
                           }}
-                        >
-                          {logAgenciasActivas[ag.id] ? '✓ Activa' : 'Inactiva'}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 8px', borderRadius: 6, cursor: 'pointer', background: logUbigeoSel === u.id ? 'rgba(201,110,75,0.1)' : 'transparent' }}>
+                            <span style={{ fontSize: 11, color: logUbigeoSel === u.id ? 'var(--tw-terra)' : 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', fontWeight: logUbigeoSel === u.id ? 700 : 400 }}>{u.distrito}</span>
+                            {logUbigeoSel === u.id && <span style={{ fontSize: 10, color: 'var(--tw-terra)' }}>✓</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Badge origen seleccionado */}
+                  {ubigeoSelObj && (
+                    <div style={{ padding: '7px 10px', background: 'rgba(143,175,138,0.06)', border: '1px solid rgba(143,175,138,0.15)', borderRadius: 7 }}>
+                      <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif' }}>
+                        📍 Origen: <strong>{ubigeoSelObj.distrito}, {ubigeoSelObj.provincia}, {ubigeoSelObj.departamento}</strong>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Card 0b: Agencias */}
+                {logUbigeoSel && ubigeoSelObj && (
+                  <div style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'var(--tw-card)', marginBottom: 12 }}>
+                    <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tw-terra)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>0b</span>
+                      Agencias disponibles en {ubigeoSelObj.distrito}
+                    </p>
+                    <p style={{ margin: '0 0 10px', fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
+                      Activa las que usas · elige si también llevas a domicilio
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {/* Agencias del ubigeo */}
+                      {ubigeoSelObj.agencias.map(ag => (
+                        <div key={ag.id} style={{ borderRadius: 8, border: `1px solid ${logAgenciasActivas[ag.id] ? 'var(--tw-sage)44' : 'var(--tw-border)'}`, overflow: 'hidden', opacity: logAgenciasActivas[ag.id] ? 1 : 0.55 }}>
+                          {/* Header agencia */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer' }} onClick={() => setLogAgenciasActivas(prev => ({ ...prev, [ag.id]: !prev[ag.id] }))}>
+                            <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${logAgenciasActivas[ag.id] ? 'var(--tw-sage)' : 'var(--tw-border)'}`, background: logAgenciasActivas[ag.id] ? 'var(--tw-sage)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', flexShrink: 0, transition: 'all 0.15s' }}>
+                              {logAgenciasActivas[ag.id] ? '✓' : ''}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ margin: '0 0 1px', fontSize: 12, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>{ag.nombre}</p>
+                              {ag.direccion && <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>{ag.direccion}{ag.horario ? ` · ${ag.horario}` : ''}</p>}
+                            </div>
+                          </div>
+                          {/* Opciones (solo si activa) */}
+                          {logAgenciasActivas[ag.id] && (<>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderTop: '1px solid var(--tw-border)', background: 'rgba(143,175,138,0.04)' }}>
+                              <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'var(--tw-sage)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', flexShrink: 0 }}>✓</div>
+                              <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>El comprador recoge y paga el flete en agencia</p>
+                            </div>
+                            <div onClick={() => setLogAgenciasDomicilio(prev => ({ ...prev, [ag.id]: !prev[ag.id] }))}
+                              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderTop: '1px solid var(--tw-border)', background: logAgenciasDomicilio[ag.id] ? 'rgba(143,175,138,0.04)' : 'transparent', cursor: 'pointer' }}>
+                              <div style={{ width: 16, height: 16, borderRadius: '50%', border: `1.5px solid ${logAgenciasDomicilio[ag.id] ? 'var(--tw-sage)' : 'var(--tw-border)'}`, background: logAgenciasDomicilio[ag.id] ? 'var(--tw-sage)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', flexShrink: 0, transition: 'all 0.15s' }}>
+                                {logAgenciasDomicilio[ag.id] ? '✓' : ''}
+                              </div>
+                              <p style={{ margin: 0, fontSize: 11, color: logAgenciasDomicilio[ag.id] ? 'var(--tw-text)' : 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>También llevo a domicilio — el comprador paga al recibirlo</p>
+                            </div>
+                            {/* Tiempo estimado de tránsito — el caficultor lo sabe por experiencia */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderTop: '1px solid var(--tw-border)', background: 'rgba(0,0,0,0.02)' }}>
+                              <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', flexShrink: 0 }}>Días hábiles estimados:</p>
+                              <input type="number" min="1" max="30" value={logAgenciasDias[ag.id]?.min ?? '2'}
+                                onChange={e => setLogAgenciasDias(prev => ({ ...prev, [ag.id]: { ...prev[ag.id], min: e.target.value } }))}
+                                style={{ width: 44, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 11, fontWeight: 700, textAlign: 'center', outline: 'none', fontFamily: 'Montserrat, sans-serif' }} />
+                              <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>–</p>
+                              <input type="number" min="1" max="30" value={logAgenciasDias[ag.id]?.max ?? '4'}
+                                onChange={e => setLogAgenciasDias(prev => ({ ...prev, [ag.id]: { ...prev[ag.id], max: e.target.value } }))}
+                                style={{ width: 44, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 11, fontWeight: 700, textAlign: 'center', outline: 'none', fontFamily: 'Montserrat, sans-serif' }} />
+                              <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>días</p>
+                            </div>
+                          </>)}
+                        </div>
+                      ))}
+
+                      {/* Agencias extra locales */}
+                      {logAgenciasExtra.map(ag => (
+                        <div key={ag.id} style={{ borderRadius: 8, border: `1px solid ${logAgenciasActivas[ag.id] ? 'var(--tw-sage)44' : 'var(--tw-border)'}`, overflow: 'hidden', opacity: logAgenciasActivas[ag.id] ? 1 : 0.55 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer' }} onClick={() => setLogAgenciasActivas(prev => ({ ...prev, [ag.id]: !prev[ag.id] }))}>
+                            <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${logAgenciasActivas[ag.id] ? 'var(--tw-sage)' : 'var(--tw-border)'}`, background: logAgenciasActivas[ag.id] ? 'var(--tw-sage)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', flexShrink: 0 }}>
+                              {logAgenciasActivas[ag.id] ? '✓' : ''}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ margin: '0 0 1px', fontSize: 12, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>{ag.nombre}</p>
+                              <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Agencia local</p>
+                            </div>
+                            <button onClick={e => { e.stopPropagation(); setLogAgenciasExtra(prev => prev.filter(a => a.id !== ag.id)); setLogAgenciasActivas(prev => { const n = { ...prev }; delete n[ag.id]; return n }) }}
+                              style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>×</button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Input agregar agencia local */}
+                      <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+                        <input
+                          value={logAgenciaInputVal}
+                          onChange={e => setLogAgenciaInputVal(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && logAgenciaInputVal.trim()) {
+                              const id = `local_${Date.now()}`
+                              setLogAgenciasExtra(prev => [...prev, { id, nombre: logAgenciaInputVal.trim() }])
+                              setLogAgenciasActivas(prev => ({ ...prev, [id]: true }))
+                              setLogAgenciasDomicilio(prev => ({ ...prev, [id]: false }))
+                              setLogAgenciaInputVal('')
+                            }
+                          }}
+                          placeholder="Nombre de agencia local..."
+                          style={{ flex: 1, padding: '7px 10px', borderRadius: 7, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 11, fontFamily: 'Montserrat, sans-serif', outline: 'none' }}
+                        />
+                        <button onClick={() => {
+                          if (!logAgenciaInputVal.trim()) return
+                          const id = `local_${Date.now()}`
+                          setLogAgenciasExtra(prev => [...prev, { id, nombre: logAgenciaInputVal.trim() }])
+                          setLogAgenciasActivas(prev => ({ ...prev, [id]: true }))
+                          setLogAgenciasDomicilio(prev => ({ ...prev, [id]: false }))
+                          setLogAgenciaInputVal('')
+                        }}
+                          style={{ padding: '7px 12px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap' }}>
+                          + Agregar
                         </button>
                       </div>
-
-                      {/* Toggle domicilio — solo si activa */}
-                      {logAgenciasActivas[ag.id] && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
-                          <button
-                            onClick={() => setLogAgenciasDomicilio(prev => ({ ...prev, [ag.id]: !prev[ag.id] }))}
-                            style={{
-                              width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'all 0.2s',
-                              background: logAgenciasDomicilio[ag.id] ? C.terra : C.muted,
-                              position: 'relative',
-                            }}
-                          >
-                            <span style={{
-                              position: 'absolute', top: 2, left: logAgenciasDomicilio[ag.id] ? 18 : 2,
-                              width: 16, height: 16, borderRadius: '50%', background: C.white, transition: 'left 0.2s',
-                            }} />
-                          </button>
-                          <p style={{ margin: 0, fontSize: 12, color: C.textSub, fontFamily: 'Montserrat, sans-serif' }}>
-                            También ofrezco envío a domicilio por esta agencia
-                          </p>
-                        </div>
-                      )}
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                {/* Botón guardar y continuar */}
+                {logUbigeoSel && (
+                  <button onClick={() => { void guardarLogistica(); setLogConfigStep(1) }} disabled={logisticaGuardando}
+                    style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: logisticaGuardando ? 'var(--tw-text-muted)' : 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: logisticaGuardando ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
+                    {logisticaGuardando ? 'Guardando...' : 'Guardar y continuar → Reglas de envío gratis'}
+                  </button>
+                )}
+              </div>
+
+              {/* ── Columna derecha: Qué desbloquea ── */}
+              {logUbigeoSel && (
+                <div style={{ flex: '0 1 240px', minWidth: 200 }}>
+                  <div style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)' }}>
+                    <p style={{ margin: '0 0 12px', fontSize: 9, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'Montserrat, sans-serif' }}>Qué desbloquea este paso</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+                      {[
+                        { n: '✓', title: 'Tus lotes se publican en el catálogo', sub: 'Sin origen configurado los lotes no aparecen (SHP-01)' },
+                        { n: '→', title: 'Paso 1 — Reglas de envío gratis', sub: 'Define umbrales para absorber el flete y mejorar conversión' },
+                      ].map(item => (
+                        <div key={item.n} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                          <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(201,110,75,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--tw-terra)', flexShrink: 0 }}>{item.n}</div>
+                          <div>
+                            <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>{item.title}</p>
+                            <p style={{ margin: 0, fontSize: 9, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>{item.sub}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ padding: '10px', background: 'rgba(201,110,75,0.06)', border: '1px solid rgba(201,110,75,0.15)', borderRadius: 8 }}>
+                      <p style={{ margin: '0 0 4px', fontSize: 9, fontWeight: 700, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>💡 Se configura una sola vez</p>
+                      <p style={{ margin: 0, fontSize: 9, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5 }}>Tu distrito y agencias no cambian con frecuencia. Si te mudas o cambias de transportista, vuelve aquí.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+            )} {/* fin paso 0 */}
+
+            {/* ── PASO 1: Reglas de envío gratis ── */}
+            {logConfigStep === 1 && (
+              <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 320px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                  <div style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'var(--tw-card)' }}>
+                    <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tw-terra)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>1</span>
+                      Reglas de envío gratis
+                    </p>
+
+                    {/* Envío gratis a agencia */}
+                    {[
+                      { key: 'agencia' as const, label: 'Envío gratis a agencia', sub: 'El negocio no paga flete si alcanza el mínimo', active: logGratisAgencia, setActive: setLogGratisAgencia, kg: logGratisAgenciaKg, setKg: setLogGratisAgenciaKg },
+                      { key: 'domicilio' as const, label: 'Envío gratis a domicilio', sub: 'Para pedidos grandes con reparto en puerta', active: logGratisDomicilio, setActive: setLogGratisDomicilio, kg: logGratisDomicilioKg, setKg: setLogGratisDomicilioKg },
+                    ].map(r => (
+                      <div key={r.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--tw-border)' }}>
+                        <div>
+                          <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 600, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>{r.label}</p>
+                          <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>{r.sub}</p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          <span style={{ fontSize: 9, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Desde</span>
+                          <input type="number" min="1" value={r.kg} onChange={e => r.setKg(e.target.value)}
+                            style={{ width: 44, padding: '5px 6px', borderRadius: 6, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 12, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', outline: 'none', textAlign: 'center' }} />
+                          <span style={{ fontSize: 9, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>kg</span>
+                          <div onClick={() => r.setActive(!r.active)}
+                            style={{ width: 36, height: 20, borderRadius: 10, background: r.active ? 'var(--tw-terra)' : 'var(--tw-border)', cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
+                            <div style={{ position: 'absolute', top: 2, left: r.active ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.15s' }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Tarifa fija a agencia */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--tw-border)', opacity: logGratisAgencia ? 1 : 0.5 }}>
+                      <div>
+                        <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 600, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>Tarifa fija a agencia</p>
+                        <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Se cobra cuando el pedido no alcanza el mínimo</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--tw-border)', borderRadius: 7, overflow: 'hidden', background: 'var(--tw-bg)', width: 90, flexShrink: 0 }}>
+                        <span style={{ padding: '0 8px', fontSize: 11, color: 'var(--tw-text-muted)', fontWeight: 700, borderRight: '1px solid var(--tw-border)', fontFamily: 'Montserrat, sans-serif' }}>S/</span>
+                        <input type="number" value={logTarifaAgencia} onChange={e => setLogTarifaAgencia(e.target.value)}
+                          style={{ width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', color: 'var(--tw-text)', fontSize: 12, fontFamily: 'Montserrat, sans-serif', outline: 'none' }} />
+                      </div>
+                    </div>
+
+                    {/* Tarifa fija a domicilio */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', opacity: logGratisDomicilio ? 1 : 0.5 }}>
+                      <div>
+                        <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 600, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>Tarifa fija a domicilio</p>
+                        <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Se cobra cuando el pedido no alcanza el mínimo</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--tw-border)', borderRadius: 7, overflow: 'hidden', background: 'var(--tw-bg)', width: 90, flexShrink: 0 }}>
+                        <span style={{ padding: '0 8px', fontSize: 11, color: 'var(--tw-text-muted)', fontWeight: 700, borderRight: '1px solid var(--tw-border)', fontFamily: 'Montserrat, sans-serif' }}>S/</span>
+                        <input type="number" value={logTarifaDomicilio} onChange={e => setLogTarifaDomicilio(e.target.value)}
+                          style={{ width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', color: 'var(--tw-text)', fontSize: 12, fontFamily: 'Montserrat, sans-serif', outline: 'none' }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={guardarLogistica} disabled={logisticaGuardando}
+                      style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: logisticaGuardando ? 'var(--tw-text-muted)' : 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: logisticaGuardando ? 'not-allowed' : 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
+                      {logisticaGuardando ? 'Guardando...' : 'Guardar configuración'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Col derecha: preview + impacto en margen */}
+                <div style={{ flex: '0 1 240px', minWidth: 180 }}>
+                  <div style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', marginBottom: 12 }}>
+                    <p style={{ margin: '0 0 10px', fontSize: 9, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'Montserrat, sans-serif' }}>Así verá el negocio:</p>
+                    <div style={{ padding: '12px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'var(--tw-card)' }}>
+                      <p style={{ margin: '0 0 2px', fontSize: 9, color: 'var(--tw-terra)', fontWeight: 700, fontFamily: 'Montserrat, sans-serif' }}>{logistica?.origenTexto ?? '—'}</p>
+                      <p style={{ margin: '0 0 8px', fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Tu café publicado</p>
+                      {logGratisAgencia
+                        ? <div style={{ fontSize: 10, background: 'rgba(143,175,138,0.1)', color: 'var(--tw-sage)', borderRadius: 5, padding: '4px 8px', marginBottom: 4 }}>🚚 Agencia: GRATIS desde {logGratisAgenciaKg} kg · S/ {logTarifaAgencia} si no alcanza</div>
+                        : <div style={{ fontSize: 10, background: 'rgba(100,100,100,0.08)', color: 'var(--tw-text-muted)', borderRadius: 5, padding: '4px 8px', marginBottom: 4 }}>🚚 Agencia: S/ {logTarifaAgencia}</div>
+                      }
+                      <div style={{ fontSize: 10, background: 'rgba(100,100,100,0.08)', color: 'var(--tw-text-muted)', borderRadius: 5, padding: '4px 8px' }}>📦 Domicilio: S/ {logTarifaDomicilio} · {logGratisDomicilio ? `Gratis desde ${logGratisDomicilioKg} kg` : 'Sin envío gratis'}</div>
+                    </div>
+                    <p style={{ margin: '8px 0 0', fontSize: 9, color: 'var(--tw-text-muted)', textAlign: 'center', fontFamily: 'Montserrat, sans-serif' }}>Vista previa del catálogo</p>
+                  </div>
+
+                  {/* Lo que verá el comprador */}
+                  {(() => {
+                    const kgAgencia = parseFloat(logGratisAgenciaKg) || 5
+                    const kgDomicilio = parseFloat(logGratisDomicilioKg) || 15
+                    const tarifaDom = parseFloat(logTarifaDomicilio) || 0
+                    return (
+                      <div style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid var(--tw-border)', background: '#0a0a0a' }}>
+                        <p style={{ margin: '0 0 10px', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'Montserrat, sans-serif' }}>Lo que verá el comprador</p>
+
+                        {/* Agencia */}
+                        <div style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid #2a2a2a' }}>
+                          <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 600, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>📦 Recojo en agencia</p>
+                          {logGratisAgencia
+                            ? <p style={{ margin: 0, fontSize: 10, color: '#7fbe96', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5 }}>
+                                Barra de progreso: <em>"Agrega {kgAgencia} kg para envío gratis"</em><br />
+                                Al alcanzar {kgAgencia} kg → 🚚 ¡Envío gratis a agencia!
+                              </p>
+                            : <p style={{ margin: 0, fontSize: 10, color: '#888', fontFamily: 'Montserrat, sans-serif' }}>Sin incentivo de envío gratis activado.</p>
+                          }
+                        </div>
+
+                        {/* Domicilio */}
+                        <div>
+                          <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 600, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>🏠 Entrega a domicilio</p>
+                          {logGratisDomicilio
+                            ? <p style={{ margin: 0, fontSize: 10, color: '#f0c060', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5 }}>
+                                Tarifa fija S/ {tarifaDom.toFixed(2)} hasta {kgDomicilio} kg<br />
+                                Desde {kgDomicilio} kg → 🏠 ¡Domicilio gratis!
+                              </p>
+                            : tarifaDom > 0
+                              ? <p style={{ margin: 0, fontSize: 10, color: '#888', fontFamily: 'Montserrat, sans-serif' }}>Tarifa fija S/ {tarifaDom.toFixed(2)} (sin umbral gratis).</p>
+                              : <p style={{ margin: 0, fontSize: 10, color: '#888', fontFamily: 'Montserrat, sans-serif' }}>Sin domicilio configurado.</p>
+                          }
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             )}
 
-            {/* Botón guardar */}
-            {logUbigeoSel && (
-              <button
-                onClick={guardarLogistica}
-                disabled={logisticaGuardando}
-                style={{
-                  padding: '14px 32px', borderRadius: 10, border: 'none',
-                  background: logisticaGuardando ? C.muted : C.terra,
-                  color: C.white, fontSize: 14, fontWeight: 700,
-                  cursor: logisticaGuardando ? 'not-allowed' : 'pointer',
-                  fontFamily: 'Montserrat, sans-serif',
-                }}
-              >
-                {logisticaGuardando ? 'Guardando...' : '💾 Guardar configuración de logística'}
-              </button>
-            )}
           </>
         )}
       </div>
@@ -1785,8 +2591,8 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
     const inputStyle: React.CSSProperties = {
       width: '100%', padding: '10px 12px', borderRadius: 8,
-      border: `1px solid ${C.border}`, background: '#0f0f0f',
-      fontSize: 13, fontFamily: 'Montserrat, sans-serif', color: C.cream,
+      border: `1px solid var(--tw-border)`, background: '#0f0f0f',
+      fontSize: 13, fontFamily: 'Montserrat, sans-serif', color: 'var(--tw-text)',
       outline: 'none', boxSizing: 'border-box',
     }
 
@@ -1805,122 +2611,631 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       />
     }
 
-    const stockTotal = productos.reduce((s, p) => s + (p.kgDisponibles ?? 0), 0)
-    const menuItemStyle: React.CSSProperties = {
-      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 18px', background: 'none', border: 'none', borderBottom: `1px solid ${C.border}`,
-      color: C.cream, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 14,
-      textAlign: 'left',
-    }
+    const ingresosNetos = pedidos.filter(p => p.logisticaStatus === 'entregado').reduce((s, p) => s + (p.totalCents ?? 0), 0)
+    const negociosUnicos = new Set(pedidos.map(p => p.negocioId).filter(Boolean)).size
 
     return (
       <div>
         {/* Banner: sin logística configurada */}
         {!logistica && !logisticaCargando && (
-          <div style={{ padding: '14px 18px', borderRadius: 12, background: '#2a1a00', border: `1px solid ${C.yellow}44`, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ padding: '14px 18px', borderRadius: 12, background: '#2a1a00', border: `1px solid ${'#f39c12'}44`, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div>
-              <p style={{ margin: '0 0 3px', fontSize: 13, fontWeight: 700, color: C.yellow, fontFamily: 'Montserrat, sans-serif' }}>⚠️ Configura tus envíos</p>
-              <p style={{ margin: 0, fontSize: 12, color: C.textSub, fontFamily: 'Montserrat, sans-serif' }}>Sin logística configurada no puedes recibir pedidos</p>
+              <p style={{ margin: '0 0 3px', fontSize: 13, fontWeight: 700, color: '#f39c12', fontFamily: 'Montserrat, sans-serif' }}>⚠️ Configura tus envíos</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Sin logística configurada no puedes recibir pedidos</p>
             </div>
             <button
-              onClick={() => setPerfilEnviosAbierto(true)}
-              style={{ flexShrink: 0, padding: '8px 16px', borderRadius: 8, border: 'none', background: C.yellow, color: '#000', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+              onClick={() => setSettingsTab('envio')}
+              style={{ flexShrink: 0, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#f39c12', color: '#000', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
             >
               Configurar
             </button>
           </div>
         )}
 
-        {/* Foto + nombre */}
-        <div style={{ background: C.card, borderRadius: 16, overflow: 'hidden', marginBottom: 14, border: `1px solid ${C.border}` }}>
-          {caficultor.foto && (
-            <div style={{ width: '100%', height: 160, overflow: 'hidden' }}>
-              <img src={caficultor.foto} alt={caficultor.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-          )}
-          <div style={{ padding: '16px 18px' }}>
-            <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif' }}>{caficultor.nombre}</h2>
-            <p style={{ margin: '0 0 2px', fontSize: 12, color: C.textSub }}>{(caficultor as any).email ?? '—'}</p>
-            <p style={{ margin: '0 0 2px', fontSize: 12, color: C.textSub }}>{caficultor.region} · {caficultor.distrito}</p>
-            <p style={{ margin: '0 0 10px', fontSize: 12, color: C.muted }}>{caficultor.altitudMsnm?.toLocaleString() ?? '—'} msnm</p>
-            <a href={`#/caficultor/${caficultorId}`} style={{ fontSize: 12, color: C.terra, textDecoration: 'none', fontWeight: 600 }}>
-              Ver perfil público →
-            </a>
+        {/* Layout 2 col en desktop */}
+        <div className="perfil-2col">
+          {/* Columna izquierda */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+
+        {/* Hero: avatar + nombre + email */}
+        <div style={{ background: 'var(--tw-card)', borderRadius: 16, padding: '16px 18px', marginBottom: 14, border: `1px solid var(--tw-border)`, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--tw-sage)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+            {caficultor.nombre.charAt(0).toUpperCase()}
           </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>{caficultor.nombre}</div>
+            <div style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>{(caficultor as any).email ?? '—'}</div>
+            <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginTop: 2 }}>Caficultor desde ene 2025 · {caficultor.region}</div>
+          </div>
+          <button
+            onClick={() => setEditandoPerfil(true)}
+            style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+          >
+            Editar
+          </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid-kpis" style={{ marginBottom: 14 }}>
-          {[
-            { label: 'Pedidos atendidos', value: String(pedidos.length) },
-            { label: 'Cafés publicados', value: String(productos.length) },
-            { label: 'Stock total', value: `${stockTotal} kg` },
-            { label: 'Calificación ★', value: scorePromedio > 0 ? scorePromedio.toFixed(1) : '—' },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ background: C.card, borderRadius: 12, padding: '12px 14px', border: `1px solid ${C.border}`, textAlign: 'center' }}>
-              <p style={{ margin: '0 0 3px', fontSize: 9, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</p>
-              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif' }}>{value}</p>
-            </div>
+        {/* Ver perfil público */}
+        <div style={{ marginBottom: 14 }}>
+          <a href={`#/caficultor/${caficultorId}`} style={{ fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 600 }}>
+            Ver perfil público →
+          </a>
+        </div>
+
+        {/* Mobile: menú lista → abre sección (oculto en desktop via CSS) */}
+        <div className={`perfil-menu-mobile${settingsTab !== null ? ' perfil-menu-hidden' : ''}`}>
+          {([
+            { id: 'perfil',         emoji: '👤', label: 'Perfil' },
+            { id: 'finca',          emoji: '🌄', label: 'Finca' },
+            { id: 'cobros',         emoji: '💳', label: 'Cobros' },
+            { id: 'envio',          emoji: '🚚', label: 'Formas de envío' },
+            { id: 'direcciones',    emoji: '📍', label: 'Mis direcciones' },
+            { id: 'notificaciones', emoji: '🔔', label: 'Notificaciones' },
+            { id: 'seguridad',      emoji: '🔒', label: 'Seguridad' },
+          ] as { id: SettingsTab; emoji: string; label: string }[]).map(item => (
+            <button
+              key={item.id}
+              onClick={() => setSettingsTab(item.id)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 12, marginBottom: 8, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+            >
+              <span style={{ fontSize: 22, width: 32, textAlign: 'center', flexShrink: 0 }}>{item.emoji}</span>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--tw-text)', textAlign: 'left' }}>{item.label}</span>
+              <span style={{ fontSize: 16, color: 'var(--tw-text-muted)' }}>›</span>
+            </button>
           ))}
         </div>
 
-        {/* Menú Android-style */}
-        <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.border}`, marginBottom: 14, overflow: 'hidden' }}>
-          {/* Yo */}
-          <button style={menuItemStyle} onClick={() => setEditandoPerfil(true)}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 18 }}>👤</span>
-              <span>Yo</span>
-            </span>
-            <span style={{ color: C.textSub, fontSize: 16 }}>›</span>
-          </button>
+        {/* Mobile: botón volver (oculto en desktop via CSS, oculto cuando settingsTab===null) */}
+        <button
+          className="perfil-back-btn"
+          onClick={() => setSettingsTab(null)}
+          style={{ display: 'none', alignItems: 'center', gap: 6, marginBottom: 14, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tw-terra)', fontSize: 12, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', padding: 0 }}
+        >
+          ‹ Volver
+        </button>
 
-          {/* Envíos */}
-          <button style={{ ...menuItemStyle, borderBottom: perfilEnviosAbierto ? `1px solid ${C.border}` : 'none' }}
-            onClick={() => setPerfilEnviosAbierto(prev => !prev)}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 18 }}>🚚</span>
-              <span>Envíos</span>
-              {logistica && <span style={{ fontSize: 11, color: C.sage, background: C.sage + '22', padding: '2px 8px', borderRadius: 10 }}>Configurado</span>}
-            </span>
-            <span style={{ color: C.textSub, fontSize: 16 }}>{perfilEnviosAbierto ? '∨' : '›'}</span>
-          </button>
-
-          {/* Sección Envíos expandida */}
-          {perfilEnviosAbierto && (
-            <div style={{ padding: '4px 0 16px', borderBottom: `1px solid ${C.border}` }}>
-              {renderLogistica()}
-            </div>
-          )}
-
-          {/* Cerrar sesión */}
-          <button style={{ ...menuItemStyle, borderBottom: 'none', color: C.red }}
-            onClick={() => logout().then(() => { window.location.hash = '#/' })}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 18 }}>🚪</span>
-              <span>Cerrar sesión</span>
-            </span>
-          </button>
+        {/* Tabs horizontales: siempre renderizados, visibles en desktop, ocultos en mobile cuando settingsTab===null */}
+        <div className="settings-tabs settings-tabs-desktop" style={{ borderBottom: '1px solid var(--tw-border)', marginBottom: 20 }}>
+          {(['perfil', 'finca', 'cobros', 'envio', 'direcciones', 'notificaciones', 'seguridad'] as NonNullable<SettingsTab>[]).map(id => {
+            const emojis: Record<NonNullable<SettingsTab>, string> = { perfil: '👤', finca: '🌄', cobros: '💳', envio: '🚚', direcciones: '📍', notificaciones: '🔔', seguridad: '🔒' }
+            const labels: Record<NonNullable<SettingsTab>, string> = { perfil: 'Perfil', finca: 'Finca', cobros: 'Cobros', envio: 'Envío', direcciones: 'Direcciones', notificaciones: 'Notific.', seguridad: 'Seguridad' }
+            const isActive = (settingsTab ?? 'perfil') === id
+            return (
+              <button key={id} onClick={() => setSettingsTab(id)} style={{ padding: '8px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: isActive ? 'var(--tw-sage)' : 'var(--tw-text-muted)', background: 'none', border: 'none', borderBottom: isActive ? '2px solid var(--tw-sage)' : '2px solid transparent', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {emojis[id]} {labels[id]}
+              </button>
+            )
+          })}
         </div>
 
-        {/* Calificaciones recibidas */}
-        {renderCalificaciones()}
+        {/* Contenido del tab (oculto en mobile si settingsTab===null) */}
+        <div className={settingsTab === null ? 'perfil-content-hidden' : ''}>
+          {renderSettings()}
+          {(settingsTab === 'perfil' || settingsTab === null) && renderCalificaciones()}
+        </div>
 
         {/* Ayuda */}
-        <div style={{ background: C.card, borderRadius: 14, padding: '16px 18px', border: `1px solid ${C.border}` }}>
-          <p style={{ margin: '0 0 12px', fontSize: 11, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>¿Necesitas ayuda?</p>
+        <div style={{ background: 'var(--tw-card)', borderRadius: 14, padding: '16px 18px', border: `1px solid var(--tw-border)` }}>
+          <p style={{ margin: '0 0 12px', fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>¿Necesitas ayuda?</p>
           <a
             href={`https://wa.me/51917959370?text=Hola, soy ${caficultor.nombre} y necesito ayuda con mi portal`}
             target="_blank" rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, background: '#25D36622', border: `1px solid #25D36644`, textDecoration: 'none' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, background: '#25D36622', border: `1px solid '#25D36644'`, textDecoration: 'none' }}
           >
             <span style={{ fontSize: 20 }}>💬</span>
             <div>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.cream }}>Hablar con el equipo</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: C.textSub }}>WhatsApp directo con TunayWasi</p>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>Hablar con el equipo</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>WhatsApp directo con TunayWasi</p>
             </div>
           </a>
         </div>
+
+          </div>{/* /columna izquierda */}
+
+          {/* Columna derecha: resumen */}
+          <div style={{ width: 240, flexShrink: 0, display: 'none' }} className="perfil-col-right">
+            <div style={{ background: 'var(--tw-card)', borderRadius: 14, padding: '16px 18px', border: `1px solid var(--tw-border)` }}>
+              <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>📊 Resumen</p>
+              {[
+                { label: 'Total ventas', value: String(pedidos.length) },
+                { label: 'Ingresos netos', value: ingresosNetos > 0 ? `S/ ${(ingresosNetos / 100).toLocaleString('es-PE', { minimumFractionDigits: 0 })}` : '—' },
+                { label: 'Calificación', value: scorePromedio > 0 ? `${scorePromedio.toFixed(1)} ⭐` : '—' },
+                { label: 'Negocios atendidos', value: String(negociosUnicos) },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid var(--tw-border)` }}>
+                  <span style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>{label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)' }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>{/* /layout 2 col */}
+      </div>
+    )
+  }
+
+  // ─── Settings ────────────────────────────────────────────────────────────────
+
+  function renderSettings() {
+    if (!caficultor) return null
+
+    const sectionTitle: React.CSSProperties = {
+      fontFamily: 'Cormorant Garamond, serif', fontSize: 14, fontWeight: 700,
+      color: 'var(--tw-text)', marginBottom: 10, paddingBottom: 6,
+      borderBottom: '1px solid var(--tw-border)',
+    }
+
+    const fieldLabel: React.CSSProperties = {
+      fontSize: 10, fontWeight: 700, color: 'var(--tw-text-muted)', marginBottom: 3,
+    }
+
+    const inputStyle: React.CSSProperties = {
+      width: '100%', background: 'var(--tw-card)', border: '1px solid var(--tw-border)',
+      borderRadius: 7, padding: '7px 10px', fontSize: 11, color: 'var(--tw-text)',
+      fontFamily: 'Montserrat, sans-serif', outline: 'none', boxSizing: 'border-box',
+    }
+
+    const notifRow = (key: keyof typeof notifState, label: string, sub?: string) => (
+      <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--tw-border)' }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tw-text)' }}>{label}</div>
+          {sub && <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 1 }}>{sub}</div>}
+        </div>
+        <div
+          onClick={() => setNotifState(prev => ({ ...prev, [key]: !prev[key] }))}
+          style={{
+            width: 36, height: 20, borderRadius: 10, flexShrink: 0, cursor: 'pointer', position: 'relative',
+            background: notifState[key] ? 'var(--tw-sage)' : 'var(--tw-border)',
+          }}
+        >
+          <div style={{
+            position: 'absolute', top: 2, borderRadius: '50%', width: 16, height: 16, background: '#fff',
+            left: notifState[key] ? 'calc(100% - 18px)' : 2, transition: 'left 0.15s',
+          }} />
+        </div>
+      </div>
+    )
+
+    const activeTab = settingsTab ?? 'perfil'
+    return (
+      <div>
+        {/* Tab: Perfil */}
+        {activeTab === 'perfil' && (
+          <div className="perfil-2col">
+            <div style={{ flex: 1, maxWidth: 520, minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
+              {/* Datos personales */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={sectionTitle}>Datos personales</div>
+                <div className="grid-2col" style={{ marginBottom: 10 }}>
+                  <div>
+                    <div style={fieldLabel}>Nombre completo</div>
+                    <input style={inputStyle} defaultValue={caficultor.nombre} />
+                  </div>
+                  <div>
+                    <div style={fieldLabel}>DNI</div>
+                    <input style={inputStyle} defaultValue={(caficultor as any).dni ?? ''} placeholder="DNI" />
+                  </div>
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={fieldLabel}>Teléfono / WhatsApp</div>
+                  <input style={inputStyle} defaultValue={(caficultor as any).telefono ?? ''} placeholder="+51 9xx xxx xxx" />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={fieldLabel}>Correo electrónico</div>
+                  <input style={inputStyle} defaultValue={(caficultor as any).email ?? ''} placeholder="correo@ejemplo.com" />
+                </div>
+              </div>
+
+              {/* Datos de productor */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={sectionTitle}>Datos de productor</div>
+                <div className="grid-2col" style={{ marginBottom: 10 }}>
+                  <div>
+                    <div style={fieldLabel}>Región</div>
+                    <input style={inputStyle} defaultValue={caficultor.region} />
+                  </div>
+                  <div>
+                    <div style={fieldLabel}>Provincia</div>
+                    <input style={inputStyle} defaultValue={(caficultor as any).provincia ?? ''} placeholder="Provincia" />
+                  </div>
+                </div>
+                <div>
+                  <div style={fieldLabel}>Descripción del productor</div>
+                  <textarea
+                    style={{ ...inputStyle, resize: 'none' }}
+                    rows={3}
+                    defaultValue={(caficultor as any).descripcion ?? ''}
+                    placeholder="Cuéntanos sobre ti y tu finca..."
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Cancelar</button>
+                <button onClick={() => toast('Perfil guardado', 'ok')} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Guardar cambios</button>
+              </div>
+            </div>
+
+            {/* Card lateral: estado del perfil */}
+            <div style={{ width: 220, flexShrink: 0, display: 'none' }} className="settings-col-right">
+              <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: 14 }}>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 10 }}>🌱 Estado del perfil</div>
+                {[
+                  { ok: true,  label: 'Perfil verificado',   sub: 'TunayWasi confirma tu identidad' },
+                  { ok: true,  label: 'Finca registrada',    sub: `${(caficultor as any).finca ?? 'Tu finca'}` },
+                  { ok: false, label: 'Foto pendiente',      sub: 'Sube tu foto de perfil' },
+                ].map(({ ok, label, sub }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <span style={{ fontSize: 14 }}>{ok ? '✅' : '⚠️'}</span>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-text)' }}>{label}</div>
+                      <div style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>{sub}</div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--tw-border)' }}>
+                  <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginBottom: 4 }}>Completado</div>
+                  <div style={{ height: 6, background: 'var(--tw-border)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ width: '75%', height: '100%', background: 'var(--tw-sage)', borderRadius: 3 }} />
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--tw-sage)', fontWeight: 700, marginTop: 4 }}>75% completo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Finca */}
+        {activeTab === 'finca' && (
+          <div className="perfil-2col">
+            <div style={{ flex: 1, maxWidth: 520, minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ marginBottom: 20 }}>
+                <div style={sectionTitle}>Datos de la finca</div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={fieldLabel}>Nombre de la finca</div>
+                  <input style={inputStyle} defaultValue={(caficultor as any).finca ?? ''} placeholder="Finca La Estrella" />
+                </div>
+                <div className="modal-prod-grid-3" style={{ gap: 10 }}>
+                  <div>
+                    <div style={fieldLabel}>Altitud (msnm)</div>
+                    <input style={inputStyle} defaultValue={caficultor.altitudMsnm} type="number" />
+                  </div>
+                  <div>
+                    <div style={fieldLabel}>Hectáreas</div>
+                    <input style={inputStyle} defaultValue={(caficultor as any).hectareas ?? ''} placeholder="12" type="number" />
+                  </div>
+                  <div>
+                    <div style={fieldLabel}>Años activa</div>
+                    <input style={inputStyle} defaultValue={(caficultor as any).aniosActiva ?? ''} placeholder="28" type="number" />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={sectionTitle}>Variedades cultivadas</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                  {((caficultor as any).variedades ?? ['Gesha', 'Bourbon']).map((v: string) => (
+                    <span key={v} style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, color: 'var(--tw-sage)', background: 'rgba(143,175,138,.15)', padding: '2px 8px', borderRadius: 4 }}>{v}</span>
+                  ))}
+                  <span style={{ display: 'inline-block', fontSize: 9, color: 'var(--tw-text-muted)', background: 'var(--tw-border)', padding: '2px 8px', borderRadius: 4, cursor: 'pointer' }}
+                    onClick={() => toast('Próximamente: agregar variedad', 'info')}>+ Agregar</span>
+                </div>
+                <div>
+                  <div style={fieldLabel}>Proceso principal</div>
+                  <input style={inputStyle} defaultValue={(caficultor as any).proceso ?? 'Lavado / Natural'} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={sectionTitle}>Certificaciones</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {((caficultor as any).certificaciones ?? ['☕ Café de especialidad']).map((c: string) => (
+                    <span key={c} style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, color: 'var(--tw-sage)', background: 'rgba(143,175,138,.15)', padding: '2px 8px', borderRadius: 4 }}>{c}</span>
+                  ))}
+                  <span style={{ display: 'inline-block', fontSize: 9, color: 'var(--tw-text-muted)', background: 'var(--tw-border)', padding: '2px 8px', borderRadius: 4, cursor: 'pointer' }}
+                    onClick={() => toast('Próximamente: agregar certificación', 'info')}>+ Agregar</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Cancelar</button>
+                <button onClick={() => toast('Finca guardada', 'ok')} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Guardar cambios</button>
+              </div>
+            </div>
+
+            {/* Card lateral: ubicación */}
+            <div style={{ width: 220, flexShrink: 0, display: 'none' }} className="settings-col-right">
+              <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: 14 }}>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 10 }}>📍 Ubicación</div>
+                <div style={{ background: 'rgba(143,175,138,.08)', border: '1px solid rgba(143,175,138,.2)', borderRadius: 8, height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 24 }}>🗺️</div>
+                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 4 }}>{caficultor.region}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Envío */}
+        {activeTab === 'envio' && renderLogistica()}
+
+        {/* Tab: Direcciones */}
+        {activeTab === 'direcciones' && (() => {
+          const TIPOS_CAF = [
+            { value: 'finca', emoji: '🏡', label: 'Finca / Casa' },
+            { value: 'agencia', emoji: '🏪', label: 'Agencia courier' },
+            { value: 'otro', emoji: '🏢', label: 'Otro' },
+          ]
+          const DEPTOS = ['Amazonas','Áncash','Apurímac','Arequipa','Ayacucho','Cajamarca','Callao','Cusco','Huancavelica','Huánuco','Ica','Junín','La Libertad','Lambayeque','Lima','Loreto','Madre de Dios','Moquegua','Pasco','Piura','Puno','San Martín','Tacna','Tumbes','Ucayali']
+          const abrirNueva = () => {
+            setDirFormEditar(undefined)
+            setDirFormTipo('finca'); setDirFormNombre(''); setDirFormDir('')
+            setDirFormDistrito(''); setDirFormProvincia(''); setDirFormDpto('Lima')
+            setDirFormRef(''); setDirFormTel(''); setDirFormPrincipal(false)
+            setDirFormAbierto(true)
+          }
+          const abrirEditar = (dir: typeof direcciones[0]) => {
+            setDirFormEditar(dir)
+            setDirFormTipo(dir.tipo); setDirFormNombre(dir.nombre); setDirFormDir(dir.direccion)
+            setDirFormDistrito(dir.distrito); setDirFormProvincia(dir.provincia); setDirFormDpto(dir.departamento)
+            setDirFormRef(dir.referencia); setDirFormTel(dir.telefono); setDirFormPrincipal(dir.esPrincipal)
+            setDirFormAbierto(true)
+          }
+          const guardar = () => {
+            if (!dirFormDir.trim() || !dirFormDistrito.trim()) return
+            const nueva: typeof direcciones[0] = {
+              id: dirFormEditar?.id ?? `dir-${Date.now()}`,
+              tipo: dirFormTipo, nombre: dirFormNombre, direccion: dirFormDir,
+              distrito: dirFormDistrito, provincia: dirFormProvincia, departamento: dirFormDpto,
+              codigoPostal: '', referencia: dirFormRef, telefono: dirFormTel, esPrincipal: dirFormPrincipal,
+            }
+            setDirecciones(prev => {
+              const idx = prev.findIndex(x => x.id === nueva.id)
+              let updated = idx >= 0 ? prev.map(x => x.id === nueva.id ? nueva : x) : [...prev, nueva]
+              if (nueva.esPrincipal) updated = updated.map(x => x.id === nueva.id ? x : { ...x, esPrincipal: false })
+              return updated
+            })
+            toast(dirFormEditar ? 'Dirección actualizada' : 'Dirección guardada', 'ok')
+            setDirFormAbierto(false)
+          }
+          return (
+            <div style={{ maxWidth: 520, width: '100%', boxSizing: 'border-box' }}>
+              {/* Lista */}
+              {!dirFormAbierto && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={sectionTitle}>Mis direcciones</div>
+                    <button onClick={abrirNueva} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>+ Agregar</button>
+                  </div>
+                  {direcciones.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--tw-text-muted)' }}>
+                      <div style={{ fontSize: 36, marginBottom: 8 }}>📍</div>
+                      <div style={{ fontSize: 13, marginBottom: 4 }}>Sin direcciones registradas</div>
+                      <div style={{ fontSize: 11 }}>Agrega tu finca o punto de despacho</div>
+                    </div>
+                  )}
+                  {direcciones.map(dir => (
+                    <div key={dir.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 0', borderBottom: '1px solid var(--tw-border)' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)' }}>{dir.nombre || dir.direccion}</div>
+                        <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginTop: 2 }}>{dir.direccion}</div>
+                        <div style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>{[dir.distrito, dir.departamento].filter(Boolean).join(', ')}</div>
+                        {dir.esPrincipal && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--tw-sage)', background: 'rgba(143,175,138,.15)', padding: '2px 6px', borderRadius: 4, display: 'inline-block', marginTop: 4 }}>Principal</span>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button onClick={() => abrirEditar(dir)} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 10, cursor: 'pointer' }}>Editar</button>
+                        {!dir.esPrincipal && <button onClick={() => setDirecciones(prev => prev.filter(d => d.id !== dir.id))} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(239,68,68,.3)', background: 'transparent', color: '#ef4444', fontSize: 10, cursor: 'pointer' }}>×</button>}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* Formulario inline */}
+              {dirFormAbierto && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                    <button onClick={() => setDirFormAbierto(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--tw-text-muted)', padding: 0 }}>‹</button>
+                    <div style={sectionTitle}>{dirFormEditar ? 'Editar dirección' : 'Nueva dirección'}</div>
+                  </div>
+
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={fieldLabel}>Tipo</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {TIPOS_CAF.map(t => (
+                        <button key={t.value} onClick={() => setDirFormTipo(t.value)} style={{ flex: 1, padding: '10px 6px', borderRadius: 10, cursor: 'pointer', border: `1px solid ${dirFormTipo === t.value ? 'var(--tw-terra)' : 'var(--tw-border)'}`, background: dirFormTipo === t.value ? 'rgba(201,110,75,0.08)' : 'var(--tw-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 20 }}>{t.emoji}</span>
+                          <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--tw-text)', textAlign: 'center' }}>{t.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={fieldLabel}>Nombre de referencia</div>
+                    <input value={dirFormNombre} onChange={e => setDirFormNombre(e.target.value)} style={inputStyle} placeholder="Ej: Finca Vista Hermosa" />
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={fieldLabel}>Dirección *</div>
+                    <input value={dirFormDir} onChange={e => setDirFormDir(e.target.value)} style={inputStyle} placeholder="Jr. Los Nogales 234" />
+                  </div>
+                  <div className="grid-2col" style={{ marginBottom: 10 }}>
+                    <div>
+                      <div style={fieldLabel}>Distrito *</div>
+                      <input value={dirFormDistrito} onChange={e => setDirFormDistrito(e.target.value)} style={inputStyle} placeholder="Jaén" />
+                    </div>
+                    <div>
+                      <div style={fieldLabel}>Provincia</div>
+                      <input value={dirFormProvincia} onChange={e => setDirFormProvincia(e.target.value)} style={inputStyle} placeholder="Jaén" />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={fieldLabel}>Departamento</div>
+                    <div style={{ position: 'relative' }}>
+                      <select value={dirFormDpto} onChange={e => setDirFormDpto(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                        {DEPTOS.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--tw-text-muted)', pointerEvents: 'none' }}>▾</span>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={fieldLabel}>Referencia adicional</div>
+                    <input value={dirFormRef} onChange={e => setDirFormRef(e.target.value)} style={inputStyle} placeholder="A 2 km de la carretera, portón verde" />
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={fieldLabel}>Teléfono de contacto</div>
+                    <input value={dirFormTel} onChange={e => setDirFormTel(e.target.value)} style={inputStyle} placeholder="+51 9XX XXX XXX" type="tel" />
+                  </div>
+                  <div onClick={() => setDirFormPrincipal(p => !p)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'var(--tw-card)', marginBottom: 20, cursor: 'pointer' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tw-text)' }}>Establecer como dirección principal</div>
+                      <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginTop: 2 }}>Se usará por defecto en nuevos despachos</div>
+                    </div>
+                    <div style={{ width: 36, height: 20, borderRadius: 10, background: dirFormPrincipal ? 'var(--tw-terra)' : 'var(--tw-border)', position: 'relative', flexShrink: 0 }}>
+                      <div style={{ position: 'absolute', top: 3, left: dirFormPrincipal ? 'calc(100% - 17px)' : 3, width: 14, height: 14, borderRadius: '50%', background: '#fff', transition: 'left 0.15s' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={() => setDirFormAbierto(false)} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                    <button onClick={guardar} style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{dirFormEditar ? 'Guardar cambios' : 'Guardar dirección'}</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* Tab: Notificaciones */}
+        {activeTab === 'notificaciones' && (
+          <div style={{ maxWidth: 520, width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={sectionTitle}>Pedidos</div>
+              {notifRow('nuevoPedido', 'Nuevo pedido recibido', 'Cuando un negocio hace un pedido nuevo')}
+              {notifRow('pagoVerificado', 'Pago verificado por TunayWasi', 'Cuando el admin confirma el voucher del negocio')}
+              {notifRow('pedidoEntregado', 'Pedido entregado confirmado', 'Cuando el negocio confirma la recepción')}
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={sectionTitle}>Negocio y mensajes</div>
+              {notifRow('mensajeNegocio', 'Mensaje de un negocio', 'Consultas o reclamos de clientes')}
+              {notifRow('valoracionRecibida', 'Valoración recibida', 'Cuando un negocio valora tu café')}
+              {notifRow('stockBajo', 'Stock bajo', 'Cuando un lote queda con menos de 5 kg')}
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={sectionTitle}>Canal de notificación</div>
+              {notifRow('whatsapp', 'WhatsApp', (caficultor as any).telefono ?? '+51 9xx xxx xxx')}
+              {notifRow('email', 'Email', (caficultor as any).email ?? 'correo@ejemplo.com')}
+              {notifRow('push', 'Push (app Android)', 'Notificaciones en el móvil')}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => toast('Preferencias guardadas', 'ok')} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Guardar preferencias</button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Cobros */}
+        {activeTab === 'cobros' && (
+          <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+            <div style={{ flex: 1, maxWidth: 520, minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ marginBottom: 20 }}>
+                <div style={sectionTitle}>💳 Cobros</div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={fieldLabel}>Número Yape</div>
+                  <input style={inputStyle} type="tel" defaultValue={(caficultor as any).numeroYape ?? ''} placeholder="+51 9XX XXX XXX" />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={fieldLabel}>Banco</div>
+                  <div style={{ position: 'relative' }}>
+                    <select style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }} defaultValue={(caficultor as any).banco ?? ''}>
+                      <option value="">Seleccionar banco</option>
+                      {['BCP', 'Interbank', 'BBVA', 'Scotiabank', 'BanBif', 'Caja Cusco', 'Caja Piura'].map(b => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--tw-text-muted)', pointerEvents: 'none' }}>▾</span>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={fieldLabel}>Número de cuenta</div>
+                  <input style={inputStyle} defaultValue={(caficultor as any).numeroCuenta ?? ''} placeholder="191-XXXXXXXXX-X-XX" />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={fieldLabel}>CCI <span style={{ fontWeight: 400, color: 'var(--tw-text-muted)' }}>(opcional)</span></div>
+                  <input style={inputStyle} defaultValue={(caficultor as any).cci ?? ''} placeholder="00219100XXXXXXXXXX25" />
+                </div>
+                <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginBottom: 16 }}>
+                  TunayWasi envía los pagos confirmados a esta cuenta dentro de las 24h.
+                </div>
+              </div>
+              <div style={{ padding: '8px 10px', background: 'rgba(143,175,138,.06)', border: '1px solid rgba(143,175,138,.15)', borderRadius: 7, fontSize: 10, color: 'var(--tw-sage)', marginBottom: 20 }}>
+                🚚 La configuración de envíos (origen, agencias, tarifas) se gestiona en la pestaña <strong>Envíos</strong>.
+              </div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Cancelar</button>
+                <button onClick={() => toast('Datos de cobro guardados', 'ok')} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Guardar cambios</button>
+              </div>
+            </div>
+            {/* Card lateral: consejos */}
+            <div style={{ width: 220, flexShrink: 0, display: 'none' }} className="settings-col-right">
+              <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: 14 }}>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 10 }}>💡 Consejos</div>
+                <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', lineHeight: 1.5 }}>
+                  <div style={{ marginBottom: 8 }}>✅ <b>Yape activo</b> permite que los negocios confirmen sus pedidos más rápido.</div>
+                  <div style={{ marginBottom: 8 }}>🏦 El <b>número de cuenta</b> es donde recibes el pago una vez que TunayWasi confirma la entrega.</div>
+                  <div>🚚 Configura tus agencias y tarifas en la pestaña <b>Envíos</b>.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Seguridad */}
+        {activeTab === 'seguridad' && (
+          <div style={{ maxWidth: 520, width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={sectionTitle}>Contraseña</div>
+              <div style={{ marginBottom: 10 }}>
+                <div style={fieldLabel}>Contraseña actual</div>
+                <input style={inputStyle} type="password" placeholder="••••••••" />
+              </div>
+              <div className="grid-2col" style={{ marginBottom: 10 }}>
+                <div>
+                  <div style={fieldLabel}>Nueva contraseña</div>
+                  <input style={inputStyle} type="password" placeholder="Mínimo 8 caracteres" />
+                </div>
+                <div>
+                  <div style={fieldLabel}>Confirmar contraseña</div>
+                  <input style={inputStyle} type="password" placeholder="Repetir nueva" />
+                </div>
+              </div>
+              <button onClick={() => toast('Próximamente: cambiar contraseña', 'info')} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Cambiar contraseña</button>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={sectionTitle}>Sesiones activas</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--tw-border)' }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tw-text)' }}>Este navegador</div>
+                  <div style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>Sesión actual</div>
+                </div>
+                <div style={{ fontSize: 9, color: 'var(--tw-sage)', fontWeight: 700 }}>Activa</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ ...sectionTitle, color: '#ef4444' }}>Zona de peligro</div>
+              <div style={{ background: 'rgba(239,68,68,.05)', border: '1px solid rgba(239,68,68,.15)', borderRadius: 8, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-text)' }}>Eliminar cuenta</div>
+                  <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginTop: 2 }}>Se eliminarán tus datos, finca y lotes publicados</div>
+                </div>
+                <button onClick={() => toast('Contacta a soporte para eliminar tu cuenta', 'info')} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(239,68,68,.3)', background: 'rgba(239,68,68,.05)', color: '#ef4444', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Eliminar cuenta</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -1928,21 +3243,20 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Montserrat, sans-serif', display: 'flex' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', fontFamily: 'Montserrat, sans-serif', display: 'flex', overflowX: 'hidden' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
 
-        /* ── Sidebar / main ── */
-        @media (max-width: 700px) {
-          .caf-sidebar        { display: none !important; }
-          .caf-main           { margin-left: 0 !important; }
-          .caf-mobile-header  { display: flex !important; }
-          .caf-bottom-nav     { display: flex !important; }
+        /* Sidebar interno eliminado — navegación vive en GlobalHeader */
+
+        /* ── Perfil columna derecha ── */
+        @media (min-width: 900px) {
+          .perfil-col-right { display: block !important; }
         }
-        @media (min-width: 701px) {
-          .caf-sidebar        { display: flex !important; }
-          .caf-main           { margin-left: ${sidebarCollapsed ? 56 : 220}px !important; }
-          .caf-mobile-header  { display: none !important; }
+
+        /* ── Settings columna derecha ── */
+        @media (min-width: 900px) {
+          .settings-col-right { display: block !important; }
         }
 
         /* ── Grids responsive ── */
@@ -1957,11 +3271,21 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         @media (min-width: 1100px) { .grid-pedidos { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 1099px) { .grid-pedidos { grid-template-columns: 1fr; } }
 
-        /* Productos Netflix: 3 col en desktop, 2 col en tablet, 1 col en mobile */
+        /* Card pedido: layout interno productos + acciones */
+        .pedido-card-body { display: flex; gap: 0; }
+        .pedido-acciones { width: 160px; flex-shrink: 0; padding: 14px 12px; border-left: 1px solid var(--tw-border); display: flex; flex-direction: column; gap: 8px; }
+        @media (max-width: 600px) {
+          .pedido-card-body { flex-direction: column; }
+          .pedido-acciones { width: 100%; border-left: none; border-top: 1px solid var(--tw-border); flex-direction: row; flex-wrap: wrap; padding: 10px 12px; }
+          .pedido-acciones > * { flex: 1; min-width: 120px; }
+        }
+
+        /* Productos: 4 col en desktop ancho, 3 col en desktop normal, 2 col en tablet, 1 col en mobile */
         .grid-productos { display: grid; gap: 14px; }
-        @media (min-width: 1000px) { .grid-productos { grid-template-columns: repeat(3, 1fr); } }
-        @media (min-width: 701px) and (max-width: 999px) { .grid-productos { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 700px)  { .grid-productos { grid-template-columns: 1fr; } }
+        @media (min-width: 1200px) { .grid-productos { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 900px) and (max-width: 1199px) { .grid-productos { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 601px) and (max-width: 899px) { .grid-productos { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px)  { .grid-productos { grid-template-columns: 1fr; gap: 8px; } }
 
         /* Historial resumen: 2 col siempre, nunca se apila */
         .grid-historial-kpis { display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); }
@@ -1971,90 +3295,249 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         @media (max-width: 600px) { .grid-score { grid-template-columns: 1fr; } }
 
         /* Form perfil caficultor: collapse 2-col grids en mobile */
-        @media (max-width: 500px) {
-          .perfil-caf-grid-2 { grid-template-columns: 1fr !important; }
+        .perfil-caf-grid-2 { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 500px) { .perfil-caf-grid-2 { grid-template-columns: 1fr; } }
+
+        /* Logística: cascada 3 col (dep/prov/dist) → 1 col en mobile */
+        .grid-geo-3 { display: grid; gap: 8px; }
+        @media (min-width: 560px) { .grid-geo-3 { grid-template-columns: 1fr 1fr 1fr; } }
+        @media (max-width: 559px) { .grid-geo-3 { grid-template-columns: 1fr; } }
+
+        /* Sub-tabs de configuración: scroll horizontal sin scrollbar */
+        .settings-tabs { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .settings-tabs::-webkit-scrollbar { display: none; }
+        /* Desktop: menú lista siempre oculto, tabs y contenido siempre visibles */
+        @media (min-width: 601px) {
+          .perfil-menu-mobile { display: none !important; }
+          .perfil-back-btn { display: none !important; }
+          .perfil-content-hidden { display: block !important; }
         }
+        /* Mobile: menú lista visible (cuando no hay tab), tabs ocultos */
+        @media (max-width: 600px) {
+          .perfil-menu-mobile { display: block; }
+          .perfil-menu-hidden { display: none !important; }
+          .settings-tabs-desktop { display: none !important; }
+          .perfil-back-btn { display: flex !important; }
+          .perfil-content-hidden { display: none !important; }
+        }
+
+        /* Layout 2 col perfil: colapsa en mobile */
+        .perfil-2col { display: flex; gap: 20px; align-items: flex-start; }
+        @media (max-width: 600px) { .perfil-2col { flex-direction: column; } }
+
+        /* Logística step tabs: scroll horizontal en mobile */
+        .log-steps { display: flex; border: 1px solid var(--tw-border); border-radius: 8px; overflow: hidden; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .log-steps::-webkit-scrollbar { display: none; }
+
+        /* Paso logística: 2 columnas en desktop, 1 en mobile */
+        .grid-log-paso { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+        .grid-log-paso > * { flex: 1 1 320px; min-width: 0; }
+
+        /* Grids 2-col genéricos → 1 col en mobile */
+        .grid-2col { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 500px) { .grid-2col { grid-template-columns: 1fr; } }
+
+        /* Modal producto: layout principal 2-col → 1 col en mobile */
+        .modal-producto-layout { grid-template-columns: 1fr 360px !important; }
+        @media (max-width: 720px) { .modal-producto-layout { grid-template-columns: 1fr !important; } }
+        .modal-prod-grid-2 { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 500px) { .modal-prod-grid-2 { grid-template-columns: 1fr; } }
+        .modal-prod-grid-3 { display: grid; gap: 12px; grid-template-columns: 1fr 1fr 1fr; }
+        @media (max-width: 500px) { .modal-prod-grid-3 { grid-template-columns: 1fr; } }
+        .modal-prod-grid-4 { display: grid; gap: 8px; grid-template-columns: repeat(4,1fr); }
+        @media (max-width: 500px) { .modal-prod-grid-4 { grid-template-columns: repeat(2,1fr); } }
       `}</style>
 
-      {/* Sidebar desktop */}
-      <div className="caf-sidebar" style={{ display: 'none' }}>
-        <Sidebar tab={tab} onChange={setTab} nombre={nombreCaficultor} caficultorId={caficultorId} onLogout={() => logout().then(() => { window.location.hash = '#/' })} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(prev => !prev)} />
-      </div>
-
-      {/* Mobile header */}
-      <div className="caf-mobile-header" style={{ display: 'none', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 150, background: '#0d0d0d', borderBottom: `1px solid ${C.border}`, padding: '12px 16px', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream }}>{nombreCaficultor}</p>
-        <button onClick={() => setSidebarOpen(true)} style={{ background: 'none', border: `1px solid ${C.border}`, color: C.textSub, borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 16 }}>☰</button>
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.8)' }} onClick={() => setSidebarOpen(false)}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 240, background: '#0d0d0d', borderRight: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream }}>{nombreCaficultor}</p>
-              <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', color: C.textSub, cursor: 'pointer', fontSize: 20, padding: 0 }}>✕</button>
-            </div>
-            {NAV_ITEMS.map(item => (
-              <button key={item.id} onClick={() => { setTab(item.id); setSidebarOpen(false) }} style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px',
-                background: tab === item.id ? C.terra + '18' : 'none',
-                border: 'none', borderLeft: tab === item.id ? `3px solid ${C.terra}` : '3px solid transparent',
-                cursor: 'pointer', textAlign: 'left',
-              }}>
-                <span style={{ fontSize: 18 }}>{item.emoji}</span>
-                <span style={{ fontSize: 14, fontWeight: tab === item.id ? 700 : 500, color: tab === item.id ? C.cream : C.textSub }}>{item.label}</span>
-              </button>
-            ))}
-            <div style={{ padding: '16px 20px' }}>
-              <button onClick={() => logout().then(() => { window.location.hash = '#/' })} style={{ width: '100%', padding: '10px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 13, cursor: 'pointer' }}>Cerrar sesión</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main content */}
-      <div className="caf-main" style={{ flex: 1, marginLeft: sidebarCollapsed ? 56 : 220, minHeight: '100vh' }}>
-        <div style={{ padding: '16px 24px 40px', paddingTop: 'clamp(60px, 8vw, 16px)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <div>
-              <p style={{ margin: '0 0 2px', fontSize: 11, color: C.textSub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {NAV_ITEMS.find(n => n.id === tab)?.emoji} {NAV_ITEMS.find(n => n.id === tab)?.label}
-              </p>
-              <h1 style={{ margin: 0, fontSize: 26, fontFamily: 'Cormorant Garamond, serif', color: C.cream, fontWeight: 700 }}>{nombreCaficultor}</h1>
-              {caficultor && <p style={{ margin: '2px 0 0', fontSize: 13, color: C.textSub }}>{caficultor.region} · {caficultor.altitudMsnm.toLocaleString()} msnm</p>}
-            </div>
-            {paraDespachar.length > 0 && (
-              <span style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, background: C.yellow + '22', color: C.yellow, fontWeight: 700, border: `1px solid ${C.yellow}44` }}>
-                {paraDespachar.length} por despachar
-              </span>
-            )}
-          </div>
-
-          {tab === 'pedidos' && renderPedidos()}
+      {/* Main content — sin sidebar interno, navegación en GlobalHeader */}
+      <div style={{ flex: 1, minHeight: '100vh', minWidth: 0, overflowX: 'hidden' }}>
+        <div style={{ padding: '16px 16px 40px' }}>
+          {tab === 'pedidos' && renderPedidosTab()}
           {tab === 'productos' && renderProductos()}
           {tab === 'historial' && renderHistorial()}
+          {tab === 'pagos' && renderPagos()}
           {tab === 'perfil' && renderPerfil()}
+
+          {tab === 'alertas' && (
+            <NotificacionesCaficultor
+              caficultorId={caficultorId}
+              onNavigatePedido={(pedidoId) => {
+                // El GlobalHeader maneja la navegación de tab; aquí solo refrescamos
+                void pedidoId
+              }}
+              onNavigateCotizacion={(_cotizId) => void 0}
+              onNavigateProducto={(_prodId) => void 0}
+              demo={isDemo}
+            />
+          )}
+
+          {tab === 'wasi' && (
+            <div style={{ height: 'calc(100vh - 180px)', display: 'flex', flexDirection: 'column' }}>
+              <WasiChat rol="seller" nombreUsuario={caficultor?.nombre} />
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Drawer detalle pedido (activos e historial) */}
+      {pedidoDetalle && (() => {
+        const p = pedidoDetalle
+        const miStatus = miStatusEnPedido(p)
+        const isPend = miStatus === 'preparando'
+        const isAgencia = miStatus === 'en_agencia' || miStatus === 'en_disputa'
+        const pagoOk = p.pagoStatus === 'verificado'
+        const miCodigo = miCodigoEnPedido(p)
+        const total = misItems(p).reduce((s, i) => s + i.subtotalCents, 0)
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex' }} onClick={() => setPedidoDetalle(null)}>
+            <div style={{ flex: 1, background: 'rgba(0,0,0,0.7)' }} />
+            <div
+              style={{ width: 'min(480px, 100vw)', background: 'var(--tw-card)', borderLeft: `1px solid var(--tw-border)`, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header drawer */}
+              <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid var(--tw-border)`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+                <div>
+                  <p style={{ margin: '0 0 2px', fontSize: 10, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{p.id}</p>
+                  <h2 style={{ margin: '0 0 2px', fontSize: 22, fontFamily: 'Cormorant Garamond, serif', color: 'var(--tw-text)', fontWeight: 700 }}>{p.nombreLocal}</h2>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-muted)' }}>{p.distritoLocal} · {formatFecha(p.createdAt)}</p>
+                </div>
+                <button onClick={() => setPedidoDetalle(null)} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', fontSize: 22, cursor: 'pointer', padding: '0 0 0 16px', lineHeight: 1 }}>×</button>
+              </div>
+
+              <div style={{ padding: '20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Estado pago */}
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: (pagoOk ? 'var(--tw-sage)' : '#f39c12') + '11', border: `1px solid ${(pagoOk ? 'var(--tw-sage)' : '#f39c12')}33` }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: pagoOk ? 'var(--tw-sage)' : '#f39c12' }}>
+                    {pagoOk ? '✓ Pago verificado' : p.pagoStatus === 'voucher_subido' ? '🔎 Voucher enviado — verificando' : '⏳ Pago pendiente'}
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>
+                    Método: {p.metodoPago?.toUpperCase() ?? '—'}
+                    {p.voucherUrl ? <> · <a href={p.voucherUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--tw-terra)' }}>Ver voucher →</a></> : null}
+                  </p>
+                </div>
+
+                {/* Items */}
+                <div>
+                  <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Productos</p>
+                  {misItems(p).map((item, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--tw-bg)', borderRadius: 8, marginBottom: 6 }}>
+                      <div>
+                        <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600, color: 'var(--tw-text)' }}>{item.productoNombre}</p>
+                        <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)' }}>{item.qty} × {item.presentacion}</p>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-terra)', flexShrink: 0, marginLeft: 12 }}>{formatCents(item.subtotalCents)}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', borderTop: `1px solid var(--tw-border)`, marginTop: 4 }}>
+                    <span style={{ fontSize: 13, color: 'var(--tw-text-muted)' }}>
+                      {(() => {
+                        const envioD = p.envioDetalle?.[caficultorId]
+                        if (envioD?.tipo === 'domicilio') return '🚚 Envío a domicilio'
+                        if (envioD?.tipo === 'agencia') return `📦 ${envioD.agencia ?? p.agencia ?? 'Agencia'}`
+                        return p.agencia ? `📦 ${p.agencia}` : '📦 Envío'
+                      })()}
+                    </span>
+                    <span style={{ fontSize: 13, color: 'var(--tw-text-muted)' }}>{formatCents(p.deliveryCents)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px' }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tw-text)' }}>Total</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tw-terra)' }}>{formatCents(total + p.deliveryCents)}</span>
+                  </div>
+                </div>
+
+                {/* Dirección */}
+                {p.direccionEntrega && (
+                  <div>
+                    <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Dirección de entrega</p>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--tw-text)', padding: '10px 12px', background: 'var(--tw-bg)', borderRadius: 8 }}>📍 {p.direccionEntrega}</p>
+                  </div>
+                )}
+
+                {/* Destinatario */}
+                <div style={{ padding: '10px 12px', background: 'var(--tw-bg)', borderRadius: 8 }}>
+                  <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Destinatario</p>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tw-text)' }}>{p.negocioRazonSocial || p.nombreLocal}</div>
+                  {p.negocioRuc && <div style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>RUC {p.negocioRuc}</div>}
+                  {p.negocioNombre && <div style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>👤 {p.negocioNombre}</div>}
+                  {p.negocioEmail && <div style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>{p.negocioEmail}</div>}
+                  {p.negocioTelefono && <div style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>{p.negocioTelefono}</div>}
+                  {p.distritoLocal && <div style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>📍 {p.distritoLocal}</div>}
+                </div>
+
+                {/* Chat con el negocio */}
+                <div>
+                  <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Chat con el negocio
+                  </p>
+                  <ChatPedido
+                    pedidoId={p.id}
+                    caficultorId={caficultorId}
+                    usuarioId={caficultorId}
+                    usuarioNombre={caficultor?.nombre ?? 'Caficultor'}
+                    usuarioRol="seller"
+                    isDemo={isDemo}
+                    codigoTracking={miCodigo}
+                  />
+                </div>
+
+                {/* Código agencia si está en tránsito */}
+                {isAgencia && miCodigo && (
+                  <div style={{ padding: '12px 14px', background: '#4a90c4' + '11', border: `1px solid ${'#4a90c4'}33`, borderRadius: 10 }}>
+                    <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: '#4a90c4' }}>🚚 En tránsito {p.agencia?.toUpperCase()}</p>
+                    <p style={{ margin: 0, fontSize: 14, color: 'var(--tw-text)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>{miCodigo}</p>
+                  </div>
+                )}
+
+                {/* Teléfono negocio */}
+                {p.negocioTelefono && (
+                  <a
+                    href={`https://wa.me/${p.negocioTelefono.replace(/\D/g, '')}?text=Hola, soy el caficultor de Tunay Wasi. Tu pedido ${p.id} está listo.`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, background: '#25D36622', border: `1px solid '#25D36644'`, textDecoration: 'none' }}
+                  >
+                    <span style={{ fontSize: 18 }}>💬</span>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>WhatsApp al negocio</p>
+                      <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>{p.negocioNombre} · {p.negocioTelefono}</p>
+                    </div>
+                  </a>
+                )}
+              </div>
+
+              {/* Footer acción */}
+              {isPend && pagoOk && (
+                <div style={{ padding: '16px 24px', borderTop: `1px solid var(--tw-border)`, flexShrink: 0 }}>
+                  <button
+                    onClick={() => { setPedidoDetalle(null); abrirDespacho(p) }}
+                    style={{ width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    🚚 Ingresar código de agencia →
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Modal despacho por agencia */}
       {modalDespacho && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setModalDespacho(null)}>
-          <div style={{ background: C.card, borderRadius: 16, padding: '28px 28px 24px', maxWidth: 440, width: '100%', border: `1px solid ${C.border}`, fontFamily: 'Montserrat, sans-serif' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tw-card)', borderRadius: 16, padding: '28px 28px 24px', maxWidth: 440, width: '100%', border: `1px solid var(--tw-border)`, fontFamily: 'Montserrat, sans-serif' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: C.cream, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>Despachar por agencia</h3>
-              <button onClick={() => setModalDespacho(null)} style={{ background: 'none', border: 'none', color: C.textSub, fontSize: 20, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+              <h3 style={{ margin: 0, fontSize: 18, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>Despachar por agencia</h3>
+              <button onClick={() => setModalDespacho(null)} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', fontSize: 20, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
             </div>
 
-            <p style={{ margin: '0 0 6px', fontSize: 11, color: C.textSub }}>Agencia: <span style={{ color: C.cream, fontWeight: 700, textTransform: 'uppercase' }}>{modalDespacho.agencia}</span></p>
+            <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--tw-text-muted)' }}>Agencia: <span style={{ color: 'var(--tw-text)', fontWeight: 700, textTransform: 'uppercase' }}>{modalDespacho.agencia}</span></p>
 
-            <label style={{ fontSize: 11, color: C.textSub, display: 'block', margin: '16px 0 4px' }}>Código de tracking *</label>
+            <label style={{ fontSize: 11, color: 'var(--tw-text-muted)', display: 'block', margin: '16px 0 4px' }}>Código de tracking *</label>
             <input
               value={despachoForm.codigoAgencia}
               onChange={e => setDespachoForm(prev => ({ ...prev, codigoAgencia: e.target.value }))}
               placeholder="Ej: OLV-20260917-1234"
-              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0f0f0f', color: C.cream, fontSize: 13, fontFamily: 'Montserrat, sans-serif', outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid var(--tw-border)`, background: '#0f0f0f', color: 'var(--tw-text)', fontSize: 13, fontFamily: 'Montserrat, sans-serif', outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
               autoFocus
             />
 
@@ -2067,13 +3550,13 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
               aspectRatio="4/3"
             />
 
-            <p style={{ margin: '0 0 20px', fontSize: 11, color: C.muted, lineHeight: 1.5 }}>
+            <p style={{ margin: '0 0 20px', fontSize: 11, color: 'var(--tw-text-muted)', lineHeight: 1.5 }}>
               La cafetería recibirá el código de tracking para rastrear su pedido. La calificación se habilita una vez que confirmen la recepción.
             </p>
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setModalDespacho(null)} style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid ${C.border}`, background: 'none', color: C.textSub, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={confirmarDespacho} disabled={accionando === modalDespacho.pedidoId} style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: accionando === modalDespacho.pedidoId ? C.muted : C.terra, color: C.white, fontSize: 13, fontWeight: 700, cursor: accionando === modalDespacho.pedidoId ? 'not-allowed' : 'pointer' }}>
+              <button onClick={() => setModalDespacho(null)} style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={confirmarDespacho} disabled={accionando === modalDespacho.pedidoId} style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: accionando === modalDespacho.pedidoId ? 'var(--tw-text-muted)' : 'var(--tw-terra)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: accionando === modalDespacho.pedidoId ? 'not-allowed' : 'pointer' }}>
                 {accionando === modalDespacho.pedidoId ? 'Guardando...' : '🚚 Confirmar despacho'}
               </button>
             </div>
@@ -2100,26 +3583,120 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         />
       )}
 
+      {/* Ficha lote evidencias (US-27) */}
+      {fichaLoteId && (() => {
+        const prod = productos.find(p => p.id === fichaLoteId)
+        if (!prod) return null
+        const rawProd = prod as any
+        const nivel: 1 | 2 | 3 = rawProd.nivelEvidencia ?? 1
+        const evidencias: { tipo: string; url?: string; verificado: boolean; fecha?: string }[] = rawProd.evidencias ?? []
+
+        const NIVELES = [
+          { n: 1, label: 'N1 Básico', color: '#6495ED', desc: 'Fotos del lote, declaración de origen' },
+          { n: 2, label: 'N2 Certificados', color: '#6495ED', desc: 'Padrón rural, certificados intermedios' },
+          { n: 3, label: 'N3 Orgánico', color: 'var(--tw-terra)', desc: 'Certificación orgánica, informe SCA' },
+        ]
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex' }} onClick={() => setFichaLoteId(null)}>
+            <div style={{ flex: 1, background: 'rgba(0,0,0,0.75)' }} />
+            <div
+              style={{ width: 'min(500px, 100vw)', background: 'var(--tw-card)', borderLeft: `1px solid var(--tw-border)`, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid var(--tw-border)`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+                <div>
+                  <p style={{ margin: '0 0 2px', fontSize: 10, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ficha del lote · Estado evidencias</p>
+                  <h2 style={{ margin: '0 0 2px', fontSize: 20, fontFamily: 'Cormorant Garamond, serif', color: 'var(--tw-text)', fontWeight: 700 }}>{prod.nombre}</h2>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-muted)' }}>{prod.variedad} · {prod.cosecha || '—'}</p>
+                </div>
+                <button onClick={() => setFichaLoteId(null)} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', fontSize: 22, cursor: 'pointer', padding: '0 0 0 16px', lineHeight: 1 }}>×</button>
+              </div>
+
+              <div style={{ padding: '20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                {/* Barra de progreso N1→N2→N3 */}
+                <div>
+                  <p style={{ margin: '0 0 12px', fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Nivel de trazabilidad</p>
+                  <div style={{ display: 'flex', gap: 0, borderRadius: 8, overflow: 'hidden', height: 8 }}>
+                    {NIVELES.map(({ n, color }) => (
+                      <div key={n} style={{ flex: 1, background: n <= nivel ? color : 'var(--tw-border)', transition: 'background 0.3s' }} />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    {NIVELES.map(({ n, label, color, desc }) => {
+                      const activo = n <= nivel
+                      const actual = n === nivel
+                      return (
+                        <div key={n} style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: `1px solid ${actual ? color + '88' : 'var(--tw-border)'}`, background: actual ? color + '11' : 'transparent' }}>
+                          <p style={{ margin: '0 0 2px', fontSize: 10, fontWeight: 700, color: activo ? color : 'var(--tw-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            {activo ? '✓' : '○'} {label}
+                          </p>
+                          <p style={{ margin: 0, fontSize: 9, color: 'var(--tw-text-muted)', lineHeight: 1.4 }}>{desc}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Tabla de evidencias */}
+                <div>
+                  <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Documentos adjuntos</p>
+                  {evidencias.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', border: `1px dashed var(--tw-border)`, borderRadius: 10 }}>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--tw-text-muted)' }}>Aún no hay evidencias adjuntas</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {evidencias.map((ev, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'var(--tw-bg)', border: `1px solid var(--tw-border)` }}>
+                          <span style={{ fontSize: 18 }}>{ev.verificado ? '✅' : '📄'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: '0 0 1px', fontSize: 12, fontWeight: 600, color: 'var(--tw-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{ev.tipo}</p>
+                            {ev.fecha && <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)' }}>{ev.fecha}</p>}
+                          </div>
+                          {ev.url ? (
+                            <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--tw-terra)', textDecoration: 'none', flexShrink: 0 }}>Ver →</a>
+                          ) : (
+                            <span style={{ fontSize: 10, color: ev.verificado ? 'var(--tw-sage)' : '#f59e0b', flexShrink: 0 }}>{ev.verificado ? 'Verificado' : 'Pendiente'}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Panel de beneficios del siguiente nivel */}
+                {nivel < 3 && (
+                  <div style={{ padding: '14px 16px', borderRadius: 10, background: 'var(--tw-sage)0A', border: `1px solid var(--tw-sage)33` }}>
+                    <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: 'var(--tw-sage)' }}>
+                      🎯 Sube a N{nivel + 1} y desbloqueas:
+                    </p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)', lineHeight: 1.6 }}>
+                      {nivel === 1
+                        ? 'Precio negociable y mayor visibilidad en el catálogo B2B.'
+                        : 'Acceso a compradores premium, certificación orgánica y cotizaciones con SCA.'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Botón agregar evidencia */}
+                <button
+                  onClick={() => toast('Próximamente: subir evidencias desde el portal web', 'info')}
+                  style={{ padding: '14px 0', borderRadius: 10, border: `1px solid var(--tw-terra)`, background: 'var(--tw-terra)11', color: 'var(--tw-terra)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                >
+                  ＋ Agregar evidencia N{Math.min(nivel + 1, 3)} / N3
+                </button>
+
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       <Toast msgs={toasts} onRemove={id => setToasts(prev => prev.filter(t => t.id !== id))} />
 
-      {/* Mobile bottom nav */}
-      <nav className="caf-bottom-nav" style={{
-        display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 150,
-        background: '#0d0d0d', borderTop: `1px solid ${C.border}`,
-        justifyContent: 'space-around', alignItems: 'center', padding: '6px 0',
-        fontFamily: 'Montserrat, sans-serif',
-      }}>
-        {NAV_ITEMS.map(item => (
-          <button key={item.id} onClick={() => setTab(item.id)} style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-            padding: '4px 8px',
-          }}>
-            <span style={{ fontSize: 20 }}>{item.emoji}</span>
-            <span style={{ fontSize: 9, color: tab === item.id ? C.terra : C.textSub, fontWeight: tab === item.id ? 700 : 400 }}>{item.label}</span>
-          </button>
-        ))}
-      </nav>
     </div>
   )
 }

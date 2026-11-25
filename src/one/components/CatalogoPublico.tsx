@@ -1,1009 +1,115 @@
 /**
- * CatalogoPublico.tsx — Vista principal pública de TunayWasi ONE
- * Layout: Carruseles por caficultor → Grid con filtros
+ * CatalogoPublico.tsx — TunayWasi Home & Catálogo Público
+ * Orquestador delgado; lógica de UI extraída a catalogo/
  */
-import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { fetchProductos, fetchCaficultores } from '../service'
-import type { ProductoONE, CaficultorONE, ProcesoONE, FormatoONE } from '../types'
-import { PROCESO_LABELS, calcularPrecioFinal } from '../config'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+import type { ProductoONE, CaficultorONE, FormatoONE } from '../types'
+import { fetchProductos, fetchCaficultores, fetchPedidosByNegocio } from '../service'
+import type { PedidoONE } from '../types'
 import seedProductos from '../seed/one_productos.json'
 import seedCaficultores from '../seed/one_caficultores.json'
+import { useTheme, setTheme as applyTheme, getStoredTheme } from '@/shared/useTheme'
+import {
+  type CatalogoProps, type MockCafe, type TipoProducto, TIPO_LABEL,
+} from './catalogo/catalogoData'
+import { DetalleProductoInline } from './catalogo/DetalleProductoInline'
+import { ModalRegistro } from './catalogo/ModalRegistro'
+import { ModalCaficultor } from './catalogo/ModalCaficultor'
 
-const C = {
-  bg: '#0a0a0a',
-  bgCard: '#141414',
-  bgHover: '#1f1f1f',
-  cream: '#f2e0cc',
-  creamDim: '#c4b297',
-  green: '#1f3028',
-  terra: '#c96e4b',
-  sage: '#8faf8a',
-  tan: '#c4b297',
-  brown: '#533b22',
-  white: '#ffffff',
-  border: '#2a2a2a',
-  muted: '#555555',
-}
+// ─── Componente Principal ────────────────────────────────────────────────────
 
-interface ModoSeleccion {
-  seleccionados: Set<string>
-  onToggle: (p: ProductoONE) => void
-  onConfirmar: () => void
-  confirmando?: boolean
-  max: number
-}
+export const CatalogoPublico: React.FC<CatalogoProps> = ({
+  onSeleccionar,
+  onSolicitarCotizacion,
+  modoSeleccion,
+  carritoCount = 0,
+  totalCarritoCents = 0,
+  onIrAlCheckout,
+  carritoProductoIds,
+  carritoLineas = [],
+  isDemo = false,
+  sidebarOffset = 0,
+  embeddedMode = false,
+  hideFiltersHeader = false,
+  rolUsuario = null,
+  userNombre = null,
+  userUid = null,
+  estadoAprobacionB2B = null,
+  searchValue,
+  onSearchChange,
+}) => {
+  useTheme()
+  void carritoLineas
+  void sidebarOffset
 
-interface ItemCarritoMin {
-  producto: { id: string; nombre: string; precioBaseKgCents: number }
-  formato: FormatoONE
-  qty: number
-}
-
-interface Props {
-  onSeleccionar?: (producto: ProductoONE, formato?: FormatoONE) => void
-  modoSeleccion?: ModoSeleccion
-  // Carrito acumulativo (cuando el usuario está logueado)
-  carritoCount?: number
-  totalCarritoCents?: number
-  onIrAlCheckout?: () => void
-  // IDs de productos ya en carrito (para mostrar estado)
-  carritoProductoIds?: Set<string>
-  // Líneas del carrito para mostrar chips en la barra flotante
-  carritoLineas?: ItemCarritoMin[]
-  isDemo?: boolean
-  // Offset del sidebar del portal (para evitar que el header y barras flotantes queden tapadas)
-  sidebarOffset?: number
-}
-
-function formatCents(cents: number): string {
-  return `S/ ${(cents / 100).toFixed(0)}`
-}
-
-const PROCESO_COLORS: Record<ProcesoONE, string> = {
-  lavado: '#4a90c4',
-  natural: '#c96e4b',
-  honey: '#d4a017',
-  anaerobico: '#9b59b6',
-}
-
-// ─── Card compartida (carrusel + grid) ───────────────────────────────────────
-
-const ProductoCard: React.FC<{
-  producto: ProductoONE
-  caficultor: CaficultorONE | undefined
-  onSeleccionar: (p: ProductoONE) => void
-  width?: number | string
-  seleccionado?: boolean
-  disabled?: boolean
-  enCarrito?: boolean
-}> = ({ producto, caficultor, onSeleccionar, width = '100%', seleccionado, disabled, enCarrito }) => {
-  const [hovered, setHovered] = useState(false)
-  const procesoColor = PROCESO_COLORS[producto.proceso] ?? C.terra
-
-  return (
-    <div
-      className="tw-card tw-card-enter"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => !disabled && onSeleccionar?.(producto)}
-      style={{
-        width: typeof width === 'number' ? width : '100%',
-        borderRadius: 8,
-        overflow: 'visible',
-        position: 'relative',
-        transform: hovered ? 'scale(1.04)' : 'scale(1)',
-        zIndex: hovered ? 10 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        flexShrink: 0,
-        opacity: disabled ? 0.4 : 1,
-      }}
-    >
-      {/* Thumbnail */}
-      <div style={{
-        width: '100%', height: 130, borderRadius: 8,
-        background: C.bgCard, overflow: 'hidden', position: 'relative',
-        border: seleccionado ? `2px solid ${C.terra}` : '2px solid transparent',
-      }}>
-        {producto.foto ? (
-          <img
-            src={producto.foto}
-            alt={producto.nombre}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }}
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-        ) : null}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: producto.foto
-            ? 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)'
-            : `linear-gradient(135deg, ${C.green}88 0%, ${C.brown}44 100%)`,
-        }} />
-        {!producto.foto && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 44, opacity: 0.5,
-          }}>
-            ☕
-          </div>
-        )}
-        <span style={{
-          position: 'absolute', top: 8, left: 8,
-          padding: '2px 8px', borderRadius: 4,
-          background: procesoColor, color: C.white,
-          fontSize: 9, fontWeight: 700,
-          fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-        }}>
-          {PROCESO_LABELS[producto.proceso]}
-        </span>
-        {producto.puntajeReferencial && (
-          <span style={{
-            position: 'absolute', top: 8, right: 8,
-            padding: '2px 6px', borderRadius: 4,
-            background: 'rgba(0,0,0,0.7)', color: C.sage,
-            fontSize: 9, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-          }}>
-            ~{producto.puntajeReferencial}
-          </span>
-        )}
-        {/* Badge urgencia stock — solo si no está en carrito */}
-        {!enCarrito && producto.kgDisponibles < 15 && producto.id !== 'kit-inicio-001' && (
-          <span style={{
-            position: 'absolute', bottom: 8, left: 8,
-            padding: '3px 8px', borderRadius: 4,
-            background: '#b94040', color: '#ffffff',
-            fontSize: 9, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-            letterSpacing: '0.04em',
-          }}>
-            ⚡ {producto.kgDisponibles} kg
-          </span>
-        )}
-        {/* Badge "En tu pedido" */}
-        {enCarrito && (
-          <span className="tw-badge-pop" style={{
-            position: 'absolute', bottom: 8, left: 8,
-            padding: '3px 8px', borderRadius: 4,
-            background: '#1f3028', border: '1px solid #8faf8a55',
-            color: '#8faf8a',
-            fontSize: 9, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-            letterSpacing: '0.04em',
-          }}>
-            ✓ En tu pedido
-          </span>
-        )}
-        {/* Checkmark si está seleccionado */}
-        {seleccionado && (
-          <div style={{
-            position: 'absolute', bottom: 8, right: 8,
-            width: 24, height: 24, borderRadius: '50%',
-            background: C.terra, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, color: C.white, fontWeight: 700,
-          }}>✓</div>
-        )}
-      </div>
-
-      {/* Info base */}
-      <div style={{
-        padding: '8px 4px 0',
-        background: hovered ? C.bgHover : 'transparent',
-        borderRadius: '0 0 8px 8px',
-      }}>
-        <p style={{
-          margin: 0, fontSize: 12, fontWeight: 700,
-          color: C.cream, fontFamily: 'Cormorant Garamond, serif',
-          lineHeight: 1.3,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
-          {producto.nombre}
-        </p>
-        <p style={{
-          margin: '2px 0 0', fontSize: 10, color: C.tan,
-          fontFamily: 'Montserrat, sans-serif',
-        }}>
-          {caficultor?.nombre ?? producto.caficultorNombre} · {caficultor?.region ?? ''}
-        </p>
-
-        {/* Precio siempre visible */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, marginBottom: 4 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.terra, fontFamily: 'Montserrat, sans-serif' }}>
-            desde {formatCents(calcularPrecioFinal(producto.precioBaseKgCents, '1kg'))}
-          </span>
-          <span style={{ fontSize: 9, color: C.tan, fontFamily: 'Montserrat, sans-serif' }}>
-            {producto.variedad}
-          </span>
-        </div>
-
-        {/* Notas de sabor — siempre visible */}
-        {producto.notasSabor.length > 0 && (
-          <p style={{
-            margin: '0 0 6px',
-            fontSize: 10, color: C.cream + 'aa',
-            fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {producto.notasSabor.join(' · ')}
-          </p>
-        )}
-
-        {/* CTA siempre visible */}
-        <button
-          onClick={(e) => { e.stopPropagation(); !disabled && onSeleccionar?.(producto) }}
-          style={{
-            width: '100%', padding: '7px 0', borderRadius: 5,
-            border: 'none',
-            background: seleccionado ? C.terra + '88' : C.terra,
-            color: C.white,
-            fontSize: 11, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-            cursor: disabled ? 'not-allowed' : 'pointer', marginBottom: 4,
-          }}>
-          {seleccionado !== undefined
-            ? (seleccionado ? '✓ Seleccionado' : 'Agregar a mi carta')
-            : 'Quiero este café →'
-          }
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ─── Fila de carrusel ─────────────────────────────────────────────────────────
-
-const CarruselRow: React.FC<{
-  titulo: string
-  subtitulo?: string
-  productos: ProductoONE[]
-  caficultores: Map<string, CaficultorONE>
-  onSeleccionar: (p: ProductoONE) => void
-  seleccionados?: Set<string>
-}> = ({ titulo, subtitulo, productos, caficultores, onSeleccionar, seleccionados }) => {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [canLeft, setCanLeft] = useState(false)
-  const [canRight, setCanRight] = useState(true)
-
-  function scroll(dir: 'left' | 'right') {
-    scrollRef.current?.scrollBy({ left: dir === 'right' ? 480 : -480, behavior: 'smooth' })
+  const isEnCarrito = (m: MockCafe) => {
+    if (!carritoProductoIds) return false
+    const prod = productos.find(p => p.nombre === m.nombre)
+    return prod ? carritoProductoIds.has(prod.id) : false
   }
 
-  function onScroll() {
-    const el = scrollRef.current
-    if (!el) return
-    setCanLeft(el.scrollLeft > 10)
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10)
-  }
+  const [temaActual, setTemaActual] = useState<'cream' | 'dark' | 'white'>(getStoredTheme() || 'cream')
 
-  if (productos.length === 0) return null
-
-  return (
-    <div style={{ marginBottom: 40, position: 'relative' }}>
-      <div style={{ margin: '0 0 10px 4%' }}>
-        <h2 style={{
-          margin: 0,
-          fontSize: 17, fontWeight: 700,
-          color: C.cream, fontFamily: 'Montserrat, sans-serif',
-          letterSpacing: '0.02em',
-        }}>
-          {titulo}
-        </h2>
-        {subtitulo && (
-          <p style={{ margin: '3px 0 0', fontSize: 11, color: C.tan, fontFamily: 'Montserrat, sans-serif' }}>
-            {subtitulo}
-          </p>
-        )}
-      </div>
-      <div style={{ position: 'relative' }}>
-        {/* Flecha izquierda */}
-        <button onClick={() => scroll('left')} style={{
-          position: 'absolute', top: 0, bottom: 40, left: 0, width: 44,
-          background: canLeft ? 'rgba(0,0,0,0.65)' : 'transparent',
-          border: 'none', color: canLeft ? C.white : 'transparent',
-          fontSize: 22, cursor: canLeft ? 'pointer' : 'default',
-          zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: '0 4px 4px 0',
-        }}>‹</button>
-
-        <div
-          ref={scrollRef}
-          onScroll={onScroll}
-          className="tw-carrusel-scroll"
-          style={{
-            display: 'flex', gap: 10,
-            overflowX: 'auto', overflowY: 'visible',
-            scrollbarWidth: 'none',
-            padding: '8px 4% 60px',
-            scrollSnapType: 'x mandatory',
-          }}>
-          {productos.map((p) => (
-            <div key={p.id} className="tw-carrusel-item" style={{ scrollSnapAlign: 'start', width: 200, flexShrink: 0 }}>
-              <ProductoCard
-                producto={p}
-                caficultor={caficultores.get(p.caficultorId)}
-                onSeleccionar={onSeleccionar}
-                width="100%"
-                seleccionado={seleccionados ? seleccionados.has(p.id) : undefined}
-                disabled={seleccionados ? (seleccionados.size >= 3 && !seleccionados.has(p.id)) : false}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Flecha derecha */}
-        <button onClick={() => scroll('right')} style={{
-          position: 'absolute', top: 0, bottom: 40, right: 0, width: 44,
-          background: canRight ? 'rgba(0,0,0,0.65)' : 'transparent',
-          border: 'none', color: canRight ? C.white : 'transparent',
-          fontSize: 22, cursor: canRight ? 'pointer' : 'default',
-          zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: '4px 0 0 4px',
-        }}>›</button>
-      </div>
-    </div>
-  )
-}
-
-// ─── Chip de filtro ───────────────────────────────────────────────────────────
-
-const Chip: React.FC<{
-  label: string
-  activo: boolean
-  color?: string
-  onClick: () => void
-}> = ({ label, activo, color = C.terra, onClick }) => (
-  <button
-    onClick={onClick}
-    style={{
-      padding: '6px 14px', borderRadius: 20,
-      border: `1px solid ${activo ? color : '#333'}`,
-      background: activo ? color : 'transparent',
-      color: activo ? C.white : C.tan,
-      fontSize: 12, fontWeight: 600,
-      fontFamily: 'Montserrat, sans-serif',
-      cursor: 'pointer', whiteSpace: 'nowrap',
-      transition: 'all 0.15s',
-    }}
-  >
-    {label}
-  </button>
-)
-
-// ─── Grid con filtros ────────────────────────────────────────────────────────
-
-const GridFiltrado: React.FC<{
-  productos: ProductoONE[]
-  caficultores: Map<string, CaficultorONE>
-  onSeleccionar: (p: ProductoONE) => void
-  seleccionados?: Set<string>
-  carritoProductoIds?: Set<string>
-}> = ({ productos, caficultores, onSeleccionar, seleccionados, carritoProductoIds }) => {
-  const [filtroProceso, setFiltroProceso] = useState<ProcesoONE | 'todos'>('todos')
-  const [filtroRegion, setFiltroRegion] = useState<string>('todas')
-  const [busqueda, setBusqueda] = useState('')
-
-  const regiones = Array.from(new Set(
-    productos.map(p => caficultores.get(p.caficultorId)?.region).filter(Boolean) as string[]
-  )).sort()
-
-  const termino = busqueda.toLowerCase().trim()
-  const filtrados = productos.filter(p => {
-    const region = caficultores.get(p.caficultorId)?.region
-    const pasaProceso = filtroProceso === 'todos' || p.proceso === filtroProceso
-    const pasaRegion = filtroRegion === 'todas' || region === filtroRegion
-    const pasaBusqueda = !termino
-      || p.nombre.toLowerCase().includes(termino)
-      || p.variedad.toLowerCase().includes(termino)
-      || p.caficultorNombre.toLowerCase().includes(termino)
-      || p.notasSabor.some(n => n.toLowerCase().includes(termino))
-    return pasaProceso && pasaRegion && pasaBusqueda
-  })
-
-  const procesos: { key: ProcesoONE | 'todos'; label: string }[] = [
-    { key: 'todos', label: 'Todos' },
-    { key: 'lavado', label: 'Lavado' },
-    { key: 'natural', label: 'Natural' },
-    { key: 'honey', label: 'Honey' },
-    { key: 'anaerobico', label: 'Anaeróbico' },
-  ]
-
-  return (
-    <div style={{ padding: '0 4% 60px' }}>
-      <h2 style={{
-        margin: '0 0 14px',
-        fontSize: 17, fontWeight: 700,
-        color: C.cream, fontFamily: 'Montserrat, sans-serif',
-      }}>
-        Todo el catálogo
-      </h2>
-
-      {/* Buscador */}
-      <div style={{ position: 'relative', marginBottom: 14 }}>
-        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: C.tan, pointerEvents: 'none' }}>🔍</span>
-        <input
-          type="text"
-          placeholder="Buscar por café, variedad, productor, notas..."
-          value={busqueda}
-          onChange={e => setBusqueda(e.target.value)}
-          style={{
-            width: '100%', padding: '10px 12px 10px 36px',
-            borderRadius: 8, border: `1px solid #2a2a2a`,
-            background: C.bgCard, color: C.cream,
-            fontSize: 13, fontFamily: 'Montserrat, sans-serif',
-            outline: 'none', boxSizing: 'border-box',
-          }}
-        />
-        {busqueda && (
-          <button onClick={() => setBusqueda('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: C.tan, cursor: 'pointer', fontSize: 16 }}>✕</button>
-        )}
-      </div>
-
-      {/* Filtros por proceso */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-        {procesos.map(({ key, label }) => (
-          <Chip
-            key={key}
-            label={label}
-            activo={filtroProceso === key}
-            color={key === 'todos' ? C.terra : PROCESO_COLORS[key as ProcesoONE] ?? C.terra}
-            onClick={() => setFiltroProceso(key)}
-          />
-        ))}
-      </div>
-
-      {/* Filtros por región */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-        <Chip
-          label="Todas las regiones"
-          activo={filtroRegion === 'todas'}
-          color={C.sage}
-          onClick={() => setFiltroRegion('todas')}
-        />
-        {regiones.map(r => (
-          <Chip
-            key={r}
-            label={r}
-            activo={filtroRegion === r}
-            color={C.sage}
-            onClick={() => setFiltroRegion(r)}
-          />
-        ))}
-      </div>
-
-      {/* Contador */}
-      <p style={{
-        margin: '0 0 16px',
-        fontSize: 12, color: C.tan,
-        fontFamily: 'Montserrat, sans-serif',
-      }}>
-        {filtrados.length} {filtrados.length === 1 ? 'café encontrado' : 'cafés encontrados'}
-      </p>
-
-      {/* Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-        gap: 20,
-      }}>
-        {filtrados.map(p => (
-          <ProductoCard
-            key={p.id}
-            producto={p}
-            caficultor={caficultores.get(p.caficultorId)}
-            onSeleccionar={onSeleccionar}
-            width={undefined}
-            seleccionado={seleccionados ? seleccionados.has(p.id) : undefined}
-            disabled={seleccionados ? (seleccionados.size >= 3 && !seleccionados.has(p.id)) : false}
-            enCarrito={carritoProductoIds?.has(p.id)}
-          />
-        ))}
-      </div>
-
-      {/* Empty state */}
-      {filtrados.length === 0 && (
-        <div style={{
-          textAlign: 'center', padding: '60px 20px',
-          fontFamily: 'Montserrat, sans-serif',
-        }}>
-          <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>☕</div>
-          <p style={{ fontSize: 14, color: C.tan, margin: 0 }}>
-            {productos.length === 0
-              ? 'Aún no hay productos disponibles en el catálogo.'
-              : 'No hay cafés que coincidan con los filtros seleccionados.'}
-          </p>
-          {productos.length > 0 && (
-            <button
-              onClick={() => { setBusqueda(''); setFiltroProceso('todos'); setFiltroRegion('todas') }}
-              style={{
-                marginTop: 12, background: 'none', border: `1px solid ${C.border}`,
-                color: C.tan, fontSize: 12, padding: '6px 16px', borderRadius: 6,
-                cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
-              }}
-            >
-              Limpiar filtros
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Drawer de detalle ───────────────────────────────────────────────────────
-
-const DetalleDrawer: React.FC<{
-  producto: ProductoONE
-  caficultor: CaficultorONE | undefined
-  onCerrar: () => void
-  onAgregar: (producto: ProductoONE, formato: FormatoONE, cantidadKg: number) => void
-  enCarrito: boolean
-  todosProductos?: ProductoONE[]
-  todosCaficultores?: Map<string, CaficultorONE>
-  onVerOtroProducto?: (p: ProductoONE) => void
-}> = ({ producto, caficultor, onCerrar, onAgregar, enCarrito, todosProductos = [], onVerOtroProducto }) => {
-  const [cantidadKg, setCantidadKg] = useState(1)
-  const [agregado, setAgregado] = useState(false)
-  const [btnPopKey, setBtnPopKey] = useState(0)
-  const [fotoIdx, setFotoIdx] = useState(0)
-  const [lightbox, setLightbox] = useState(false)
-  const procesoColor = PROCESO_COLORS[producto.proceso] ?? C.terra
-
-  const fotos = (producto.fotos?.length ? producto.fotos : producto.foto ? [producto.foto] : []).filter(Boolean)
-
-  const maxKg = producto.kgDisponibles || 999
-  const precioPorKgCents = producto.precioBaseKgCents
-  const totalCents = precioPorKgCents * cantidadKg
-
-  function cambiarCantidad(delta: number) {
-    setCantidadKg(prev => Math.min(maxKg, Math.max(1, prev + delta)))
-  }
-
-  // Cerrar con Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (lightbox) setLightbox(false)
-        else onCerrar()
-      }
-      if (lightbox && e.key === 'ArrowRight') setFotoIdx(i => Math.min(fotos.length - 1, i + 1))
-      if (lightbox && e.key === 'ArrowLeft') setFotoIdx(i => Math.max(0, i - 1))
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onCerrar, lightbox, fotos.length])
-
-  function handleAgregar() {
-    onAgregar(producto, '1kg', cantidadKg)
-    setAgregado(true)
-    setBtnPopKey(k => k + 1)
-    setTimeout(() => setAgregado(false), 1800)
-  }
-
-  return (
-    <>
-      {/* Lightbox fullscreen */}
-      {lightbox && fotos.length > 0 && (
-        <div
-          onClick={() => setLightbox(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 400,
-            background: 'rgba(0,0,0,0.95)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <img
-            src={fotos[fotoIdx]}
-            alt={producto.nombre}
-            onClick={e => e.stopPropagation()}
-            style={{
-              maxWidth: '90vw', maxHeight: '90vh',
-              objectFit: 'contain',
-              borderRadius: 4,
-              boxShadow: '0 8px 64px rgba(0,0,0,0.8)',
-            }}
-          />
-          {/* Flecha izq */}
-          {fotoIdx > 0 && (
-            <button
-              onClick={e => { e.stopPropagation(); setFotoIdx(i => i - 1) }}
-              style={{
-                position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)',
-                background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-                color: '#fff', fontSize: 28, cursor: 'pointer', borderRadius: '50%',
-                width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >‹</button>
-          )}
-          {/* Flecha der */}
-          {fotoIdx < fotos.length - 1 && (
-            <button
-              onClick={e => { e.stopPropagation(); setFotoIdx(i => i + 1) }}
-              style={{
-                position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)',
-                background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-                color: '#fff', fontSize: 28, cursor: 'pointer', borderRadius: '50%',
-                width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >›</button>
-          )}
-          {/* Cerrar */}
-          <button
-            onClick={() => setLightbox(false)}
-            style={{
-              position: 'absolute', top: 20, right: 20,
-              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-              color: '#fff', fontSize: 18, cursor: 'pointer', borderRadius: '50%',
-              width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >✕</button>
-          {/* Contador */}
-          {fotos.length > 1 && (
-            <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, alignItems: 'center' }}>
-              {fotos.map((_, i) => (
-                <button key={i} onClick={e => { e.stopPropagation(); setFotoIdx(i) }} style={{
-                  width: i === fotoIdx ? 24 : 8, height: 8, borderRadius: 4,
-                  background: i === fotoIdx ? '#fff' : 'rgba(255,255,255,0.3)',
-                  border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.2s',
-                }} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Overlay drawer */}
-      <div
-        onClick={onCerrar}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(0,0,0,0.75)',
-          backdropFilter: 'blur(3px)',
-        }}
-      />
-
-      {/* Panel — drawer lateral derecho, ancho fijo, scroll vertical único */}
-      <div className="tw-drawer-in" style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 201,
-        width: 'min(520px, 100vw)',
-        background: '#111111',
-        borderLeft: `1px solid ${C.border}`,
-        overflowY: 'auto',
-        display: 'flex', flexDirection: 'column',
-        fontFamily: 'Montserrat, sans-serif',
-      }}>
-        {/* Botón cerrar */}
-        <button
-          onClick={onCerrar}
-          style={{
-            position: 'absolute', top: 14, right: 14, zIndex: 10,
-            width: 32, height: 32, borderRadius: '50%',
-            background: 'rgba(0,0,0,0.65)', border: `1px solid ${C.border}`,
-            color: C.cream, fontSize: 14, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >✕</button>
-
-        {/* ── Galería ── */}
-        <div style={{
-          position: 'relative', height: 280, flexShrink: 0,
-          background: `linear-gradient(135deg, ${C.green} 0%, ${C.brown}88 100%)`,
-          overflow: 'hidden',
-        }}>
-          {fotos.length > 0 && (
-            <img
-              src={fotos[fotoIdx]}
-              alt={producto.nombre}
-              onClick={() => setLightbox(true)}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in' }}
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
-          )}
-          {/* Botón zoom explícito */}
-          {fotos.length > 0 && (
-            <button
-              onClick={() => setLightbox(true)}
-              style={{
-                position: 'absolute', top: 12, right: 12, zIndex: 5,
-                background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.15)',
-                color: '#fff', fontSize: 14, cursor: 'pointer', borderRadius: 6,
-                padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5,
-                fontFamily: 'Montserrat, sans-serif', fontWeight: 600,
-              }}
-            >⤢ Ver</button>
-          )}
-          {!fotos.length && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80, opacity: 0.12 }}>☕</div>
-          )}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to top, #111111, transparent)' }} />
-          {fotos.length > 1 && fotoIdx > 0 && (
-            <button onClick={() => setFotoIdx(i => i - 1)} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: C.white, fontSize: 18, cursor: 'pointer', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
-          )}
-          {fotos.length > 1 && fotoIdx < fotos.length - 1 && (
-            <button onClick={() => setFotoIdx(i => i + 1)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.55)', border: 'none', color: C.white, fontSize: 18, cursor: 'pointer', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
-          )}
-          {fotos.length > 1 && (
-            <div style={{ position: 'absolute', bottom: 14, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 5 }}>
-              {fotos.map((_, i) => (
-                <button key={i} onClick={() => setFotoIdx(i)} style={{ width: i === fotoIdx ? 18 : 6, height: 6, borderRadius: 3, background: i === fotoIdx ? C.terra : 'rgba(255,255,255,0.4)', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.2s' }} />
-              ))}
-            </div>
-          )}
-          <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
-            <span style={{ padding: '3px 10px', borderRadius: 4, background: procesoColor, color: C.white, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {PROCESO_LABELS[producto.proceso]}
-            </span>
-            {producto.puntajeReferencial && (
-              <span style={{ marginLeft: 6, padding: '3px 8px', borderRadius: 4, background: 'rgba(0,0,0,0.6)', color: C.sage, fontSize: 10, fontWeight: 700 }}>
-                {producto.puntajeReferencial} pts SCA
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* ── Contenido scrolleable ── */}
-        <div style={{ padding: '24px 28px 32px', display: 'flex', flexDirection: 'column', gap: 0 }}>
-
-          {/* Nombre */}
-          <h2 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1.2 }}>
-            {producto.nombre}
-          </h2>
-          <p style={{ margin: '0 0 14px', fontSize: 12, color: C.tan }}>
-            {caficultor?.region ?? ''}{producto.altitudMsnm ? ` · ${producto.altitudMsnm.toLocaleString()} msnm` : ''} · Cosecha {producto.cosecha}
-          </p>
-
-          {/* Notas de sabor */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
-            {producto.notasSabor.map(nota => (
-              <span key={nota} style={{ padding: '3px 10px', borderRadius: 20, background: procesoColor + '22', border: `1px solid ${procesoColor}44`, color: procesoColor, fontSize: 11, fontWeight: 600 }}>
-                {nota}
-              </span>
-            ))}
-          </div>
-
-          {/* Grid técnico */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: 0, marginBottom: 18,
-            borderRadius: 10, overflow: 'hidden',
-            border: `1px solid ${C.border}`,
-          }}>
-            {[
-              { label: 'Variedad', value: producto.variedad },
-              { label: 'Proceso', value: PROCESO_LABELS[producto.proceso] },
-              { label: 'Tueste', value: producto.nivelTueste },
-              { label: 'Present.', value: producto.presentacion === 'tostado_grano' ? 'En grano' : 'Molido' },
-              { label: 'Stock', value: `${producto.kgDisponibles} kg`, color: C.sage },
-            ].map((item, idx, arr) => (
-              <div key={item.label} style={{
-                padding: '10px 6px', textAlign: 'center',
-                borderRight: idx < arr.length - 1 ? `1px solid ${C.border}` : 'none',
-                background: '#141414',
-              }}>
-                <p style={{ margin: 0, fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{item.label}</p>
-                <p style={{ margin: '3px 0 0', fontSize: 11, fontWeight: 700, color: item.color ?? C.cream, textTransform: 'capitalize' }}>{item.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Descripción */}
-          {producto.descripcion && (
-            <p style={{ margin: '0 0 18px', fontSize: 13, color: C.cream + 'cc', lineHeight: 1.7 }}>
-              {producto.descripcion}
-            </p>
-          )}
-
-          {/* Caficultor */}
-          {caficultor && (
-            <div style={{
-              padding: '14px 16px', borderRadius: 10, marginBottom: 18,
-              border: `1px solid ${C.border}`,
-              background: `linear-gradient(135deg, ${C.green}18, #141414)`,
-              display: 'flex', alignItems: 'center', gap: 12,
-            }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: C.green, border: `2px solid ${C.sage}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0, overflow: 'hidden' }}>
-                {caficultor.foto
-                  ? <img src={caficultor.foto} alt={caficultor.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span>🧑‍🌾</span>
-                }
-              </div>
-              <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.cream }}>{caficultor.nombre}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: C.sage }}>{caficultor.distrito}, {caficultor.region} · {caficultor.altitudMsnm?.toLocaleString()} msnm</p>
-              </div>
-            </div>
-          )}
-
-          {/* Precio */}
-          <div style={{ marginBottom: 4 }}>
-            <p style={{ margin: '0 0 2px', fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio</p>
-            <p style={{ margin: 0, fontSize: 32, fontWeight: 800, color: C.terra, letterSpacing: '-0.02em' }}>
-              S/ {(precioPorKgCents / 100).toFixed(0)}
-              <span style={{ fontSize: 14, fontWeight: 400, color: C.tan, marginLeft: 6 }}>/kg</span>
-            </p>
-          </div>
-
-          {/* Urgencia */}
-          {producto.kgDisponibles < 15 && producto.id !== 'kit-inicio-001' && (
-            <div style={{ margin: '12px 0', padding: '8px 12px', borderRadius: 8, background: '#b9404018', border: '1px solid #b9404055', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 13 }}>⚡</span>
-              <span style={{ fontSize: 12, color: '#e87070', fontWeight: 600 }}>Solo quedan {producto.kgDisponibles} kg · Cosecha {producto.cosecha}</span>
-            </div>
-          )}
-
-          {/* Separador */}
-          <div style={{ borderTop: `1px solid ${C.border}`, margin: '20px 0 16px' }} />
-
-          {/* Selector de cantidad */}
-          <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Cantidad</p>
-
-          {/* Chips rápidos */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-            {[1, 5, 10, 25].filter(n => n <= maxKg).map(n => (
-              <button key={n} onClick={() => setCantidadKg(n)} style={{
-                padding: '5px 14px', borderRadius: 6,
-                border: `1px solid ${cantidadKg === n ? C.terra : C.border}`,
-                background: cantidadKg === n ? C.terra + '20' : 'transparent',
-                color: cantidadKg === n ? C.terra : C.tan,
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.12s',
-              }}>
-                {n} kg
-              </button>
-            ))}
-          </div>
-
-          {/* Stepper compacto — no full width */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', background: '#161616', borderRadius: 8, border: `1px solid ${C.border}`, height: 38 }}>
-              <button onClick={() => cambiarCantidad(-1)} disabled={cantidadKg <= 1} style={{
-                width: 36, height: 38, border: 'none', background: 'transparent',
-                color: cantidadKg <= 1 ? C.muted : C.cream, fontSize: 18,
-                cursor: cantidadKg <= 1 ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                borderRight: `1px solid ${C.border}`,
-              }}>−</button>
-              <input type="number" value={cantidadKg} min={1} max={maxKg}
-                onChange={e => setCantidadKg(Math.max(1, Math.min(maxKg, parseInt(e.target.value) || 1)))}
-                style={{ width: 52, textAlign: 'center', border: 'none', background: 'transparent', color: C.cream, fontSize: 15, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', outline: 'none' }}
-              />
-              <span style={{ fontSize: 13, color: C.tan, paddingRight: 2 }}>kg</span>
-              <button onClick={() => cambiarCantidad(1)} disabled={cantidadKg >= maxKg} style={{
-                width: 36, height: 38, border: 'none', background: 'transparent',
-                color: cantidadKg >= maxKg ? C.muted : C.cream, fontSize: 18,
-                cursor: cantidadKg >= maxKg ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                borderLeft: `1px solid ${C.border}`,
-              }}>+</button>
-            </div>
-            <span style={{ fontSize: 12, color: C.muted }}>máx {maxKg} kg</span>
-          </div>
-          <div style={{ marginBottom: 20 }} />
-
-          {/* Total + botón */}
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 13, color: C.tan }}>{cantidadKg} kg × S/ {(precioPorKgCents / 100).toFixed(0)}/kg</span>
-            <span style={{ fontSize: 30, fontWeight: 800, color: C.terra, letterSpacing: '-0.02em' }}>S/ {(totalCents / 100).toFixed(0)}</span>
-          </div>
-          <button
-            key={btnPopKey}
-            onClick={handleAgregar}
-            className={btnPopKey > 0 ? 'tw-btn-pop' : ''}
-            style={{
-            width: '100%', padding: '15px',
-            borderRadius: 10, border: 'none',
-            background: agregado ? C.sage : C.terra,
-            color: C.white, fontSize: 15, fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'background 0.3s',
-            letterSpacing: '0.02em',
-          }}>
-            {agregado ? '✓ Agregado al carrito' : (enCarrito ? '+ Agregar más' : 'Agregar al carrito →')}
-          </button>
-
-          {producto.notaReferencial && (
-            <p style={{ margin: '14px 0 0', fontSize: 11, color: C.muted, fontStyle: 'italic' }}>* {producto.notaReferencial}</p>
-          )}
-
-          {/* Cross-selling: Más cafés de este productor */}
-          {(() => {
-            const otrosDelCaficultor = todosProductos
-              .filter(p => p.caficultorId === producto.caficultorId && p.id !== producto.id)
-              .slice(0, 3)
-            if (otrosDelCaficultor.length === 0) return null
-            return (
-              <div style={{ marginTop: 28 }}>
-                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 20 }}>
-                  <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                    Más de {caficultor?.nombre ?? producto.caficultorNombre}
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {otrosDelCaficultor.map(p => {
-                      const pc = PROCESO_COLORS[p.proceso] ?? C.terra
-                      return (
-                        <div
-                          key={p.id}
-                          onClick={() => onVerOtroProducto?.(p)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 12,
-                            padding: '10px 12px', borderRadius: 10,
-                            background: '#161616', border: `1px solid ${C.border}`,
-                            cursor: 'pointer', transition: 'border-color 0.15s',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.borderColor = C.terra + '55')}
-                          onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}
-                        >
-                          <div style={{
-                            width: 40, height: 40, borderRadius: 6, flexShrink: 0,
-                            background: pc + '22', border: `1px solid ${pc}44`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 20,
-                          }}>☕</div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {p.nombre}
-                            </p>
-                            <p style={{ margin: '2px 0 0', fontSize: 10, color: C.tan }}>
-                              {p.variedad} · {PROCESO_LABELS[p.proceso] ?? p.proceso}
-                            </p>
-                          </div>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: C.terra, flexShrink: 0 }}>
-                            S/{(p.precioBaseKgCents / 100).toFixed(0)}/kg
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )
-          })()}
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
-        input[type=number] { -moz-appearance: textfield; }
-      `}</style>
-    </>
-  )
-}
-
-// ─── Componente principal ─────────────────────────────────────────────────────
-
-const CatalogoPublico: React.FC<Props> = ({ onSeleccionar, modoSeleccion, carritoCount = 0, totalCarritoCents = 0, onIrAlCheckout, carritoProductoIds, carritoLineas, isDemo = false, sidebarOffset = 0 }) => {
   const [productos, setProductos] = useState<ProductoONE[]>([])
   const [caficultores, setCaficultores] = useState<Map<string, CaficultorONE>>(new Map())
   const [loading, setLoading] = useState(true)
-  const [productoDetalle, setProductoDetalle] = useState<ProductoONE | null>(null)
-  const [modalRegistro, setModalRegistro] = useState(false)
-  const [menuAbierto, setMenuAbierto] = useState(false)
+  const [pedidos, setPedidos] = useState<PedidoONE[]>([])
 
-  // Cerrar drawer estable como callback
-  const cerrarDetalle = useCallback(() => setProductoDetalle(null), [])
+  const [searchInterno, setSearchInterno] = useState('')
+  const search = searchValue !== undefined ? searchValue : searchInterno
+  const setSearch = onSearchChange ?? setSearchInterno
+  const [regionFilter, setRegionFilter] = useState<string>('all')
+  const [procesoFilter, setProcesoFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<TipoProducto | 'all'>('all')
+  const [evidenciaFilter, setEvidenciaFilter] = useState<'all' | 'N1' | 'N2' | 'N3'>('all')
+  const [saboresFilter, setSaboresFilter] = useState<'all' | 'floral' | 'frutal' | 'chocolate' | 'caramelo'>('all')
+  const [sortBy, setSortBy] = useState<'relevancia' | 'recientes' | 'precio_asc' | 'precio_desc' | 'evidencia'>('relevancia')
+  const [_orderStep, _setOrderStep] = useState(1)
+  const [appDrawerOpen, setAppDrawerOpen] = useState(false)
+  const [productoDetalle, setProductoDetalle] = useState<ProductoONE | null>(null)
+  const [detalleFormato, setDetalleFormato] = useState<string>('1kg')
+  const [detalleCantidad, setDetalleCantidad] = useState(1)
+  const [modalRegistro, setModalRegistro] = useState(false)
+  const [loginGateProducto, setLoginGateProducto] = useState<{ nombre: string; precio: number } | null>(null)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [caficultorModalId, setCaficultorModalId] = useState<number | null>(null)
+
+  const lavadoRef = useRef<HTMLDivElement>(null)
+  const naturalRef = useRef<HTMLDivElement>(null)
+  const honeyRef = useRef<HTMLDivElement>(null)
+
+  const cambiarTema = (t: 'cream' | 'dark' | 'white') => {
+    setTemaActual(t)
+    applyTheme(t)
+  }
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(null), 2500)
+  }
 
   useEffect(() => {
     if (isDemo) {
-      console.log('[CatalogoPublico] Modo demo — seed')
       setProductos(seedProductos as ProductoONE[])
-      setCaficultores(new Map((seedCaficultores as CaficultorONE[]).map((c) => [c.id, c])))
+      setCaficultores(new Map((seedCaficultores as CaficultorONE[]).map(c => [c.id, c])))
       setLoading(false)
       return
     }
-
-    console.log('[CatalogoPublico] Cargando desde Firestore...')
-
     async function cargar() {
       try {
-        const [prods, cafics] = await Promise.all([fetchProductos(), fetchCaficultores()])
-        console.log(`[CatalogoPublico] Firestore OK — ${prods.length} productos, ${cafics.length} caficultores`)
+        const { auth } = await import('@/shared/firebase')
+        const uid = auth.currentUser?.uid
+        const [prods, cafics, peds] = await Promise.all([
+          fetchProductos(),
+          fetchCaficultores(),
+          uid ? fetchPedidosByNegocio(uid) : Promise.resolve([]),
+        ])
         setProductos(prods)
-        setCaficultores(new Map(cafics.map((c) => [c.id, c])))
+        setCaficultores(new Map(cafics.map(c => [c.id, c])))
+        setPedidos(peds)
       } catch (err) {
-        console.error('[CatalogoPublico] Error al cargar Firestore — sin productos', err)
+        console.warn('Error cargando catálogo', err)
         setProductos([])
-        setCaficultores(new Map())
       } finally {
         setLoading(false)
       }
@@ -1011,639 +117,1400 @@ const CatalogoPublico: React.FC<Props> = ({ onSeleccionar, modoSeleccion, carrit
     cargar()
   }, [isDemo])
 
-  // Agrupar productos por caficultor (excluir kit-inicio-001 del catálogo)
-  // En modo normal: top 4. En modo selección: todos los caficultores
-  const productosParaCatalogo = productos.filter(p => p.id !== 'kit-inicio-001')
-
-  const porCaficultor: Map<string, ProductoONE[]> = new Map()
-  for (const p of productosParaCatalogo) {
-    const lista = porCaficultor.get(p.caficultorId) ?? []
-    porCaficultor.set(p.caficultorId, [...lista, p])
+  // Helper: derivar MockCafe desde ProductoONE para compatibilidad con el render
+  const toMockCafe = (p: ProductoONE): MockCafe => {
+    const procesoMap: Record<string, string> = { lavado: 'Lavado', natural: 'Natural', honey: 'Honey', anaerobico: 'Anaeróbico' }
+    return {
+      id: parseInt(p.id.replace(/\D/g, '').slice(-6) || '0', 10) || (Math.random() * 9999 | 0),
+      nombre: p.nombre,
+      variedad: p.variedad,
+      proceso: procesoMap[p.proceso] ?? p.proceso,
+      region: p.caficultorRegion ?? 'Perú',
+      caf: p.caficultorNombre,
+      notas: p.notasSabor.join(', '),
+      precio: p.precioBaseKgCents / 100,
+      nivelEvidencia: 1 as 1 | 2 | 3,
+      visualQuality: 'Bueno' as 'Bueno' | 'Muy bueno' | 'Excepcional',
+      emoji: '☕',
+      pricingMode: p.pricingMode,
+      productType: (
+        // tipoCafe='verde' (o variantes) → café verde sin tostar (TYPE_A)
+        p.tipoCafe === 'verde' || p.tipoCafe === 'verde_grano' || p.tipoCafe === 'cafe_verde'
+          ? 'TYPE_A'
+          : p.presentacion === 'tostado_molido' || p.tipoCafe === 'tostado_molido' || p.tipoCafe === 'molido'
+          ? 'TYPE_C'
+          : 'TYPE_B'
+      ) as TipoProducto,
+    } as MockCafe
   }
-  const caficultoresOrdenados = [...porCaficultor.entries()]
-    .sort((a, b) => b[1].length - a[1].length)
-  const filasCarrusel = modoSeleccion ? caficultoresOrdenados : caficultoresOrdenados.slice(0, 4)
 
-  // En modo selección: toggle directo. En modo normal: abrir drawer de detalle
-  const handleCard = modoSeleccion
-    ? (p: ProductoONE) => modoSeleccion.onToggle(p)
-    : (p: ProductoONE) => setProductoDetalle(p)
+  const SABOR_NOTAS: Record<string, string[]> = {
+    floral: ['jazmín', 'hibisco', 'rosas', 'floral', 'lavanda', 'azahar'],
+    frutal: ['durazno', 'mandarina', 'cereza', 'limón', 'manzana', 'maracuyá', 'fresa', 'frutal'],
+    chocolate: ['chocolate', 'cacao', 'nuez', 'almendra', 'avellana'],
+    caramelo: ['caramelo', 'panela', 'miel', 'toffee', 'melaza', 'dulce'],
+  }
+
+  const cafésFiltrados = useMemo(() => {
+    const q = search.toLowerCase().trim()
+    const fuente: MockCafe[] = productos.filter(p => p.status === 'activo').map(toMockCafe)
+
+    const filtrados = fuente.filter(c => {
+      const matchRegion = regionFilter === 'all' || c.region === regionFilter
+      const matchProceso = procesoFilter === 'all' || c.proceso === procesoFilter
+      const matchType = typeFilter === 'all' || c.productType === typeFilter
+      const matchEvidencia = evidenciaFilter === 'all' || c.nivelEvidencia === parseInt(evidenciaFilter.replace('N', ''), 10)
+      const notasStr = c.notas.toLowerCase()
+      const matchSabor = saboresFilter === 'all' || SABOR_NOTAS[saboresFilter]?.some(n => notasStr.includes(n))
+      const matchSearch =
+        !q ||
+        c.nombre.toLowerCase().includes(q) ||
+        c.caf.toLowerCase().includes(q) ||
+        c.region.toLowerCase().includes(q) ||
+        c.notas.toLowerCase().includes(q)
+      return matchRegion && matchProceso && matchType && matchEvidencia && matchSabor && matchSearch
+    })
+
+    // Ordenamiento
+    return [...filtrados].sort((a, b) => {
+      if (sortBy === 'precio_asc') return a.precio - b.precio
+      if (sortBy === 'precio_desc') return b.precio - a.precio
+      if (sortBy === 'evidencia') return b.nivelEvidencia - a.nivelEvidencia
+      if (sortBy === 'recientes') return b.id - a.id
+      return 0 // relevancia — mantener orden original
+    })
+  }, [search, regionFilter, procesoFilter, typeFilter, evidenciaFilter, saboresFilter, sortBy, productos]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Filtro más restrictivo activo (para sugerencia vacío US-47)
+  const filtroMasRestrictivo = useMemo((): { label: string; limpiar: () => void } | null => {
+    if (saboresFilter !== 'all') return { label: `perfil "${saboresFilter}"`, limpiar: () => setSaboresFilter('all') }
+    if (evidenciaFilter !== 'all') return { label: `evidencia ${evidenciaFilter}`, limpiar: () => setEvidenciaFilter('all') }
+    if (procesoFilter !== 'all') return { label: `proceso ${procesoFilter}`, limpiar: () => setProcesoFilter('all') }
+    if (typeFilter !== 'all') return { label: `tipo ${typeFilter === 'TYPE_A' ? 'Verde' : typeFilter === 'TYPE_B' ? 'Tostado' : 'Molido'}`, limpiar: () => setTypeFilter('all') }
+    if (regionFilter !== 'all') return { label: `región ${regionFilter}`, limpiar: () => setRegionFilter('all') }
+    if (search) return { label: `búsqueda "${search}"`, limpiar: () => setSearch('') }
+    return null
+  }, [saboresFilter, evidenciaFilter, procesoFilter, typeFilter, regionFilter, search])
+
+  const hayFiltrosActivos = regionFilter !== 'all' || procesoFilter !== 'all' || typeFilter !== 'all' || evidenciaFilter !== 'all' || saboresFilter !== 'all' || search !== ''
+
+  const cafesLavado = useMemo(() => cafésFiltrados.filter(c => c.proceso === 'Lavado'), [cafésFiltrados])
+  const cafesNatural = useMemo(() => cafésFiltrados.filter(c => c.proceso === 'Natural'), [cafésFiltrados])
+  const cafesHoney = useMemo(() => cafésFiltrados.filter(c => c.proceso === 'Honey'), [cafésFiltrados])
+
+  const scrollRow = (ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') => {
+    if (!ref.current) return
+    ref.current.scrollBy({ left: dir === 'right' ? 360 : -360, behavior: 'smooth' })
+  }
+
+  const handleCardClick = (m: MockCafe) => {
+    const prod = productos.find(p => p.nombre === m.nombre)
+    if (!prod) return
+    if (modoSeleccion) {
+      modoSeleccion.onToggle(prod)
+    } else {
+      setProductoDetalle(prod)
+      setDetalleFormato('1kg')
+      setDetalleCantidad(1)
+    }
+  }
+
+  const handleAddClick = (e: React.MouseEvent, m: MockCafe) => {
+    e.stopPropagation()
+    if (!rolUsuario) {
+      setLoginGateProducto({ nombre: m.nombre, precio: m.precio })
+      setModalRegistro(true)
+      return
+    }
+    // TYPE_A = café verde — solo buyer_b2b APPROVED puede comprar (restricción comercial, no de visibilidad)
+    if (rolUsuario !== 'buyer_b2b' && m.productType === 'TYPE_A') return
+    const prod = productos.find(p => p.nombre === m.nombre)
+    if (!prod) return
+    onSeleccionar?.(prod, '1kg')
+    showToast(`Agregado: ${m.nombre}`)
+  }
+
+  const renderAddBtn = (m: MockCafe) => {
+    if (!rolUsuario) {
+      return (
+        <button
+          className="sc-add-btn"
+          onClick={ev => { ev.stopPropagation(); setModalRegistro(true) }}
+          title="Inicia sesión para comprar"
+          style={{ fontSize: 10, padding: '3px 6px', opacity: 0.85 }}
+        >🔒</button>
+      )
+    }
+    if (rolUsuario !== 'buyer_b2b' && m.productType === 'TYPE_A') {
+      return (
+        <button
+          className="sc-add-btn"
+          disabled
+          title="Solo disponible para compradores B2B aprobados"
+          style={{ opacity: 0.45, cursor: 'not-allowed', fontSize: 9 }}
+          onClick={ev => ev.stopPropagation()}
+        >B2B</button>
+      )
+    }
+    return (
+      <button
+        className={`sc-add-btn${isEnCarrito(m) ? ' in-cart' : ''}`}
+        onClick={ev => handleAddClick(ev, m)}
+        title={isEnCarrito(m) ? 'En carrito' : 'Agregar'}
+      >{isEnCarrito(m) ? '✓' : '+'}</button>
+    )
+  }
+
+  void _orderStep
+  void _setOrderStep
+
+  // ── Vista inline de detalle (solo en embeddedMode / portal) ─────────────────
+  if (embeddedMode && productoDetalle) {
+    return (
+      <DetalleProductoInline
+        producto={productoDetalle}
+        productos={productos}
+        formato={detalleFormato}
+        cantidad={detalleCantidad}
+        toastMsg={toastMsg}
+        onVolver={() => setProductoDetalle(null)}
+        onSetFormato={setDetalleFormato}
+        onSetCantidad={setDetalleCantidad}
+        onAgregar={(p, fmt) => {
+          onSeleccionar?.(p, fmt)
+          setProductoDetalle(null)
+          showToast(`Agregado: ${p.nombre}`)
+        }}
+        onVerOtro={p => { setProductoDetalle(p); setDetalleFormato('1kg'); setDetalleCantidad(1); window.scrollTo(0, 0) }}
+        rolUsuario={rolUsuario}
+        estadoAprobacionB2B={estadoAprobacionB2B}
+        userUid={userUid}
+        onSolicitarCotizacion={(p) => { onSolicitarCotizacion?.(p) }}
+      />
+    )
+  }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      fontFamily: 'Montserrat, sans-serif',
-      position: 'relative',
-      // Fondo de la página: imagen de finca fija + overlay oscuro
-      ...((!modoSeleccion && sidebarOffset === 0) ? {
-        backgroundImage: 'url(/imgs/hero-finca.jpeg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center 40%',
-        backgroundAttachment: 'fixed',
-      } : { background: C.bg }),
-    }}>
-      {/* Header flotante — solo en modo standalone (sin portal) */}
-      {!modoSeleccion && sidebarOffset === 0 && (
-        <header style={{
-          position: 'fixed', top: 0, left: sidebarOffset, right: 0, zIndex: 100,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%)',
-        }}>
-          {/* Barra principal */}
-          <div style={{
-            padding: '14px 4%',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <div style={{ flexShrink: 0 }}>
-              <span style={{
-                fontSize: 20, fontWeight: 700, letterSpacing: '0.08em',
-                color: C.terra, fontFamily: 'Cormorant Garamond, serif',
-              }}>
-                TUNAY WASI
-              </span>
-              <span className="cat-nav-subtitle" style={{
-                marginLeft: 12, fontSize: 11, color: C.tan,
-                letterSpacing: '0.1em', fontFamily: 'Montserrat, sans-serif',
-              }}>
-                CAFÉ PERUANO
-              </span>
-            </div>
+    <>
+      <style>{`
+        /* Reset y estilos base sincronizados con simulador-home */
+        .tw-app-shell {
+          min-height: 100vh;
+          background: var(--tw-bg);
+          color: var(--tw-text);
+          font-family: var(--tw-font-body);
+          display: flex;
+          flex-direction: column;
+          overflow-x: hidden;
+        }
 
-            {/* Desktop links */}
-            <div className="cat-nav-desktop" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <a href="#/para-caficultores" style={{ color: C.tan, fontSize: 13, textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', padding: '7px 14px' }}>
-                Soy caficultor
-              </a>
-              <a href="#/para-cafeterias" style={{ color: C.tan, fontSize: 13, textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', padding: '7px 14px' }}>
-                Soy negocio
-              </a>
-              <button onClick={() => setModalRegistro(true)} style={{ color: C.cream, fontSize: 13, fontFamily: 'Montserrat, sans-serif', fontWeight: 600, padding: '7px 16px', borderRadius: 4, border: `1px solid ${C.terra}`, background: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                Registrarse
-              </button>
-              <a href="#/portal" style={{ color: C.cream, fontSize: 13, textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, padding: '7px 18px', borderRadius: 4, background: C.terra }}>
-                Mi portal
-              </a>
-            </div>
+        /* Top header */
+        .d-header {
+          position: sticky;
+          top: 0;
+          z-index: 60;
+          background: var(--tw-bg);
+          border-bottom: 1px solid var(--tw-border);
+          padding: 8px 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
 
-            {/* Hamburger mobile */}
-            <button className="cat-nav-hamburger" onClick={() => setMenuAbierto(o => !o)} style={{
-              display: 'none', background: 'none', border: 'none', cursor: 'pointer',
-              padding: 8, color: C.cream,
-            }}>
-              {menuAbierto
-                ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-              }
-            </button>
+        .app-ham-btn {
+          width: 32px;
+          height: 32px;
+          border-radius: 7px;
+          border: 1px solid var(--tw-border);
+          background: transparent;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          color: var(--tw-text);
+          transition: background .12s;
+        }
+        .app-ham-btn:hover { background: var(--tw-terra); color: #fff; border-color: var(--tw-terra); }
+
+        .frame-search {
+          flex: 1;
+          background: var(--tw-card);
+          border: 1px solid var(--tw-border);
+          border-radius: 8px;
+          padding: 7px 12px;
+          font-size: 11px;
+          font-family: var(--tw-font-body);
+          color: var(--tw-text);
+          outline: none;
+        }
+        .frame-search:focus { border-color: var(--tw-terra); }
+        .frame-search::placeholder { color: var(--tw-text-muted); }
+
+        /* Chips */
+        .d-fchip {
+          padding: 4px 10px;
+          border-radius: 6px;
+          border: 1px solid var(--tw-border);
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--tw-text-muted);
+          cursor: pointer;
+          transition: all .12s;
+          white-space: nowrap;
+          background: transparent;
+        }
+        .d-fchip.active {
+          background: var(--tw-terra);
+          color: #fff;
+          border-color: var(--tw-terra);
+        }
+        .d-fchip:hover:not(.active) {
+          border-color: var(--tw-terra);
+          color: var(--tw-terra);
+        }
+        .d-filters-row {
+          display: flex; flex-wrap: wrap; gap: 5; margin-bottom: 8px;
+        }
+        @media (max-width: 768px) {
+          .d-fchip { padding: 3px 8px; font-size: 9px; }
+          .d-filters-row {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            margin-bottom: 6px;
+            gap: 4px;
+          }
+          .d-filters-row::-webkit-scrollbar { display: none; }
+          .d-filters-divider { display: none; }
+        }
+
+        /* Banner */
+        .d-banner-pend {
+          background: rgba(201,110,75,.08);
+          border: 1px solid rgba(201,110,75,.2);
+          border-radius: 8px;
+          padding: 7px 12px;
+          font-size: 10px;
+          color: var(--tw-text);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+        .d-banner-pend a { color: var(--tw-terra); font-weight: 700; text-decoration: none; cursor: pointer; }
+
+        /* Cards de Producto */
+        .sc-product-card {
+          background: var(--tw-card);
+          border: 1px solid var(--tw-border);
+          border-radius: 10px;
+          overflow: hidden;
+          cursor: pointer;
+          transition: transform .18s ease, box-shadow .18s ease, border-color .15s;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+        }
+        .sc-product-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 24px rgba(201,110,75,.2);
+          border-color: var(--tw-terra);
+        }
+        .sc-photo {
+          height: 80px;
+          background: linear-gradient(135deg, #2a1810, #1a0f08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          position: relative;
+        }
+        .sc-sca-badge {
+          position: absolute;
+          top: 6px;
+          left: 6px;
+          background: rgba(10,5,2,.85);
+          border: 1px solid rgba(201,110,75,.4);
+          border-radius: 6px;
+          padding: 2px 6px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          line-height: 1.1;
+        }
+        .sc-sca-pts { font-size: 12px; font-weight: 700; color: #fff; font-family: var(--tw-font-display); }
+        .sc-sca-label { font-size: 7px; color: #a89080; font-weight: 700; }
+
+        .proc-chip {
+          position: absolute;
+          top: 6px;
+          right: 6px;
+          border-radius: 5px;
+          padding: 2px 6px;
+          font-size: 8px;
+          font-weight: 700;
+          color: #fff;
+        }
+        .tipo-chip {
+          position: absolute;
+          top: 6px;
+          left: 6px;
+          border-radius: 5px;
+          padding: 2px 6px;
+          font-size: 8px;
+          font-weight: 700;
+          color: #fff;
+        }
+        .proc-lavado  { background: #4a90c4; }
+        .proc-natural { background: #c96e4b; }
+        .proc-honey   { background: #d4a017; }
+        .proc-anaerobico { background: #7c5cbf; }
+        .tipo-verde   { background: #4a7c59; }
+        .tipo-tostado { background: #7a4f28; }
+        .tipo-molido  { background: #8b6914; }
+
+        .sc-info { padding: 8px 10px; display: flex; flex-direction: column; flex: 1; }
+        .sc-name { font-size: 11px; font-weight: 700; color: var(--tw-text); line-height: 1.2; margin-bottom: 2px; }
+        .sc-caf { font-size: 9px; color: var(--tw-terra); font-weight: 600; margin-bottom: 2px; }
+        .sc-notes { font-size: 9px; color: var(--tw-text-muted); margin-bottom: 5px; flex: 1; }
+        .sc-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 5px; }
+        .sc-badge {
+          font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+        }
+        .sc-badge-excepcional { background: rgba(143,175,138,.18); color: #8faf8a; border: 1px solid rgba(143,175,138,.3); }
+        .sc-badge-muybueno    { background: rgba(74,144,196,.15);  color: #4a90c4; border: 1px solid rgba(74,144,196,.3); }
+        .sc-badge-bueno       { background: rgba(201,110,75,.12);  color: #c96e4b; border: 1px solid rgba(201,110,75,.25); }
+        .sc-badge-negociable  { background: rgba(143,175,138,.15); color: #8faf8a; border: 1px solid rgba(143,175,138,.3); }
+        .sc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+        .sc-price { font-size: 13px; font-weight: 700; color: var(--tw-text); }
+        .sc-price-sub { font-size: 8px; color: var(--tw-text-muted); }
+        .sc-add-btn {
+          width: 26px;
+          height: 26px;
+          border-radius: 7px;
+          background: var(--tw-terra);
+          color: #fff;
+          border: none;
+          font-size: 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background .2s, transform .1s;
+          flex-shrink: 0;
+        }
+        .sc-add-btn:active { transform: scale(.88); }
+        .sc-add-btn.in-cart {
+          background: var(--tw-sage, #8faf8a);
+          font-size: 13px;
+          animation: checkPop .3s cubic-bezier(.34,1.56,.64,1) both;
+        }
+        @keyframes checkPop {
+          0%   { transform: scale(.6); opacity: .6; }
+          60%  { transform: scale(1.25); }
+          100% { transform: scale(1);   opacity: 1; }
+        }
+
+        /* Panel pedidos */
+        .d-pedidos-panel {
+          width: 230px;
+          flex-shrink: 0;
+          margin-left: 12px;
+        }
+        .pend-card {
+          background: var(--tw-card);
+          border: 1px solid var(--tw-border);
+          border-radius: 10px;
+          padding: 10px 12px;
+          margin-bottom: 8px;
+          transition: all .2s;
+        }
+        .pend-card.highlight {
+          border-color: var(--tw-terra);
+          background: rgba(201,110,75,.05);
+        }
+        .pend-status-label {
+          font-size: 9px;
+          font-weight: 700;
+          padding: 2px 7px;
+          border-radius: 4px;
+          display: inline-block;
+          margin-top: 4px;
+        }
+        .pend-preparing { background: rgba(217,119,6,.12); color: #d97706; }
+        .pend-transit { background: rgba(59,130,246,.12); color: #3b82f6; }
+        .pend-delivered { background: rgba(143,175,138,.15); color: var(--tw-sage); }
+        .pend-waiting { background: rgba(201,110,75,.12); color: var(--tw-terra); }
+
+        .pedido-step { flex: 1; height: 4px; border-radius: 2px; background: var(--tw-border); transition: background .4s; }
+        .pedido-step.done { background: var(--tw-sage); }
+        .pedido-step.active { background: var(--tw-terra); animation: ppulse 1.5s infinite; }
+        @keyframes ppulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+        /* Footer */
+        .d-footer {
+          border-top: 1px solid var(--tw-border);
+          padding: 16px 24px 20px;
+          background: var(--tw-bg);
+          font-size: 11px;
+          flex-shrink: 0;
+        }
+        .d-footer-links {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 14px;
+          align-items: center;
+          width: 100%;
+          justify-content: space-between;
+        }
+        .d-footer-link {
+          color: var(--tw-text-muted);
+          text-decoration: none;
+          font-size: 10px;
+          cursor: pointer;
+          transition: color .12s;
+        }
+        .d-footer-link:hover { color: var(--tw-text); }
+        .d-footer-contact {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 8px;
+          color: var(--tw-text-muted);
+          font-size: 10px;
+        }
+        .d-footer-divider { width: 1px; height: 12px; background: var(--tw-border); flex-shrink: 0; }
+        .d-footer-copy { font-size: 9px; color: var(--tw-text-muted); }
+        @media (max-width: 768px) {
+          .d-footer { display: none; }
+        }
+
+        /* Drawer overlay & panel */
+        .app-drawer-ov {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100;
+          transition: opacity .25s ease;
+        }
+        .app-drawer {
+          position: fixed; top: 0; left: 0; bottom: 0; width: 240px; z-index: 101;
+          background: var(--tw-bg); border-right: 1px solid var(--tw-border);
+          display: flex; flex-direction: column; padding: 18px;
+          transform: translateX(-100%); transition: transform .25s cubic-bezier(.4,0,.2,1);
+        }
+        .app-drawer.open { transform: translateX(0); }
+
+        /* Toast */
+        .sim-toast {
+          position: fixed; bottom: 20px; right: 20px;
+          background: var(--tw-card); border: 1px solid var(--tw-border);
+          border-radius: 10px; padding: 10px 16px; font-size: 11px; font-weight: 600;
+          color: var(--tw-text); box-shadow: 0 4px 20px rgba(0,0,0,.25); z-index: 999;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+          .d-pedidos-panel { display: none; }
+        }
+
+        /* Detalle producto inline (embeddedMode) */
+        .detalle-inline-grid { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: flex-start; }
+        .detalle-inline-panel { position: sticky; top: calc(var(--header-h, 52px) + 16px); }
+        @media (max-width: 700px) {
+          .detalle-inline-grid { display: block; }
+          .detalle-inline-panel { position: static; }
+        }
+        /* Detalle overlay (ruta /) */
+        .detalle-desktop { display: block; }
+        .detalle-mobile  { display: none; }
+        @media (max-width: 700px) {
+          .detalle-desktop { display: none; }
+          .detalle-mobile  { display: flex; }
+        }
+
+        /* Bottom Nav Mobile */
+        .bn-bar {
+          display: none;
+          position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+          height: 60px;
+          background: var(--tw-bg);
+          border-top: 1px solid var(--tw-border);
+          padding: 0 8px env(safe-area-inset-bottom, 0px);
+          align-items: center; justify-content: space-around;
+        }
+        @media (max-width: 768px) {
+          .bn-bar { display: flex; }
+          .sim-toast { bottom: 72px; }
+          main { padding-bottom: 60px; }
+        }
+        .bn-item {
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: 2px; flex: 1; height: 100%;
+          background: none; border: none; cursor: pointer;
+          color: var(--tw-text-muted);
+          text-decoration: none; font-size: 9px; font-weight: 500;
+          transition: color .12s;
+          padding: 0; min-width: 0;
+        }
+        .bn-item.active, .bn-item:hover { color: var(--tw-terra); }
+        .bn-icon { font-size: 20px; line-height: 1; }
+        .bn-badge {
+          position: absolute; top: 6px; right: calc(50% - 18px);
+          background: var(--tw-terra); color: #fff;
+          border-radius: 10px; min-width: 16px; height: 16px;
+          font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+          padding: 0 4px; pointer-events: none;
+        }
+
+        /* Panel estadísticas en propuesta de valor: oculto en mobile */
+        .cat-stats-panel { width: 180px; flex-shrink: 0; }
+        @media (max-width: 600px) { .cat-stats-panel { display: none; } }
+
+        /* Grid de regiones: 6 col desktop → 3 col mobile */
+        .cat-regiones-grid { grid-template-columns: repeat(6, 1fr); }
+        @media (max-width: 600px) { .cat-regiones-grid { grid-template-columns: repeat(3, 1fr); } }
+      `}</style>
+
+      <div className="tw-app-shell">
+
+        {/* ── DRAWER LATERAL ── */}
+        {!embeddedMode && appDrawerOpen && (
+          <div className="app-drawer-ov" onClick={() => setAppDrawerOpen(false)} />
+        )}
+        {!embeddedMode && (<div className={`app-drawer ${appDrawerOpen ? 'open' : ''}`}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div style={{ fontFamily: 'var(--tw-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--tw-text)' }}>
+              Tunay · Wasi
+            </div>
+            <button onClick={() => setAppDrawerOpen(false)} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--tw-text-muted)' }}>✕</button>
           </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a href="#/" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, background: 'rgba(201,110,75,.08)', color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700, fontSize: 12 }}>☕ Catálogo</a>
+            {rolUsuario === 'buyer_b2b' || rolUsuario === 'buyer_b2c' || rolUsuario === 'admin' ? (
+              <>
+                <a href="#/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🏪 Mi Portal</a>
+                <a href="#/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Compras</a>
+              </>
+            ) : rolUsuario === 'seller' ? (
+              <>
+                <a href="#/caficultor-portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-sage)', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>🌱 Mi Portal</a>
+                <a href="#/caficultor-portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Ventas</a>
+              </>
+            ) : (
+              <>
+                <a href="#/portal" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📦 Mis Compras</a>
+                <a href="#/para-cafeterias" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-terra)', textDecoration: 'none', fontSize: 12 }}>☕ Soy Negocio</a>
+              </>
+            )}
+            <a href="#/docs" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>📄 Documentación</a>
+            <a href="#/soporte" onClick={() => setAppDrawerOpen(false)} style={{ padding: '8px 10px', borderRadius: 6, color: 'var(--tw-text)', textDecoration: 'none', fontSize: 12 }}>❓ Preguntas frecuentes</a>
+          </div>
+          {/* Theme switcher en drawer */}
+          <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid var(--tw-border)', marginBottom: 14 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Apariencia</div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {([
+                { key: 'cream' as const, label: 'Crema',  bg: '#f2e0cc' },
+                { key: 'dark'  as const, label: 'Oscuro', bg: '#141414' },
+                { key: 'white' as const, label: 'Blanco', bg: '#f5f5f5' },
+              ]).map(({ key, label, bg }) => (
+                <button
+                  key={key}
+                  onClick={() => { cambiarTema(key); setAppDrawerOpen(false); }}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: bg,
+                    border: temaActual === key ? '2.5px solid var(--tw-terra)' : '1.5px solid var(--tw-border)',
+                    transform: temaActual === key ? 'scale(1.15)' : 'scale(1)',
+                    transition: 'transform 0.15s, border-color 0.15s',
+                    boxShadow: temaActual === key ? '0 0 0 3px rgba(201,110,75,0.15)' : 'none',
+                  }} />
+                  <span style={{ fontSize: 8, color: temaActual === key ? 'var(--tw-terra)' : 'var(--tw-text-muted)', fontWeight: temaActual === key ? 700 : 400 }}>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ paddingTop: 14, borderTop: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tw-terra)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>
+              {userNombre ? userNombre.charAt(0).toUpperCase() : '?'}
+            </div>
+            <div>
+              {userNombre ? (
+                <>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tw-text)' }}>{userNombre}</div>
+                  <div style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>{rolUsuario === 'seller' ? 'Caficultor' : rolUsuario === 'buyer_b2b' ? 'Negocio B2B' : rolUsuario === 'buyer_b2c' ? 'Consumidor' : rolUsuario === 'admin' ? 'Admin' : ''}</div>
+                </>
+              ) : (
+                <>
+                  <a href="#/login" onClick={() => setAppDrawerOpen(false)} style={{ fontSize: 11, fontWeight: 600, color: 'var(--tw-terra)', textDecoration: 'none' }}>Iniciar sesión</a>
+                  <div style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>Para acceder a tu cuenta</div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>)}
 
-          {/* Mobile menu desplegable */}
-          {menuAbierto && (
-            <div className="cat-nav-mobile-menu" style={{
-              display: 'none',
-              flexDirection: 'column',
-              padding: '8px 20px 20px',
-              background: 'rgba(0,0,0,0.92)',
-              gap: 4,
+        {/* ── HEADER SUPERIOR ── */}
+        {!embeddedMode && <header className="d-header">
+          <button className="app-ham-btn" onClick={() => setAppDrawerOpen(true)} title="Menú">☰</button>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'var(--tw-font-display)', whiteSpace: 'nowrap' }}>
+            Tunay · Wasi
+          </div>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 20, background: 'rgba(201,110,75,.08)', border: '1px solid rgba(201,110,75,.2)', cursor: 'pointer', flexShrink: 0 }}
+            onClick={() => showToast('📍 Cobertura actual: Lima Metropolitana')}
+          >
+            <span style={{ fontSize: 12 }}>📍</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-terra)' }}>Lima, Perú</span>
+            <span style={{ fontSize: 8, color: 'var(--tw-text-muted)' }}>▾</span>
+          </div>
+          <input
+            className="frame-search"
+            placeholder="🔎  Buscar café, variedad, región..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {/* Theme switcher */}
+          <div style={{ display: 'flex', gap: 5, alignItems: 'center', margin: '0 6px', flexShrink: 0 }}>
+            {(['cream', 'dark', 'white'] as const).map(t => (
+              <div
+                key={t}
+                onClick={() => cambiarTema(t)}
+                title={t === 'cream' ? 'Tema crema' : t === 'dark' ? 'Tema oscuro' : 'Tema blanco'}
+                style={{
+                  width: 18, height: 18, borderRadius: '50%', cursor: 'pointer',
+                  border: temaActual === t ? '2px solid var(--tw-terra)' : '1.5px solid var(--tw-border)',
+                  background: t === 'cream' ? '#f2e0cc' : t === 'dark' ? '#141414' : '#f5f5f5',
+                  transform: temaActual === t ? 'scale(1.25)' : 'scale(1)',
+                  transition: 'transform 0.15s, border-color 0.15s',
+                  flexShrink: 0,
+                }}
+              />
+            ))}
+          </div>
+          {/* Cart Icon */}
+          <div style={{ position: 'relative', cursor: 'pointer', padding: '0 4px', flexShrink: 0 }} onClick={onIrAlCheckout}>
+            <span style={{ fontSize: 18 }}>🛒</span>
+            {carritoCount > 0 && (
+              <span style={{ position: 'absolute', top: -4, right: -4, background: 'var(--tw-terra)', color: '#fff', fontSize: 8, fontWeight: 700, borderRadius: 8, padding: '1px 5px', minWidth: 14, textAlign: 'center' }}>{carritoCount}</span>
+            )}
+          </div>
+          <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--tw-card)', border: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--tw-text)', flexShrink: 0 }}>D</div>
+          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            <button onClick={() => setModalRegistro(true)} style={{ padding: '5px 11px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)' }}>Registrarse</button>
+            <a href="#/portal" style={{ padding: '5px 11px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Mi portal</a>
+          </div>
+        </header>}
+
+        {/* ── CONTENIDO PRINCIPAL (2 Columnas) ── */}
+        <main style={{ flex: 1, padding: '14px 18px 40px', maxWidth: 1380, margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+
+          {/* Banner de pedido activo */}
+          {rolUsuario && pedidos.length > 0 && (() => {
+            const activo = pedidos.find(p => !p.cancelado && p.logisticaStatus !== 'entregado') ?? pedidos[0]
+            const item = activo.items[0]
+            const resumen = item ? `${item.productoNombre} × ${item.qty} ${item.presentacion}` : activo.id
+            return (
+              <div className="d-banner-pend">
+                <span>⏳ {pedidos.length} pedido{pedidos.length !== 1 ? 's' : ''} · <strong>{resumen}</strong></span>
+                <a href="#/portal" style={{ color: 'var(--tw-terra)', fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}>Ver →</a>
+              </div>
+            )
+          })()}
+
+          {/* Banner PENDING_APPROVAL B2B — US-10 */}
+          {rolUsuario === 'buyer_b2b' && estadoAprobacionB2B === 'PENDING_APPROVAL' && (
+            <div style={{
+              background: 'rgba(232,184,75,0.12)', border: '1px solid rgba(232,184,75,0.35)',
+              borderRadius: 10, padding: '10px 16px', marginBottom: 14,
+              display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
             }}>
-              <a href="#/para-caficultores" onClick={() => setMenuAbierto(false)} style={{ color: C.tan, fontSize: 15, textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'block' }}>Soy caficultor</a>
-              <a href="#/para-cafeterias" onClick={() => setMenuAbierto(false)} style={{ color: C.tan, fontSize: 15, textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'block' }}>Soy negocio</a>
-              <button onClick={() => { setModalRegistro(true); setMenuAbierto(false) }} style={{ color: C.cream, fontSize: 15, fontFamily: 'Montserrat, sans-serif', fontWeight: 600, padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>Registrarse</button>
-              <a href="#/portal" onClick={() => setMenuAbierto(false)} style={{ display: 'block', marginTop: 12, padding: '13px', borderRadius: 4, background: C.terra, color: C.cream, fontSize: 14, textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, textAlign: 'center' }}>Mi portal</a>
+              <span style={{ fontSize: 16 }}>⏳</span>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#e8b84b', fontFamily: 'var(--tw-font-body)' }}>
+                  Tu cuenta de empresa está en revisión por el equipo de TunayWasi
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'var(--tw-font-body)', marginTop: 2 }}>
+                  Mientras tanto puedes explorar el catálogo. Los precios mayoristas (S/kg) y cotizaciones estarán disponibles una vez aprobada tu cuenta.
+                </div>
+              </div>
             </div>
           )}
 
-          <style>{`
-            @media (max-width: 640px) {
-              .cat-nav-desktop { display: none !important; }
-              .cat-nav-subtitle { display: none !important; }
-              .cat-nav-hamburger { display: flex !important; }
-              .cat-nav-mobile-menu { display: flex !important; }
-            }
-          `}</style>
-        </header>
-      )}
-
-      {/* Overlay oscuro sobre toda la página (solo modo standalone) */}
-      {!modoSeleccion && sidebarOffset === 0 && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-          background: 'rgba(10,10,10,0.72)',
-        }} />
-      )}
-
-      {/* Hero — texto sobre imagen de fondo */}
-      {!modoSeleccion && sidebarOffset === 0 && (
-        <div style={{
-          position: 'relative', zIndex: 1,
-          height: 'clamp(320px, 52vw, 580px)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          padding: '80px 24px 48px',
-          textAlign: 'center',
-          fontFamily: 'Montserrat, sans-serif',
-        }}>
-          <span style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '0.22em',
-            color: '#8faf8a', textTransform: 'uppercase', marginBottom: 14,
-          }}>
-            Café de especialidad peruano
-          </span>
-          <h1 style={{
-            margin: '0 0 16px',
-            fontSize: 'clamp(36px, 6vw, 72px)',
-            fontFamily: 'Cormorant Garamond, serif',
-            fontWeight: 700, color: '#f2e0cc',
-            lineHeight: 1.05, letterSpacing: '-0.01em',
-          }}>
-            Del caficultor<br />a tu local.
-          </h1>
-          <p style={{
-            margin: '0 0 32px',
-            fontSize: 'clamp(13px, 1.5vw, 16px)',
-            color: '#c4b297', lineHeight: 1.6,
-            maxWidth: 460,
-          }}>
-            Lotes con trazabilidad completa — región, altitud, variedad y proceso — directamente de la finca.
-          </p>
-          <a
-            href="#catalogo"
-            onClick={e => {
-              e.preventDefault()
-              document.getElementById('catalogo-section')?.scrollIntoView({ behavior: 'smooth' })
-            }}
-            style={{
-              padding: '13px 32px', borderRadius: 8,
-              background: '#c96e4b', color: '#fff',
-              fontSize: 14, fontWeight: 700,
-              textDecoration: 'none', letterSpacing: '0.04em',
-            }}
-          >
-            Ver catálogo →
-          </a>
-        </div>
-      )}
-
-      {/* Divisor */}
-      <div id="catalogo-section" style={{ padding: '32px 4% 8px', borderTop: modoSeleccion ? 'none' : `1px solid ${C.border}`, position: 'relative', zIndex: 1 }}>
-        <h2 style={{
-          margin: 0,
-          fontSize: 22, fontWeight: 700,
-          color: C.cream, fontFamily: 'Cormorant Garamond, serif',
-          letterSpacing: '0.02em',
-        }}>
-          {modoSeleccion ? 'Elige tus cafés' : 'Los cafés disponibles hoy'}
-        </h2>
-        <p style={{ margin: '4px 0 0', fontSize: 12, color: C.tan, fontFamily: 'Montserrat, sans-serif' }}>
-          {modoSeleccion
-            ? `Selecciona hasta ${modoSeleccion.max} · ${modoSeleccion.seleccionados.size} elegidos`
-            : 'Todos con historia, origen y trazabilidad verificada'
-          }
-        </p>
-      </div>
-
-      {/* Carruseles y grid */}
-      {loading ? (
-        <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
-          <p style={{ color: C.tan, fontSize: 14 }}>Cargando catálogo...</p>
-        </div>
-      ) : (
-        <div style={{ paddingTop: 24, paddingBottom: modoSeleccion ? 120 : 0, position: 'relative', zIndex: 1 }}>
-          {/* Carruseles por caficultor */}
-          {filasCarrusel.map(([caficultorId, prods]) => {
-            const caficultor = caficultores.get(caficultorId)
-            if (!caficultor) return null
-            return (
-              <CarruselRow
-                key={caficultorId}
-                titulo={`Cafés de ${caficultor.nombre}`}
-                subtitulo={`${caficultor.region} · ${caficultor.altitudMsnm?.toLocaleString()} msnm`}
-                productos={prods.slice(0, 8)}
-                caficultores={caficultores}
-                onSeleccionar={handleCard}
-                seleccionados={modoSeleccion?.seleccionados}
-              />
-            )
-          })}
-
-          {/* Grid con filtros */}
-          <GridFiltrado
-            productos={productosParaCatalogo}
-            caficultores={caficultores}
-            onSeleccionar={handleCard}
-            seleccionados={modoSeleccion?.seleccionados}
-            carritoProductoIds={carritoProductoIds}
-          />
-        </div>
-      )}
-
-      {/* Floating CTA bar — solo en modo selección */}
-      {modoSeleccion && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: sidebarOffset, right: 0, zIndex: 50,
-          background: 'linear-gradient(to top, #0a0a0a 70%, transparent)',
-          padding: '20px 4% 28px',
-          pointerEvents: 'none',
-        }}>
-          <div style={{ maxWidth: 600, margin: '0 auto', pointerEvents: 'all' }}>
-            {modoSeleccion.seleccionados.size > 0 && (
-              <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-                {[...modoSeleccion.seleccionados].map(id => {
-                  const p = productos.find(x => x.id === id)
-                  if (!p) return null
-                  return (
-                    <span key={id} style={{
-                      fontSize: 11, padding: '3px 10px', borderRadius: 10, fontWeight: 600,
-                      background: (PROCESO_COLORS[p.proceso] ?? C.terra) + '33',
-                      color: PROCESO_COLORS[p.proceso] ?? C.terra,
-                      border: `1px solid ${(PROCESO_COLORS[p.proceso] ?? C.terra)}55`,
-                    }}>
-                      {p.nombre}
-                    </span>
-                  )
-                })}
+          {/* Banner REJECTED B2B */}
+          {rolUsuario === 'buyer_b2b' && estadoAprobacionB2B === 'REJECTED' && (
+            <div style={{
+              background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: 10, padding: '10px 16px', marginBottom: 14,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ fontSize: 16 }}>❌</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#ef4444', fontFamily: 'var(--tw-font-body)' }}>Solicitud de empresa rechazada</div>
+                <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'var(--tw-font-body)', marginTop: 2 }}>
+                  Contacta a soporte en TunayWasi para más información.
+                </div>
               </div>
-            )}
-            <button
-              onClick={() => modoSeleccion.onConfirmar()}
-              disabled={modoSeleccion.confirmando}
-              style={{
-                width: '100%', padding: '15px', borderRadius: 10,
-                background: modoSeleccion.confirmando ? '#555' : C.terra,
-                color: C.white, border: 'none',
-                fontSize: 15, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
-                cursor: modoSeleccion.confirmando ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {modoSeleccion.confirmando ? 'Creando tu cuenta...' : (
-                modoSeleccion.seleccionados.size > 0
-                  ? `${modoSeleccion.seleccionados.size} de ${modoSeleccion.max} · Crear mi cuenta →`
-                  : 'Crear mi cuenta →'
-              )}
-            </button>
-            {modoSeleccion.seleccionados.size === 0 && (
-              <p style={{ margin: '8px 0 0', fontSize: 11, color: C.tan, textAlign: 'center', fontFamily: 'Montserrat, sans-serif' }}>
-                Puedes elegir cafés desde el catálogo también.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
 
-      {/* Barra flotante de carrito — cuando hay ítems y no estamos en modoSelección */}
-      {!modoSeleccion && carritoCount > 0 && onIrAlCheckout && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: sidebarOffset, right: 0, zIndex: 50,
-          background: 'linear-gradient(to top, #0a0a0a 70%, transparent)',
-          padding: '16px 4% 28px',
-          animation: 'slideUp 0.25s ease',
-        }}>
-          <div style={{ maxWidth: 640, margin: '0 auto' }}>
-            {/* Chips de ítems del carrito */}
-            {carritoLineas && carritoLineas.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-                {carritoLineas.slice(0, 3).map((item, i) => {
-                  const precio = calcularPrecioFinal(item.producto.precioBaseKgCents, item.formato)
-                  const nombreCorto = item.producto.nombre.split(' ').slice(0, 2).join(' ')
-                  return (
-                    <span key={i} className="tw-chip-in" style={{
-                      fontSize: 11, padding: '4px 10px', borderRadius: 10, fontWeight: 600,
-                      background: C.terra + '22', border: `1px solid ${C.terra}44`,
-                      color: C.cream, whiteSpace: 'nowrap',
-                      animationDelay: `${i * 0.06}s`,
-                    }}>
-                      {nombreCorto} · S/{((precio * item.qty) / 100).toFixed(0)}
-                    </span>
-                  )
-                })}
-                {carritoLineas.length > 3 && (
-                  <span style={{
-                    fontSize: 11, padding: '4px 10px', borderRadius: 10, fontWeight: 600,
-                    background: '#222', color: C.tan, whiteSpace: 'nowrap',
-                  }}>
-                    +{carritoLineas.length - 3} más
-                  </span>
+          <div style={{ display: 'flex', gap: 12 }}>
+
+            {/* COLUMNA IZQUIERDA: Catálogo */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+
+              {!hideFiltersHeader && (<>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+                <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)' }}>Cafés disponibles</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}><span>{cafésFiltrados.length}</span> resultados</div>
+                  <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                    style={{ fontSize: 10, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--tw-border)', background: 'var(--tw-card)', color: 'var(--tw-text)', cursor: 'pointer', fontFamily: 'var(--tw-font-body)' }}>
+                    <option value="relevancia">Relevancia</option>
+                    <option value="recientes">Más recientes</option>
+                    <option value="precio_asc">Precio: menor a mayor</option>
+                    <option value="precio_desc">Precio: mayor a menor</option>
+                    <option value="evidencia">Mayor evidencia</option>
+                  </select>
+                </div>
+              </div>
+              <div className="d-filters-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
+                <button className={`d-fchip ${regionFilter === 'all' ? 'active' : ''}`} onClick={() => setRegionFilter('all')}>Todos</button>
+                <button className={`d-fchip ${regionFilter === 'Cajamarca' ? 'active' : ''}`} onClick={() => setRegionFilter('Cajamarca')}>Cajamarca</button>
+                <button className={`d-fchip ${regionFilter === 'Cusco' ? 'active' : ''}`} onClick={() => setRegionFilter('Cusco')}>Cusco</button>
+                <button className={`d-fchip ${regionFilter === 'Puno' ? 'active' : ''}`} onClick={() => setRegionFilter('Puno')}>Puno</button>
+                <button className={`d-fchip ${regionFilter === 'San Martín' ? 'active' : ''}`} onClick={() => setRegionFilter('San Martín')}>San Martín</button>
+                <div className="d-filters-divider" style={{ width: 1, background: 'var(--tw-border)', margin: '0 2px' }} />
+                <button className={`d-fchip ${procesoFilter === 'all' ? 'active' : ''}`} onClick={() => setProcesoFilter('all')}>Todo proceso</button>
+                <button className={`d-fchip ${procesoFilter === 'Lavado' ? 'active' : ''}`} onClick={() => setProcesoFilter('Lavado')}>Lavado</button>
+                <button className={`d-fchip ${procesoFilter === 'Natural' ? 'active' : ''}`} onClick={() => setProcesoFilter('Natural')}>Natural</button>
+                <button className={`d-fchip ${procesoFilter === 'Honey' ? 'active' : ''}`} onClick={() => setProcesoFilter('Honey')}>Honey</button>
+                <div className="d-filters-divider" style={{ width: 1, background: 'var(--tw-border)', margin: '0 2px' }} />
+                <button className={`d-fchip ${typeFilter === 'all' ? 'active' : ''}`} onClick={() => setTypeFilter('all')}>Todo tipo</button>
+                <button className={`d-fchip ${typeFilter === 'TYPE_A' ? 'active' : ''}`} onClick={() => setTypeFilter('TYPE_A')} title="Café verde · Solo compra B2B aprobado">🌿 Verde</button>
+                <button className={`d-fchip ${typeFilter === 'TYPE_B' ? 'active' : ''}`} onClick={() => setTypeFilter('TYPE_B')} title="Café tostado en grano">☕ Tostado</button>
+                <button className={`d-fchip ${typeFilter === 'TYPE_C' ? 'active' : ''}`} onClick={() => setTypeFilter('TYPE_C')} title="Café tostado y molido">🫘 Molido</button>
+              </div>
+              {/* Filtros de evidencia y perfil de taza */}
+              <div className="d-filters-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
+                <button className={`d-fchip ${evidenciaFilter === 'all' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('all')}>Toda evidencia</button>
+                <button className={`d-fchip ${evidenciaFilter === 'N1' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('N1')} title="Foto del lote verificada">N1</button>
+                <button className={`d-fchip ${evidenciaFilter === 'N2' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('N2')} title="Ficha de catación verificada">N2</button>
+                <button className={`d-fchip ${evidenciaFilter === 'N3' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('N3')} title="Certificado de laboratorio">N3</button>
+                <div className="d-filters-divider" style={{ width: 1, background: 'var(--tw-border)', margin: '0 2px' }} />
+                <button className={`d-fchip ${saboresFilter === 'all' ? 'active' : ''}`} onClick={() => setSaboresFilter('all')}>Todo perfil</button>
+                <button className={`d-fchip ${saboresFilter === 'floral' ? 'active' : ''}`} onClick={() => setSaboresFilter('floral')}>🌸 Floral</button>
+                <button className={`d-fchip ${saboresFilter === 'frutal' ? 'active' : ''}`} onClick={() => setSaboresFilter('frutal')}>🍓 Frutal</button>
+                <button className={`d-fchip ${saboresFilter === 'chocolate' ? 'active' : ''}`} onClick={() => setSaboresFilter('chocolate')}>🍫 Chocolate</button>
+                <button className={`d-fchip ${saboresFilter === 'caramelo' ? 'active' : ''}`} onClick={() => setSaboresFilter('caramelo')}>🍯 Caramelo</button>
+              </div>
+              {/* Etiquetas de filtros activos */}
+              {hayFiltrosActivos && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10, alignItems: 'center' }}>
+                  <span style={{ fontSize: 9, color: 'var(--tw-text-muted)', fontFamily: 'var(--tw-font-body)' }}>Activos:</span>
+                  {regionFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{regionFilter} <span onClick={() => setRegionFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
+                  {procesoFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{procesoFilter} <span onClick={() => setProcesoFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
+                  {typeFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{typeFilter === 'TYPE_A' ? '🌿 Verde' : typeFilter === 'TYPE_B' ? '☕ Tostado' : '🫘 Molido'} <span onClick={() => setTypeFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
+                  {evidenciaFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{evidenciaFilter} <span onClick={() => setEvidenciaFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
+                  {saboresFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{saboresFilter} <span onClick={() => setSaboresFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
+                  {search && <span className="d-fchip active" style={{ cursor: 'default' }}>"{search}" <span onClick={() => setSearch('')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
+                  <button onClick={() => { setRegionFilter('all'); setProcesoFilter('all'); setTypeFilter('all'); setEvidenciaFilter('all'); setSaboresFilter('all'); setSearch('') }}
+                    style={{ fontSize: 9, color: 'var(--tw-terra)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--tw-font-body)', padding: '2px 4px', textDecoration: 'underline' }}>
+                    Limpiar todos
+                  </button>
+                </div>
+              )}
+              </>)}
+
+              {/* ── Estado vacío US-47 ── */}
+              {cafésFiltrados.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--tw-text-muted)' }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 6, fontFamily: 'var(--tw-font-body)' }}>Sin resultados para esta combinación</div>
+                  {filtroMasRestrictivo ? (
+                    <div style={{ fontSize: 12, fontFamily: 'var(--tw-font-body)' }}>
+                      Prueba quitar el filtro de {filtroMasRestrictivo.label} para encontrar más cafés.{' '}
+                      <button onClick={filtroMasRestrictivo.limpiar} style={{ background: 'none', border: 'none', color: 'var(--tw-terra)', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'var(--tw-font-body)', textDecoration: 'underline' }}>
+                        Quitar filtro
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 12, fontFamily: 'var(--tw-font-body)' }}>Aún no hay cafés disponibles. Vuelve pronto.</div>
+                  )}
+                </div>
+              )}
+
+              {/* ── ROW: LAVADO ── */}
+              {cafesLavado.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontSize: 14 }}>☕</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)' }}>Lavado</span>
+                      <span style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>· Claridad · acidez brillante</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => scrollRow(lavadoRef, 'left')} style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--tw-border)', background: 'var(--tw-card)', cursor: 'pointer', fontSize: 11, color: 'var(--tw-text)' }}>‹</button>
+                      <button onClick={() => scrollRow(lavadoRef, 'right')} style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--tw-border)', background: 'var(--tw-card)', cursor: 'pointer', fontSize: 11, color: 'var(--tw-text)' }}>›</button>
+                    </div>
+                  </div>
+                  <div ref={lavadoRef} style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '160px', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', minWidth: 0 }}>
+                    {cafesLavado.map(c => (
+                      <div key={c.id} className="sc-product-card" onClick={() => handleCardClick(c)}>
+                        <div className="sc-photo">
+                          <span>{c.emoji}</span>
+                          <span className={`tipo-chip tipo-${c.productType === 'TYPE_A' ? 'verde' : c.productType === 'TYPE_B' ? 'tostado' : 'molido'}`}>{TIPO_LABEL[c.productType]}</span>
+                          <span className={`proc-chip proc-${(c.proceso || '').toLowerCase().replace(/é/g,'e').replace(/ó/g,'o') || 'lavado'}`}>{c.proceso}</span>
+                        </div>
+                        <div className="sc-info">
+                          <div className="sc-name" title={c.nombre}>{c.nombre}</div>
+                          <div className="sc-caf">{c.caf} · {c.region}</div>
+                          <div className="sc-notes">{c.notas}</div>
+                          <div className="sc-footer">
+                            <div>
+                              {c.pricingMode === 'NEGOTIABLE'
+                                ? <><span className="sc-badge sc-badge-negociable">A negociar</span><span className="sc-price-sub" style={{ display: 'block', fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 2 }}>Ref. S/ {c.precio.toFixed(0)}/kg</span></>
+                                : <><span className="sc-price">S/ {c.precio.toFixed(2)}</span><span className="sc-price-sub"> /kg</span></>
+                              }
+                            </div>
+                            {renderAddBtn(c)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── ROW: NATURAL ── */}
+              {cafesNatural.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontSize: 14 }}>🫘</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)' }}>Natural</span>
+                      <span style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>· Cuerpo · frutas intensas</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => scrollRow(naturalRef, 'left')} style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--tw-border)', background: 'var(--tw-card)', cursor: 'pointer', fontSize: 11, color: 'var(--tw-text)' }}>‹</button>
+                      <button onClick={() => scrollRow(naturalRef, 'right')} style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--tw-border)', background: 'var(--tw-card)', cursor: 'pointer', fontSize: 11, color: 'var(--tw-text)' }}>›</button>
+                    </div>
+                  </div>
+                  <div ref={naturalRef} style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '160px', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', minWidth: 0 }}>
+                    {cafesNatural.map(c => (
+                      <div key={c.id} className="sc-product-card" onClick={() => handleCardClick(c)}>
+                        <div className="sc-photo">
+                          <span>{c.emoji}</span>
+                          <span className={`tipo-chip tipo-${c.productType === 'TYPE_A' ? 'verde' : c.productType === 'TYPE_B' ? 'tostado' : 'molido'}`}>{TIPO_LABEL[c.productType]}</span>
+                          <span className={`proc-chip proc-${(c.proceso || '').toLowerCase().replace(/é/g,'e').replace(/ó/g,'o') || 'lavado'}`}>{c.proceso}</span>
+                        </div>
+                        <div className="sc-info">
+                          <div className="sc-name" title={c.nombre}>{c.nombre}</div>
+                          <div className="sc-caf">{c.caf} · {c.region}</div>
+                          <div className="sc-notes">{c.notas}</div>
+                          <div className="sc-footer">
+                            <div>
+                              {c.pricingMode === 'NEGOTIABLE'
+                                ? <><span className="sc-badge sc-badge-negociable">A negociar</span><span className="sc-price-sub" style={{ display: 'block', fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 2 }}>Ref. S/ {c.precio.toFixed(0)}/kg</span></>
+                                : <><span className="sc-price">S/ {c.precio.toFixed(2)}</span><span className="sc-price-sub"> /kg</span></>
+                              }
+                            </div>
+                            {renderAddBtn(c)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── ROW: HONEY ── */}
+              {cafesHoney.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontSize: 14 }}>🍯</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)' }}>Honey</span>
+                      <span style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>· Dulzor · notas suaves</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => scrollRow(honeyRef, 'left')} style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--tw-border)', background: 'var(--tw-card)', cursor: 'pointer', fontSize: 11, color: 'var(--tw-text)' }}>‹</button>
+                      <button onClick={() => scrollRow(honeyRef, 'right')} style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--tw-border)', background: 'var(--tw-card)', cursor: 'pointer', fontSize: 11, color: 'var(--tw-text)' }}>›</button>
+                    </div>
+                  </div>
+                  <div ref={honeyRef} style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '160px', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', minWidth: 0 }}>
+                    {cafesHoney.map(c => (
+                      <div key={c.id} className="sc-product-card" onClick={() => handleCardClick(c)}>
+                        <div className="sc-photo">
+                          <span>{c.emoji}</span>
+                          <span className={`tipo-chip tipo-${c.productType === 'TYPE_A' ? 'verde' : c.productType === 'TYPE_B' ? 'tostado' : 'molido'}`}>{TIPO_LABEL[c.productType]}</span>
+                          <span className={`proc-chip proc-${(c.proceso || '').toLowerCase().replace(/é/g,'e').replace(/ó/g,'o') || 'lavado'}`}>{c.proceso}</span>
+                        </div>
+                        <div className="sc-info">
+                          <div className="sc-name" title={c.nombre}>{c.nombre}</div>
+                          <div className="sc-caf">{c.caf} · {c.region}</div>
+                          <div className="sc-notes">{c.notas}</div>
+                          <div className="sc-footer">
+                            <div>
+                              {c.pricingMode === 'NEGOTIABLE'
+                                ? <><span className="sc-badge sc-badge-negociable">A negociar</span><span className="sc-price-sub" style={{ display: 'block', fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 2 }}>Ref. S/ {c.precio.toFixed(0)}/kg</span></>
+                                : <><span className="sc-price">S/ {c.precio.toFixed(2)}</span><span className="sc-price-sub"> /kg</span></>
+                              }
+                            </div>
+                            {renderAddBtn(c)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── CAFICULTORES DESTACADOS + banner + regiones ── */}
+              {!hideFiltersHeader && <><div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--tw-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>Caficultores destacados</div>
+                  <a href="#/caficultores" style={{ fontSize: 10, color: 'var(--tw-terra)', fontWeight: 600, textDecoration: 'none' }}>Ver todos →</a>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                  {loading ? (
+                    <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', padding: '8px 0' }}>Cargando…</div>
+                  ) : Array.from(caficultores.values()).filter(c => c.activo).slice(0, 3).length === 0 ? (
+                    <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', padding: '8px 0' }}>Próximamente</div>
+                  ) : Array.from(caficultores.values()).filter(c => c.activo).slice(0, 3).map(c => {
+                    const lotesCount = productos.filter(p => p.caficultorId === c.id && p.status === 'activo').length
+                    return (
+                      <div key={c.id} style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer' }}>
+                        <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#c96e4b,#8faf8a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>☕</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-text)' }}>{c.nombre}</div>
+                          <div style={{ fontSize: 9, color: 'var(--tw-terra)', fontWeight: 600 }}>{c.region} · {lotesCount} lote{lotesCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        {c.scoreConfianza != null && (
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-text)' }}>⭐ {c.scoreConfianza.toFixed(1)}</div>
+                            <div style={{ fontSize: 8, color: 'var(--tw-text-muted)' }}>{c.totalCalificaciones ?? 0} reseñas</div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* ── PROPUESTA DE VALOR ── */}
+              <div style={{ marginTop: 20, padding: 18, background: 'linear-gradient(135deg,rgba(201,110,75,.08),rgba(143,175,138,.06))', border: '1px solid rgba(201,110,75,.2)', borderRadius: 12 }}>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--tw-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 4 }}>
+                      Café de especialidad <span style={{ color: 'var(--tw-terra)' }}>directo del productor</span>
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.5, marginBottom: 12 }}>
+                      Conectamos emprendedores con caficultores peruanos certificados. Sin intermediarios, con trazabilidad completa y pago seguro a través de escrow.
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {[['🔒','Pago escrow','Tu dinero seguro'],['📜','Certificado SCA','Calidad verificada'],['🚚','Envío rastreado','Shalom · Olva · Hub']].map(([ico, t, s]) => (
+                        <div key={t} style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 6, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{ico}</span>
+                          <div><div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tw-text)' }}>{t}</div><div style={{ fontSize: 8, color: 'var(--tw-text-muted)' }}>{s}</div></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="cat-stats-panel" style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: 12 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 8 }}>📊 Estadísticas</div>
+                    {(() => {
+                      const activos = productos.filter(p => p.status === 'activo')
+                      const nCafics = caficultores.size
+                      const nLotes = activos.length
+                      const nRegiones = new Set(Array.from(caficultores.values()).map(c => c.region)).size
+                      const lavados = activos.filter(p => p.proceso === 'lavado')
+                      const naturales = activos.filter(p => p.proceso === 'natural')
+                      const avgLavado = lavados.length ? Math.round(lavados.reduce((s, p) => s + p.precioBaseKgCents, 0) / lavados.length / 100) : null
+                      const avgNatural = naturales.length ? Math.round(naturales.reduce((s, p) => s + p.precioBaseKgCents, 0) / naturales.length / 100) : null
+                      const maxAvg = Math.max(avgLavado ?? 0, avgNatural ?? 0) || 1
+                      return <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, paddingBottom: 6, borderBottom: '1px solid var(--tw-border)' }}>
+                          <div style={{ textAlign: 'center' }}><div style={{ fontSize: 15, fontWeight: 800, color: 'var(--tw-terra)' }}>{nCafics}</div><div style={{ fontSize: 8, color: 'var(--tw-text-muted)' }}>Caficultores</div></div>
+                          <div style={{ textAlign: 'center' }}><div style={{ fontSize: 15, fontWeight: 800, color: 'var(--tw-terra)' }}>{nLotes}</div><div style={{ fontSize: 8, color: 'var(--tw-text-muted)' }}>Lotes</div></div>
+                          <div style={{ textAlign: 'center' }}><div style={{ fontSize: 15, fontWeight: 800, color: 'var(--tw-terra)' }}>{nRegiones}</div><div style={{ fontSize: 8, color: 'var(--tw-text-muted)' }}>Regiones</div></div>
+                        </div>
+                        {(avgLavado || avgNatural) && <>
+                          <div style={{ fontSize: 8, color: 'var(--tw-text-muted)', marginBottom: 4 }}>Precio promedio / kg</div>
+                          {avgLavado != null && <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                            <span style={{ fontSize: 8, color: 'var(--tw-text-muted)', width: 44 }}>Lavado</span>
+                            <div style={{ flex: 1, height: 4, background: 'var(--tw-border)', borderRadius: 2, overflow: 'hidden' }}><div style={{ width: `${Math.round(avgLavado / maxAvg * 100)}%`, height: '100%', background: 'var(--tw-terra)' }} /></div>
+                            <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--tw-text)' }}>S/{avgLavado}</span>
+                          </div>}
+                          {avgNatural != null && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ fontSize: 8, color: 'var(--tw-text-muted)', width: 44 }}>Natural</span>
+                            <div style={{ flex: 1, height: 4, background: 'var(--tw-border)', borderRadius: 2, overflow: 'hidden' }}><div style={{ width: `${Math.round(avgNatural / maxAvg * 100)}%`, height: '100%', background: 'var(--tw-sage)' }} /></div>
+                            <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--tw-text)' }}>S/{avgNatural}</span>
+                          </div>}
+                        </>}
+                      </>
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── REGIONES PRODUCTORAS ── */}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--tw-border)' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 10 }}>Regiones productoras</div>
+                <div className="cat-regiones-grid" style={{ display: 'grid', gap: 8 }}>
+                  {(() => {
+                    const REGION_ICONS: Record<string, string> = { 'Cajamarca': '🏔️', 'Cusco': '🌿', 'Puno': '🌄', 'San Martín': '🌺', 'Huánuco': '⛰️', 'Amazonas': '🌳', 'Junín': '🏞️', 'Ayacucho': '🌾' }
+                    const regionMap = new Map<string, number>()
+                    productos.filter(p => p.status === 'activo').forEach(p => {
+                      const caf = caficultores.get(p.caficultorId ?? '')
+                      if (caf?.region) regionMap.set(caf.region, (regionMap.get(caf.region) ?? 0) + 1)
+                    })
+                    if (regionMap.size === 0) return <div style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>Próximamente</div>
+                    return Array.from(regionMap.entries()).map(([name, count]) => (
+                      <div key={name} onClick={() => setRegionFilter(name)} style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 8, padding: '8px 6px', textAlign: 'center', cursor: 'pointer', transition: 'border-color .15s' }}>
+                        <div style={{ fontSize: 18, marginBottom: 2 }}>{REGION_ICONS[name] ?? '📍'}</div>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tw-text)' }}>{name}</div>
+                        <div style={{ fontSize: 8, color: 'var(--tw-text-muted)' }}>{count} lote{count !== 1 ? 's' : ''}</div>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              </div>
+              </>}
+            </div>{/* /columna izquierda */}
+
+            {/* COLUMNA DERECHA: Mis Compras */}
+            {!hideFiltersHeader && rolUsuario && <aside className="d-pedidos-panel">
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                Mis Compras
+                {pedidos.length > 0 && <span style={{ background: 'var(--tw-terra)', color: '#fff', fontSize: 8, fontWeight: 700, borderRadius: 6, padding: '1px 5px' }}>{pedidos.length}</span>}
+              </div>
+              {loading ? (
+                <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', padding: '8px 0' }}>Cargando…</div>
+              ) : pedidos.length === 0 ? (
+                <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', padding: '8px 0', textAlign: 'center', lineHeight: 1.5 }}>
+                  Aún no tienes pedidos.<br />
+                  <a href="#/catalogo" style={{ color: 'var(--tw-terra)', fontWeight: 600, textDecoration: 'none' }}>Explorar catálogo →</a>
+                </div>
+              ) : pedidos.slice(0, 3).map((ped, i) => {
+                const fase = ped.cancelado
+                  ? { label: 'Cancelado', cls: 'pend-waiting' }
+                  : ped.logisticaStatus === 'entregado'
+                  ? { label: '¡Entregado!', cls: 'pend-delivered' }
+                  : ped.logisticaStatus === 'en_agencia'
+                  ? { label: 'En camino', cls: 'pend-transit' }
+                  : ped.logisticaStatus === 'preparando'
+                  ? { label: 'Preparando pedido', cls: 'pend-preparing' }
+                  : ped.pagoStatus === 'verificado'
+                  ? { label: 'Pago confirmado', cls: 'pend-transit' }
+                  : ped.pagoStatus === 'voucher_subido'
+                  ? { label: 'Verificando pago', cls: 'pend-preparing' }
+                  : { label: 'Esperando voucher', cls: 'pend-waiting' }
+                const primerItem = ped.items[0]
+                return (
+                  <div key={ped.id} className={`pend-card${i === 0 ? ' highlight' : ''}`}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-text)', flex: 1, marginRight: 6 }}>
+                        {primerItem ? `${primerItem.productoNombre} × ${primerItem.qty} ${primerItem.presentacion}` : ped.id}
+                        {ped.items.length > 1 && <span style={{ color: 'var(--tw-text-muted)', fontWeight: 400 }}> +{ped.items.length - 1}</span>}
+                      </div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-terra)', flexShrink: 0 }}>S/ {(ped.totalCents / 100).toFixed(2)}</div>
+                    </div>
+                    {primerItem?.caficultorNombre && (
+                      <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginBottom: 4 }}>{primerItem.caficultorNombre}</div>
+                    )}
+                    <div className={`pend-status-label ${fase.cls}`}>{fase.label}</div>
+                  </div>
+                )
+              })}
+              {carritoCount > 0 && (
+                <div style={{ marginTop: 10, border: '1px solid var(--tw-terra)', borderRadius: 10, padding: 10, textAlign: 'center', background: 'var(--tw-card)' }}>
+                  <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginBottom: 2 }}>Carrito actual ({carritoCount})</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tw-terra)' }}>S/ {(totalCarritoCents / 100).toFixed(2)}</div>
+                  <button onClick={onIrAlCheckout} style={{ marginTop: 6, width: '100%', padding: '6px 10px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Ir al carrito →</button>
+                </div>
+              )}
+            </aside>}
+
+          </div>
+        </main>
+
+        {/* ── TOAST ── */}
+        {toastMsg && <div className="sim-toast">{toastMsg}</div>}
+
+        {/* ── MODAL REGISTRO ── */}
+        {modalRegistro && <ModalRegistro onClose={() => { setModalRegistro(false); setLoginGateProducto(null) }} productoIntencion={loginGateProducto} />}
+
+        {/* ── DRAWER DE DETALLE (ruta #/) ── */}
+        {productoDetalle && (() => {
+          const PROCESO_BADGE_LOCAL: Record<string, { bg: string; color: string; border: string; label: string }> = {
+            lavado:    { bg: 'rgba(59,130,246,.12)',  color: '#60a5fa', border: 'rgba(59,130,246,.25)',  label: 'Lavado' },
+            natural:   { bg: 'rgba(239,68,68,.12)',   color: '#f87171', border: 'rgba(239,68,68,.25)',   label: 'Natural' },
+            honey:     { bg: 'rgba(245,158,11,.12)',  color: '#fbbf24', border: 'rgba(245,158,11,.25)',  label: 'Honey' },
+            tostado:   { bg: 'rgba(143,175,138,.12)', color: 'var(--tw-sage)', border: 'rgba(143,175,138,.25)', label: 'Tostado' },
+            anaerobic: { bg: 'rgba(167,139,250,.12)', color: '#a78bfa', border: 'rgba(167,139,250,.25)', label: 'Anaeróbico' },
+          }
+          const proc = PROCESO_BADGE_LOCAL[(productoDetalle.proceso || '').toLowerCase()] ?? { bg: 'var(--tw-card)', color: 'var(--tw-text-muted)', border: 'var(--tw-border)', label: productoDetalle.proceso }
+          const crossSelling = productos.filter((p: ProductoONE) => p.caficultorId === productoDetalle.caficultorId && p.id !== productoDetalle.id).slice(0, 4)
+          const precioKg = productoDetalle.precioBaseKgCents / 100
+          const FORMATOS = [{ key: '250g', label: '250g', kgFactor: 0.25 }, { key: '500g', label: '500g', kgFactor: 0.5 }, { key: '1kg', label: '1 kg', kgFactor: 1 }, { key: '5kg', label: '5 kg', kgFactor: 5 }]
+          const fmtActual = FORMATOS.find(f => f.key === detalleFormato) ?? FORMATOS[2]
+          const precioUnitario = precioKg * fmtActual.kgFactor
+          const precioTotal = precioUnitario * detalleCantidad
+          const kgLabel = `${(fmtActual.kgFactor * detalleCantidad).toLocaleString('es', { maximumFractionDigits: 2 })} kg`
+
+          const PanelAccion = ({ compact }: { compact?: boolean }) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 10 : 12 }}>
+              <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 12, padding: compact ? '12px 12px 14px' : '14px 14px 16px' }}>
+                <div style={{ marginBottom: 10 }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: compact ? 22 : 26, fontWeight: 800, color: 'var(--tw-terra)' }}>S/ {precioUnitario.toFixed(2)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', marginLeft: 4 }}>/ {fmtActual.label}</span>
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--tw-text-muted)', marginBottom: 6 }}>Selecciona el formato</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                  {FORMATOS.map(f => (
+                    <button key={f.key} type="button" onClick={() => setDetalleFormato(f.key)} style={{ padding: '5px 10px', borderRadius: 7, cursor: 'pointer', border: `1px solid ${detalleFormato === f.key ? 'var(--tw-terra)' : 'var(--tw-border)'}`, background: detalleFormato === f.key ? 'var(--tw-terra)' : 'var(--tw-card)', color: detalleFormato === f.key ? '#fff' : 'var(--tw-text-muted)', fontSize: 10, fontWeight: 600, fontFamily: 'Montserrat, sans-serif' }}>
+                      {f.label} · S/{(precioKg * f.kgFactor).toFixed(0)}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <span style={{ fontSize: 11, color: 'var(--tw-text-muted)' }}>Cantidad</span>
+                  <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--tw-border)', borderRadius: 8, overflow: 'hidden' }}>
+                    <button type="button" onClick={() => setDetalleCantidad(c => Math.max(1, c - 1))} style={{ width: 32, height: 32, border: 'none', background: 'var(--tw-card)', color: 'var(--tw-text)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                    <span style={{ padding: '0 14px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', background: 'var(--tw-bg)' }}>{detalleCantidad}</span>
+                    <button type="button" onClick={() => setDetalleCantidad(c => c + 1)} style={{ width: 32, height: 32, border: 'none', background: 'var(--tw-card)', color: 'var(--tw-text)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  </div>
+                </div>
+                <button onClick={() => { onSeleccionar?.(productoDetalle, detalleFormato as FormatoONE); setProductoDetalle(null); showToast(`Agregado: ${productoDetalle.nombre} · ${kgLabel}`) }} style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'Montserrat, sans-serif' }}>
+                  <span>Agregar al carrito</span>
+                  <span style={{ fontWeight: 800 }}>S/ {precioTotal.toFixed(2)}</span>
+                </button>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--tw-text-muted)', marginBottom: 6 }}>Vendido por</div>
+                <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--tw-terra)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{(productoDetalle.caficultorNombre || '?').charAt(0).toUpperCase()}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)' }}>{productoDetalle.caficultorNombre}</div>
+                    <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginTop: 1 }}>📍 {productoDetalle.caficultorRegion ?? 'Perú'}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+                      <span style={{ color: '#fbbf24', fontSize: 10 }}>★★★★★</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-text)' }}>4.8</span>
+                      <span style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>(32 reseñas)</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 10, color: 'var(--tw-terra)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>Ver perfil →</span>
+                </div>
+              </div>
+              <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: '10px 12px' }}>
+                {([
+                  { label: 'Proceso', value: proc.label, color: undefined },
+                  { label: 'Altitud', value: productoDetalle.altitudMsnm ? `${productoDetalle.altitudMsnm.toLocaleString()} msnm` : null, color: undefined },
+                  { label: 'Variedad', value: productoDetalle.variedad, color: undefined },
+                  // Puntuación SCA: solo en ficha técnica para buyer_b2b APPROVED con evidencia N2/N3 (INV-04/CAL-02)
+                ] as Array<{label:string;value:string|null|undefined;color:string|undefined}>).filter(r => r.value).map((r, i, arr) => (
+                  <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: i < arr.length - 1 ? 7 : 0, marginBottom: i < arr.length - 1 ? 7 : 0, borderBottom: i < arr.length - 1 ? '1px solid var(--tw-border)' : 'none' }}>
+                    <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>{r.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: r.color ?? 'var(--tw-text)' }}>{r.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Ficha técnica B2B — solo buyer_b2b APPROVED (CAT-03 / B2B-02) */}
+              {rolUsuario === 'buyer_b2b' && estadoAprobacionB2B === 'APPROVED' && (
+                <div style={{ background: 'rgba(143,175,138,.06)', border: '1px solid rgba(143,175,138,.3)', borderRadius: 10, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <span style={{ fontSize: 10 }}>🏢</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-sage)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Ficha técnica B2B</span>
+                    <span style={{ marginLeft: 'auto', fontSize: 9, background: 'rgba(143,175,138,.2)', color: 'var(--tw-sage)', border: '1px solid rgba(143,175,138,.4)', padding: '1px 7px', borderRadius: 4, fontWeight: 700 }}>✓ APROBADO</span>
+                  </div>
+                  {/* Tabla de precios mayoristas */}
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Precios mayoristas</div>
+                    {[
+                      { rango: '1–4 kg', precio: (productoDetalle.precioBaseKgCents / 100).toFixed(2) },
+                      { rango: '5–9 kg', precio: ((productoDetalle.precioBaseKgCents * 0.86) / 100).toFixed(2) },
+                      { rango: '≥ 10 kg', precio: ((productoDetalle.precioBaseKgCents * 0.75) / 100).toFixed(2) },
+                    ].map((t, i, arr) => (
+                      <div key={t.rango} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: i < arr.length - 1 ? 6 : 0, marginBottom: i < arr.length - 1 ? 6 : 0, borderBottom: i < arr.length - 1 ? '1px solid rgba(143,175,138,.2)' : 'none' }}>
+                        <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>{t.rango}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-sage)' }}>S/ {t.precio}/kg</span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Datos técnicos adicionales */}
+                  {([
+                    { label: 'Humedad', value: (productoDetalle as any).humedad ? `${(productoDetalle as any).humedad}%` : '11–12%' },
+                    { label: 'Merma aprox.', value: (productoDetalle as any).merma ?? '5–8%' },
+                    { label: 'Tostado', value: (productoDetalle as any).perfilTostado ?? 'Fresco a pedido' },
+                    { label: 'Envío mínimo', value: `${(productoDetalle as any).kgMinPedido ?? 3} kg` },
+                  ] as Array<{label:string;value:string}>).map((r, i, arr) => (
+                    <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: i < arr.length - 1 ? 5 : 0, marginBottom: i < arr.length - 1 ? 5 : 0, borderBottom: i < arr.length - 1 ? '1px solid rgba(143,175,138,.15)' : 'none' }}>
+                      <span style={{ fontSize: 9, color: 'var(--tw-text-muted)' }}>{r.label}</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--tw-text)' }}>{r.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Banner PENDING — precio mayorista bloqueado */}
+              {rolUsuario === 'buyer_b2b' && estadoAprobacionB2B === 'PENDING_APPROVAL' && (
+                <div style={{ background: 'rgba(232,184,75,.08)', border: '1px solid rgba(232,184,75,.3)', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>⏳</span>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#e8b84b', marginBottom: 2 }}>Precios mayoristas pendientes</div>
+                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', lineHeight: 1.5 }}>Tu cuenta está en revisión. Los precios B2B y la ficha técnica estarán disponibles al ser aprobada (≤24h hábiles).</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+
+          const ContenidoCentral = ({ mobilePanel }: { mobilePanel?: boolean }) => (
+            <>
+              <div style={{ position: 'relative', background: 'linear-gradient(145deg,#fdf8f4,#f0e6d8)', height: mobilePanel ? 200 : 420, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: mobilePanel ? 0 : 12, overflow: 'hidden', flexShrink: 0 }}>
+                {productoDetalle.foto ? <img src={productoDetalle.foto} alt={productoDetalle.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} /> : <span style={{ fontSize: mobilePanel ? 60 : 120, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,.12))' }}>☕</span>}
+                <div style={{ position: 'absolute', top: 10, right: mobilePanel ? 10 : 42 }}><span style={{ background: proc.bg, color: proc.color, border: `1px solid ${proc.border}`, fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 4 }}>{proc.label}</span></div>
+                {mobilePanel && (<button onClick={() => setProductoDetalle(null)} style={{ position: 'absolute', top: 8, right: 10, background: 'rgba(0,0,0,.35)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', color: '#fff', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>)}
+              </div>
+              <div style={{ display: 'flex', gap: 5, justifyContent: 'center', padding: '7px 0 4px' }}>
+                {[0,1,2].map(i => (<div key={i} style={{ width: i === 0 ? 18 : 7, height: 7, borderRadius: i === 0 ? 4 : '50%', background: i === 0 ? 'var(--tw-terra)' : 'var(--tw-border)' }} />))}
+              </div>
+              <div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: mobilePanel ? 18 : 24, fontWeight: 700, color: 'var(--tw-text)', lineHeight: 1.25, marginBottom: 7 }}>{productoDetalle.nombre}</div>
+                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 7 }}>
+                  <span style={{ background: proc.bg, color: proc.color, border: `1px solid ${proc.border}`, fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>{proc.label}</span>
+                </div>
+                {productoDetalle.cosecha && (<div style={{ fontSize: 10, color: 'var(--tw-text-muted)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>🗓️ Campaña {productoDetalle.cosecha}</div>)}
+                {productoDetalle.kgDisponibles != null && productoDetalle.kgDisponibles > 0 && (<div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}><div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--tw-sage)', flexShrink: 0 }} /><span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>{productoDetalle.kgDisponibles} kg disponibles</span></div>)}
+              </div>
+              {productoDetalle.notasSabor && productoDetalle.notasSabor.length > 0 && (<div style={{ marginBottom: 14 }}><div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--tw-text-muted)', marginBottom: 6 }}>Notas de cata</div><div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>{productoDetalle.notasSabor.map((nota, i) => (<span key={i} style={{ background: 'rgba(201,110,75,.1)', border: '1px solid rgba(201,110,75,.2)', borderRadius: 10, padding: '3px 9px', fontSize: 9, color: 'var(--tw-terra)', fontWeight: 600 }}>{nota}</span>))}</div></div>)}
+              {productoDetalle.descripcion && (<div style={{ marginBottom: 14 }}><div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--tw-text-muted)', marginBottom: 6 }}>Historia del café</div><p style={{ fontSize: 11, color: 'var(--tw-text-muted)', lineHeight: 1.65, margin: 0 }}>{productoDetalle.descripcion}</p></div>)}
+            </>
+          )
+
+          return (
+            <>
+              <div className="detalle-desktop" style={{ position: 'fixed', inset: 0, zIndex: 150, background: 'var(--tw-bg)', overflowY: 'auto', fontFamily: 'Montserrat, sans-serif' }}>
+                <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--tw-bg)', borderBottom: '1px solid var(--tw-border)', height: 48 }}>
+                  <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 24px', height: '100%', display: 'flex', alignItems: 'center', gap: 14, width: '100%', boxSizing: 'border-box' }}>
+                    <button onClick={() => setProductoDetalle(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tw-terra)', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5, padding: 0, fontFamily: 'Montserrat, sans-serif' }}>← Catálogo</button>
+                    <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>›</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tw-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{productoDetalle.nombre}</span>
+                  </div>
+                </div>
+                <div style={{ maxWidth: 1380, margin: '0 auto', padding: '28px 24px 60px', width: '100%', boxSizing: 'border-box' as const, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}><ContenidoCentral /></div>
+                  <div style={{ position: 'sticky', top: 64 }}><PanelAccion /></div>
+                </div>
+                {crossSelling.length > 0 && (
+                  <div style={{ maxWidth: 1380, margin: '0 auto', padding: '0 24px 60px', width: '100%', boxSizing: 'border-box' as const }}>
+                    <div style={{ borderTop: '1px solid var(--tw-border)', paddingTop: 28, marginBottom: 20 }}>
+                      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 20, fontWeight: 700, color: 'var(--tw-text)' }}>Más de {productoDetalle.caficultorNombre}</div>
+                      <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginTop: 2 }}>📍 {productoDetalle.caficultorRegion ?? 'Perú'}</div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+                      {crossSelling.map((p: ProductoONE) => {
+                        const cp = PROCESO_BADGE_LOCAL[(p.proceso || '').toLowerCase()] ?? { bg: 'var(--tw-card)', color: 'var(--tw-text-muted)', border: 'var(--tw-border)', label: p.proceso }
+                        return (
+                          <div key={p.id} onClick={() => { setProductoDetalle(p); setDetalleFormato('1kg'); setDetalleCantidad(1); window.scrollTo(0,0) }} style={{ background: 'var(--tw-card)', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--tw-border)', cursor: 'pointer' }}>
+                            <div style={{ height: 140, background: 'linear-gradient(145deg,#fdf8f4,#f0e6d8)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                              {p.foto ? <img src={p.foto} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} /> : <span style={{ fontSize: 44 }}>🫘</span>}
+                              <span style={{ position: 'absolute', top: 7, right: 7, background: cp.bg, color: cp.color, border: `1px solid ${cp.border}`, fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>{cp.label}</span>
+                            </div>
+                            <div style={{ padding: '10px 12px 12px' }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)', lineHeight: 1.3, marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{p.nombre}</div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--tw-terra)' }}>S/ {(p.precioBaseKgCents / 100).toFixed(0)}<span style={{ fontSize: 9, fontWeight: 500, color: 'var(--tw-text-muted)' }}>/kg</span></span>
+                                <button type="button" onClick={e => { e.stopPropagation(); onSeleccionar?.(p, '1kg'); showToast(`Agregado: ${p.nombre}`) }} style={{ padding: '5px 10px', borderRadius: 7, border: '1.5px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>+ Carrito</button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
-            )}
-            <button
-              onClick={onIrAlCheckout}
-              style={{
-                width: '100%', padding: '16px 20px', borderRadius: 12,
-                background: `linear-gradient(135deg, ${C.terra}, #d4825f)`,
-                border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                cursor: 'pointer',
-                boxShadow: `0 4px 24px ${C.terra}44`,
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', fontFamily: 'Montserrat, sans-serif' }}>
-                🛒 {carritoCount} {carritoCount === 1 ? 'producto' : 'productos'} · Despacho directo del caficultor
-              </span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#ffffff', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap' }}>
-                S/ {(totalCarritoCents / 100).toFixed(0)} · Ir al checkout →
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
 
-      <style>{`
-        div::-webkit-scrollbar { display: none; }
-
-        /* ── Carrusel mobile: grid vertical en lugar de scroll horizontal ── */
-        @media (max-width: 640px) {
-          .tw-carrusel-scroll {
-            display: grid !important;
-            grid-template-columns: 1fr !important;
-            overflow-x: visible !important;
-            padding-bottom: 8px !important;
-            scroll-snap-type: none !important;
-            gap: 12px !important;
-          }
-          .tw-carrusel-item {
-            width: 100% !important;
-            flex-shrink: 0 !important;
-            scroll-snap-align: none !important;
-          }
-          /* La ProductoCard tiene width inline — override con !important */
-          .tw-carrusel-item > div[style] {
-            width: 100% !important;
-          }
-        }
-
-        /* ── Barra flotante ── */
-        @keyframes slideUp {
-          from { transform: translateY(40px); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
-
-        /* ── Cards del catálogo: entrada escalonada ── */
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .tw-card-enter {
-          animation: fadeInUp 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        /* ── Shimmer skeleton mientras carga ── */
-        @keyframes shimmer {
-          0%   { background-position: -400px 0; }
-          100% { background-position: 400px 0; }
-        }
-        .tw-shimmer {
-          background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%);
-          background-size: 400px 100%;
-          animation: shimmer 1.4s ease-in-out infinite;
-          border-radius: 8px;
-        }
-
-        /* ── Botón "Agregar": scale al click ── */
-        @keyframes btnPop {
-          0%   { transform: scale(1); }
-          40%  { transform: scale(0.94); }
-          70%  { transform: scale(1.04); }
-          100% { transform: scale(1); }
-        }
-        .tw-btn-pop { animation: btnPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
-
-        /* ── Badge "✓ Agregado": aparece con bounce ── */
-        @keyframes badgePop {
-          0%   { transform: scale(0) translateY(4px); opacity: 0; }
-          60%  { transform: scale(1.15) translateY(-1px); opacity: 1; }
-          100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        .tw-badge-pop { animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-
-        /* ── Chip del carrito: entra desde la izquierda ── */
-        @keyframes chipIn {
-          from { opacity: 0; transform: translateX(-8px) scale(0.9); }
-          to   { opacity: 1; transform: translateX(0)    scale(1); }
-        }
-        .tw-chip-in { animation: chipIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
-
-        /* ── Precio del carrito: pulso cuando cambia ── */
-        @keyframes pricePulse {
-          0%, 100% { opacity: 1; }
-          40%       { opacity: 0.5; transform: scale(0.96); }
-          70%       { transform: scale(1.03); }
-        }
-        .tw-price-pulse { animation: pricePulse 0.45s ease; }
-
-        /* ── Hover en card: glow sutil ── */
-        .tw-card:hover { box-shadow: 0 0 0 1px #c96e4b33, 0 8px 32px rgba(201,110,75,0.12); }
-        .tw-card { transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), box-shadow 0.22s ease; }
-
-        /* ── Drawer: entrada suave desde la derecha ── */
-        @keyframes drawerIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to   { transform: translateX(0);    opacity: 1; }
-        }
-        .tw-drawer-in { animation: drawerIn 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
-
-        /* ── Overlay del drawer: fade in ── */
-        @keyframes overlayIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        .tw-overlay-in { animation: overlayIn 0.25s ease; }
-
-        /* ── Step indicator checkout: fill ── */
-        @keyframes stepFill {
-          from { width: 0%; }
-          to   { width: 100%; }
-        }
-
-        /* ── Confirmación: check bounce ── */
-        @keyframes checkBounce {
-          0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
-          50%  { transform: scale(1.2) rotate(3deg); opacity: 1; }
-          75%  { transform: scale(0.95) rotate(-1deg); }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        .tw-check-bounce { animation: checkBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both; }
-
-        /* ── Número step badge: pop escalonado ── */
-        @keyframes stepBadgeIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .tw-step-1 { animation: stepBadgeIn 0.35s cubic-bezier(0.22,1,0.36,1) 0.2s both; }
-        .tw-step-2 { animation: stepBadgeIn 0.35s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
-        .tw-step-3 { animation: stepBadgeIn 0.35s cubic-bezier(0.22,1,0.36,1) 0.5s both; }
-
-        /* ── Spinner de carga: fade out suave ── */
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to   { opacity: 0; pointer-events: none; }
-        }
-      `}</style>
-
-      {/* Drawer de detalle — solo en modo normal */}
-      {!modoSeleccion && productoDetalle && (
-        <DetalleDrawer
-          producto={productoDetalle}
-          caficultor={caficultores.get(productoDetalle.caficultorId)}
-          onCerrar={cerrarDetalle}
-          onAgregar={(producto, formato, cantidadKg) => {
-            // Llamar onSeleccionar tantas veces como kg pidió
-            for (let i = 0; i < cantidadKg; i++) {
-              onSeleccionar?.(producto, formato)
-            }
-          }}
-          enCarrito={carritoProductoIds?.has(productoDetalle.id) ?? false}
-          todosProductos={productosParaCatalogo}
-          todosCaficultores={caficultores}
-          onVerOtroProducto={(p) => setProductoDetalle(p)}
-        />
-      )}
-      {/* Modal selección de rol para registro */}
-      {modalRegistro && (
-        <div
-          onClick={() => setModalRegistro(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 999,
-            background: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: '#0f0f0f',
-              borderRadius: 20,
-              padding: '36px 32px 28px',
-              maxWidth: 420,
-              width: '100%',
-              border: '1px solid #252525',
-              boxShadow: '0 32px 64px rgba(0,0,0,0.6)',
-              fontFamily: 'Montserrat, sans-serif',
-            }}
-          >
-            {/* Logo / marca */}
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: C.terra, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-                Tunay Wasi
-              </span>
-              <h2 style={{
-                margin: '6px 0 6px',
-                fontSize: 26,
-                fontWeight: 700,
-                color: C.cream,
-                fontFamily: 'Cormorant Garamond, serif',
-                lineHeight: 1.2,
-              }}>
-                ¿Cómo quieres unirte?
-              </h2>
-              <p style={{ margin: 0, fontSize: 13, color: '#666', lineHeight: 1.5 }}>
-                Elige tu rol para crear tu cuenta gratis
-              </p>
-            </div>
-
-            {/* Opción Negocio */}
-            <a
-              href="#/registro-emprendedor"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '16px 18px', borderRadius: 12,
-                border: `1px solid ${C.terra}55`,
-                background: `linear-gradient(135deg, ${C.terra}12, ${C.terra}06)`,
-                textDecoration: 'none', marginBottom: 10,
-                transition: 'border-color 0.2s',
-              }}
-            >
-              <div style={{
-                width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                background: `${C.terra}18`,
-                border: `1px solid ${C.terra}33`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22,
-              }}>
-                ☕
+              <div className="detalle-mobile" onClick={() => setProductoDetalle(null)} style={{ position: 'fixed', inset: 0, zIndex: 150, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', fontFamily: 'Montserrat, sans-serif' }}>
+                <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxHeight: '92vh', background: 'var(--tw-bg)', borderRadius: '16px 16px 0 0', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                  <ContenidoCentral mobilePanel />
+                  <div style={{ padding: '0 16px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <PanelAccion compact />
+                    {crossSelling.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 8 }}>Más de {productoDetalle.caficultorNombre}</div>
+                        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
+                          {crossSelling.map((p: ProductoONE) => {
+                            const cp = PROCESO_BADGE_LOCAL[(p.proceso || '').toLowerCase()] ?? { bg: 'var(--tw-card)', color: 'var(--tw-text-muted)', border: 'var(--tw-border)', label: p.proceso }
+                            return (
+                              <div key={p.id} onClick={() => { setProductoDetalle(p); setDetalleFormato('1kg'); setDetalleCantidad(1) }} style={{ width: 148, flexShrink: 0, background: 'var(--tw-card)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--tw-border)', cursor: 'pointer' }}>
+                                <div style={{ height: 90, background: 'linear-gradient(145deg,#fdf8f4,#f0e6d8)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                                  {p.foto ? <img src={p.foto} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} /> : <span style={{ fontSize: 32 }}>🫘</span>}
+                                  <span style={{ position: 'absolute', top: 5, right: 5, background: cp.bg, color: cp.color, border: `1px solid ${cp.border}`, fontSize: 7, fontWeight: 700, padding: '1px 4px', borderRadius: 3 }}>{cp.label}</span>
+                                </div>
+                                <div style={{ padding: '7px 8px' }}>
+                                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tw-text)', lineHeight: 1.3, marginBottom: 3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{p.nombre}</div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--tw-terra)' }}>S/ {(p.precioBaseKgCents / 100).toFixed(0)}<span style={{ fontSize: 8, fontWeight: 500, color: 'var(--tw-text-muted)' }}>/kg</span></span>
+                                    <button type="button" onClick={e => { e.stopPropagation(); onSeleccionar?.(p, '1kg'); showToast(`Agregado: ${p.nombre}`) }} style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 700, color: C.cream }}>
-                  Soy negocio
-                </p>
-                <p style={{ margin: 0, fontSize: 12, color: '#777', lineHeight: 1.5 }}>
-                  Cafetería, restaurante o tienda
-                </p>
-              </div>
-              <span style={{ marginLeft: 'auto', color: C.terra, fontSize: 16, flexShrink: 0 }}>→</span>
-            </a>
+            </>
+          )
+        })()}
 
-            {/* Opción Caficultor */}
-            <a
-              href="#/registro-caficultor"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '16px 18px', borderRadius: 12,
-                border: `1px solid ${C.sage}44`,
-                background: `linear-gradient(135deg, ${C.sage}0f, ${C.sage}06)`,
-                textDecoration: 'none',
-                transition: 'border-color 0.2s',
-              }}
-            >
-              <div style={{
-                width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                background: `${C.sage}15`,
-                border: `1px solid ${C.sage}30`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22,
-              }}>
-                🌱
-              </div>
-              <div>
-                <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 700, color: C.cream }}>
-                  Soy caficultor
-                </p>
-                <p style={{ margin: 0, fontSize: 12, color: '#777', lineHeight: 1.5 }}>
-                  Productor de café en Perú
-                </p>
-              </div>
-              <span style={{ marginLeft: 'auto', color: C.sage, fontSize: 16, flexShrink: 0 }}>→</span>
-            </a>
+        {/* ── MODAL PERFIL CAFICULTOR ── */}
+        {caficultorModalId !== null && (
+          <ModalCaficultor caficultorId={caficultorModalId} onClose={() => setCaficultorModalId(null)} />
+        )}
 
-            {/* Divisor */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0 16px' }}>
-              <div style={{ flex: 1, height: 1, background: '#222' }} />
-              <span style={{ fontSize: 11, color: '#444', letterSpacing: '0.06em' }}>¿YA TIENES CUENTA?</span>
-              <div style={{ flex: 1, height: 1, background: '#222' }} />
-            </div>
+        {/* ── BOTTOM NAV MOBILE ── */}
+        {!embeddedMode && (<nav className="bn-bar" role="navigation" aria-label="Navegación principal">
+          {rolUsuario === 'seller' ? (
+            <>
+              <a href="#/" className="bn-item active"><span className="bn-icon">☕</span><span>Catálogo</span></a>
+              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">🌱</span><span>Mis cafés</span></a>
+              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">📦</span><span>Mis Ventas</span></a>
+              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">🤖</span><span>Wasi</span></a>
+              <a href="#/caficultor-portal" className="bn-item"><span className="bn-icon">👤</span><span>Perfil</span></a>
+            </>
+          ) : (
+            <>
+              <a href="#/" className="bn-item active"><span className="bn-icon">☕</span><span>Catálogo</span></a>
+              <a href="#/portal" className="bn-item" style={{ position: 'relative' }}>
+                <span className="bn-icon">📦</span>
+                {(carritoCount ?? 0) > 0 && (<span className="bn-badge">{carritoCount}</span>)}
+                <span>Mis Compras</span>
+              </a>
+              <a href="#/docs" className="bn-item"><span className="bn-icon">📄</span><span>Docs</span></a>
+              <a href="#/para-caficultores" className="bn-item"><span className="bn-icon">🌱</span><span>Caficultor</span></a>
+              <button className="bn-item" onClick={() => setModalRegistro(true)} style={{ position: 'relative' }}>
+                <span className="bn-icon">👤</span><span>Perfil</span>
+              </button>
+            </>
+          )}
+        </nav>)}
 
-            {/* Botón Iniciar sesión */}
-            <a
-              href="#/login"
-              onClick={() => setModalRegistro(false)}
-              style={{
-                display: 'block', textAlign: 'center',
-                padding: '13px', borderRadius: 10,
-                border: 'none',
-                background: '#c96e4b',
-                color: '#ffffff', fontSize: 14, fontWeight: 600,
-                textDecoration: 'none',
-                fontFamily: 'Montserrat, sans-serif',
-              }}
-            >
-              Iniciar sesión
-            </a>
-
-            <button
-              onClick={() => setModalRegistro(false)}
-              style={{
-                display: 'block', width: '100%', marginTop: 12,
-                background: 'none', border: 'none',
-                color: '#444', fontSize: 12, cursor: 'pointer',
-                fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.03em',
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   )
 }
 

@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
@@ -12,18 +13,32 @@ import { auth } from '@/shared/firebase'
 import { crearUsuario, fetchUsuario } from './service'
 import type { CreateUsuarioInput, RolONE } from './types'
 
-export async function loginConGoogle(): Promise<{ uid: string; esNuevo: boolean }> {
+const GOOGLE_PENDING_KEY = 'one_google_pending_registro'
+const ADMIN_EMAILS = ['tunaywasi@gmail.com']
+
+export async function loginConGoogle(): Promise<{ uid: string; esNuevo: boolean; nombre: string; email: string }> {
   const provider = new GoogleAuthProvider()
   const cred = await signInWithPopup(auth, provider)
   const uid = cred.user.uid
+  const nombre = cred.user.displayName ?? ''
+  const email = cred.user.email ?? ''
 
   // Verificar si ya tiene doc en one_usuarios
   try {
     await fetchUsuario(uid)
-    return { uid, esNuevo: false }
+    return { uid, esNuevo: false, nombre, email }
   } catch {
-    // Primera vez — doc no existe aún
-    return { uid, esNuevo: true }
+    // Si es email admin, crear doc con rol admin automáticamente
+    if (ADMIN_EMAILS.includes(email) || email.endsWith('@tunaywasi.pe')) {
+      await crearUsuario(uid, { uid, rol: 'admin', nombre, email })
+      return { uid, esNuevo: false, nombre, email }
+    }
+    // Primera vez — guardar pending en sessionStorage AQUÍ, en la misma cadena sync
+    // antes de que onAuthStateChanged dispare y desmonte el componente
+    try {
+      sessionStorage.setItem(GOOGLE_PENDING_KEY, JSON.stringify({ uid, nombre, email }))
+    } catch { /* ok */ }
+    return { uid, esNuevo: true, nombre, email }
   }
 }
 
@@ -38,7 +53,7 @@ export async function completarRegistroGoogle(
     rol,
     nombre,
     email,
-    ...(rol === 'negocio' ? {
+    ...(rol === 'buyer_b2b' ? {
       negocio: {
         nombreLocal: '',
         distritoLocal: '',
@@ -46,7 +61,7 @@ export async function completarRegistroGoogle(
         pedidoIds: [],
       },
     } : {}),
-    ...(rol === 'caficultor' ? {
+    ...(rol === 'seller' ? {
       caficultor: {
         region: '',
         distrito: '',
@@ -63,23 +78,25 @@ export async function completarRegistroGoogle(
 export async function registrar(
   email: string,
   password: string,
-  nombre: string
+  nombre: string,
+  rol: RolONE = 'buyer_b2b'
 ): Promise<void> {
   const cred = await createUserWithEmailAndPassword(auth, email, password)
   await updateProfile(cred.user, { displayName: nombre })
   const input: CreateUsuarioInput = {
     uid: cred.user.uid,
-    rol: 'negocio',
+    rol,
     nombre,
     email,
-    negocio: {
+    negocio: rol === 'buyer_b2b' ? {
       nombreLocal: '',
       distritoLocal: '',
       etapa: 'planificando',
       pedidoIds: [],
-    },
+    } : undefined,
   }
   await crearUsuario(cred.user.uid, input)
+  await sendEmailVerification(cred.user)
 }
 
 export async function registrarCaficultor(
@@ -100,7 +117,7 @@ export async function registrarCaficultor(
   await updateProfile(cred.user, { displayName: nombre })
   const input: CreateUsuarioInput = {
     uid: cred.user.uid,
-    rol: 'caficultor',
+    rol: 'seller',
     nombre,
     email,
     caficultor: {
@@ -137,7 +154,7 @@ export async function asegurarUsuarioONE(
   } catch {
     await crearUsuario(uid, {
       uid,
-      rol: 'negocio',
+      rol: 'buyer_b2b',
       nombre: nombre || email,
       email,
       negocio: {

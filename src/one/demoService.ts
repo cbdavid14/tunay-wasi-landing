@@ -21,6 +21,8 @@ import type {
   UbigeoONE,
   LogisticaCaficultorONE,
   SaveLogisticaInput,
+  ReposicionONE,
+  CreateReposicionInput,
 } from './types'
 import seedPedidos from './seed/one_pedidos.json'
 import seedKits from './seed/one_kits.json'
@@ -33,6 +35,7 @@ import seedMenus from './seed/one_menus.json'
 
 let pedidosDemo: PedidoONE[] = (seedPedidos as unknown as PedidoONE[]).map(p => ({ ...p, calificado: false }))
 let kitsDemo: KitIdentidadONE[] = (seedKits as unknown as KitIdentidadONE[]).map(k => ({ ...k }))
+let reposicionesDemo: ReposicionONE[] = []
 let nextPedidoIdx = 9000
 
 // ─── Usuario demo ─────────────────────────────────────────────────────────────
@@ -42,14 +45,14 @@ export const DEMO_USER = {
   nombre: 'Carlos Mendoza',
   email: 'carlos@cafeelorigenmiraflores.pe',
   telefono: '+51987654321',
-  rol: 'negocio' as const,
+  rol: 'buyer_b2b' as const,
 }
 
 // ─── Pedidos ──────────────────────────────────────────────────────────────────
 
 export function demoFetchPedidosByNegocio(negocioId: string): Promise<PedidoONE[]> {
   const resultado = negocioId === 'demo-user'
-    ? pedidosDemo.filter(p => p.negocioId === 'user-negocio-001')
+    ? pedidosDemo.filter(p => p.negocioId === 'user-emprendedor-001')
     : pedidosDemo.filter(p => p.negocioId === negocioId)
   return Promise.resolve(resultado.sort((a, b) => b.createdAt.localeCompare(a.createdAt)))
 }
@@ -74,8 +77,8 @@ export function demoCreatePedido(input: CreatePedidoInput): Promise<string> {
       subtotalCents: item.unitCents * item.qty,
     })),
     subtotalCents: subtotal,
-    deliveryCents: 0,
-    totalCents: subtotal,
+    deliveryCents: input.deliveryCentsOverride ?? 0,
+    totalCents: subtotal + (input.deliveryCentsOverride ?? 0),
     metodoPago: input.metodoPago,
     pagoStatus: 'pendiente',
     voucherUrl: undefined,
@@ -85,6 +88,9 @@ export function demoCreatePedido(input: CreatePedidoInput): Promise<string> {
     calificado: false,
     recepcionConfirmada: false,
     esKitProveedor: input.esKitProveedor,
+    ...(input.caficultorId ? { caficultorId: input.caficultorId } : {}),
+    ...(input.grupoCheckoutId ? { grupoCheckoutId: input.grupoCheckoutId } : {}),
+    ...(input.subPedidoLetra ? { subPedidoLetra: input.subPedidoLetra } : {}),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -92,9 +98,49 @@ export function demoCreatePedido(input: CreatePedidoInput): Promise<string> {
   return Promise.resolve(id)
 }
 
+export function demoCreateReposicion(input: CreateReposicionInput): Promise<string> {
+  const id = `reposicion-demo-${Date.now()}`
+  const nextOrderDate = new Date()
+  nextOrderDate.setDate(nextOrderDate.getDate() + input.frecuenciaDias)
+  const nueva: ReposicionONE = {
+    id,
+    status: 'ACTIVE',
+    buyerId: input.buyerId,
+    sellerId: input.sellerId,
+    productoId: input.productoId,
+    productoNombre: input.productoNombre,
+    pedidoOrigenId: input.pedidoOrigenId,
+    frecuenciaDias: input.frecuenciaDias,
+    cantidadUnidades: input.cantidadUnidades,
+    presentacion: input.presentacion,
+    nextOrderDate: nextOrderDate.toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+  reposicionesDemo = [nueva, ...reposicionesDemo]
+  return Promise.resolve(id)
+}
+
+export function demoLinkReposicionesToPedido(pedidoId: string, ids: string[]): Promise<void> {
+  pedidosDemo = pedidosDemo.map(p =>
+    p.id === pedidoId ? { ...p, reposicionIds: ids, updatedAt: new Date().toISOString() } : p
+  )
+  return Promise.resolve()
+}
+
 export function demoSubirVoucher(pedidoId: string, _voucherUrl: string): Promise<void> {
   pedidosDemo = pedidosDemo.map(p =>
     p.id === pedidoId
+      ? { ...p, pagoStatus: 'voucher_subido', voucherUrl: 'https://res.cloudinary.com/dtc9meqbc/image/upload/v1/tunaywasi/placeholder-voucher.jpg', updatedAt: new Date().toISOString() }
+      : p
+  )
+  return Promise.resolve()
+}
+
+// Subir voucher a todos los pedidos de un grupo (demo)
+export function demoSubirVoucherGrupo(grupoCheckoutId: string, _voucherUrl: string): Promise<void> {
+  pedidosDemo = pedidosDemo.map(p =>
+    p.grupoCheckoutId === grupoCheckoutId
       ? { ...p, pagoStatus: 'voucher_subido', voucherUrl: 'https://res.cloudinary.com/dtc9meqbc/image/upload/v1/tunaywasi/placeholder-voucher.jpg', updatedAt: new Date().toISOString() }
       : p
   )
@@ -288,19 +334,27 @@ export function demoScoreCaficultor(caficultorId: string): { score: number; tota
 // ─── Directorio de negocios (clientes) ───────────────────────────────────────
 
 export function demoFetchNegocios(): Promise<UsuarioONE[]> {
-  const negocios = (seedUsuarios as UsuarioONE[]).filter(u => u.rol === 'negocio')
+  const negocios = (seedUsuarios as UsuarioONE[]).filter(u => u.rol === 'buyer_b2b' || u.rol === 'buyer_b2c')
   return Promise.resolve(negocios)
 }
 
 export function demoFetchNegocio(uid: string): Promise<UsuarioONE | null> {
-  const negocio = (seedUsuarios as UsuarioONE[]).find(u => u.uid === uid && u.rol === 'negocio') ?? null
+  const negocio = (seedUsuarios as UsuarioONE[]).find(u => u.uid === uid && (u.rol === 'buyer_b2b' || u.rol === 'buyer_b2c')) ?? null
   return Promise.resolve(negocio)
 }
 
 export function demoFetchUsuario(uid: string): Promise<UsuarioONE | null> {
-  const id = uid === 'demo-user' ? 'user-negocio-001' : uid
-  const usuario = (seedUsuarios as UsuarioONE[]).find(u => u.uid === id) ?? null
-  return Promise.resolve(usuario)
+  const id = (uid === 'demo-user' || uid === 'user-emprendedor-001') ? 'user-emprendedor-001' : uid
+  const base = (seedUsuarios as UsuarioONE[]).find(u => u.uid === id) ?? null
+  if (!base) return Promise.resolve(null)
+  // Demo B2B siempre aprobado para mostrar el flujo completo
+  if (base.rol === 'buyer_b2b' && !base.empresa) {
+    return Promise.resolve({
+      ...base,
+      empresa: { ruc: '20601234567', razonSocial: base.nombre, dirFiscal: 'Lima', dirEnvio: 'Lima', estadoAprobacion: 'APPROVED' as const, solicitudAt: '2026-01-01T00:00:00.000Z' }
+    })
+  }
+  return Promise.resolve(base)
 }
 
 export function demoFetchMenuNegocio(negocioId: string): Promise<ProductoONE[]> {
@@ -349,20 +403,20 @@ export function demoUpdateProducto(productoId: string, data: Partial<Omit<Produc
 let menusDemo: MenuONE[] = (seedMenus as MenuONE[]).map(m => ({ ...m }))
 
 export function demoFetchMenusByNegocio(negocioId: string): Promise<MenuONE[]> {
-  const uid = negocioId === 'demo-user' ? 'user-negocio-001' : negocioId
+  const uid = negocioId === 'demo-user' ? 'user-emprendedor-001' : negocioId
   return Promise.resolve(
     menusDemo.filter(m => m.negocioId === uid).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   )
 }
 
 export function demoFetchMenuActivo(negocioId: string): Promise<MenuONE | null> {
-  const uid = negocioId === 'demo-user' ? 'user-negocio-001' : negocioId
+  const uid = negocioId === 'demo-user' ? 'user-emprendedor-001' : negocioId
   return Promise.resolve(menusDemo.find(m => m.negocioId === uid && m.activo) ?? null)
 }
 
 export function demoCreateMenu(input: CreateMenuInput): Promise<string> {
   const id = `menu-demo-${Date.now()}`
-  const uid = input.negocioId === 'demo-user' ? 'user-negocio-001' : input.negocioId
+  const uid = input.negocioId === 'demo-user' ? 'user-emprendedor-001' : input.negocioId
   const qrUrl = `#/negocio/${uid}?menu=${id}`
   const nuevo: MenuONE = {
     id,
@@ -393,7 +447,7 @@ export function demoDeleteMenu(menuId: string): Promise<void> {
 }
 
 export function demoSetMenuActivo(negocioId: string, menuId: string): Promise<void> {
-  const uid = negocioId === 'demo-user' ? 'user-negocio-001' : negocioId
+  const uid = negocioId === 'demo-user' ? 'user-emprendedor-001' : negocioId
   menusDemo = menusDemo.map(m => {
     if (m.negocioId !== uid) return m
     return { ...m, activo: m.id === menuId, updatedAt: new Date().toISOString() }
@@ -492,6 +546,12 @@ export function demoSaveLogisticaCaficultor(input: SaveLogisticaInput): Promise<
     agenciasMap: input.agenciasMap,
     agenciasActivas: input.agenciasActivas,
     agenciasPermiteDomicilio: input.agenciasPermiteDomicilio,
+    gratisAgenciaActivo: input.gratisAgenciaActivo,
+    gratisAgenciaKg: input.gratisAgenciaKg,
+    gratisDomicilioActivo: input.gratisDomicilioActivo,
+    gratisDomicilioKg: input.gratisDomicilioKg,
+    tarifaFijaAgenciaSoles: input.tarifaFijaAgenciaSoles,
+    tarifaFijaDomicilioSoles: input.tarifaFijaDomicilioSoles,
   }
   return Promise.resolve()
 }

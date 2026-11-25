@@ -1,7 +1,7 @@
 [
   {
     "uid": "user-emprendedor-001",
-    "rol": "negocio",
+    "rol": "buyer_b2b",
     "nombre": "Carlos Mendoza",
     "email": "carlos@cafeelorigenmiraflores.pe",
     "telefono": "+51987654321",
@@ -19,7 +19,7 @@
   },
   {
     "uid": "user-emprendedor-002",
-    "rol": "negocio",
+    "rol": "buyer_b2b",
     "nombre": "Lucía Torres",
     "email": "lucia@latazaverde.pe",
     "telefono": "+51976543210",
@@ -37,7 +37,7 @@
   },
   {
     "uid": "user-emprendedor-003",
-    "rol": "negocio",
+    "rol": "buyer_b2b",
     "nombre": "Diego Paredes",
     "email": "diego@altitudcafe.pe",
     "telefono": "+51965432109",
@@ -53,7 +53,7 @@
   },
   {
     "uid": "user-emprendedor-004",
-    "rol": "negocio",
+    "rol": "buyer_b2b",
     "nombre": "Valeria Quispe",
     "email": "valeria@terracafe.pe",
     "telefono": "+51954321098",
@@ -70,7 +70,7 @@
   },
   {
     "uid": "user-emprendedor-005",
-    "rol": "negocio",
+    "rol": "buyer_b2b",
     "nombre": "Andrés Flores",
     "email": "andres@origencafe.pe",
     "telefono": "+51943210987",
@@ -87,7 +87,7 @@
   },
   {
     "uid": "user-caficultor-001",
-    "rol": "caficultor",
+    "rol": "seller",
     "nombre": "María Huamán Díaz",
     "email": "maria.huaman@tunaywasi.pe",
     "telefono": "+51964321987",

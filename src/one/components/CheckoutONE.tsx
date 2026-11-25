@@ -9,39 +9,22 @@
  * Paso 3 — Confirmación
  */
 import React, { useState, useRef, useEffect } from 'react'
-import type { FormatoONE, LogisticaCaficultorONE } from '../types'
-import { createPedido, subirVoucher, fetchMenusByNegocio, fetchLogisticaCaficultor } from '../service'
+import type { FormatoONE, LogisticaCaficultorONE, ReposicionItemConfig, FrecuenciaReposicion } from '../types'
+import { createPedido, subirVoucher, fetchMenusByNegocio, fetchLogisticaCaficultor, createReposicion, linkReposicionesToPedido } from '../service'
 import {
   demoCreatePedido,
   demoSubirVoucher,
   demoUploadVoucher,
   demoFetchMenusByNegocio,
   demoFetchLogisticaCaficultor,
+  demoCreateReposicion,
+  demoLinkReposicionesToPedido,
 } from '../demoService'
 import { ONE_CONFIG, FORMATO_LABELS, calcularPrecioFinal } from '../config'
 import type { ItemCarrito } from '../../AppONE'
 import type { MenuONE } from '../types'
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
-
-const C = {
-  bg:          '#0a0a0a',
-  bgCard:      '#111111',
-  bgInput:     '#181818',
-  bgHover:     '#1a1a1a',
-  cream:       '#f2e0cc',
-  creamDim:    '#c4b297',
-  green:       '#1f3028',
-  terra:       '#c96e4b',
-  terraLight:  '#d4825f',
-  sage:        '#8faf8a',
-  white:       '#ffffff',
-  red:         '#e05a4e',
-  border:      '#222222',
-  borderFocus: '#c96e4b',
-  muted:       '#555555',
-  mutedLight:  '#777777',
-}
 
 const PROCESO_COLORS: Record<string, string> = {
   lavado: '#4a90c4', natural: '#c96e4b', honey: '#d4a017', anaerobico: '#9b59b6',
@@ -71,7 +54,7 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <label style={{
     display: 'block', marginBottom: 8,
     fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-    color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase',
+    color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase',
   }}>
     {children}
   </label>
@@ -87,9 +70,9 @@ const Field: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => 
       style={{
         width: '100%', boxSizing: 'border-box',
         padding: '13px 16px', borderRadius: 8,
-        border: `1px solid ${focused ? C.borderFocus : C.border}`,
+        border: `1px solid ${focused ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
         fontSize: 14, fontFamily: 'Montserrat, sans-serif',
-        color: C.cream, background: C.bgInput,
+        color: 'var(--tw-text)', background: 'var(--tw-card)',
         outline: 'none', transition: 'border-color 0.15s',
         ...props.style,
       }}
@@ -107,10 +90,10 @@ const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) 
       style={{
         width: '100%', boxSizing: 'border-box',
         padding: '13px 16px', borderRadius: 8,
-        border: `1px solid ${focused ? C.borderFocus : C.border}`,
+        border: `1px solid ${focused ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
         fontSize: 14, fontFamily: 'Montserrat, sans-serif',
-        color: props.value ? C.cream : C.muted,
-        background: C.bgInput, outline: 'none',
+        color: props.value ? 'var(--tw-text)' : 'var(--tw-text-faint)',
+        background: 'var(--tw-card)', outline: 'none',
         transition: 'border-color 0.15s', cursor: 'pointer',
         ...props.style,
       }}
@@ -126,12 +109,12 @@ const PrimaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ c
       fontSize: 15, fontWeight: 700, letterSpacing: '0.04em',
       fontFamily: 'Montserrat, sans-serif',
       background: props.disabled
-        ? C.border
-        : `linear-gradient(135deg, ${C.terra} 0%, ${C.terraLight} 100%)`,
-      color: props.disabled ? C.muted : C.white,
+        ? 'var(--tw-border)'
+        : `linear-gradient(135deg, ${'var(--tw-terra)'} 0%, ${'var(--tw-terra-h)'} 100%)`,
+      color: props.disabled ? 'var(--tw-text-faint)' : 'var(--tw-text-inverse)',
       cursor: props.disabled ? 'not-allowed' : 'pointer',
       transition: 'opacity 0.15s, transform 0.1s',
-      boxShadow: props.disabled ? 'none' : `0 4px 20px ${C.terra}44`,
+      boxShadow: props.disabled ? 'none' : `0 4px 20px ${'var(--tw-terra)'}44`,
       ...props.style,
     }}
   >
@@ -144,9 +127,9 @@ const GhostBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ chi
     {...props}
     style={{
       width: '100%', padding: '13px 0', borderRadius: 10,
-      border: `1px solid ${C.border}`, background: 'transparent',
+      border: `1px solid ${'var(--tw-border)'}`, background: 'transparent',
       fontSize: 13, fontFamily: 'Montserrat, sans-serif', fontWeight: 600,
-      color: C.mutedLight, cursor: 'pointer',
+      color: 'var(--tw-text-muted)', cursor: 'pointer',
       ...props.style,
     }}
   >
@@ -156,32 +139,33 @@ const GhostBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ chi
 
 // ─── StepIndicator ────────────────────────────────────────────────────────────
 
-const StepIndicator: React.FC<{ step: number }> = ({ step }) => (
+const StepIndicator: React.FC<{ step: number; labels: string[] }> = ({ step, labels }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 32 }}>
-    {(['Carrito', 'Pago', 'Listo'] as const).map((label, i) => {
+    {labels.map((label, i) => {
       const n = i + 1
       const active = step >= n
       const current = step === n
+      const totalSteps = labels.length
       return (
         <React.Fragment key={n}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <div style={{
               width: 34, height: 34, borderRadius: '50%',
-              background: active ? C.terra : C.bgCard,
-              border: `1px solid ${active ? C.terra : C.border}`,
-              color: active ? C.white : C.muted,
+              background: active ? 'var(--tw-terra)' : 'var(--tw-card)',
+              border: `1px solid ${active ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
+              color: active ? 'var(--tw-text-inverse)' : 'var(--tw-text-faint)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
               transition: 'all 0.2s',
-              boxShadow: current ? `0 0 0 3px ${C.terra}33` : 'none',
+              boxShadow: current ? `0 0 0 3px ${'var(--tw-terra)'}33` : 'none',
             }}>
               {step > n ? '✓' : n}
             </div>
-            <span style={{ fontSize: 10, fontWeight: 600, color: active ? C.creamDim : C.muted, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: active ? 'var(--tw-text-muted)' : 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.06em' }}>
               {label}
             </span>
           </div>
-          {n < 3 && <div style={{ width: 56, height: 1, background: step > n ? C.terra : C.border, margin: '0 4px 16px', transition: 'background 0.3s' }} />}
+          {n < totalSteps && <div style={{ width: 56, height: 1, background: step > n ? 'var(--tw-terra)' : 'var(--tw-border)', margin: '0 4px 16px', transition: 'background 0.3s' }} />}
         </React.Fragment>
       )
     })}
@@ -205,32 +189,32 @@ const ResumenPedido: React.FC<{
 
   return (
     <div style={{
-      background: C.bgCard, borderRadius: 16,
-      border: `1px solid ${C.border}`,
+      background: 'var(--tw-card)', borderRadius: 16,
+      border: `1px solid ${'var(--tw-border)'}`,
       overflow: 'hidden',
     }}>
       {/* Cabecera del resumen */}
       <div
         style={{
           padding: '18px 22px',
-          background: `linear-gradient(135deg, ${C.green}cc, #0d1e14)`,
+          background: `linear-gradient(135deg, ${'var(--tw-section-dark)'}cc, '#0d1e14')`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           cursor: compact ? 'pointer' : 'default',
         }}
         onClick={() => compact && setExpandido(v => !v)}
       >
         <div>
-          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: C.sage, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase' }}>
             Tu pedido
           </p>
-          <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif' }}>
+          <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>
             {formatCents(totalCents)}
           </p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <span style={{ fontSize: 24, display: 'block' }}>☕</span>
           {compact && (
-            <span style={{ fontSize: 12, color: C.sage }}>{expandido ? '▲' : '▼'}</span>
+            <span style={{ fontSize: 12, color: 'var(--tw-sage)' }}>{expandido ? '▲' : '▼'}</span>
           )}
         </div>
       </div>
@@ -241,12 +225,12 @@ const ResumenPedido: React.FC<{
           <div style={{ marginBottom: 16 }}>
             {lineas.map((l, i) => {
               const precio = calcularPrecioFinal(l.producto.precioBaseKgCents, l.formato)
-              const procesoColor = PROCESO_COLORS[l.producto.proceso] ?? C.terra
+              const procesoColor = PROCESO_COLORS[l.producto.proceso] ?? 'var(--tw-terra)'
               return (
                 <div key={i} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
                   paddingBottom: 12, marginBottom: 12,
-                  borderBottom: `1px solid ${C.border}`,
+                  borderBottom: `1px solid ${'var(--tw-border)'}`,
                 }}>
                   <div style={{ display: 'flex', gap: 10, flex: 1 }}>
                     <div style={{
@@ -257,15 +241,15 @@ const ResumenPedido: React.FC<{
                       fontSize: 16,
                     }}>☕</div>
                     <div>
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif', lineHeight: 1.3 }}>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.3 }}>
                         {l.producto.nombre.split(' — ')[0]}
                       </p>
-                      <p style={{ margin: '2px 0 0', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+                      <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
                         {FORMATO_LABELS[l.formato]} × {l.qty}
                       </p>
                     </div>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.creamDim, fontFamily: 'Montserrat, sans-serif', flexShrink: 0, marginLeft: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', flexShrink: 0, marginLeft: 8 }}>
                     {formatCents(precio * l.qty)}
                   </span>
                 </div>
@@ -275,32 +259,32 @@ const ResumenPedido: React.FC<{
 
           {/* Subtotal + delivery */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>Subtotal</span>
-            <span style={{ fontSize: 12, color: C.creamDim, fontFamily: 'Montserrat, sans-serif' }}>{formatCents(subtotalCents)}</span>
+            <span style={{ fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>Subtotal</span>
+            <span style={{ fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>{formatCents(subtotalCents)}</span>
           </div>
           {ONE_CONFIG.DELIVERY_CENTS > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>Delivery</span>
-              <span style={{ fontSize: 12, color: C.creamDim, fontFamily: 'Montserrat, sans-serif' }}>{formatCents(ONE_CONFIG.DELIVERY_CENTS)}</span>
+              <span style={{ fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>Delivery</span>
+              <span style={{ fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>{formatCents(ONE_CONFIG.DELIVERY_CENTS)}</span>
             </div>
           )}
 
           {/* Total */}
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 6,
+            borderTop: `1px solid ${'var(--tw-border)'}`, paddingTop: 12, marginTop: 6,
           }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>Total</span>
-            <span style={{ fontSize: 20, fontWeight: 800, color: C.terra, fontFamily: 'Montserrat, sans-serif' }}>{formatCents(totalCents)}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>Total</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>{formatCents(totalCents)}</span>
           </div>
 
           {/* Agencia seleccionada */}
           {agenciaNombre && (
             <div style={{
               marginTop: 14, padding: '10px 14px', borderRadius: 8,
-              background: '#0d1a0d', border: `1px solid ${C.sage}33`,
+              background: '#0d1a0d', border: `1px solid ${'var(--tw-sage)'}33`,
             }}>
-              <span style={{ fontSize: 11, color: C.sage, fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+              <span style={{ fontSize: 11, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 📦 Envío por: {agenciaNombre}
               </span>
             </div>
@@ -310,9 +294,9 @@ const ResumenPedido: React.FC<{
           {menuNombre && menuNombre !== 'Sin categorizar' && (
             <div style={{
               marginTop: 14, padding: '10px 14px', borderRadius: 8,
-              background: C.green + '33', border: `1px solid ${C.sage}33`,
+              background: 'var(--tw-section-dark)' + '33', border: `1px solid ${'var(--tw-sage)'}33`,
             }}>
-              <span style={{ fontSize: 11, color: C.sage, fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+              <span style={{ fontSize: 11, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 📋 Asignado a: {menuNombre}
               </span>
             </div>
@@ -322,7 +306,7 @@ const ResumenPedido: React.FC<{
           {/* Garantía */}
           <div style={{ marginTop: 14, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
             <span style={{ fontSize: 15, flexShrink: 0 }}>🔒</span>
-            <p style={{ margin: 0, fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5 }}>
               Pedido confirmado solo cuando verificamos tu pago. Sin riesgo.
             </p>
           </div>
@@ -350,20 +334,23 @@ interface Paso1Props {
   direccionEntrega: string
   logisticas: LogisticaCaficultorONE[]
   agenciaSeleccionada: string
+  b2bAprobado?: boolean
+  reposicionConfig?: ReposicionItemConfig[]
   onLineasChange: (l: ItemCarrito[]) => void
   onMenuIdChange: (id: string) => void
   onNombreLocalChange: (v: string) => void
   onDistritoLocalChange: (v: string) => void
   onDireccionChange: (v: string) => void
   onAgenciaChange: (id: string) => void
+  onReposicionChange?: (config: ReposicionItemConfig[]) => void
   onNext: () => void
 }
 
 const Paso1Form: React.FC<Paso1Props> = ({
   lineas, menuId, menus, nombreLocal, distritoLocal, direccionEntrega,
-  logisticas, agenciaSeleccionada,
+  logisticas, agenciaSeleccionada, b2bAprobado, reposicionConfig,
   onLineasChange, onMenuIdChange, onNombreLocalChange, onDistritoLocalChange, onDireccionChange,
-  onAgenciaChange, onNext,
+  onAgenciaChange, onReposicionChange, onNext,
 }) => {
   function setFormato(idx: number, formato: FormatoONE) {
     onLineasChange(lineas.map((l, i) => i === idx ? { ...l, formato } : l))
@@ -376,21 +363,32 @@ const Paso1Form: React.FC<Paso1Props> = ({
   }
 
   // Unir todas las agencias activas de todos los caficultores del pedido, sin duplicados
-  const agenciasDisponibles: { id: string; nombre: string; domicilio: boolean; origen: string }[] = []
+  const agenciasDisponibles: { id: string; nombre: string; domicilio: boolean; origen: string; diasMin?: number; diasMax?: number }[] = []
   const agenciasSeen = new Set<string>()
   for (const log of logisticas) {
     for (const agId of Object.keys(log.agenciasActivas ?? {})) {
       if (log.agenciasActivas[agId] && !agenciasSeen.has(agId)) {
         agenciasSeen.add(agId)
+        const detalle = log.agenciasDetalle?.[agId]
         agenciasDisponibles.push({
           id: agId,
           nombre: log.agenciasMap?.[agId] ?? agId,
-          domicilio: log.agenciasPermiteDomicilio?.[agId] ?? false,
+          domicilio: detalle?.permiteDomicilio ?? log.agenciasPermiteDomicilio?.[agId] ?? false,
           origen: log.origenTexto ?? '',
+          diasMin: detalle?.diasMin,
+          diasMax: detalle?.diasMax,
         })
       }
     }
   }
+
+  // Reglas de envío gratis del primer caficultor (asume pedido de un solo caficultor)
+  const logPrincipal = logisticas[0]
+  const gratisAgenciaActivo = logPrincipal?.gratisAgenciaActivo ?? false
+  const gratisAgenciaKg = logPrincipal?.gratisAgenciaKg ?? 5
+  const gratisDomicilioActivo = logPrincipal?.gratisDomicilioActivo ?? false
+  const gratisDomicilioKg = logPrincipal?.gratisDomicilioKg ?? 15
+  const tarifaFijaDomicilio = logPrincipal?.tarifaFijaDomicilioSoles ?? 0
 
   const hayAgencias = agenciasDisponibles.length > 0
   const canContinue = lineas.length > 0
@@ -402,12 +400,12 @@ const Paso1Form: React.FC<Paso1Props> = ({
     return (
       <div style={{ textAlign: 'center', padding: '60px 0' }}>
         <p style={{ fontSize: 48, marginBottom: 16 }}>🛒</p>
-        <p style={{ color: C.mutedLight, fontFamily: 'Montserrat, sans-serif', fontSize: 15, marginBottom: 24 }}>
+        <p style={{ color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', fontSize: 15, marginBottom: 24 }}>
           Tu carrito está vacío
         </p>
         <a href="#/" style={{
           display: 'inline-block', padding: '14px 32px', borderRadius: 10,
-          background: C.terra, color: C.white, textDecoration: 'none',
+          background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', textDecoration: 'none',
           fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
         }}>
           Explorar catálogo →
@@ -420,17 +418,17 @@ const Paso1Form: React.FC<Paso1Props> = ({
     <div>
       {/* ── Sección: Tus cafés ── */}
       <div style={{ marginBottom: 32 }}>
-        <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Tus cafés ({lineas.length})
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {lineas.map((linea, idx) => {
             const precioFormato = calcularPrecioFinal(linea.producto.precioBaseKgCents, linea.formato)
             const subtotal = precioFormato * linea.qty
-            const procesoColor = PROCESO_COLORS[linea.producto.proceso] ?? C.terra
+            const procesoColor = PROCESO_COLORS[linea.producto.proceso] ?? 'var(--tw-terra)'
             return (
               <div key={idx} style={{
-                background: C.bgCard, borderRadius: 12, border: `1px solid ${C.border}`,
+                background: 'var(--tw-card)', borderRadius: 12, border: `1px solid ${'var(--tw-border)'}`,
                 overflow: 'hidden',
               }}>
                 {/* Franja superior de color del proceso */}
@@ -439,23 +437,23 @@ const Paso1Form: React.FC<Paso1Props> = ({
                   {/* Header producto */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
                     <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1.3 }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', lineHeight: 1.3 }}>
                         {linea.producto.nombre}
                       </p>
-                      <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+                      <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
                         {linea.producto.caficultorNombre}
                       </p>
                     </div>
                     <button
                       onClick={() => quitar(idx)}
-                      style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 15, padding: '2px', lineHeight: 1, flexShrink: 0 }}
+                      style={{ background: 'none', border: 'none', color: 'var(--tw-text-faint)', cursor: 'pointer', fontSize: 15, padding: '2px', lineHeight: 1, flexShrink: 0 }}
                       title="Quitar"
                     >✕</button>
                   </div>
 
                   {/* Selector de formato */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 14 }}>
-                    {(['1kg', '5kg', '10kg', '25kg'] as FormatoONE[]).map(f => {
+                    {(['1kg', '5kg', '10kg', '20kg'] as FormatoONE[]).map(f => {
                       const precio = calcularPrecioFinal(linea.producto.precioBaseKgCents, f)
                       const activo = linea.formato === f
                       return (
@@ -464,15 +462,15 @@ const Paso1Form: React.FC<Paso1Props> = ({
                           onClick={() => setFormato(idx, f)}
                           style={{
                             padding: '8px 4px', borderRadius: 8, cursor: 'pointer',
-                            border: `1px solid ${activo ? procesoColor : C.border}`,
-                            background: activo ? procesoColor + '18' : C.bgHover,
+                            border: `1px solid ${activo ? procesoColor : 'var(--tw-border)'}`,
+                            background: activo ? procesoColor + '18' : 'var(--tw-card-hover)',
                             textAlign: 'center', transition: 'all 0.15s',
                           }}
                         >
-                          <div style={{ fontSize: 11, fontWeight: 700, color: activo ? procesoColor : C.creamDim, fontFamily: 'Montserrat, sans-serif' }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: activo ? procesoColor : 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
                             {FORMATO_LABELS[f]}
                           </div>
-                          <div style={{ fontSize: 11, color: activo ? procesoColor : C.muted, marginTop: 2, fontFamily: 'Montserrat, sans-serif' }}>
+                          <div style={{ fontSize: 11, color: activo ? procesoColor : 'var(--tw-text-faint)', marginTop: 2, fontFamily: 'Montserrat, sans-serif' }}>
                             {formatCents(precio)}
                           </div>
                         </button>
@@ -480,45 +478,114 @@ const Paso1Form: React.FC<Paso1Props> = ({
                     })}
                   </div>
 
+                  {/* Chips cantidad frecuente */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                    {[
+                      { qty: 3, label: '3 kg · Prueba' },
+                      { qty: 5, label: '5 kg · Semanal' },
+                      { qty: 10, label: '10 kg · Quincenal' },
+                      { qty: 15, label: '15 kg · Mensual' },
+                    ].map(op => (
+                      <button
+                        key={op.qty}
+                        onClick={() => onLineasChange(lineas.map((l, i) => i === idx ? { ...l, qty: op.qty } : l))}
+                        style={{ padding: '4px 10px', borderRadius: 20, border: `1px solid ${linea.qty === op.qty ? procesoColor : 'var(--tw-border)'}`, background: linea.qty === op.qty ? procesoColor + '18' : 'none', color: linea.qty === op.qty ? procesoColor : 'var(--tw-text-muted)', fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap' }}
+                      >{op.label}</button>
+                    ))}
+                  </div>
+
                   {/* Cantidad + subtotal */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: C.bgHover, borderRadius: 8, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: 'var(--tw-card-hover)', borderRadius: 8, border: `1px solid ${'var(--tw-border)'}`, overflow: 'hidden' }}>
                       <button
                         onClick={() => setQty(idx, -1)}
-                        style={{ width: 36, height: 36, background: 'none', border: 'none', color: C.creamDim, cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ width: 36, height: 36, background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >−</button>
-                      <span style={{ minWidth: 32, textAlign: 'center', fontSize: 15, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>
+                      <span style={{ minWidth: 32, textAlign: 'center', fontSize: 15, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>
                         {linea.qty}
                       </span>
                       <button
                         onClick={() => setQty(idx, 1)}
-                        style={{ width: 36, height: 36, background: 'none', border: 'none', color: C.creamDim, cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ width: 36, height: 36, background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >+</button>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: C.terra, fontFamily: 'Montserrat, sans-serif' }}>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>
                         {formatCents(subtotal)}
                       </span>
                     </div>
                   </div>
+
+                  {/* Reposición automática — solo B2B aprobado (ABAST-01) */}
+                  {b2bAprobado && reposicionConfig && onReposicionChange && (() => {
+                    const cfg = reposicionConfig[idx]
+                    if (!cfg) return null
+                    return (
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--tw-border)' }}>
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={cfg.activa}
+                            onChange={() => onReposicionChange(reposicionConfig.map((c, i) => i === idx ? { ...c, activa: !c.activa } : c))}
+                            style={{ marginTop: 2, accentColor: 'var(--tw-sage)', width: 14, height: 14, flexShrink: 0 }}
+                          />
+                          <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5 }}>
+                            📅 <strong style={{ color: 'var(--tw-text)' }}>Programar reposición:</strong> Recibir este lote cada 15 días automáticamente con prioridad de tueste.
+                            {cfg.esTypeA && (
+                              <span style={{ display: 'block', marginTop: 4, fontSize: 10, color: '#d4a017' }}>
+                                ⚠️ Café verde: no garantizamos el mismo lote en la reposición.
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             )
           })}
         </div>
 
-        <a href="#/" style={{ display: 'inline-block', marginTop: 10, fontSize: 12, color: C.terra, textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+        <a href="#/" style={{ display: 'inline-block', marginTop: 10, fontSize: 12, color: 'var(--tw-terra)', textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
           + Agregar más cafés al catálogo
         </a>
+
+        {/* ── Nudge envío gratis — usa reglas reales del caficultor (SHP-03) ── */}
+        {gratisAgenciaActivo && (() => {
+          const kgPorFormatoMap: Record<FormatoONE, number> = { '250g': 0.25, '500g': 0.5, '1kg': 1, '5kg': 5, '10kg': 10, '20kg': 20, '1quintal': 46, '1saco': 60 }
+          const totalKg = lineas.reduce((s, l) => s + (kgPorFormatoMap[l.formato as FormatoONE] ?? 1) * l.qty, 0)
+          const faltaKg = gratisAgenciaKg - totalKg
+          const pct = Math.min(100, (totalKg / gratisAgenciaKg) * 100)
+          if (faltaKg <= 0) return (
+            <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(143,175,138,0.12)', border: '1px solid rgba(143,175,138,0.3)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>🚚</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif' }}>¡Envío gratis a agencia en tu pedido!</span>
+            </div>
+          )
+          return (
+            <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'var(--tw-card)', border: '1px solid var(--tw-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
+                  🚚 Agrega <strong style={{ color: 'var(--tw-terra)' }}>{faltaKg.toFixed(1)} kg más</strong> para envío gratis a agencia
+                </span>
+                <span style={{ fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>{Math.round(pct)}%</span>
+              </div>
+              <div style={{ height: 4, borderRadius: 2, background: 'var(--tw-border)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: 'var(--tw-terra)', borderRadius: 2, transition: 'width 0.3s' }} />
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* ── Sección: Envío ── */}
       <div style={{ marginBottom: 32 }}>
-        <h3 style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        <h3 style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Agencia de envío
         </h3>
-        <p style={{ margin: '0 0 14px', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
-          El caficultor despacha por estas agencias. Elige una y coordina el costo directo con él.
+        <p style={{ margin: '0 0 14px', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
+          Selecciona la agencia de tu preferencia. El envío se calcula según el peso de tu pedido.
         </p>
 
         {!hayAgencias ? (
@@ -526,7 +593,7 @@ const Paso1Form: React.FC<Paso1Props> = ({
             <span style={{ fontSize: 16 }}>⚠️</span>
             <div>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#d4a017', fontFamily: 'Montserrat, sans-serif' }}>El caficultor aún no configuró sus envíos</p>
-              <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>Puedes continuar — coordinarán la agencia por el chat del pedido.</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>Puedes continuar — el caficultor aún no tiene agencias configuradas.</p>
             </div>
           </div>
         ) : (
@@ -540,27 +607,30 @@ const Paso1Form: React.FC<Paso1Props> = ({
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
-                    border: `1px solid ${activa ? C.sage + '88' : C.border}`,
-                    background: activa ? '#0d1f0d' : C.bgCard,
+                    border: `1px solid ${activa ? 'var(--tw-sage)' + '88' : 'var(--tw-border)'}`,
+                    background: activa ? '#0d1f0d' : 'var(--tw-card)',
                     textAlign: 'left', transition: 'all 0.15s',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ fontSize: 20 }}>📦</span>
                     <div>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>
                         {ag.nombre}
                       </p>
-                      <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+                      <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
                         Despacho desde: {ag.origen}
-                        {ag.domicilio && <span style={{ marginLeft: 8, color: C.sage }}>· Entrega a domicilio disponible</span>}
+                        {ag.domicilio && <span style={{ marginLeft: 8, color: 'var(--tw-sage)' }}>· Entrega a domicilio disponible</span>}
+                        {(ag.diasMin != null && ag.diasMax != null) && (
+                          <span style={{ marginLeft: 8, color: 'var(--tw-text-muted)' }}>· {ag.diasMin}–{ag.diasMax} días hábiles</span>
+                        )}
                       </p>
                     </div>
                   </div>
                   <div style={{
                     width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                    border: `2px solid ${activa ? C.sage : C.border}`,
-                    background: activa ? C.sage : 'transparent',
+                    border: `2px solid ${activa ? 'var(--tw-sage)' : 'var(--tw-border)'}`,
+                    background: activa ? 'var(--tw-sage)' : 'transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {activa && <span style={{ fontSize: 10, color: '#000', fontWeight: 700 }}>✓</span>}
@@ -568,16 +638,19 @@ const Paso1Form: React.FC<Paso1Props> = ({
                 </button>
               )
             })}
-            <p style={{ margin: '6px 0 0', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
-              El costo de envío se coordina directamente con el caficultor por el chat del pedido.
-            </p>
+            {gratisDomicilioActivo && agenciaSeleccionada && agenciasDisponibles.find(a => a.id === agenciaSeleccionada)?.domicilio && (
+              <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif' }}>
+                🏠 Envío a domicilio gratis a partir de {gratisDomicilioKg} kg
+                {tarifaFijaDomicilio > 0 && ` (tarifa fija: S/ ${tarifaFijaDomicilio.toFixed(2)})`}
+              </p>
+            )}
           </div>
         )}
       </div>
 
       {/* ── Sección: Datos del local ── */}
       <div style={{ marginBottom: 32 }}>
-        <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Tu local
         </h3>
 
@@ -600,24 +673,76 @@ const Paso1Form: React.FC<Paso1Props> = ({
           </div>
           <div>
             <Label>Ciudad</Label>
-            <Field value="Lima" disabled style={{ color: C.muted, cursor: 'not-allowed' }} />
+            <Field value="Lima" disabled style={{ color: 'var(--tw-text-faint)', cursor: 'not-allowed' }} />
           </div>
         </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <Label>Dirección de entrega</Label>
-          <Field
-            placeholder="Ej. Av. Larco 123, Miraflores"
-            value={direccionEntrega}
-            onChange={e => onDireccionChange(e.target.value)}
-          />
-        </div>
+        {/* Dirección estructurada */}
+        {(() => {
+          const DEPARTAMENTOS = ['Amazonas','Áncash','Apurímac','Arequipa','Ayacucho','Cajamarca','Callao','Cusco','Huancavelica','Huánuco','Ica','Junín','La Libertad','Lambayeque','Lima','Loreto','Madre de Dios','Moquegua','Pasco','Piura','Puno','San Martín','Tacna','Tumbes','Ucayali']
+          type TipoDireccion = 'finca' | 'agencia_courier' | 'otro'
+          const [tipoDireccion, setTipoDireccion] = React.useState<TipoDireccion>('finca')
+          const [calle, setCalle] = React.useState('')
+          const [distrito, setDistrito] = React.useState('')
+          const [provincia, setProvincia] = React.useState('')
+          const [dpto, setDpto] = React.useState('Lima')
+          const [referencia, setReferencia] = React.useState('')
+
+          React.useEffect(() => {
+            const partes = [calle, distrito, provincia, dpto].filter(Boolean)
+            const full = partes.join(', ') + (referencia ? ` (${referencia})` : '')
+            onDireccionChange(full)
+          }, [calle, distrito, provincia, dpto, referencia])
+
+          const tipoOpts: { id: TipoDireccion; emoji: string; label: string }[] = [
+            { id: 'finca', emoji: '🏡', label: 'Finca / Casa' },
+            { id: 'agencia_courier', emoji: '🏪', label: 'Agencia courier' },
+            { id: 'otro', emoji: '🏢', label: 'Otro' },
+          ]
+          const selStyle = (sel: boolean): React.CSSProperties => ({
+            flex: 1, padding: '8px 6px', borderRadius: 8, border: `1.5px solid ${sel ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
+            background: sel ? 'rgba(201,110,75,0.08)' : 'var(--tw-card)', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+          })
+          const iStyle: React.CSSProperties = {
+            width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--tw-border)',
+            background: 'var(--tw-card)', color: 'var(--tw-text)', fontSize: 12,
+            fontFamily: 'Montserrat, sans-serif', outline: 'none', boxSizing: 'border-box',
+          }
+          return (
+            <div style={{ marginBottom: 14 }}>
+              <Label>Dirección de entrega</Label>
+              {/* Tipo */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                {tipoOpts.map(t => (
+                  <div key={t.id} style={selStyle(tipoDireccion === t.id)} onClick={() => setTipoDireccion(t.id)}>
+                    <span style={{ fontSize: 18 }}>{t.emoji}</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, color: tipoDireccion === t.id ? 'var(--tw-terra)' : 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', textAlign: 'center' }}>{t.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Calle */}
+              <input style={{ ...iStyle, marginBottom: 8 }} placeholder={tipoDireccion === 'agencia_courier' ? 'Nombre de agencia y dirección' : 'Calle, número, urbanización'} value={calle} onChange={e => setCalle(e.target.value)} />
+              {/* Distrito / Provincia */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                <input style={iStyle} placeholder="Distrito" value={distrito} onChange={e => setDistrito(e.target.value)} />
+                <input style={iStyle} placeholder="Provincia" value={provincia} onChange={e => setProvincia(e.target.value)} />
+              </div>
+              {/* Dpto */}
+              <select style={{ ...iStyle, marginBottom: 8 }} value={dpto} onChange={e => setDpto(e.target.value)}>
+                {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+              {/* Referencia */}
+              <input style={iStyle} placeholder="Referencia adicional (opcional)" value={referencia} onChange={e => setReferencia(e.target.value)} />
+            </div>
+          )
+        })()}
       </div>
 
       {/* ── Sección: Menú (opcional) ── */}
       {menus.length > 0 && (
         <div style={{ marginBottom: 32 }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Asignar a menú
           </h3>
           <Select value={menuId} onChange={e => onMenuIdChange(e.target.value)}>
@@ -626,18 +751,46 @@ const Paso1Form: React.FC<Paso1Props> = ({
               <option key={m.id} value={m.id}>{m.nombre}{m.activo ? ' ★' : ''}</option>
             ))}
           </Select>
-          <p style={{ margin: '8px 0 0', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+          <p style={{ margin: '8px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
             Podrás cambiar esto desde "Mis menús" en tu portal.
           </p>
         </div>
       )}
+
+      {/* ── Nudge envío gratis ── */}
+      {(() => {
+        const KG_UMBRAL = 5
+        const totalKg = lineas.reduce((s, l) => {
+          const kgPorFormato: Record<FormatoONE, number> = { '250g': 0.25, '500g': 0.5, '1kg': 1, '5kg': 5, '10kg': 10, '20kg': 20, '1quintal': 46, '1saco': 60 }
+          return s + (kgPorFormato[l.formato] ?? 1) * l.qty
+        }, 0)
+        const faltanKg = Math.max(0, KG_UMBRAL - totalKg)
+        const pct = Math.min(100, (totalKg / KG_UMBRAL) * 100)
+        if (totalKg >= KG_UMBRAL) return (
+          <div style={{ background: 'rgba(143,175,138,0.1)', border: '1px solid rgba(143,175,138,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18 }}>✅</span>
+            <span style={{ fontSize: 12, color: 'var(--tw-sage)', fontWeight: 700 }}>¡Envío gratis a agencia incluido!</span>
+          </div>
+        )
+        return (
+          <div style={{ background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(217,119,6,0.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--tw-text)', marginBottom: 7 }}>
+              <span>🚚 Agrega <strong>{faltanKg.toFixed(1)} kg más</strong> para Envío Gratis a Agencia</span>
+              <span style={{ flexShrink: 0, marginLeft: 10, color: 'var(--tw-text-muted)', fontSize: 10 }}>{totalKg.toFixed(1)} / {KG_UMBRAL} kg</span>
+            </div>
+            <div style={{ height: 6, background: 'var(--tw-border)', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: 'var(--tw-terra)', borderRadius: 3, transition: 'width 0.4s' }} />
+            </div>
+          </div>
+        )
+      })()}
 
       <PrimaryBtn onClick={onNext} disabled={!canContinue}>
         {canContinue ? 'Continuar al pago →' : 'Completa los campos para continuar'}
       </PrimaryBtn>
 
       {!canContinue && (
-        <p style={{ textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 8, fontFamily: 'Montserrat, sans-serif' }}>
+        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--tw-text-faint)', marginTop: 8, fontFamily: 'Montserrat, sans-serif' }}>
           {!nombreLocal.trim() ? 'Falta el nombre de tu local · ' : ''}
           {!direccionEntrega.trim() ? 'Falta la dirección de entrega · ' : ''}
           {hayAgencias && !agenciaSeleccionada ? 'Selecciona una agencia de envío' : ''}
@@ -722,29 +875,29 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
       {/* Datos de pago — preview rápido antes de elegir método */}
       <div style={{
         marginBottom: 20, padding: '12px 16px', borderRadius: 10,
-        background: '#0d1020', border: `1px solid ${C.border}`,
+        background: '#0d1020', border: `1px solid ${'var(--tw-border)'}`,
         display: 'flex', gap: 24, flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>📱</span>
           <div>
-            <p style={{ margin: 0, fontSize: 10, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Yape</p>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.YAPE_NUMERO}</p>
+            <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Yape</p>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.YAPE_NUMERO}</p>
           </div>
         </div>
-        <div style={{ width: 1, background: C.border, flexShrink: 0, alignSelf: 'stretch' }} />
+        <div style={{ width: 1, background: 'var(--tw-border)', flexShrink: 0, alignSelf: 'stretch' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>🏦</span>
           <div>
-            <p style={{ margin: 0, fontSize: 10, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.07em' }}>BCP · {ONE_CONFIG.BCP_TITULAR}</p>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.BCP_CUENTA}</p>
+            <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.07em' }}>BCP · {ONE_CONFIG.BCP_TITULAR}</p>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.BCP_CUENTA}</p>
           </div>
         </div>
       </div>
 
       {/* Método de pago */}
       <div style={{ marginBottom: 28 }}>
-        <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Método de pago
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -756,18 +909,18 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
                 onClick={() => handleMetodoChange(m)}
                 style={{
                   padding: '16px 12px', borderRadius: 10, cursor: 'pointer',
-                  border: `1px solid ${activo ? C.terra : C.border}`,
-                  background: activo ? C.terra + '18' : C.bgCard,
+                  border: `1px solid ${activo ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
+                  background: activo ? 'var(--tw-terra)' + '18' : 'var(--tw-card)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                   transition: 'all 0.15s',
-                  boxShadow: activo ? `0 0 0 2px ${C.terra}44` : 'none',
+                  boxShadow: activo ? `0 0 0 2px ${'var(--tw-terra)'}44` : 'none',
                 }}
               >
                 <span style={{ fontSize: 26 }}>{m === 'yape' ? '📱' : '🏦'}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: activo ? C.terra : C.creamDim, fontFamily: 'Montserrat, sans-serif' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: activo ? 'var(--tw-terra)' : 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
                   {m === 'yape' ? 'Yape' : 'Transferencia'}
                 </span>
-                <span style={{ fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+                <span style={{ fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
                   {m === 'yape' ? 'Más rápido' : 'BCP'}
                 </span>
               </button>
@@ -782,33 +935,33 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
           {/* Monto destacado */}
           <div style={{
             padding: '20px', borderRadius: 14, marginBottom: 14,
-            background: `linear-gradient(135deg, ${C.terra}22, ${C.terra}0a)`,
-            border: `1px solid ${C.terra}44`, textAlign: 'center',
+            background: `linear-gradient(135deg, ${'var(--tw-terra)'}22, ${'var(--tw-terra)'}0a)`,
+            border: `1px solid ${'var(--tw-terra)'}44`, textAlign: 'center',
           }}>
-            <p style={{ margin: '0 0 4px', fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Monto a Yapear
             </p>
-            <p style={{ margin: 0, fontSize: 36, fontWeight: 800, color: C.terra, fontFamily: 'Montserrat, sans-serif' }}>
+            <p style={{ margin: 0, fontSize: 36, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>
               {formatCents(totalCents)}
             </p>
           </div>
 
           {/* Número Yape con copy */}
-          <div style={{ padding: '16px 18px', borderRadius: 12, background: C.bgCard, border: `1px solid ${C.border}`, marginBottom: 14 }}>
-            <p style={{ margin: '0 0 8px', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ padding: '16px 18px', borderRadius: 12, background: 'var(--tw-card)', border: `1px solid ${'var(--tw-border)'}`, marginBottom: 14 }}>
+            <p style={{ margin: '0 0 8px', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Número Yape
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.cream, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.05em' }}>
+              <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.05em' }}>
                 {ONE_CONFIG.YAPE_NUMERO}
               </p>
               <button
                 onClick={() => copiarAlPortapapeles(ONE_CONFIG.YAPE_NUMERO, setCopiedNumero)}
                 style={{
                   flexShrink: 0, padding: '8px 14px', borderRadius: 8,
-                  border: `1px solid ${copiedNumero ? C.sage : C.border}`,
-                  background: copiedNumero ? C.sage + '22' : C.bgHover,
-                  color: copiedNumero ? C.sage : C.creamDim,
+                  border: `1px solid ${copiedNumero ? 'var(--tw-sage)' : 'var(--tw-border)'}`,
+                  background: copiedNumero ? 'var(--tw-sage)' + '22' : 'var(--tw-card-hover)',
+                  color: copiedNumero ? 'var(--tw-sage)' : 'var(--tw-text-muted)',
                   fontSize: 12, fontWeight: 700, cursor: 'pointer',
                   fontFamily: 'Montserrat, sans-serif', transition: 'all 0.2s',
                 }}
@@ -816,25 +969,25 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
                 {copiedNumero ? '✓ Copiado' : 'Copiar'}
               </button>
             </div>
-            <p style={{ margin: '6px 0 0', fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
               A nombre de {ONE_CONFIG.BCP_TITULAR}
             </p>
           </div>
 
           {/* Instrucciones */}
-          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#0d1a0d', border: `1px solid ${C.sage}33`, marginBottom: 20 }}>
-            <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: C.sage, fontFamily: 'Montserrat, sans-serif' }}>Pasos:</p>
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#0d1a0d', border: `1px solid ${'var(--tw-sage)'}33`, marginBottom: 20 }}>
+            <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif' }}>Pasos:</p>
             {['Abre Yape en tu celular', `Ingresa el número y el monto (${formatCents(totalCents)})`, 'Regresa aquí y toca "Ya pagué con Yape"'].map((paso, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 11, color: C.terra, fontWeight: 700, minWidth: 16, fontFamily: 'Montserrat, sans-serif' }}>{i + 1}.</span>
-                <span style={{ fontSize: 12, color: C.creamDim, fontFamily: 'Montserrat, sans-serif', lineHeight: 1.4 }}>{paso}</span>
+                <span style={{ fontSize: 11, color: 'var(--tw-terra)', fontWeight: 700, minWidth: 16, fontFamily: 'Montserrat, sans-serif' }}>{i + 1}.</span>
+                <span style={{ fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.4 }}>{paso}</span>
               </div>
             ))}
           </div>
 
           {/* Voucher opcional para Yape */}
           <div style={{ marginBottom: 20 }}>
-            <p style={{ margin: '0 0 10px', fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+            <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
               Opcionalmente puedes adjuntar el screenshot de tu Yape:
             </p>
             <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFile} />
@@ -842,12 +995,12 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
               <div
                 onClick={() => fileRef.current?.click()}
                 style={{
-                  border: `1px dashed ${C.border}`, borderRadius: 10,
+                  border: `1px dashed ${'var(--tw-border)'}`, borderRadius: 10,
                   padding: '20px 16px', textAlign: 'center',
-                  cursor: 'pointer', background: C.bgCard,
+                  cursor: 'pointer', background: 'var(--tw-card)',
                 }}
               >
-                <p style={{ margin: 0, fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
                   📎 Adjuntar screenshot (opcional)
                 </p>
               </div>
@@ -856,24 +1009,24 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
                 <img src={voucherPreview} alt="Voucher" style={{ width: '100%', borderRadius: 10, maxHeight: 160, objectFit: 'cover' }} />
                 {subiendoArchivo && (
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ color: C.cream, fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>Subiendo...</span>
+                    <span style={{ color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>Subiendo...</span>
                   </div>
                 )}
                 {!subiendoArchivo && voucherUrl && (
                   <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 6, background: '#25a244', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 11, color: C.white, fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>✓ Subido</span>
+                    <span style={{ fontSize: 11, color: 'var(--tw-text-inverse)', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>✓ Subido</span>
                   </div>
                 )}
                 <button
                   onClick={() => { setVoucherPreview(null); setVoucherUrl(null); onVoucherSubido('') }}
-                  style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', color: C.cream, border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontSize: 13 }}
+                  style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', color: 'var(--tw-text)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontSize: 13 }}
                 >✕</button>
               </div>
             )}
           </div>
 
           {uploadError && (
-            <p style={{ margin: '0 0 14px', fontSize: 12, color: C.red, fontFamily: 'Montserrat, sans-serif' }}>{uploadError}</p>
+            <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--tw-error)', fontFamily: 'Montserrat, sans-serif' }}>{uploadError}</p>
           )}
 
           {/* Botón "Ya pagué" */}
@@ -882,9 +1035,9 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
               ✓ Ya pagué con Yape
             </PrimaryBtn>
           ) : (
-            <div style={{ padding: '16px', borderRadius: 10, background: '#0d1f0d', border: `1px solid ${C.sage}55`, marginBottom: 0, textAlign: 'center' }}>
-              <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: C.sage, fontFamily: 'Montserrat, sans-serif' }}>✓ Pago confirmado</p>
-              <p style={{ margin: 0, fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>Verificamos en menos de 2 horas y te avisamos por WhatsApp</p>
+            <div style={{ padding: '16px', borderRadius: 10, background: '#0d1f0d', border: `1px solid ${'var(--tw-sage)'}55`, marginBottom: 0, textAlign: 'center' }}>
+              <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif' }}>✓ Pago confirmado</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>Verificamos en menos de 2 horas y te avisamos por WhatsApp</p>
             </div>
           )}
         </div>
@@ -896,43 +1049,43 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
           {/* Monto destacado */}
           <div style={{
             padding: '20px', borderRadius: 14, marginBottom: 14,
-            background: `linear-gradient(135deg, ${C.terra}22, ${C.terra}0a)`,
-            border: `1px solid ${C.terra}44`, textAlign: 'center',
+            background: `linear-gradient(135deg, ${'var(--tw-terra)'}22, ${'var(--tw-terra)'}0a)`,
+            border: `1px solid ${'var(--tw-terra)'}44`, textAlign: 'center',
           }}>
-            <p style={{ margin: '0 0 4px', fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Monto a transferir
             </p>
-            <p style={{ margin: 0, fontSize: 36, fontWeight: 800, color: C.terra, fontFamily: 'Montserrat, sans-serif' }}>
+            <p style={{ margin: 0, fontSize: 36, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>
               {formatCents(totalCents)}
             </p>
           </div>
 
           {/* Datos bancarios con copy */}
-          <div style={{ padding: '18px 20px', borderRadius: 12, background: C.bgCard, border: `1px solid ${C.border}`, marginBottom: 14 }}>
-            <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 700, color: C.muted, fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ padding: '18px 20px', borderRadius: 12, background: 'var(--tw-card)', border: `1px solid ${'var(--tw-border)'}`, marginBottom: 14 }}>
+            <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Datos BCP
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
-                <p style={{ margin: '0 0 2px', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>Titular</p>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>{ONE_CONFIG.BCP_TITULAR}</p>
+                <p style={{ margin: '0 0 2px', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>Titular</p>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>{ONE_CONFIG.BCP_TITULAR}</p>
               </div>
               <div>
-                <p style={{ margin: '0 0 4px', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>N° Cuenta</p>
+                <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>N° Cuenta</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.BCP_CUENTA}</p>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.BCP_CUENTA}</p>
                   <button onClick={() => copiarAlPortapapeles(ONE_CONFIG.BCP_CUENTA, setCopiedCuenta)}
-                    style={{ flexShrink: 0, padding: '5px 10px', borderRadius: 6, border: `1px solid ${copiedCuenta ? C.sage : C.border}`, background: copiedCuenta ? C.sage + '22' : C.bgHover, color: copiedCuenta ? C.sage : C.creamDim, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', transition: 'all 0.2s' }}>
+                    style={{ flexShrink: 0, padding: '5px 10px', borderRadius: 6, border: `1px solid ${copiedCuenta ? 'var(--tw-sage)' : 'var(--tw-border)'}`, background: copiedCuenta ? 'var(--tw-sage)' + '22' : 'var(--tw-card-hover)', color: copiedCuenta ? 'var(--tw-sage)' : 'var(--tw-text-muted)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', transition: 'all 0.2s' }}>
                     {copiedCuenta ? '✓' : 'Copiar'}
                   </button>
                 </div>
               </div>
               <div>
-                <p style={{ margin: '0 0 4px', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>CCI</p>
+                <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>CCI</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.BCP_CCI}</p>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.04em' }}>{ONE_CONFIG.BCP_CCI}</p>
                   <button onClick={() => copiarAlPortapapeles(ONE_CONFIG.BCP_CCI, setCopiedCci)}
-                    style={{ flexShrink: 0, padding: '5px 10px', borderRadius: 6, border: `1px solid ${copiedCci ? C.sage : C.border}`, background: copiedCci ? C.sage + '22' : C.bgHover, color: copiedCci ? C.sage : C.creamDim, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', transition: 'all 0.2s' }}>
+                    style={{ flexShrink: 0, padding: '5px 10px', borderRadius: 6, border: `1px solid ${copiedCci ? 'var(--tw-sage)' : 'var(--tw-border)'}`, background: copiedCci ? 'var(--tw-sage)' + '22' : 'var(--tw-card-hover)', color: copiedCci ? 'var(--tw-sage)' : 'var(--tw-text-muted)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', transition: 'all 0.2s' }}>
                     {copiedCci ? '✓' : 'Copiar'}
                   </button>
                 </div>
@@ -942,25 +1095,25 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
 
           {/* Upload voucher — obligatorio para transferencia */}
           <div style={{ marginBottom: 20 }}>
-            <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>
-              Sube el comprobante de transferencia <span style={{ color: C.terra }}>*</span>
+            <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>
+              Sube el comprobante de transferencia <span style={{ color: 'var(--tw-terra)' }}>*</span>
             </p>
             <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFile} />
             {!voucherPreview ? (
               <div
                 onClick={() => fileRef.current?.click()}
                 style={{
-                  border: `2px dashed ${C.border}`, borderRadius: 12,
+                  border: `2px dashed ${'var(--tw-border)'}`, borderRadius: 12,
                   padding: '36px 16px', textAlign: 'center',
-                  cursor: 'pointer', background: C.bgCard,
+                  cursor: 'pointer', background: 'var(--tw-card)',
                   transition: 'border-color 0.15s',
                 }}
               >
                 <p style={{ margin: '0 0 8px', fontSize: 32 }}>📎</p>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.creamDim, fontFamily: 'Montserrat, sans-serif' }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
                   Subir comprobante
                 </p>
-                <p style={{ margin: '4px 0 0', fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
                   Foto o PDF · JPG, PNG, PDF
                 </p>
               </div>
@@ -969,31 +1122,31 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
                 <img src={voucherPreview} alt="Voucher" style={{ width: '100%', borderRadius: 10, maxHeight: 200, objectFit: 'cover' }} />
                 {subiendoArchivo && (
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ color: C.cream, fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>Subiendo...</span>
+                    <span style={{ color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>Subiendo...</span>
                   </div>
                 )}
                 {!subiendoArchivo && voucherUrl && (
                   <div style={{ position: 'absolute', top: 10, left: 10, padding: '4px 10px', borderRadius: 6, background: '#25a244', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 11, color: C.white, fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>✓ Subido</span>
+                    <span style={{ fontSize: 11, color: 'var(--tw-text-inverse)', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>✓ Subido</span>
                   </div>
                 )}
                 <button
                   onClick={() => { setVoucherPreview(null); setVoucherUrl(null); onVoucherSubido('') }}
-                  style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: C.cream, border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: 14 }}
+                  style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'var(--tw-text)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: 14 }}
                 >✕</button>
               </div>
             )}
           </div>
 
           {uploadError && (
-            <p style={{ margin: '0 0 14px', fontSize: 12, color: C.red, fontFamily: 'Montserrat, sans-serif' }}>{uploadError}</p>
+            <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--tw-error)', fontFamily: 'Montserrat, sans-serif' }}>{uploadError}</p>
           )}
         </div>
       )}
 
       {error && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 8, background: C.red + '18', border: `1px solid ${C.red}44` }}>
-          <p style={{ margin: 0, color: C.red, fontSize: 13, fontFamily: 'Montserrat, sans-serif' }}>{error}</p>
+        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 8, background: 'var(--tw-error)' + '18', border: `1px solid ${'var(--tw-error)'}44` }}>
+          <p style={{ margin: 0, color: 'var(--tw-error)', fontSize: 13, fontFamily: 'Montserrat, sans-serif' }}>{error}</p>
         </div>
       )}
 
@@ -1014,79 +1167,118 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
 
 // ─── Paso 3: Confirmación ─────────────────────────────────────────────────────
 
-const Paso3Screen: React.FC<{ pedidoId: string; nombreLocal: string }> = ({ pedidoId, nombreLocal }) => (
-  <div style={{ textAlign: 'center' }}>
-    {/* Check animado */}
-    <div className="tw-check-bounce" style={{
-      width: 80, height: 80, borderRadius: '50%',
-      background: `linear-gradient(135deg, ${C.terra}, ${C.terraLight})`,
-      margin: '0 auto 24px',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 36, boxShadow: `0 8px 32px ${C.terra}44`,
-    }}>✓</div>
+const Paso3Screen: React.FC<{ pedidoId: string; nombreLocal: string; totalCents: number; reposicionesActivas?: number }> = ({ pedidoId, nombreLocal, totalCents, reposicionesActivas = 0 }) => (
+  <div>
+    {/* Encabezado */}
+    <div style={{ textAlign: 'center', paddingBottom: 20 }}>
+      <div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div>
+      <h2 style={{ margin: '0 0 4px', fontSize: 24, fontFamily: 'Cormorant Garamond, serif', color: 'var(--tw-text)', fontWeight: 700 }}>
+        ¡Pedido creado!
+      </h2>
+      <p style={{ margin: '0 0 2px', fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
+        Código: <span style={{ color: 'var(--tw-terra)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>{pedidoId}</span>
+      </p>
+      <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
+        Ahora yapea el monto exacto para que el caficultor prepare tu pedido
+      </p>
+    </div>
 
-    <h2 style={{ margin: '0 0 6px', fontSize: 28, fontFamily: 'Cormorant Garamond, serif', color: C.cream, fontWeight: 700 }}>
-      ¡Pedido recibido!
-    </h2>
-    <p style={{ margin: '0 0 4px', color: C.mutedLight, fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>
-      Código de pedido
-    </p>
-    <p style={{ margin: '0 0 32px', color: C.terra, fontFamily: 'JetBrains Mono, monospace', fontSize: 14, fontWeight: 700 }}>
-      {pedidoId}
-    </p>
-
-    {/* Pasos siguientes */}
-    <div style={{ textAlign: 'left', marginBottom: 28 }}>
+    {/* Track-steps */}
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
       {[
-        { n: '1', titulo: 'Verificamos tu pago', sub: 'Revisamos tu comprobante en menos de 2 horas', color: C.terra },
-        { n: '2', titulo: 'Te escribimos por WhatsApp', sub: 'Coordinamos la entrega y los detalles de tu kit', color: C.terra },
-        { n: '3', titulo: 'Recibes tu café y tu kit', sub: 'Directo del caficultor peruano a tu local', color: C.sage },
-      ].map(({ n, titulo, sub, color }) => (
-        <div key={n} className={`tw-step-${n}`} style={{
-          display: 'flex', gap: 14, marginBottom: 16, alignItems: 'flex-start',
-          padding: '14px', borderRadius: 10,
-          background: C.bgCard, border: `1px solid ${C.border}`,
-        }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: '50%',
-            background: color + '22', border: `1px solid ${color}55`,
-            color, fontWeight: 700, fontSize: 13, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'Montserrat, sans-serif',
-          }}>{n}</div>
-          <div>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>{titulo}</p>
-            <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif' }}>{sub}</p>
+        { n: '1', label: 'Pagar', active: true },
+        { n: '2', label: 'Confirmar', active: false },
+        { n: '3', label: 'Preparando', active: false },
+        { n: '4', label: 'Entregado', active: false },
+      ].map((s, i, arr) => (
+        <React.Fragment key={s.n}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: s.active ? 'var(--tw-terra)' : 'var(--tw-border)',
+              color: s.active ? '#fff' : 'var(--tw-text-muted)',
+              fontSize: 11, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
+            }}>{s.n}</div>
+            <div style={{ fontSize: 9, color: s.active ? 'var(--tw-terra)' : 'var(--tw-text-muted)', fontWeight: s.active ? 700 : 500, fontFamily: 'Montserrat, sans-serif' }}>{s.label}</div>
           </div>
-        </div>
+          {i < arr.length - 1 && (
+            <div style={{ flex: 1, height: 2, background: 'var(--tw-border)', margin: '0 4px', marginBottom: 18 }} />
+          )}
+        </React.Fragment>
       ))}
     </div>
 
-    <div className="tw-confirm-ctas">
+    {/* Card instrucciones Yape/BCP */}
+    <div style={{
+      background: 'rgba(201,110,75,.08)', border: '1px solid rgba(201,110,75,.2)',
+      borderRadius: 10, padding: 16, marginBottom: 12,
+    }}>
+      <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>
+        📱 Instrucciones de pago
+      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Yapea a</span>
+        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>+51 917 959 370</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Cuenta BCP</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'JetBrains Mono, monospace' }}>191-92345678-0-12</span>
+      </div>
+      <div style={{ height: 1, background: 'var(--tw-border)', margin: '0 0 10px' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>Monto exacto</span>
+        <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>{formatCents(totalCents)}</span>
+      </div>
+      <p style={{ margin: '8px 0 0', fontSize: 10, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>
+        ⚠️ Envía el monto exacto para procesamiento automático
+      </p>
+    </div>
+
+    {/* Bloque de reposiciones activas */}
+    {reposicionesActivas > 0 && (
+      <div style={{
+        padding: '12px 16px', borderRadius: 10, marginBottom: 12,
+        background: 'rgba(143,175,138,0.08)', border: '1px solid rgba(143,175,138,0.3)',
+        display: 'flex', gap: 10, alignItems: 'flex-start',
+      }}>
+        <span style={{ fontSize: 18, flexShrink: 0 }}>🔄</span>
+        <div>
+          <p style={{ margin: '0 0 3px', fontSize: 13, fontWeight: 700, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif' }}>
+            {reposicionesActivas} reposición(es) activada(s)
+          </p>
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5 }}>
+            Recibirás un aviso por WhatsApp antes de cada pedido automático. Puedes ajustar o cancelar desde tu portal.
+          </p>
+        </div>
+      </div>
+    )}
+
+    {/* WhatsApp CTA */}
     <a
       href={`https://wa.me/${ONE_CONFIG.ADMIN_WHATSAPP.replace(/\s+/g, '')}?text=Hola%2C%20soy%20${encodeURIComponent(nombreLocal)}%20%E2%80%94%20pedido%20${encodeURIComponent(pedidoId)}`}
       target="_blank" rel="noopener noreferrer"
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        padding: '16px', borderRadius: 10, background: '#25D366',
-        color: C.white, textDecoration: 'none',
-        fontSize: 15, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
+        padding: '14px', borderRadius: 10, background: '#25D366',
+        color: '#fff', textDecoration: 'none',
+        fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif',
         marginBottom: 10, boxShadow: '0 4px 16px rgba(37,211,102,0.3)',
       }}
     >
-      <span style={{ fontSize: 20 }}>💬</span> Escríbenos por WhatsApp
+      <span style={{ fontSize: 20 }}>💬</span> Enviar comprobante por WhatsApp
     </a>
     <a href="#/portal" style={{
-      display: 'block', padding: '15px', borderRadius: 10,
-      background: C.terra, color: C.white, textDecoration: 'none',
-      fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textAlign: 'center',
+      display: 'block', padding: '13px', borderRadius: 10,
+      background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none',
+      fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', textAlign: 'center',
       marginBottom: 14,
     }}>
       Ver mi portal →
     </a>
-    <a href="#/" style={{ fontSize: 12, color: C.muted, fontFamily: 'Montserrat, sans-serif', textDecoration: 'none' }}>
-      Volver al catálogo
-    </a>
+    <div style={{ textAlign: 'center' }}>
+      <a href="#/" style={{ fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', textDecoration: 'none' }}>
+        Volver al catálogo
+      </a>
     </div>
   </div>
 )
@@ -1104,13 +1296,29 @@ interface Props {
   isDemo?: boolean
   onPedidoConfirmado?: () => void
   onPasoChange?: (paso: string) => void
+  // B2B
+  rolUsuario?: 'buyer_b2c' | 'buyer_b2b' | null
+  estadoAprobacionB2B?: string | null
+  rucEmpresa?: string | null
+  razonSocialEmpresa?: string | null
 }
 
 const CheckoutONE: React.FC<Props> = ({
   items, usuarioId, usuarioNombre, usuarioEmail, usuarioTelefono,
   nombreLocalInicial = '', distritoLocalInicial = '',
   isDemo = false, onPedidoConfirmado, onPasoChange,
+  rolUsuario = null, estadoAprobacionB2B = null,
+  rucEmpresa = null, razonSocialEmpresa = null,
 }) => {
+  const esB2b = rolUsuario === 'buyer_b2b'
+  const b2bAprobado = esB2b && estadoAprobacionB2B === 'APPROVED'
+
+  // Constantes de paso — 3 pasos para todos los roles (ABAST-01 revisado)
+  const PASO_CARRITO = 1
+  const PASO_PAGO    = 2
+  const PASO_CONFIRM = 3
+  const stepLabels   = ['Carrito', 'Pago', 'Listo']
+
   const [step, setStep] = useState(1)
 
   const [lineas, setLineas] = useState<ItemCarrito[]>(items)
@@ -1122,8 +1330,25 @@ const CheckoutONE: React.FC<Props> = ({
   const [agenciaSeleccionada, setAgenciaSeleccionada] = useState('')
   const [logisticas, setLogisticas] = useState<LogisticaCaficultorONE[]>([])
 
+  // Reposición por ítem — solo usado si b2bAprobado
+  const [reposicionConfig, setReposicionConfig] = useState<ReposicionItemConfig[]>(
+    () => items.map(item => ({
+      productoId: item.producto.id,
+      productoNombre: item.producto.nombre,
+      caficultorId: item.producto.caficultorId,
+      activa: false,
+      frecuenciaDias: 30 as FrecuenciaReposicion,
+      cantidadUnidades: item.qty,
+      presentacion: item.formato,
+      esTypeA: false,
+    }))
+  )
+
   const [metodoPago, setMetodoPago] = useState<'yape' | 'transferencia'>('yape')
   const [voucherUrl, setVoucherUrl] = useState<string | null>(null)
+  // B2B: número de OC y tipo de comprobante
+  const [numeroOC, setNumeroOC] = useState('')
+  const [tipoComprobante, setTipoComprobante] = useState<'factura' | 'boleta'>(esB2b && rucEmpresa ? 'factura' : 'boleta')
 
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1135,6 +1360,28 @@ const CheckoutONE: React.FC<Props> = ({
     window.addEventListener('resize', handler)
     return () => window.removeEventListener('resize', handler)
   }, [])
+
+  // Sincronizar reposicionConfig cuando el carrito cambia en Paso 1
+  useEffect(() => {
+    if (!b2bAprobado) return
+    setReposicionConfig(prev =>
+      lineas.map(item => {
+        const existing = prev.find(c => c.productoId === item.producto.id)
+        return existing
+          ? { ...existing, cantidadUnidades: item.qty, presentacion: item.formato }
+          : {
+              productoId: item.producto.id,
+              productoNombre: item.producto.nombre,
+              caficultorId: item.producto.caficultorId,
+              activa: false,
+              frecuenciaDias: 30 as FrecuenciaReposicion,
+              cantidadUnidades: item.qty,
+              presentacion: item.formato,
+              esTypeA: false,
+            }
+      })
+    )
+  }, [lineas, b2bAprobado])
 
   useEffect(() => {
     const cargarMenus = async () => {
@@ -1203,12 +1450,64 @@ const CheckoutONE: React.FC<Props> = ({
         direccionEntrega,
         agencia: agenciaSeleccionada as import('../types').AgenciaONE | undefined || undefined,
         esKitProveedor: false,
+        isReposicion: false,
+        // B2B
+        ...(esB2b && {
+          rolComprador: 'buyer_b2b',
+          rucEmpresa: rucEmpresa ?? undefined,
+          razonSocialEmpresa: razonSocialEmpresa ?? undefined,
+          tipoComprobante,
+          numeroOC: numeroOC || undefined,
+        }),
       }
       const id = isDemo ? await demoCreatePedido(input) : await createPedido(input)
       if (isDemo) await demoSubirVoucher(id, voucherUrl ?? '')
       else await subirVoucher(id, voucherUrl ?? '')
+
+      // Crear reposiciones para los ítems que lo tienen activo (B2B APPROVED)
+      if (b2bAprobado) {
+        const activas = reposicionConfig.filter(c => c.activa)
+        if (activas.length > 0) {
+          const resultados = await Promise.allSettled(
+            activas.map(cfg =>
+              isDemo
+                ? demoCreateReposicion({
+                    buyerId: usuarioId,
+                    sellerId: cfg.caficultorId,
+                    productoId: cfg.productoId,
+                    productoNombre: cfg.productoNombre,
+                    pedidoOrigenId: id,
+                    frecuenciaDias: cfg.frecuenciaDias,
+                    cantidadUnidades: cfg.cantidadUnidades,
+                    presentacion: cfg.presentacion,
+                  })
+                : createReposicion({
+                    buyerId: usuarioId,
+                    sellerId: cfg.caficultorId,
+                    productoId: cfg.productoId,
+                    productoNombre: cfg.productoNombre,
+                    pedidoOrigenId: id,
+                    frecuenciaDias: cfg.frecuenciaDias,
+                    cantidadUnidades: cfg.cantidadUnidades,
+                    presentacion: cfg.presentacion,
+                  })
+            )
+          )
+          const reposicionIds = resultados
+            .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+            .map(r => r.value)
+
+          if (reposicionIds.length > 0) {
+            try {
+              if (isDemo) await demoLinkReposicionesToPedido(id, reposicionIds)
+              else await linkReposicionesToPedido(id, reposicionIds)
+            } catch { /* best-effort — el pedido ya fue creado */ }
+          }
+        }
+      }
+
       setPedidoId(id)
-      setStep(3)
+      setStep(PASO_CONFIRM)
       onPedidoConfirmado?.()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error al crear el pedido. Intenta de nuevo.')
@@ -1218,37 +1517,37 @@ const CheckoutONE: React.FC<Props> = ({
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Montserrat, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', fontFamily: 'Montserrat, sans-serif' }}>
 
       {/* ── Header ── */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,
         background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(12px)',
-        borderBottom: `1px solid ${C.border}`,
+        borderBottom: `1px solid ${'var(--tw-border)'}`,
         padding: '0 4%',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         height: 60,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {step < 3 && (
+          {step < PASO_CONFIRM && (
             <button
               onClick={() => step === 1 ? window.history.back() : setStep(step - 1)}
-              style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 22, padding: 0, display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', color: 'var(--tw-text-faint)', cursor: 'pointer', fontSize: 22, padding: 0, display: 'flex', alignItems: 'center' }}
             >←</button>
           )}
-          <span style={{ fontSize: 18, fontWeight: 700, color: C.terra, fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--tw-terra)', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.06em' }}>
             TUNAY WASI
           </span>
-          <span style={{ fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.1em' }}>
-            {step === 1 ? 'CARRITO' : step === 2 ? 'PAGO' : 'CONFIRMACIÓN'}
+          <span style={{ fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.1em' }}>
+            {(stepLabels[step - 1] ?? 'CONFIRMACIÓN').toUpperCase()}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {step < 3 && (
+          {step < PASO_CONFIRM && (
             <button
               onClick={() => { window.location.hash = '#/' }}
               style={{
-                background: 'none', border: 'none', color: C.mutedLight,
+                background: 'none', border: 'none', color: 'var(--tw-text-muted)',
                 fontSize: 12, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                 padding: '6px 0', whiteSpace: 'nowrap', letterSpacing: '0.02em',
               }}
@@ -1256,8 +1555,8 @@ const CheckoutONE: React.FC<Props> = ({
               + Seguir comprando
             </button>
           )}
-          {step < 3 && (
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.terra, fontFamily: 'Montserrat, sans-serif' }}>
+          {step < PASO_CONFIRM && (
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>
               {formatCents(totalCents)}
             </div>
           )}
@@ -1265,9 +1564,9 @@ const CheckoutONE: React.FC<Props> = ({
       </header>
 
       {/* ── Contenido principal ── */}
-      {step === 3 && pedidoId ? (
+      {step === PASO_CONFIRM && pedidoId ? (
         <div style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
-          <Paso3Screen pedidoId={pedidoId} nombreLocal={nombreLocal} />
+          <Paso3Screen pedidoId={pedidoId} nombreLocal={nombreLocal} totalCents={totalCents} reposicionesActivas={reposicionConfig.filter(c => c.activa).length} />
         </div>
       ) : (
         <div
@@ -1284,10 +1583,20 @@ const CheckoutONE: React.FC<Props> = ({
           <div>
             {/* Step indicator */}
             <div style={{ marginBottom: 36 }}>
-              <StepIndicator step={step} />
+              <StepIndicator step={step} labels={stepLabels} />
             </div>
 
-            {step === 1 && (
+            {step === PASO_CARRITO && (
+              <>
+              {/* Bloque de verificación B2B: solo si buyer_b2b NO aprobado */}
+              {esB2b && !b2bAprobado && (
+                <div style={{ padding: '20px 24px', background: 'rgba(201,110,75,.08)', border: '1px solid rgba(201,110,75,.3)', borderRadius: 12, margin: '8px 0 0' }}>
+                  <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 700, color: 'var(--tw-terra)' }}>Cuenta empresarial pendiente de aprobación</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-muted)', lineHeight: 1.6 }}>
+                    Tu cuenta B2B está en revisión. Podrás completar compras de lotes a granel y cotizaciones una vez que tu cuenta sea aprobada (1–2 días hábiles).
+                  </p>
+                </div>
+              )}
               <Paso1Form
                 lineas={lineas}
                 menuId={menuId}
@@ -1303,18 +1612,68 @@ const CheckoutONE: React.FC<Props> = ({
                 onDistritoLocalChange={setDistritoLocal}
                 onDireccionChange={setDireccionEntrega}
                 onAgenciaChange={setAgenciaSeleccionada}
-                onNext={() => { setStep(2); onPasoChange?.('paso2_pago') }}
+                b2bAprobado={b2bAprobado}
+                reposicionConfig={reposicionConfig}
+                onReposicionChange={setReposicionConfig}
+                onNext={() => { setStep(PASO_PAGO); onPasoChange?.('paso2_pago') }}
               />
+              {/* Campos fiscales B2B: solo para buyer_b2b APPROVED */}
+              {esB2b && b2bAprobado && step === PASO_CARRITO && (
+                <div style={{ padding: '20px 24px', background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 12, marginTop: 16 }}>
+                  <p style={{ margin: '0 0 16px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Datos de facturación B2B</p>
+                  {/* RUC y razón social (solo lectura — vienen del perfil) */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginBottom: 14 }}>
+                    <div>
+                      <Label>RUC</Label>
+                      <div style={{ padding: '12px 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', fontSize: 13, color: 'var(--tw-text)', fontFamily: 'JetBrains Mono, monospace' }}>
+                        {rucEmpresa ?? '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Razón Social</Label>
+                      <div style={{ padding: '12px 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', fontSize: 13, color: 'var(--tw-text)' }}>
+                        {razonSocialEmpresa ?? '—'}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Número de OC opcional */}
+                  <div style={{ marginBottom: 14 }}>
+                    <Label>Nº Orden de Compra (opcional)</Label>
+                    <Field
+                      value={numeroOC}
+                      onChange={e => setNumeroOC(e.target.value)}
+                      placeholder="OC-2026-001"
+                      maxLength={40}
+                    />
+                  </div>
+                  {/* Tipo de comprobante */}
+                  <div>
+                    <Label>Comprobante</Label>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      {(['factura', 'boleta'] as const).map(t => (
+                        <button key={t} type="button" onClick={() => setTipoComprobante(t)}
+                          style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: `1px solid ${tipoComprobante === t ? 'var(--tw-terra)' : 'var(--tw-border)'}`, background: tipoComprobante === t ? 'var(--tw-terra)' : 'transparent', color: tipoComprobante === t ? '#fff' : 'var(--tw-text-muted)', fontSize: 12, fontWeight: 700, cursor: 'pointer', textTransform: 'capitalize' }}>
+                          {t === 'factura' ? '🧾 Factura electrónica' : '📄 Boleta'}
+                        </button>
+                      ))}
+                    </div>
+                    {tipoComprobante === 'factura' && (
+                      <p style={{ margin: '8px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>Se emitirá a {razonSocialEmpresa ?? 'tu empresa'} · RUC {rucEmpresa ?? '—'}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              </>
             )}
 
-            {step === 2 && (
+            {step === PASO_PAGO && (
               <Paso2Form
                 totalCents={totalCents}
                 metodoPago={metodoPago}
                 onMetodoChange={setMetodoPago}
                 onVoucherSubido={setVoucherUrl}
                 onNext={confirmarPedido}
-                onBack={() => { setStep(1); onPasoChange?.('paso1_carrito') }}
+                onBack={() => { setStep(PASO_CARRITO); onPasoChange?.('paso1_carrito') }}
                 cargando={cargando}
                 error={error}
                 isDemo={isDemo}
@@ -1338,14 +1697,13 @@ const CheckoutONE: React.FC<Props> = ({
 
             {/* Confianza */}
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {/* Badge entrega estimada */}
               <div style={{
                 display: 'flex', gap: 10, alignItems: 'center',
                 padding: '8px 12px', borderRadius: 8,
-                background: '#0d1a0d', border: `1px solid ${C.sage}33`,
+                background: '#0d1a0d', border: `1px solid ${'var(--tw-sage)'}33`,
               }}>
                 <span style={{ fontSize: 14, flexShrink: 0 }}>📦</span>
-                <span style={{ fontSize: 11, color: C.sage, fontFamily: 'Montserrat, sans-serif', lineHeight: 1.4, fontWeight: 600 }}>
+                <span style={{ fontSize: 11, color: 'var(--tw-sage)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.4, fontWeight: 600 }}>
                   Entrega estimada: 2-5 días hábiles
                 </span>
               </div>
@@ -1355,7 +1713,7 @@ const CheckoutONE: React.FC<Props> = ({
               ].map(({ icon, text }) => (
                 <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
-                  <span style={{ fontSize: 11, color: C.muted, fontFamily: 'Montserrat, sans-serif', lineHeight: 1.4 }}>{text}</span>
+                  <span style={{ fontSize: 11, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.4 }}>{text}</span>
                 </div>
               ))}
             </div>

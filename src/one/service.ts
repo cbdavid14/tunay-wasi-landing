@@ -14,6 +14,7 @@ import {
   serverTimestamp,
   Timestamp,
   runTransaction,
+  writeBatch,
   deleteDoc,
 } from 'firebase/firestore'
 import { db } from '../shared/firebase'
@@ -23,6 +24,7 @@ import type {
   ProductoONE,
   PedidoONE,
   UsuarioONE,
+  DireccionEnvioONE,
   KitIdentidadONE,
   CalificacionCaficultor,
   CalificacionCafeteria,
@@ -38,6 +40,18 @@ import type {
   UbigeoONE,
   LogisticaCaficultorONE,
   SaveLogisticaInput,
+  SolicitudB2B,
+  EmpresaB2B,
+  CotizacionONE,
+  CreateCotizacionInput,
+  ResponderCotizacionInput,
+  PagoCaficultorONE,
+  EvidenciaONE,
+  AprobarEvidenciaInput,
+  RechazarEvidenciaInput,
+  ReclamoONE,
+  CreateReclamoInput,
+  CreateReposicionInput,
 } from './types'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -71,18 +85,20 @@ function normalizeDate(value: unknown): string {
 // Convierte presentación a kg equivalente para cálculo de stock
 function parseKgFromPresentacion(presentacion: FormatoONE, qty: number): number {
   switch (presentacion) {
-    case '250g':  return 0.25 * qty
-    case '500g':  return 0.5  * qty
-    case '1kg':   return 1.0  * qty
-    case '5kg':   return 5.0  * qty
-    case '10kg':  return 10.0 * qty
-    case '25kg':  return 25.0 * qty
-    default:      return 0
+    case '250g':     return 0.25 * qty
+    case '500g':     return 0.5  * qty
+    case '1kg':      return 1.0  * qty
+    case '5kg':      return 5.0  * qty
+    case '10kg':     return 10.0 * qty
+    case '20kg':     return 20.0 * qty
+    case '1quintal': return 46.0 * qty
+    case '1saco':    return 60.0 * qty
+    default:         return 0
   }
 }
 
 // ─── CATÁLOGO ─────────────────────────────────────────────────────────────────
-// Los caficultores ahora viven en one_usuarios con rol='caficultor'
+// Los caficultores ahora viven en one_usuarios con rol='seller'
 // CaficultorONE se construye desde el sub-documento caficultor del usuario
 
 function usuarioToCaficultor(snap: { id: string; data: () => any }): CaficultorONE {
@@ -108,7 +124,7 @@ export async function fetchCaficultores(): Promise<CaficultorONE[]> {
   const snap = await getDocs(
     query(
       collection(db, ONE_COLLECTIONS.USUARIOS),
-      where('rol', '==', 'caficultor')
+      where('rol', '==', 'seller')
     )
   )
   return snap.docs
@@ -171,7 +187,7 @@ export async function createPedido(input: CreatePedidoInput): Promise<string> {
   }))
 
   const subtotalCents = items.reduce((acc, item) => acc + item.subtotalCents, 0)
-  const deliveryCents = ONE_CONFIG.DELIVERY_CENTS
+  const deliveryCents = input.deliveryCentsOverride ?? ONE_CONFIG.DELIVERY_CENTS
   const totalCents = subtotalCents + deliveryCents
 
   // Construir pedido omitiendo campos undefined
@@ -180,6 +196,8 @@ export async function createPedido(input: CreatePedidoInput): Promise<string> {
     negocioNombre: input.negocioNombre,
     negocioEmail: input.negocioEmail,
     negocioTelefono: input.negocioTelefono,
+    ...(input.negocioRazonSocial ? { negocioRazonSocial: input.negocioRazonSocial } : {}),
+    ...(input.negocioRuc ? { negocioRuc: input.negocioRuc } : {}),
     nombreLocal: input.nombreLocal,
     distritoLocal: input.distritoLocal,
     items,
@@ -193,7 +211,13 @@ export async function createPedido(input: CreatePedidoInput): Promise<string> {
     calificado: false,
     recepcionConfirmada: false,
     esKitProveedor: input.esKitProveedor ?? false,
+    ...(input.caficultorId ? { caficultorId: input.caficultorId } : {}),
+    ...(input.grupoCheckoutId ? { grupoCheckoutId: input.grupoCheckoutId } : {}),
+    ...(input.subPedidoLetra ? { subPedidoLetra: input.subPedidoLetra } : {}),
     ...(input.direccionEntrega ? { direccionEntrega: input.direccionEntrega } : {}),
+    ...(input.envioDetalle ? { envioDetalle: input.envioDetalle } : {}),
+    isReposicion: input.isReposicion ?? false,
+    ...(input.reposicionIds?.length ? { reposicionIds: input.reposicionIds } : {}),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -243,6 +267,33 @@ export async function createPedido(input: CreatePedidoInput): Promise<string> {
   return pedidoId
 }
 
+export async function createReposicion(input: CreateReposicionInput): Promise<string> {
+  const nextOrderDate = new Date()
+  nextOrderDate.setDate(nextOrderDate.getDate() + input.frecuenciaDias)
+  const docRef = await addDoc(collection(db, ONE_COLLECTIONS.REPOSICIONES), {
+    status: 'ACTIVE',
+    buyerId: input.buyerId,
+    sellerId: input.sellerId,
+    productoId: input.productoId,
+    productoNombre: input.productoNombre,
+    pedidoOrigenId: input.pedidoOrigenId,
+    frecuenciaDias: input.frecuenciaDias,
+    cantidadUnidades: input.cantidadUnidades,
+    presentacion: input.presentacion,
+    nextOrderDate: nextOrderDate.toISOString(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return docRef.id
+}
+
+export async function linkReposicionesToPedido(pedidoId: string, reposicionIds: string[]): Promise<void> {
+  await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
+    reposicionIds,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function fetchPedido(id: string): Promise<PedidoONE> {
   const snap = await getDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, id))
   if (!snap.exists()) throw new Error(`Pedido ${id} no encontrado`)
@@ -260,33 +311,51 @@ export async function fetchPedidosByNegocio(uid: string): Promise<PedidoONE[]> {
     query(
       collection(db, ONE_COLLECTIONS.PEDIDOS),
       where('negocioId', '==', uid),
-      orderBy('createdAt', 'desc')
-    )
-  )
-  return snap.docs.map((d) => {
-    const data = d.data()
-    return {
-      id: d.id,
-      ...data,
-      createdAt: normalizeDate(data.createdAt),
-      updatedAt: normalizeDate(data.updatedAt),
-    } as PedidoONE
-  })
-}
-
-export async function fetchPedidosByCaficultor(caficultorId: string): Promise<PedidoONE[]> {
-  const snap = await getDocs(
-    query(
-      collection(db, ONE_COLLECTIONS.PEDIDOS),
-      orderBy('createdAt', 'desc')
     )
   )
   return snap.docs
     .map((d) => {
       const data = d.data()
+      return {
+        id: d.id,
+        ...data,
+        createdAt: normalizeDate(data.createdAt),
+        updatedAt: normalizeDate(data.updatedAt),
+      } as PedidoONE
+    })
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+}
+
+export async function fetchPedidosByCaficultor(caficultorId: string): Promise<PedidoONE[]> {
+  // Intentar primero query por caficultorId en raíz (modelo nuevo — más eficiente)
+  const snapNuevo = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.PEDIDOS),
+      where('caficultorId', '==', caficultorId),
+      orderBy('createdAt', 'desc')
+    )
+  )
+  const pedidosNuevos = snapNuevo.docs.map((d) => {
+    const data = d.data()
+    return { id: d.id, ...data, createdAt: normalizeDate(data.createdAt), updatedAt: normalizeDate(data.updatedAt) } as PedidoONE
+  })
+
+  // Fallback: pedidos legacy donde el caficultor aparece en items[].caficultorId (sin caficultorId en raíz)
+  const snapAll = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.PEDIDOS),
+      orderBy('createdAt', 'desc')
+    )
+  )
+  const idsNuevos = new Set(pedidosNuevos.map(p => p.id))
+  const pedidosLegacy = snapAll.docs
+    .map((d) => {
+      const data = d.data()
       return { id: d.id, ...data, createdAt: normalizeDate(data.createdAt), updatedAt: normalizeDate(data.updatedAt) } as PedidoONE
     })
-    .filter((p) => p.items.some((item) => item.caficultorId === caficultorId))
+    .filter((p) => !idsNuevos.has(p.id) && !p.caficultorId && p.items.some((item) => item.caficultorId === caficultorId))
+
+  return [...pedidosNuevos, ...pedidosLegacy].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
 }
 
 export async function fetchPedidosAdmin(): Promise<PedidoONE[]> {
@@ -315,6 +384,41 @@ export async function subirVoucher(pedidoId: string, url: string): Promise<void>
   })
 }
 
+// Obtener todos los pedidos de un grupo de checkout
+export async function fetchPedidosByGrupo(grupoCheckoutId: string): Promise<PedidoONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.PEDIDOS),
+      where('grupoCheckoutId', '==', grupoCheckoutId)
+    )
+  )
+  return snap.docs
+    .map((d) => {
+      const data = d.data()
+      return {
+        id: d.id,
+        ...data,
+        createdAt: normalizeDate(data.createdAt),
+        updatedAt: normalizeDate(data.updatedAt),
+      } as PedidoONE
+    })
+    .sort((a, b) => (a.subPedidoLetra ?? '').localeCompare(b.subPedidoLetra ?? ''))
+}
+
+// Subir voucher a todos los pedidos de un grupo (el comprobante cubre todos los sub-pedidos)
+export async function subirVoucherGrupo(grupoCheckoutId: string, url: string): Promise<void> {
+  const pedidos = await fetchPedidosByGrupo(grupoCheckoutId)
+  await Promise.all(
+    pedidos.map((p) =>
+      updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, p.id), {
+        voucherUrl: url,
+        pagoStatus: 'voucher_subido',
+        updatedAt: serverTimestamp(),
+      })
+    )
+  )
+}
+
 export async function verificarPago(pedidoId: string): Promise<void> {
   await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
     pagoStatus: 'verificado',
@@ -322,11 +426,27 @@ export async function verificarPago(pedidoId: string): Promise<void> {
   })
 }
 
+export async function verificarPagoGrupo(grupoCheckoutId: string): Promise<void> {
+  const pedidos = await fetchPedidosByGrupo(grupoCheckoutId)
+  await Promise.all(pedidos.map(p => updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, p.id), {
+    pagoStatus: 'verificado',
+    updatedAt: serverTimestamp(),
+  })))
+}
+
 export async function rechazarPago(pedidoId: string): Promise<void> {
   await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
     pagoStatus: 'rechazado',
     updatedAt: serverTimestamp(),
   })
+}
+
+export async function rechazarPagoGrupo(grupoCheckoutId: string): Promise<void> {
+  const pedidos = await fetchPedidosByGrupo(grupoCheckoutId)
+  await Promise.all(pedidos.map(p => updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, p.id), {
+    pagoStatus: 'rechazado',
+    updatedAt: serverTimestamp(),
+  })))
 }
 
 export async function updateLogistica(
@@ -341,20 +461,62 @@ export async function updateLogistica(
 
 export async function despacharAgencia(
   pedidoId: string,
-  data: { codigoAgencia: string; fotoDespacho?: string }
+  data: { codigoAgencia: string; fotoDespacho?: string; caficultorId?: string; agencia?: string }
 ): Promise<void> {
-  await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
+  const base = {
     logisticaStatus: 'en_agencia',
     codigoAgencia: data.codigoAgencia,
     ...(data.fotoDespacho ? { fotoDespacho: data.fotoDespacho } : {}),
     updatedAt: serverTimestamp(),
-  })
+  }
+  if (data.caficultorId) {
+    const key = `enviosCaficultor.${data.caficultorId}`
+    await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
+      ...base,
+      [key]: {
+        codigoAgencia: data.codigoAgencia,
+        ...(data.agencia ? { agencia: data.agencia } : {}),
+        ...(data.fotoDespacho ? { fotoDespacho: data.fotoDespacho } : {}),
+        logisticaStatus: 'en_agencia',
+      },
+    })
+  } else {
+    await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), base)
+  }
 }
 
-export async function confirmarRecepcion(pedidoId: string): Promise<void> {
-  await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
+export async function confirmarRecepcion(pedidoId: string, enviosCaficultorIds?: string[]): Promise<void> {
+  const updates: Record<string, unknown> = {
     logisticaStatus: 'entregado',
     recepcionConfirmada: true,
+    updatedAt: serverTimestamp(),
+  }
+  for (const cafId of (enviosCaficultorIds ?? [])) {
+    updates[`enviosCaficultor.${cafId}.logisticaStatus`] = 'entregado'
+  }
+  await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), updates)
+}
+
+export async function confirmarRecepcionCaficultor(
+  pedidoId: string,
+  caficultorId: string,
+  todosEntregados: boolean
+): Promise<void> {
+  const updates: Record<string, unknown> = {
+    [`enviosCaficultor.${caficultorId}.logisticaStatus`]: 'entregado',
+    updatedAt: serverTimestamp(),
+  }
+  if (todosEntregados) {
+    updates.logisticaStatus = 'entregado'
+    updates.recepcionConfirmada = true
+  }
+  await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), updates)
+}
+
+export async function marcarEnDisputa(pedidoId: string, reclamoId?: string): Promise<void> {
+  await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
+    logisticaStatus: 'en_disputa',
+    ...(reclamoId ? { disputaId: reclamoId } : {}),
     updatedAt: serverTimestamp(),
   })
 }
@@ -363,7 +525,7 @@ export async function confirmarRecepcion(pedidoId: string): Promise<void> {
 
 export async function fetchNegocios(): Promise<UsuarioONE[]> {
   const snap = await getDocs(
-    query(collection(db, ONE_COLLECTIONS.USUARIOS), where('rol', '==', 'negocio'))
+    query(collection(db, ONE_COLLECTIONS.USUARIOS), where('rol', 'in', ['buyer_b2b', 'buyer_b2c']))
   )
   return snap.docs.map(d => ({ uid: d.id, ...d.data() } as UsuarioONE))
 }
@@ -443,6 +605,16 @@ export async function updateUsuario(
 ): Promise<void> {
   await updateDoc(doc(db, ONE_COLLECTIONS.USUARIOS, uid), {
     ...data,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function updateDireccionesNegocio(
+  uid: string,
+  direcciones: DireccionEnvioONE[]
+): Promise<void> {
+  await updateDoc(doc(db, ONE_COLLECTIONS.USUARIOS, uid), {
+    'negocio.direcciones': direcciones,
     updatedAt: serverTimestamp(),
   })
 }
@@ -607,10 +779,11 @@ export async function fetchCalificacionesByCaficultor(
     query(
       collection(db, ONE_COLLECTIONS.CALIFICACIONES_CAFICULTOR),
       where('caficultorId', '==', caficultorId),
-      orderBy('createdAt', 'desc')
     )
   )
-  return snap.docs.map((d) => ({ id: d.id, ...d.data(), createdAt: normalizeDate(d.data().createdAt) } as CalificacionCaficultor))
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data(), createdAt: normalizeDate(d.data().createdAt) } as CalificacionCaficultor))
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
 }
 
 export async function crearCalificacionCafeteria(
@@ -630,10 +803,11 @@ export async function fetchCalificacionesCafeteria(
     query(
       collection(db, ONE_COLLECTIONS.CALIFICACIONES_CAFETERIA),
       where('caficultorId', '==', caficultorId),
-      orderBy('createdAt', 'desc')
     )
   )
-  return snap.docs.map((d) => ({ id: d.id, ...d.data(), createdAt: normalizeDate(d.data().createdAt) } as CalificacionCafeteria))
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data(), createdAt: normalizeDate(d.data().createdAt) } as CalificacionCafeteria))
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
 }
 
 // ─── Menús ────────────────────────────────────────────────────────────────────
@@ -643,19 +817,21 @@ export async function fetchMenuActivo(negocioId: string): Promise<MenuONE | null
   return menus.find((m) => m.activo) ?? null
 }
 
-export async function fetchMenusByNegocio(negocioId: string): Promise<MenuONE[]> {  const snap = await getDocs(
+export async function fetchMenusByNegocio(negocioId: string): Promise<MenuONE[]> {
+  const snap = await getDocs(
     query(
       collection(db, ONE_COLLECTIONS.MENUS),
       where('negocioId', '==', negocioId),
-      orderBy('createdAt', 'asc')
     )
   )
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-    createdAt: normalizeDate(d.data().createdAt),
-    updatedAt: normalizeDate(d.data().updatedAt),
-  } as MenuONE))
+  return snap.docs
+    .map((d) => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: normalizeDate(d.data().createdAt),
+      updatedAt: normalizeDate(d.data().updatedAt),
+    } as MenuONE))
+    .sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''))
 }
 
 export async function createMenu(input: CreateMenuInput): Promise<string> {
@@ -705,29 +881,29 @@ export async function setMenuActivo(negocioId: string, menuId: string): Promise<
 export async function sendMensaje(input: SendMensajeInput): Promise<string> {
   const docRef = await addDoc(collection(db, ONE_COLLECTIONS.MENSAJES), {
     pedidoId: input.pedidoId,
+    ...(input.caficultorId ? { caficultorId: input.caficultorId } : {}),
     autorId: input.autorId,
     autorNombre: input.autorNombre,
     autorRol: input.autorRol,
     texto: input.texto,
-    tipo: input.tipo ?? 'texto',
+    ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),
+    tipo: input.tipo ?? (input.imageUrl ? 'imagen' : 'texto'),
     createdAt: serverTimestamp(),
   })
   return docRef.id
 }
 
-export async function fetchMensajesByPedido(pedidoId: string): Promise<MensajePedidoONE[]> {
-  const snap = await getDocs(
-    query(
-      collection(db, ONE_COLLECTIONS.MENSAJES),
-      where('pedidoId', '==', pedidoId),
-      orderBy('createdAt', 'asc')
-    )
-  )
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-    createdAt: normalizeDate(d.data().createdAt),
-  } as MensajePedidoONE))
+export async function fetchMensajesByPedido(pedidoId: string, caficultorId?: string): Promise<MensajePedidoONE[]> {
+  const constraints = [where('pedidoId', '==', pedidoId)]
+  if (caficultorId) constraints.push(where('caficultorId', '==', caficultorId))
+  const snap = await getDocs(query(collection(db, ONE_COLLECTIONS.MENSAJES), ...constraints))
+  return snap.docs
+    .map((d) => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: normalizeDate(d.data().createdAt),
+    } as MensajePedidoONE))
+    .sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''))
 }
 
 // ─── LOGÍSTICA CAFICULTOR ────────────────────────────────────────────────────
@@ -744,7 +920,13 @@ export async function fetchLogisticaCaficultor(caficultorId: string): Promise<Lo
   // Soporte para estructura nueva (caficultor.logistica) y legacy (caficultor.direccion)
   const logistica = data?.caficultor?.logistica ?? data?.caficultor?.direccion ?? null
   if (!logistica?.ubigeo) return null
-  return logistica as LogisticaCaficultorONE
+  // Merge con campos sueltos en caficultor raíz (legacy: campos guardados antes de la estructura logistica)
+  const caf = data?.caficultor ?? {}
+  return {
+    ...(caf.tarifaFijaAgenciaSoles !== undefined && { tarifaFijaAgenciaSoles: caf.tarifaFijaAgenciaSoles }),
+    ...(caf.tarifaFijaDomicilioSoles !== undefined && { tarifaFijaDomicilioSoles: caf.tarifaFijaDomicilioSoles }),
+    ...logistica,  // logistica gana sobre legacy si tiene el campo
+  } as LogisticaCaficultorONE
 }
 
 export async function saveLogisticaCaficultor(input: SaveLogisticaInput): Promise<void> {
@@ -760,6 +942,522 @@ export async function saveLogisticaCaficultor(input: SaveLogisticaInput): Promis
       agenciasMap: input.agenciasMap,
       agenciasActivas: input.agenciasActivas,
       agenciasPermiteDomicilio: input.agenciasPermiteDomicilio,
+      ...(input.agenciasDetalle && { agenciasDetalle: input.agenciasDetalle }),
+      ...(input.gratisAgenciaActivo !== undefined && { gratisAgenciaActivo: input.gratisAgenciaActivo }),
+      ...(input.gratisAgenciaKg !== undefined && { gratisAgenciaKg: input.gratisAgenciaKg }),
+      ...(input.gratisDomicilioActivo !== undefined && { gratisDomicilioActivo: input.gratisDomicilioActivo }),
+      ...(input.gratisDomicilioKg !== undefined && { gratisDomicilioKg: input.gratisDomicilioKg }),
+      ...(input.tarifaFijaAgenciaSoles !== undefined && { tarifaFijaAgenciaSoles: input.tarifaFijaAgenciaSoles }),
+      ...(input.tarifaFijaDomicilioSoles !== undefined && { tarifaFijaDomicilioSoles: input.tarifaFijaDomicilioSoles }),
     },
+  })
+}
+
+// ─── CUENTAS B2B ─────────────────────────────────────────────────────────────
+
+export async function registrarEmpresaB2B(uid: string, empresa: EmpresaB2B): Promise<void> {
+  await updateDoc(doc(db, ONE_COLLECTIONS.USUARIOS, uid), {
+    empresa: { ...empresa, solicitudAt: new Date().toISOString() },
+  })
+}
+
+export async function fetchSolicitudesB2B(estado?: EmpresaB2B['estadoAprobacion']): Promise<SolicitudB2B[]> {
+  const q = estado
+    ? query(collection(db, ONE_COLLECTIONS.USUARIOS), where('empresa.estadoAprobacion', '==', estado))
+    : query(collection(db, ONE_COLLECTIONS.USUARIOS), where('empresa', '!=', null))
+  const snap = await getDocs(q)
+  return snap.docs
+    .map(d => {
+      const data = d.data()
+      if (!data.empresa) return null
+      return {
+        uid: d.id,
+        nombre: data.nombre ?? '',
+        email: data.email ?? '',
+        telefono: data.telefono,
+        empresa: data.empresa as EmpresaB2B,
+        createdAt: normalizeDate(data.createdAt),
+      } as SolicitudB2B
+    })
+    .filter((s): s is SolicitudB2B => s !== null)
+}
+
+export async function aprobarSolicitudB2B(uid: string, adminUid: string): Promise<void> {
+  await updateDoc(doc(db, ONE_COLLECTIONS.USUARIOS, uid), {
+    'empresa.estadoAprobacion': 'APPROVED',
+    'empresa.aprobadoPor': adminUid,
+    'empresa.aprobadoAt': new Date().toISOString(),
+    'empresa.motivoRechazo': null,
+  })
+}
+
+export async function rechazarSolicitudB2B(uid: string, adminUid: string, motivo: string): Promise<void> {
+  await updateDoc(doc(db, ONE_COLLECTIONS.USUARIOS, uid), {
+    'empresa.estadoAprobacion': 'REJECTED',
+    'empresa.aprobadoPor': adminUid,
+    'empresa.aprobadoAt': new Date().toISOString(),
+    'empresa.motivoRechazo': motivo,
+  })
+}
+
+// ─── COTIZACIONES B2B ─────────────────────────────────────────────────────────
+
+function expiraAt7d(): string {
+  return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+}
+
+export async function createCotizacion(input: CreateCotizacionInput): Promise<string> {
+  const now = new Date().toISOString()
+  const ronda1 = {
+    ronda: 1,
+    autorRol: 'buyer_b2b',
+    kgSolicitados: input.kgSolicitados,
+    precioOfertadoCents: input.precioOfertadoCents,
+    plazoEntrega: input.plazoEntrega,
+    mensaje: input.mensaje ?? '',
+    createdAt: now,
+  }
+  const payload = {
+    productoId: input.productoId,
+    productoNombre: input.productoNombre,
+    caficultorId: input.caficultorId,
+    caficultorNombre: input.caficultorNombre,
+    negocioId: input.negocioId,
+    negocioNombre: input.negocioNombre,
+    negocioRazonSocial: input.negocioRazonSocial ?? '',
+    estado: 'ENVIADA',
+    rondas: [ronda1],
+    rondaActual: 1,
+    expiraAt: expiraAt7d(),
+    createdAt: now,
+    updatedAt: now,
+  }
+  console.debug('[Cotizacion] Intentando crear cotización en Firestore:', {
+    negocioId: payload.negocioId,
+    productoId: payload.productoId,
+    collection: ONE_COLLECTIONS.COTIZACIONES,
+  })
+  try {
+    const ref = await addDoc(collection(db, ONE_COLLECTIONS.COTIZACIONES), payload)
+    console.debug('[Cotizacion] Cotización creada con ID:', ref.id)
+    return ref.id
+  } catch (err) {
+    console.error('[Cotizacion] Error en Firestore addDoc:', err)
+    throw err
+  }
+}
+
+export async function fetchCotizacionesNegocio(negocioId: string): Promise<CotizacionONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.COTIZACIONES),
+      where('negocioId', '==', negocioId),
+    )
+  )
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as CotizacionONE))
+    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
+}
+
+export async function fetchCotizacionesCaficultor(caficultorId: string): Promise<CotizacionONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.COTIZACIONES),
+      where('caficultorId', '==', caficultorId),
+    )
+  )
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as CotizacionONE))
+    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
+}
+
+export async function responderCotizacion(input: ResponderCotizacionInput): Promise<void> {
+  const ref = doc(db, ONE_COLLECTIONS.COTIZACIONES, input.cotizacionId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('Cotización no encontrada')
+  const cot = snap.data() as CotizacionONE
+
+  if (input.accion === 'aceptar') {
+    await updateDoc(ref, { estado: 'ACEPTADA', updatedAt: new Date().toISOString(), expiraAt: null })
+    await createPedidoFromCotizacion(input.cotizacionId)
+    return
+  }
+  if (input.accion === 'rechazar') {
+    await updateDoc(ref, { estado: 'RECHAZADA', updatedAt: new Date().toISOString(), expiraAt: null })
+    return
+  }
+
+  // contraofertar
+  const rondaSig = cot.rondaActual + 1
+  if (rondaSig > 3) throw new Error('Máximo 3 rondas de negociación')
+  const nuevaRonda = {
+    ronda: rondaSig,
+    autorRol: input.autorRol,
+    kgSolicitados: input.kgSolicitados ?? cot.rondas[cot.rondas.length - 1].kgSolicitados,
+    precioOfertadoCents: input.precioOfertadoCents ?? cot.rondas[cot.rondas.length - 1].precioOfertadoCents,
+    plazoEntrega: input.plazoEntrega ?? cot.rondas[cot.rondas.length - 1].plazoEntrega,
+    mensaje: input.mensaje ?? '',
+    createdAt: new Date().toISOString(),
+  }
+  await updateDoc(ref, {
+    estado: input.autorRol === 'buyer_b2b' ? 'CONTRAOFERTA' : 'RESPONDIDA',
+    rondas: [...cot.rondas, nuevaRonda],
+    rondaActual: rondaSig,
+    expiraAt: expiraAt7d(),
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+// Crea un pedido a partir de una cotización ACEPTADA usando una batch write atómica.
+// Retorna el pedidoId generado.
+export async function createPedidoFromCotizacion(cotizacionId: string): Promise<string> {
+  const cotRef = doc(db, ONE_COLLECTIONS.COTIZACIONES, cotizacionId)
+  const cotSnap = await getDoc(cotRef)
+  if (!cotSnap.exists()) throw new Error(`Cotización ${cotizacionId} no encontrada`)
+  const cot = cotSnap.data() as CotizacionONE
+
+  // Precio acordado = última ronda de negociación
+  const ultimaRonda = cot.rondas[cot.rondas.length - 1]
+  const kgSolicitados = ultimaRonda.kgSolicitados
+  const precioKgCents = ultimaRonda.precioOfertadoCents
+  const totalCents = Math.round(precioKgCents * kgSolicitados)
+
+  const pedidoId = generarIdPedido()
+  const now = new Date().toISOString()
+
+  const pedido = {
+    id: pedidoId,
+    negocioId: cot.negocioId,
+    negocioNombre: cot.negocioNombre,
+    negocioEmail: '',
+    negocioTelefono: '',
+    ...(cot.negocioRazonSocial ? { negocioRazonSocial: cot.negocioRazonSocial } : {}),
+    nombreLocal: cot.negocioNombre,
+    distritoLocal: '',
+    caficultorId: cot.caficultorId,
+    items: [
+      {
+        productoId: cot.productoId,
+        productoNombre: cot.productoNombre,
+        caficultorId: cot.caficultorId,
+        caficultorNombre: cot.caficultorNombre,
+        presentacion: `${kgSolicitados}kg` as FormatoONE,
+        qty: 1,
+        unitCents: totalCents,
+        subtotalCents: totalCents,
+      },
+    ],
+    subtotalCents: totalCents,
+    deliveryCents: 0,
+    totalCents,
+    metodoPago: 'transferencia' as const,
+    pagoStatus: 'pendiente' as const,
+    logisticaStatus: 'preparando' as const,
+    estado: 'confirmado',
+    origenCotizacion: cotizacionId,
+    payment: { status: 'RETAINED' },
+    kitGenerado: false,
+    calificado: false,
+    recepcionConfirmada: false,
+    esKitProveedor: false,
+    isReposicion: false,
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  const batch = writeBatch(db)
+
+  const pedidoRef = doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId)
+  batch.set(pedidoRef, pedido)
+
+  batch.update(cotRef, {
+    estado: 'ACEPTADA',
+    pedidoId,
+    updatedAt: now,
+  })
+
+  await batch.commit()
+
+  return pedidoId
+}
+
+// ─── PAGOS CAFICULTOR ─────────────────────────────────────────────────────────
+
+export async function fetchPagosByCaficultor(caficultorId: string): Promise<PagoCaficultorONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.PAGOS_CAFICULTOR),
+      where('caficultorId', '==', caficultorId),
+    )
+  )
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as PagoCaficultorONE))
+    .sort((a, b) => ((b as any).createdAt ?? '').localeCompare((a as any).createdAt ?? ''))
+}
+
+export async function liberarPago(pagoId: string, adminUid: string, metodoPago: string, cuentaDestino: string): Promise<void> {
+  const ref = doc(db, ONE_COLLECTIONS.PAGOS_CAFICULTOR, pagoId)
+  await updateDoc(ref, {
+    estado: 'LIBERADO',
+    metodoPago,
+    cuentaDestino,
+    liberadoPor: adminUid,
+    liberadoAt: new Date().toISOString(),
+  })
+}
+
+// ─── EVIDENCIAS / REVIEWER ───────────────────────────────────────────────────
+
+export async function fetchEvidenciasPendientes(): Promise<EvidenciaONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.EVIDENCIAS),
+      where('estado', 'in', ['PENDING_REVIEW', 'DISPUTED']),
+    )
+  )
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as EvidenciaONE))
+    .sort((a, b) => ((a as any).createdAt ?? '').localeCompare((b as any).createdAt ?? ''))
+}
+
+export async function fetchEvidenciasByProducto(productoId: string): Promise<EvidenciaONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.EVIDENCIAS),
+      where('productoId', '==', productoId),
+    )
+  )
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as EvidenciaONE))
+    .sort((a, b) => ((b as any).createdAt ?? '').localeCompare((a as any).createdAt ?? ''))
+}
+
+export async function aprobarEvidencia(input: AprobarEvidenciaInput): Promise<void> {
+  const ref = doc(db, ONE_COLLECTIONS.EVIDENCIAS, input.evidenciaId)
+  await updateDoc(ref, {
+    estado: 'APPROVED',
+    revisadoPor: input.reviewerUid,
+    revisadoAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+export async function rechazarEvidencia(input: RechazarEvidenciaInput): Promise<void> {
+  const ref = doc(db, ONE_COLLECTIONS.EVIDENCIAS, input.evidenciaId)
+  await updateDoc(ref, {
+    estado: 'REJECTED',
+    revisadoPor: input.reviewerUid,
+    revisadoAt: new Date().toISOString(),
+    motivoRechazo: input.motivo,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+// ─── RECLAMOS / DEVOLUCIONES ─────────────────────────────────────────────────
+
+export async function createReclamo(input: CreateReclamoInput, uid: string): Promise<string> {
+  const now = new Date().toISOString()
+  const ref = await addDoc(collection(db, ONE_COLLECTIONS.RECLAMOS), {
+    ...input,
+    fotosUrls: input.fotosUrls ?? [],
+    estado: 'ABIERTO',
+    creadoPor: uid,
+    createdAt: now,
+    updatedAt: now,
+  })
+  return ref.id
+}
+
+export async function fetchReclamosByNegocio(negocioId: string): Promise<ReclamoONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.RECLAMOS),
+      where('negocioId', '==', negocioId),
+    )
+  )
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as ReclamoONE))
+    .sort((a, b) => ((b as any).createdAt ?? '').localeCompare((a as any).createdAt ?? ''))
+}
+
+export async function fetchReclamoById(reclamoId: string): Promise<ReclamoONE | null> {
+  const snap = await getDoc(doc(db, ONE_COLLECTIONS.RECLAMOS, reclamoId))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as ReclamoONE
+}
+
+// ─── RECLAMOS ADMIN ───────────────────────────────────────────────────────────
+
+/** Trae todos los reclamos (vista admin) ordenados por fecha desc, sin filtro de uid */
+export async function fetchReclamosAdmin(): Promise<ReclamoONE[]> {
+  let snap
+  try {
+    snap = await getDocs(
+      query(
+        collection(db, ONE_COLLECTIONS.RECLAMOS),
+        orderBy('createdAt', 'desc')
+      )
+    )
+  } catch (err) {
+    // Fallback: si orderBy falla (p.ej. docs sin createdAt o índice pendiente),
+    // traer la colección entera y ordenar en cliente.
+    console.warn('[fetchReclamosAdmin] orderBy falló, usando fallback sin orden:', err)
+    snap = await getDocs(collection(db, ONE_COLLECTIONS.RECLAMOS))
+  }
+  const docs = snap.docs.map(d => ({
+    id: d.id,
+    ...d.data(),
+    createdAt: normalizeDate(d.data().createdAt),
+    updatedAt: normalizeDate(d.data().updatedAt),
+  } as ReclamoONE))
+  // Ordenar en cliente para garantizar resultado correcto en ambos casos
+  return docs.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+export type DecisionDisputa = 'RESOLUCION_COMPRADOR' | 'RESOLUCION_CAFICULTOR'
+
+export interface ResolverDisputaInput {
+  reclamoId: string
+  decision: DecisionDisputa
+  refundPct?: number          // 0–100, si es RESOLUCION_COMPRADOR
+  notaInterna: string
+  notaComprador?: string
+  notaCaficultor?: string
+  reviewerUid: string
+}
+
+/**
+ * Paso 1 — Registra la decisión humana y pasa el reclamo a DECISION_PENDIENTE.
+ * Escribe en one_auditoria el evento.
+ */
+export async function resolverDisputa(input: ResolverDisputaInput): Promise<void> {
+  const ref = doc(db, ONE_COLLECTIONS.RECLAMOS, input.reclamoId)
+  const now = new Date().toISOString()
+
+  const humanDecision: Record<string, unknown> = {
+    decision: input.decision,
+    ...(input.refundPct !== undefined && { refundPct: input.refundPct }),
+    notaInterna: input.notaInterna,
+    ...(input.notaComprador ? { notaComprador: input.notaComprador } : {}),
+    ...(input.notaCaficultor ? { notaCaficultor: input.notaCaficultor } : {}),
+    registradoPor: input.reviewerUid,
+    registradoAt: now,
+  }
+
+  await updateDoc(ref, {
+    humanDecision,
+    estado: 'DECISION_PENDIENTE' as const,
+    revisadoPor: input.reviewerUid,
+    revisadoAt: now,
+    updatedAt: now,
+  })
+
+  // Auditoria
+  await addDoc(collection(db, 'one_auditoria'), {
+    tipo: 'DISPUTA_DECISION',
+    reclamoId: input.reclamoId,
+    decision: input.decision,
+    ...(input.refundPct !== undefined && { refundPct: input.refundPct }),
+    reviewerUid: input.reviewerUid,
+    createdAt: now,
+  })
+}
+
+/**
+ * Paso 2 — Confirma la ejecución financiera.
+ * Cambia estado a EJECUCION_FINANCIERA y luego a RESUELTO_COMPRADOR / RESUELTO_CAFICULTOR.
+ * En producción real, aquí se llamaría al proveedor de pagos.
+ */
+export async function confirmarEjecucionFinanciera(reclamoId: string, reviewerUid: string): Promise<void> {
+  const ref = doc(db, ONE_COLLECTIONS.RECLAMOS, reclamoId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('Reclamo no encontrado')
+  const reclamo = snap.data() as ReclamoONE & { humanDecision?: { decision: string } }
+  const now = new Date().toISOString()
+
+  const estadoFinal = reclamo.humanDecision?.decision === 'RESOLUCION_COMPRADOR'
+    ? 'RESUELTO_COMPRADOR'
+    : 'RESUELTO_CAFICULTOR'
+
+  await updateDoc(ref, {
+    estado: 'EJECUCION_FINANCIERA' as const,
+    updatedAt: now,
+  })
+
+  // En producción: await proveedorPagos.ejecutarReembolso(...)
+  // Por ahora lo marcamos resuelto directamente
+  await updateDoc(ref, {
+    estado: estadoFinal as ReclamoONE['estado'],
+    updatedAt: new Date().toISOString(),
+  })
+
+  await addDoc(collection(db, 'one_auditoria'), {
+    tipo: 'DISPUTA_EJECUTADA',
+    reclamoId,
+    estadoFinal,
+    reviewerUid,
+    createdAt: now,
+  })
+}
+
+/**
+ * Reintenta la ejecución financiera después de un fallo.
+ * Reactiva al estado EJECUCION_FINANCIERA para un nuevo intento.
+ */
+export async function reintentarEjecucionFinanciera(reclamoId: string, reviewerUid: string): Promise<void> {
+  return confirmarEjecucionFinanciera(reclamoId, reviewerUid)
+}
+
+/**
+ * Envía solicitud de información adicional al comprador.
+ * Cambia estado a ESPERANDO_INFO.
+ */
+export async function solicitarInfoDisputa(reclamoId: string, nota: string, reviewerUid: string): Promise<void> {
+  const ref = doc(db, ONE_COLLECTIONS.RECLAMOS, reclamoId)
+  const now = new Date().toISOString()
+  await updateDoc(ref, {
+    estado: 'ESPERANDO_INFO' as const,
+    notaTW: nota,
+    revisadoPor: reviewerUid,
+    revisadoAt: now,
+    updatedAt: now,
+  })
+  await addDoc(collection(db, 'one_auditoria'), {
+    tipo: 'DISPUTA_SOLICITUD_INFO',
+    reclamoId,
+    nota,
+    reviewerUid,
+    createdAt: now,
+  })
+}
+
+// US-447: Cancelar pedido — solo desde pagoStatus=verificado + logisticaStatus=preparando
+// Al cancelar: pedido marcado cancelado=true, escrow a reembolsar, stock restaurado.
+export async function cancelarPedido(pedidoId: string, motivo: string): Promise<void> {
+  const pedidoRef = doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId)
+  await runTransaction(db, async (tx) => {
+    const pedidoSnap = await tx.get(pedidoRef)
+    if (!pedidoSnap.exists()) throw new Error('Pedido no encontrado')
+    const pedido = pedidoSnap.data()
+    if (pedido.cancelado) throw new Error('El pedido ya fue cancelado')
+    if (pedido.pagoStatus !== 'verificado' || pedido.logisticaStatus !== 'preparando') {
+      throw new Error('Solo se puede cancelar un pedido en estado PAID (pago verificado, aún no despachado)')
+    }
+    // Restaurar stock de cada item
+    const items: Array<{ productoId: string; cantidad: number }> = pedido.items ?? []
+    for (const item of items) {
+      const prodRef = doc(db, ONE_COLLECTIONS.PRODUCTOS, item.productoId)
+      const prodSnap = await tx.get(prodRef)
+      if (prodSnap.exists()) {
+        const stockActual = prodSnap.data().stock ?? 0
+        tx.update(prodRef, { stock: stockActual + item.cantidad, updatedAt: new Date().toISOString() })
+      }
+    }
+    tx.update(pedidoRef, {
+      cancelado: true,
+      motivoCancelacion: motivo,
+      canceladoAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
   })
 }

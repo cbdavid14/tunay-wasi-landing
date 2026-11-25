@@ -1,0 +1,212 @@
+/* ============================================================
+   Tunay Wasi — Design Tokens
+   Theme applied via data-theme on <html>:
+     cream (default) | dark | white
+   Stored in user profile (Firestore users/{uid}.theme)
+   ============================================================ */
+
+/* ── Cream (default — warm artisanal) ──────────────────────── */
+:root,
+[data-theme="cream"] {
+  /* Backgrounds */
+  --tw-bg:           #f2e0cc;
+  --tw-bg-alt:       #ede0cc;
+  --tw-card:         #fdf6ee;
+  --tw-card-hover:   #fff9f4;
+  --tw-section-dark: #1f3028;   /* dark sections inside cream theme */
+
+  /* Text */
+  --tw-text:         #1f3028;
+  --tw-text-muted:   #533b22;
+  --tw-text-faint:   #c4b297;
+  --tw-text-inverse: #f2e0cc;
+
+  /* Brand accents */
+  --tw-terra:        #c96e4b;
+  --tw-terra-h:      #b85d3a;
+  --tw-terra-muted:  rgba(201, 110, 75, 0.15);
+  --tw-sage:         #8faf8a;
+  --tw-sage-d:       #6d8e68;
+  --tw-sage-muted:   rgba(143, 175, 138, 0.2);
+
+  /* Borders */
+  --tw-border:       rgba(31, 48, 40, 0.14);
+  --tw-border-dark:  rgba(31, 48, 40, 0.28);
+
+  /* Status */
+  --tw-success:      #27ae60;
+  --tw-warning:      #f39c12;
+  --tw-info:         #4a90c4;
+  --tw-error:        #e74c3c;
+
+  /* Shadows */
+  --tw-shadow-sm:    0 4px 12px -4px rgba(83, 59, 34, 0.25);
+  --tw-shadow-md:    0 10px 28px -10px rgba(83, 59, 34, 0.35);
+  --tw-shadow-lg:    0 24px 56px -20px rgba(83, 59, 34, 0.45);
+
+  /* Radii */
+  --tw-radius-sm:    8px;
+  --tw-radius-md:    12px;
+  --tw-radius-lg:    16px;
+  --tw-radius-xl:    24px;
+  --tw-radius-pill:  999px;
+
+  /* Typography scale */
+  --tw-font-display: 'Cormorant Garamond', Georgia, serif;
+  --tw-font-body:    'Montserrat', system-ui, sans-serif;
+  --tw-font-label:   'Bowlby One SC', sans-serif;
+  --tw-font-data:    'JetBrains Mono', monospace;
+  --tw-font-brand:   'Mulish', system-ui, sans-serif;
+}
+
+/* ── Dark / Black (espresso roast) ─────────────────────────── */
+[data-theme="dark"] {
+  --tw-bg:           #0d0b09;
+  --tw-bg-alt:       #110e0b;
+  --tw-card:         #171411;
+  --tw-card-hover:   #1e1a16;
+  --tw-section-dark: #0a0806;
+
+  --tw-text:         #f2e0cc;
+  --tw-text-muted:   #c4b297;
+  --tw-text-faint:   rgba(196, 178, 151, 0.5);
+  --tw-text-inverse: #0d0b09;
+
+  --tw-terra:        #c96e4b;
+  --tw-terra-h:      #d97e5b;
+  --tw-terra-muted:  rgba(201, 110, 75, 0.18);
+  --tw-sage:         #8faf8a;
+  --tw-sage-d:       #a8c8a3;
+  --tw-sage-muted:   rgba(143, 175, 138, 0.15);
+
+  --tw-border:       rgba(242, 224, 204, 0.09);
+  --tw-border-dark:  rgba(242, 224, 204, 0.18);
+
+  --tw-success:      #2ecc71;
+  --tw-warning:      #f1c40f;
+  --tw-info:         #5ba3d4;
+  --tw-error:        #e74c3c;
+
+  --tw-shadow-sm:    0 4px 12px -4px rgba(0, 0, 0, 0.5);
+  --tw-shadow-md:    0 10px 28px -10px rgba(0, 0, 0, 0.6);
+  --tw-shadow-lg:    0 24px 56px -20px rgba(0, 0, 0, 0.75);
+}
+
+/* ── White (clean editorial) ───────────────────────────────── */
+[data-theme="white"] {
+  --tw-bg:           #f5f5f5;
+  --tw-bg-alt:       #efefef;
+  --tw-card:         #ffffff;
+  --tw-card-hover:   #fafafa;
+  --tw-section-dark: #1f3028;
+
+  --tw-text:         #1a1a1a;
+  --tw-text-muted:   #4a4a4a;
+  --tw-text-faint:   #9a9a9a;
+  --tw-text-inverse: #ffffff;
+
+  --tw-terra:        #c96e4b;
+  --tw-terra-h:      #b85d3a;
+  --tw-terra-muted:  rgba(201, 110, 75, 0.1);
+  --tw-sage:         #6d8e68;
+  --tw-sage-d:       #567050;
+  --tw-sage-muted:   rgba(109, 142, 104, 0.12);
+
+  --tw-border:       rgba(0, 0, 0, 0.1);
+  --tw-border-dark:  rgba(0, 0, 0, 0.2);
+
+  --tw-success:      #27ae60;
+  --tw-warning:      #e67e22;
+  --tw-info:         #2980b9;
+  --tw-error:        #c0392b;
+
+  --tw-shadow-sm:    0 2px 8px -2px rgba(0, 0, 0, 0.12);
+  --tw-shadow-md:    0 8px 24px -8px rgba(0, 0, 0, 0.16);
+  --tw-shadow-lg:    0 20px 48px -16px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Global base styles using tokens ──────────────────────── */
+body {
+  background-color: var(--tw-bg);
+  color: var(--tw-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+::selection {
+  background: var(--tw-terra);
+  color: var(--tw-text-inverse);
+}
+
+/* ── Shared animations ─────────────────────────────────────── */
+@keyframes tw-logo-hover    { 0%, 100% { transform: translateY(0); }    50% { transform: translateY(-4px); } }
+@keyframes tw-logo-breathe  { 0%, 100% { transform: scale(1); }         50% { transform: scale(1.02); } }
+@keyframes tw-scroll        { 0%, 100% { transform: scaleY(0.4); transform-origin: top; opacity: 0.4; } 50% { transform: scaleY(1); opacity: 1; } }
+@keyframes tw-pulse         { 0%, 100% { box-shadow: 0 0 0 0 rgba(201,110,75,0.5); } 50% { box-shadow: 0 0 0 8px rgba(201,110,75,0); } }
+@keyframes tw-pulse-dot     { 0%, 100% { opacity: 1; transform: scale(1); }     50% { opacity: 0.5; transform: scale(0.8); } }
+@keyframes tw-skeleton-pulse{ 0%, 100% { opacity: 1; }                           50% { opacity: 0.55; } }
+@keyframes tw-mobile-nav-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tw-fade-up       { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Shared responsive utilities ──────────────────────────── */
+@media (max-width: 768px) {
+  .tw-2col {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  section {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    padding-top: 80px !important;
+    padding-bottom: 60px !important;
+  }
+}
+
+/* ── Nav shared styles ─────────────────────────────────────── */
+.tw-navlink::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 100%; bottom: 0;
+  height: 1px;
+  background: var(--tw-terra);
+  transition: right 0.35s ease;
+}
+.tw-navlink:hover::after { right: 0; }
+.tw-navlink:hover { color: var(--tw-terra); }
+
+.tw-mobile-nav-panel { animation: tw-mobile-nav-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+
+@media (max-width: 880px) {
+  .tw-navlink { display: none; }
+  .tw-cta-btn { display: none; }
+  .tw-hamburger { display: flex !important; }
+}
+
+/* ── Carousel / grid shared ────────────────────────────────── */
+.tw-cafe-grid,
+.tw-prod-grid  { max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+@media (max-width: 1040px) {
+  .tw-cafe-grid  { grid-template-columns: repeat(2, 1fr) !important; width: 100% !important; }
+  .tw-prod-grid  { grid-template-columns: repeat(2, 1fr) !important; width: 100% !important; }
+  .tw-cafe-page  { grid-template-columns: repeat(2, 1fr) !important; }
+  .tw-carousel-page { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 640px) {
+  .tw-cafe-grid  { grid-template-columns: 1fr !important; gap: 20px !important; }
+  .tw-prod-grid  { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .tw-cafe-page  { grid-template-columns: 1fr !important; }
+  .tw-carousel-page { grid-template-columns: 1fr !important; }
+}
+
+.tw-cafe-page,
+.tw-carousel-page {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  box-sizing: border-box;
+  align-items: start;
+  flex-shrink: 0;
+}

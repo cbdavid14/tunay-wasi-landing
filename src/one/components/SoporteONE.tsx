@@ -5,20 +5,6 @@
  */
 import React, { useState } from 'react'
 
-const C = {
-  bg:         '#0a0a0a',
-  bgCard:     '#141414',
-  bgSection:  '#0f0f0f',
-  cream:      '#f2e0cc',
-  creamDim:   '#c4b297',
-  terra:      '#c96e4b',
-  sage:       '#8faf8a',
-  border:     '#222222',
-  muted:      '#555555',
-  mutedLight: '#777777',
-  white:      '#ffffff',
-}
-
 const FAQ_SOPORTE = [
   {
     p: '¿Cómo descargo la app?',
@@ -59,8 +45,8 @@ const FAQ_SOPORTE = [
 const NavBar: React.FC = () => (
   <nav style={{
     position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
-    background: `${C.bg}f0`, backdropFilter: 'blur(12px)',
-    borderBottom: `1px solid ${C.border}`,
+    background: `${"var(--tw-bg)"}f0`, backdropFilter: 'blur(12px)',
+    borderBottom: `1px solid ${"var(--tw-border)"}`,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '0 5%', height: 56,
   }}>
@@ -68,15 +54,15 @@ const NavBar: React.FC = () => (
       <button onClick={() => { window.location.hash = '#/' }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
         fontFamily: 'Cormorant Garamond, serif',
-        fontSize: 20, fontWeight: 700, color: C.cream,
+        fontSize: 20, fontWeight: 700, color: 'var(--tw-text)',
         whiteSpace: 'nowrap', flexShrink: 0,
       }}>
         TunayWasi
       </button>
-      <span style={{ color: C.border, fontSize: 20, flexShrink: 0 }}>·</span>
+      <span style={{ color: 'var(--tw-border)', fontSize: 20, flexShrink: 0 }}>·</span>
       <span className="sop-nav-label" style={{
         fontFamily: 'Montserrat, sans-serif',
-        fontSize: 13, fontWeight: 600, color: C.sage,
+        fontSize: 13, fontWeight: 600, color: 'var(--tw-sage)',
         letterSpacing: '0.05em',
       }}>
         Soporte
@@ -85,14 +71,14 @@ const NavBar: React.FC = () => (
     <div className="sop-nav-links" style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
       <button onClick={() => { window.location.hash = '#/docs' }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
-        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.terra,
+        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-terra)',
         fontWeight: 600, whiteSpace: 'nowrap',
       }}>
         Documentación
       </button>
       <button onClick={() => { window.location.hash = '#/' }} style={{
         background: 'none', border: 'none', cursor: 'pointer',
-        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.mutedLight,
+        fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
         whiteSpace: 'nowrap',
       }}>
         Catálogo
@@ -112,8 +98,8 @@ const NavBar: React.FC = () => (
 const Hero: React.FC = () => (
   <section style={{
     paddingTop: 56,
-    background: `linear-gradient(180deg, #0a0a0a 0%, #0d1f13 100%)`,
-    borderBottom: `1px solid ${C.border}`,
+    background: 'var(--tw-bg)',
+    borderBottom: `1px solid ${"var(--tw-border)"}`,
   }}>
     <div style={{
       maxWidth: 640, margin: '0 auto',
@@ -122,7 +108,7 @@ const Hero: React.FC = () => (
     }}>
       <div style={{
         width: 56, height: 56, borderRadius: '50%',
-        background: `${C.sage}18`, border: `1px solid ${C.sage}44`,
+        background: `${"var(--tw-sage)"}18`, border: `1px solid ${"var(--tw-sage)"}44`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         margin: '0 auto 24px', fontSize: 24,
       }}>
@@ -131,14 +117,14 @@ const Hero: React.FC = () => (
       <h1 style={{
         fontFamily: 'Cormorant Garamond, serif',
         fontSize: 'clamp(32px, 5vw, 48px)',
-        fontWeight: 700, color: C.cream,
+        fontWeight: 700, color: 'var(--tw-text)',
         margin: '0 0 14px', lineHeight: 1.15,
       }}>
         ¿En qué podemos ayudarte?
       </h1>
       <p style={{
         fontFamily: 'Montserrat, sans-serif',
-        fontSize: 15, color: C.creamDim, lineHeight: 1.7, margin: 0,
+        fontSize: 15, color: 'var(--tw-text-muted)', lineHeight: 1.7, margin: 0,
       }}>
         Estamos disponibles por WhatsApp, email y redes sociales.<br />
         También puedes consultar la documentación paso a paso.
@@ -175,7 +161,7 @@ const CANALES: Canal[] = [
     descripcion: 'Para consultas detalladas o temas que requieran documentación.',
     ctaLabel: 'Enviar un correo',
     href: 'mailto:soporte@tunaywasi.pe',
-    color: C.terra,
+    color: 'var(--tw-terra)',
     bgColor: '#1a0d05',
   },
   {
@@ -193,13 +179,13 @@ const CANALES: Canal[] = [
     descripcion: 'Guías paso a paso para negocios y caficultores.',
     ctaLabel: 'Ver documentación',
     href: '#/docs',
-    color: C.sage,
+    color: 'var(--tw-sage)',
     bgColor: '#0a1f13',
   },
 ]
 
 const SeccionCanales: React.FC = () => (
-  <section style={{ background: C.bg, padding: '64px 24px' }}>
+  <section style={{ background: 'var(--tw-bg)', padding: '64px 24px' }}>
     <div style={{ maxWidth: 880, margin: '0 auto' }}>
       <div style={{
         display: 'grid',
@@ -244,13 +230,13 @@ const SeccionCanales: React.FC = () => (
             <h3 style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: 15, fontWeight: 700,
-              color: C.cream, margin: 0, textAlign: 'center',
+              color: 'var(--tw-text)', margin: 0, textAlign: 'center',
             }}>
               {canal.titulo}
             </h3>
             <p style={{
               fontFamily: 'Montserrat, sans-serif',
-              fontSize: 12, color: C.creamDim,
+              fontSize: 12, color: 'var(--tw-text-muted)',
               lineHeight: 1.6, margin: 0, textAlign: 'center',
             }}>
               {canal.descripcion}
@@ -275,12 +261,12 @@ const SeccionCanales: React.FC = () => (
 const SeccionFAQ: React.FC = () => {
   const [abierto, setAbierto] = useState<number | null>(null)
   return (
-    <section style={{ background: C.bgSection, padding: '64px 24px 80px' }}>
+    <section style={{ background: 'var(--tw-bg-alt)', padding: '64px 24px 80px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 44 }}>
           <p style={{
             fontFamily: 'Montserrat, sans-serif',
-            fontSize: 10, fontWeight: 700, color: C.muted,
+            fontSize: 10, fontWeight: 700, color: 'var(--tw-text-faint)',
             letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px',
           }}>
             Preguntas frecuentes
@@ -288,7 +274,7 @@ const SeccionFAQ: React.FC = () => {
           <h2 style={{
             fontFamily: 'Cormorant Garamond, serif',
             fontSize: 'clamp(26px, 3.5vw, 38px)',
-            fontWeight: 700, color: C.cream, margin: 0,
+            fontWeight: 700, color: 'var(--tw-text)', margin: 0,
           }}>
             Respuestas rápidas
           </h2>
@@ -297,8 +283,8 @@ const SeccionFAQ: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {FAQ_SOPORTE.map((f, i) => (
             <div key={i} style={{
-              background: C.bgCard,
-              border: `1px solid ${abierto === i ? C.sage + '44' : C.border}`,
+              background: 'var(--tw-card)',
+              border: `1px solid ${abierto === i ? 'var(--tw-sage)' + '44' : 'var(--tw-border)'}`,
               borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s',
             }}>
               <button onClick={() => setAbierto(abierto === i ? null : i)} style={{
@@ -310,11 +296,11 @@ const SeccionFAQ: React.FC = () => {
                 <span style={{
                   fontFamily: 'Montserrat, sans-serif',
                   fontSize: 14, fontWeight: 600,
-                  color: C.cream, textAlign: 'left',
+                  color: 'var(--tw-text)', textAlign: 'left',
                 }}>
                   {f.p}
                 </span>
-                <span style={{ color: C.sage, fontSize: 18, flexShrink: 0 }}>
+                <span style={{ color: 'var(--tw-sage)', fontSize: 18, flexShrink: 0 }}>
                   {abierto === i ? '−' : '+'}
                 </span>
               </button>
@@ -322,7 +308,7 @@ const SeccionFAQ: React.FC = () => {
                 <div style={{ padding: '0 20px 16px' }}>
                   <p style={{
                     fontFamily: 'Montserrat, sans-serif',
-                    fontSize: 13, color: C.creamDim,
+                    fontSize: 13, color: 'var(--tw-text-muted)',
                     lineHeight: 1.75, margin: 0,
                   }}>
                     {f.r}
@@ -337,12 +323,12 @@ const SeccionFAQ: React.FC = () => {
         <div style={{
           marginTop: 44, textAlign: 'center',
           background: '#0a1a10',
-          border: `1px solid ${C.sage}33`,
+          border: `1px solid ${"var(--tw-sage)"}33`,
           borderRadius: 14, padding: '28px 24px',
         }}>
           <p style={{
             fontFamily: 'Montserrat, sans-serif',
-            fontSize: 14, color: C.creamDim,
+            fontSize: 14, color: 'var(--tw-text-muted)',
             margin: '0 0 16px',
           }}>
             ¿No encontraste lo que buscabas?
@@ -355,7 +341,7 @@ const SeccionFAQ: React.FC = () => {
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '12px 28px', borderRadius: 10,
               background: '#25D366', border: 'none',
-              color: C.white, fontSize: 14, fontWeight: 700,
+              color: 'var(--tw-text-inverse)', fontSize: 14, fontWeight: 700,
               fontFamily: 'Montserrat, sans-serif',
               textDecoration: 'none',
               boxShadow: '0 4px 16px #25D36633',
@@ -373,8 +359,8 @@ const SeccionFAQ: React.FC = () => {
 
 const Footer: React.FC = () => (
   <footer style={{
-    background: '#050505',
-    borderTop: `1px solid ${C.border}`,
+    background: 'var(--tw-bg)',
+    borderTop: `1px solid ${"var(--tw-border)"}`,
     padding: '28px 24px',
   }}>
     <div style={{
@@ -384,20 +370,20 @@ const Footer: React.FC = () => (
     }}>
       <span style={{
         fontFamily: 'Cormorant Garamond, serif',
-        fontSize: 16, fontWeight: 700, color: C.creamDim,
+        fontSize: 16, fontWeight: 700, color: 'var(--tw-text-muted)',
       }}>
         TunayWasi
       </span>
       <div style={{ display: 'flex', gap: 20 }}>
         <button onClick={() => { window.location.hash = '#/docs' }} style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.mutedLight,
+          fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
         }}>
           Documentación
         </button>
         <button onClick={() => { window.location.hash = '#/' }} style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: C.mutedLight,
+          fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: 'var(--tw-text-muted)',
         }}>
           Catálogo
         </button>
@@ -409,7 +395,7 @@ const Footer: React.FC = () => (
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 const SoporteONE: React.FC = () => (
-  <div style={{ background: C.bg, minHeight: '100vh' }}>
+  <div style={{ background: 'var(--tw-bg)', minHeight: '100vh' }}>
     <NavBar />
     <Hero />
     <SeccionCanales />

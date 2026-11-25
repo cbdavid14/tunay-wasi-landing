@@ -10,18 +10,6 @@ import { PROCESO_LABELS, calcularPrecioFinal } from '../config'
 import seedCaficultores from '../seed/one_caficultores.json'
 import seedProductos from '../seed/one_productos.json'
 
-const C = {
-  bg: '#0a0a0a',
-  bgCard: '#141414',
-  cream: '#f2e0cc',
-  green: '#1f3028',
-  terra: '#c96e4b',
-  sage: '#8faf8a',
-  tan: '#c4b297',
-  brown: '#533b22',
-  white: '#ffffff',
-}
-
 function formatCents(cents: number): string {
   return `S/ ${(cents / 100).toFixed(0)}`
 }
@@ -104,22 +92,22 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: C.tan, fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>Cargando...</p>
+      <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>Cargando...</p>
       </div>
     )
   }
 
   if (!caficultor) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: C.tan, fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>Caficultor no encontrado.</p>
+      <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif', fontSize: 14 }}>Caficultor no encontrado.</p>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'Montserrat, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', fontFamily: 'Montserrat, sans-serif' }}>
       <style>{`
         @media (max-width: 480px) {
           .caf-perfil-stats { grid-template-columns: 1fr !important; }
@@ -134,14 +122,14 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <a href="#/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: C.terra, fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--tw-terra)', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.08em' }}>
             TUNAY WASI
           </span>
         </a>
         <a href="#/" style={{
-          color: C.cream, fontSize: 12, textDecoration: 'none',
+          color: 'var(--tw-text)', fontSize: 12, textDecoration: 'none',
           fontFamily: 'Montserrat, sans-serif', fontWeight: 600,
-          padding: '6px 16px', borderRadius: 4, background: C.terra,
+          padding: '6px 16px', borderRadius: 4, background: 'var(--tw-terra)',
         }}>
           Ver catálogo
         </a>
@@ -151,7 +139,7 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
       <div style={{
         position: 'relative',
         height: '60vw', maxHeight: 480, minHeight: 260,
-        background: C.bgCard, overflow: 'hidden',
+        background: 'var(--tw-card)', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', inset: 0,
@@ -160,14 +148,14 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
         }} />
         <div style={{
           position: 'absolute', inset: 0,
-          background: `linear-gradient(to bottom, transparent 30%, ${C.bg} 100%)`,
+          background: `linear-gradient(to bottom, transparent 30%, ${"var(--tw-bg)"} 100%)`,
         }} />
         <div style={{
           position: 'absolute', bottom: '10%', left: '5%', zIndex: 2,
         }}>
           <p style={{
             margin: '0 0 6px', fontSize: 11, fontWeight: 700,
-            color: C.terra, letterSpacing: '0.18em', textTransform: 'uppercase',
+            color: 'var(--tw-terra)', letterSpacing: '0.18em', textTransform: 'uppercase',
           }}>
             {caficultor.region} · {caficultor.altitudMsnm.toLocaleString()} msnm
           </p>
@@ -175,11 +163,11 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
             margin: 0,
             fontSize: 'clamp(28px, 5vw, 48px)',
             fontFamily: 'Cormorant Garamond, serif',
-            fontWeight: 700, color: C.white, lineHeight: 1.1,
+            fontWeight: 700, color: 'var(--tw-text-inverse)', lineHeight: 1.1,
           }}>
             {caficultor.nombre}
           </h1>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: C.tan }}>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--tw-text-faint)' }}>
             {caficultor.distrito}
           </p>
           {/* Score de confianza */}
@@ -188,10 +176,10 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
               <span style={{ color: '#f39c12', fontSize: 14 }}>
                 {'★'.repeat(Math.round(caficultor.scoreConfianza))}{'☆'.repeat(5 - Math.round(caficultor.scoreConfianza))}
               </span>
-              <span style={{ fontSize: 12, color: C.cream, fontWeight: 700 }}>
+              <span style={{ fontSize: 12, color: 'var(--tw-text)', fontWeight: 700 }}>
                 {caficultor.scoreConfianza.toFixed(1)}
               </span>
-              <span style={{ fontSize: 11, color: C.tan }}>
+              <span style={{ fontSize: 11, color: 'var(--tw-text-faint)' }}>
                 ({caficultor.totalCalificaciones} pedidos)
               </span>
             </div>
@@ -206,7 +194,7 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
         <section style={{ marginBottom: 40 }}>
           <p style={{
             fontSize: 'clamp(15px, 2vw, 17px)',
-            color: C.cream + 'dd',
+            color: 'var(--tw-text)' + 'dd',
             lineHeight: 1.8,
             fontFamily: 'Cormorant Garamond, serif',
             fontStyle: 'italic',
@@ -226,13 +214,13 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
               { label: 'Distrito', value: caficultor.distrito },
             ].map(({ label, value }) => (
               <div key={label} style={{
-                background: C.bgCard, borderRadius: 8, padding: '14px 16px',
-                borderLeft: `3px solid ${C.terra}`,
+                background: 'var(--tw-card)', borderRadius: 8, padding: '14px 16px',
+                borderLeft: `3px solid ${"var(--tw-terra)"}`,
               }}>
-                <p style={{ margin: '0 0 4px', fontSize: 10, color: C.tan, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--tw-text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {label}
                 </p>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.cream }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)' }}>
                   {value}
                 </p>
               </div>
@@ -245,14 +233,14 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
           <section style={{ marginBottom: 40 }}>
             <h2 style={{
               margin: '0 0 16px', fontSize: 13, fontWeight: 700,
-              color: C.tan, textTransform: 'uppercase', letterSpacing: '0.1em',
+              color: 'var(--tw-text-faint)', textTransform: 'uppercase', letterSpacing: '0.1em',
             }}>
               Sus cafés disponibles
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {productos.map(p => (
                 <div key={p.id} style={{
-                  background: C.bgCard, borderRadius: 10, padding: '16px 18px',
+                  background: 'var(--tw-card)', borderRadius: 10, padding: '16px 18px',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
                   gap: 12,
                 }}>
@@ -260,32 +248,32 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <span style={{
                         padding: '2px 8px', borderRadius: 4,
-                        background: C.terra, color: C.white,
+                        background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)',
                         fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
                       }}>
                         {PROCESO_LABELS[p.proceso]}
                       </span>
                       {p.puntajeReferencial && (
-                        <span style={{ fontSize: 10, color: C.sage }}>
+                        <span style={{ fontSize: 10, color: 'var(--tw-sage)' }}>
                           ~{p.puntajeReferencial} pts
                         </span>
                       )}
                     </div>
                     <p style={{
                       margin: '0 0 4px', fontSize: 15, fontWeight: 700,
-                      color: C.cream, fontFamily: 'Cormorant Garamond, serif',
+                      color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif',
                     }}>
                       {p.nombre}
                     </p>
-                    <p style={{ margin: '0 0 6px', fontSize: 11, color: C.tan }}>
+                    <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--tw-text-faint)' }}>
                       {p.variedad} · {p.cosecha}
                     </p>
-                    <p style={{ margin: 0, fontSize: 12, color: C.cream + '99', fontStyle: 'italic' }}>
+                    <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text)' + '99', fontStyle: 'italic' }}>
                       {p.notasSabor.join(' · ')}
                     </p>
                   </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: C.terra }}>
+                    <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: 'var(--tw-terra)' }}>
                       desde {formatCents(calcularPrecioFinal(p.precioBaseKgCents, '1kg'))}
                     </p>
                     <button
@@ -296,7 +284,7 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
                       style={{
                         display: 'inline-block', marginTop: 8,
                         padding: '6px 14px', borderRadius: 5,
-                        background: C.terra, color: C.white,
+                        background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)',
                         fontSize: 11, fontWeight: 700, cursor: 'pointer',
                         border: 'none', fontFamily: 'Montserrat, sans-serif',
                       }}>
@@ -314,32 +302,32 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
           {enviado ? (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <p style={{ fontSize: 28, marginBottom: 8 }}>★</p>
-              <p style={{ margin: 0, fontSize: 14, color: C.cream, fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--tw-text)', fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>
                 ¡Gracias por tu calificación!
               </p>
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: C.tan }}>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--tw-text-faint)' }}>
                 Ayuda a otros cafés a conocer este productor.
               </p>
             </div>
           ) : !mostrarFormCafeteria ? (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ margin: '0 0 10px', fontSize: 13, color: C.tan }}>
+              <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--tw-text-faint)' }}>
                 ¿Cómo estuvo el café en esta cafetería?
               </p>
               <button
                 onClick={() => setMostrarFormCafeteria(true)}
                 style={{
                   padding: '10px 24px', borderRadius: 8,
-                  border: `1px solid ${C.sage}`, background: 'none',
-                  fontSize: 13, fontWeight: 600, color: C.sage,
+                  border: `1px solid ${"var(--tw-sage)"}`, background: 'none',
+                  fontSize: 13, fontWeight: 600, color: 'var(--tw-sage)',
                   cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
                 }}>
                 Calificar mi experiencia
               </button>
             </div>
           ) : (
-            <div style={{ background: C.bgCard, borderRadius: 12, padding: '20px 18px' }}>
-              <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: C.cream, fontFamily: 'Montserrat, sans-serif' }}>
+            <div style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '20px 18px' }}>
+              <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>
                 ¿Cómo estuvo el café?
               </p>
               {/* Estrellas */}
@@ -360,8 +348,8 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
                 onChange={e => setNombreLocalForm(e.target.value)}
                 style={{
                   width: '100%', padding: '8px 12px', borderRadius: 8,
-                  border: `1px solid ${C.tan + '66'}`, background: 'transparent',
-                  fontSize: 13, color: C.cream, fontFamily: 'Montserrat, sans-serif',
+                  border: `1px solid ${'var(--tw-text-faint)' + '66'}`, background: 'transparent',
+                  fontSize: 13, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif',
                   marginBottom: 10, boxSizing: 'border-box', outline: 'none',
                 }}
               />
@@ -373,8 +361,8 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
                 maxLength={150}
                 style={{
                   width: '100%', minHeight: 60, padding: '8px 12px',
-                  borderRadius: 8, border: `1px solid ${C.tan + '66'}`,
-                  background: 'transparent', fontSize: 13, color: C.cream,
+                  borderRadius: 8, border: `1px solid ${'var(--tw-text-faint)' + '66'}`,
+                  background: 'transparent', fontSize: 13, color: 'var(--tw-text)',
                   fontFamily: 'Montserrat, sans-serif', resize: 'vertical',
                   marginBottom: 14, boxSizing: 'border-box', outline: 'none',
                 }}
@@ -382,16 +370,16 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setMostrarFormCafeteria(false)} style={{
                   flex: 1, padding: '10px 0', borderRadius: 8,
-                  border: `1px solid ${C.tan}`, background: 'none',
-                  fontSize: 13, color: C.tan, cursor: 'pointer',
+                  border: `1px solid ${'var(--tw-text-faint)'}`, background: 'none',
+                  fontSize: 13, color: 'var(--tw-text-faint)', cursor: 'pointer',
                 }}>Cancelar</button>
                 <button
                   onClick={enviarCalificacionCafeteria}
                   disabled={enviandoForm || !nombreLocalForm.trim()}
                   style={{
                     flex: 2, padding: '10px 0', borderRadius: 8,
-                    border: 'none', background: C.terra,
-                    fontSize: 13, fontWeight: 700, color: C.white,
+                    border: 'none', background: 'var(--tw-terra)',
+                    fontSize: 13, fontWeight: 700, color: 'var(--tw-text-inverse)',
                     cursor: enviandoForm || !nombreLocalForm.trim() ? 'not-allowed' : 'pointer',
                     opacity: enviandoForm || !nombreLocalForm.trim() ? 0.6 : 1,
                   }}>
@@ -404,14 +392,14 @@ const PerfilCaficultor: React.FC<Props> = ({ caficultorId, isDemo = false }) => 
 
         {/* Sello de transparencia */}
         <div style={{
-          background: C.bgCard, borderRadius: 10, padding: '20px 20px',
-          borderLeft: `3px solid ${C.sage}`,
+          background: 'var(--tw-card)', borderRadius: 10, padding: '20px 20px',
+          borderLeft: `3px solid ${"var(--tw-sage)"}`,
         }}>
-          <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: C.sage }}>
+          <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: 'var(--tw-sage)' }}>
             ¿Por qué escanear este QR?
           </p>
-          <p style={{ margin: 0, fontSize: 13, color: C.tan, lineHeight: 1.6 }}>
-            Este café fue producido por <strong style={{ color: C.cream }}>{caficultor.nombre}</strong> en {caficultor.distrito}, {caficultor.region}.
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--tw-text-faint)', lineHeight: 1.6 }}>
+            Este café fue producido por <strong style={{ color: 'var(--tw-text)' }}>{caficultor.nombre}</strong> en {caficultor.distrito}, {caficultor.region}.
             Tunay Wasi conecta directamente al productor con la cafetería donde estás —
             sin intermediarios, con precio transparente al productor.
           </p>
