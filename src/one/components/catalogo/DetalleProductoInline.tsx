@@ -653,7 +653,15 @@ export const DetalleProductoInline: React.FC<Props> = ({
                       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-text)', lineHeight: 1.3, marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>{p.nombre}</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--tw-terra)' }}>S/ {(p.precioBaseKgCents / 100).toFixed(0)}<span style={{ fontSize: 9, fontWeight: 500, color: 'var(--tw-text-muted)' }}>/kg</span></span>
-                        <button type="button" onClick={e => { e.stopPropagation(); onAgregar(p, '1kg') }} style={{ padding: '5px 10px', borderRadius: 7, border: '1.5px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>+ Carrito</button>
+                        {/* TIPO-01/TIPO-VIS-04: TYPE_A — solo buyer_b2b APPROVED puede agregar al carrito */}
+                        {((p as any).tipoCafe === 'verde' || (p as any).productType === 'TYPE_A')
+                          ? (
+                            esB2bAprobado
+                              ? <button type="button" onClick={e => { e.stopPropagation(); onAgregar(p, '1kg') }} style={{ padding: '5px 10px', borderRadius: 7, border: '1.5px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>+ Carrito</button>
+                              : <span style={{ fontSize: 9, color: 'var(--tw-sage)', fontWeight: 600, padding: '5px 6px' }}>B2B →</span>
+                          )
+                          : <button type="button" onClick={e => { e.stopPropagation(); onAgregar(p, '1kg') }} style={{ padding: '5px 10px', borderRadius: 7, border: '1.5px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>+ Carrito</button>
+                        }
                       </div>
                     </div>
                   </div>

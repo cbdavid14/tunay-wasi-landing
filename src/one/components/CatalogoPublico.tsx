@@ -223,8 +223,10 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
       setModalRegistro(true)
       return
     }
-    // TYPE_A = café verde — solo buyer_b2b APPROVED puede comprar (restricción comercial, no de visibilidad)
-    if (rolUsuario !== 'buyer_b2b' && m.productType === 'TYPE_A') return
+    // TYPE_A = café verde — solo buyer_b2b APPROVED puede comprar (B2B-02, TIPO-01)
+    if (m.productType === 'TYPE_A') {
+      if (rolUsuario !== 'buyer_b2b' || estadoAprobacionB2B !== 'APPROVED') return
+    }
     const prod = productos.find(p => p.nombre === m.nombre)
     if (!prod) return
     onSeleccionar?.(prod, '1kg')
@@ -242,12 +244,24 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
         >🔒</button>
       )
     }
-    if (rolUsuario !== 'buyer_b2b' && m.productType === 'TYPE_A') {
+    // TIPO-VIS-04: buyer_b2c on TYPE_A → "¿Eres tostador o cafetería? → Registrar negocio"
+    if (rolUsuario === 'buyer_b2c' && m.productType === 'TYPE_A') {
+      return (
+        <button
+          className="sc-add-btn"
+          onClick={ev => { ev.stopPropagation(); navigate('/registro-emprendedor') }}
+          title="¿Eres tostador o cafetería? Registra tu negocio"
+          style={{ fontSize: 7, padding: '3px 5px', width: 'auto', minWidth: 36, background: 'var(--tw-sage)' }}
+        >Negocio →</button>
+      )
+    }
+    // buyer_b2b PENDING/REJECTED/SUSPENDED on TYPE_A → disabled (B2B-02)
+    if (rolUsuario === 'buyer_b2b' && m.productType === 'TYPE_A' && estadoAprobacionB2B !== 'APPROVED') {
       return (
         <button
           className="sc-add-btn"
           disabled
-          title="Solo disponible para compradores B2B aprobados"
+          title="Solo disponible para empresas aprobadas"
           style={{ opacity: 0.45, cursor: 'not-allowed', fontSize: 9 }}
           onClick={ev => ev.stopPropagation()}
         >B2B</button>

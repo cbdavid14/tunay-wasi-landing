@@ -71,17 +71,7 @@ export default function ProductCardCompact({ p }: { p: Producto }) {
             ? <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
             : <span>☕</span>
           }
-          {/* SCA badge — top left */}
-          <div style={{
-            position: 'absolute', top: 6, left: 6,
-            background: 'rgba(10,5,2,.85)',
-            border: '1px solid rgba(201,110,75,.4)',
-            borderRadius: 6, padding: '2px 6px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.1,
-          }}>
-            <span style={{ fontFamily: 'var(--tw-font-display)', fontSize: 12, fontWeight: 700, color: '#fff' }}>{p.score}</span>
-            <span style={{ fontSize: 7, color: '#a89080', fontWeight: 700, letterSpacing: '0.08em' }}>SCA</span>
-          </div>
+          {/* INV-04/CAL-02: SCA score never shown in catalog cards — removed */}
           {/* Process badge — top right */}
           <div style={{
             position: 'absolute', top: 6, right: 6,

@@ -632,7 +632,7 @@ export default function Cafe() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: 'var(--tw-font-body)', fontSize: 11, fontWeight: 700, color: 'var(--tw-text)' }}>{p.name}</div>
                         <div style={{ fontFamily: 'var(--tw-font-body)', fontSize: 9, color: 'var(--tw-terra)', fontWeight: 600 }}>{p.region} · {p.farm}</div>
-                        <div style={{ fontFamily: 'var(--tw-font-data)', fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 2 }}>SCA prom. {p.score} pts</div>
+                        <div style={{ fontFamily: 'var(--tw-font-data)', fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 2 }}>{p.region}</div>
                       </div>
                     </div>
                   ))}

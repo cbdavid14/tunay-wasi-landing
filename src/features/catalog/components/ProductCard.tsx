@@ -106,8 +106,9 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
         ) : (
           <ImageSlot label={`bolsa · ${p.name.toLowerCase()}`} tone={p.tone} ratio="7 / 3" />
         )}
+        {/* INV-04/CAL-02: SCA score never shown in catalog cards for any profile */}
         <div style={{ position: 'absolute', top: 14, left: 14, background: '#1f3028e0', color: 'var(--tw-text-inverse)', padding: '6px 12px', borderRadius: 'var(--tw-radius-pill)', fontFamily: 'var(--tw-font-data)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', backdropFilter: 'blur(6px)' }}>
-          № {p.code} · SCA {p.score}
+          № {p.code}
         </div>
         <div style={{ position: 'absolute', top: 14, right: 14, background: tone.bg, color: tone.text, padding: '6px 12px', borderRadius: 'var(--tw-radius-pill)', fontFamily: 'var(--tw-font-label)', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
           {p.tag}
@@ -320,11 +321,8 @@ export default function ProductCard({ p, onRequestBreakdown }: { p: Producto; on
             "availability": isAgotado ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
             "seller": { "@type": "Organization", "name": "Tunay Wasi" },
           },
-          ...(p.score ? { "additionalProperty": [{
-            "@type": "PropertyValue",
-            "name": "Puntaje SCA",
-            "value": String(p.score),
-          }] } : {}),
+          // INV-04/CAL-02: SCA score never exposed publicly (not even in structured data)
+          // scaScore only visible for buyer_b2b APPROVED in /lots/:id/technical endpoint
         }) }}
       />
     </article>
