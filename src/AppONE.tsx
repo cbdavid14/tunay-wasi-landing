@@ -38,11 +38,7 @@ import TerminosONE from '@/one/components/TerminosONE'
 import ContratoCompradorONE from '@/one/components/ContratoCompradorONE'
 import PrivacidadONE from '@/one/components/PrivacidadONE'
 import LibroReclamacionesONE from '@/one/components/LibroReclamacionesONE'
-const Footer: React.FC = () => (
-  <footer style={{ padding: '24px 16px', textAlign: 'center', fontSize: 11, color: '#444', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em', borderTop: '1px solid #1e1e1e', marginTop: 40 }}>
-    © {new Date().getFullYear()} Tunay Wasi · Lima, Perú · Hasta el 50% para el caficultor · siempre.
-  </footer>
-)
+import Footer from '@/components/layout/Footer'
 import { DEMO_USER } from '@/one/demoService'
 import { useTheme, setTheme as applyTheme, getStoredTheme } from '@/shared/useTheme'
 import type { Theme } from '@/shared/useTheme'
