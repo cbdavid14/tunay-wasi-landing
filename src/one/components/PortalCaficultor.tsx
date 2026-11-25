@@ -1975,8 +1975,8 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         {/* KPI tiles */}
         <div className="grid-kpis" style={{ marginBottom: 20 }}>
           {[
-            { label: 'Total liberado', value: `S/ ${(totalLiberadoCents / 100).toFixed(0)}`, color: 'var(--tw-sage)' },
-            { label: 'Por cobrar', value: `S/ ${(totalPendienteCents / 100).toFixed(0)}`, color: 'var(--tw-amber, #e8b84b)' },
+            { label: 'Recibidos', value: `S/ ${(totalLiberadoCents / 100).toFixed(0)}`, color: 'var(--tw-sage)' },
+            { label: 'Por recibir', value: `S/ ${(totalPendienteCents / 100).toFixed(0)}`, color: 'var(--tw-amber, #e8b84b)' },
             { label: 'Pagos', value: String(pagos.length), color: 'var(--tw-text)' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: 'var(--tw-card)', borderRadius: 12, padding: '12px 14px', border: `1px solid var(--tw-border)` }}>

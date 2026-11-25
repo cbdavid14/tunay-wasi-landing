@@ -159,7 +159,13 @@ const BtnAccion: React.FC<{
 
 type FiltroDash = 'hoy' | 'semana' | 'mes' | 'todo'
 
-const TabDashboard: React.FC<{ pedidos: PedidoONE[] }> = ({ pedidos }) => {
+// ADM-06: Dashboard recibe también los contadores de gestión (B2B, disputas, pagos retenidos)
+const TabDashboard: React.FC<{
+  pedidos: PedidoONE[]
+  pendingB2B?: number
+  pendingDisputas?: number
+  pagosRetenidosCount?: number
+}> = ({ pedidos, pendingB2B = 0, pendingDisputas = 0, pagosRetenidosCount = 0 }) => {
   const [filtro, setFiltro] = useState<FiltroDash>('hoy')
 
   function inicioFiltro(): Date | null {
@@ -226,7 +232,16 @@ const TabDashboard: React.FC<{ pedidos: PedidoONE[] }> = ({ pedidos }) => {
         <StatCard label="Comisión TW"  value={`S/ ${comision.toFixed(2)}`}     sub="5%" color={'var(--tw-sage)'} />
       </div>
 
-      <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Estados</p>
+      {/* ADM-06: KPIs de gestión — pagos retenidos, disputas, B2B pendientes */}
+      <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Gestión</p>
+      <div className="adm-grid-kpis" style={{ marginBottom: 24 }}>
+        <StatCard label="Pagos retenidos" value={`${pagosRetenidosCount}`} sub="caficultores" color={pagosRetenidosCount > 0 ? 'var(--tw-terra)' : 'var(--tw-text-muted)'} />
+        <StatCard label="Disputas abiertas" value={`${pendingDisputas}`} sub="activas" color={pendingDisputas > 0 ? '#ef4444' : 'var(--tw-text-muted)'} />
+        <StatCard label="B2B pendientes" value={`${pendingB2B}`} sub="por aprobar" color={pendingB2B > 0 ? '#e8b84b' : 'var(--tw-text-muted)'} />
+        <StatCard label="Vouchers" value={`${revisar}`} sub="por verificar" color={revisar > 0 ? 'var(--tw-warning)' : 'var(--tw-text-muted)'} />
+      </div>
+
+      <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Estados de pedidos</p>
       <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
         <CountRow label="🔍 Por revisar"    count={revisar}     color={'var(--tw-warning)'} />
         <CountRow label="📦 Preparación"    count={preparacion} color={'var(--tw-text)'} />
@@ -252,6 +267,8 @@ const TabPagos: React.FC<{
   const [pagosRetenidos, setPagosRetenidos] = useState<PagoCaficultorONE[]>([])
   const [pagosRetenidosLoading, setPagosRetenidosLoading] = useState(false)
   const [liberandoPago, setLiberandoPago] = useState<string | null>(null)
+  // ESC-05: banco seleccionado por pago (BCP/Interbank/BN — sin Yape)
+  const [bancoSeleccionado, setBancoSeleccionado] = useState<Record<string, 'transferencia_bcp' | 'transferencia_interbank' | 'transferencia_bn'>>({})
 
   useEffect(() => {
     if (isDemo) return
@@ -265,11 +282,13 @@ const TabPagos: React.FC<{
       .finally(() => setPagosRetenidosLoading(false))
   }, [isDemo])
 
+  // ESC-05 INVARIANTE: caficultor recibe solo vía transferencia bancaria (BCP/Interbank/BN)
   async function handleLiberarPago(pago: PagoCaficultorONE) {
+    const banco = bancoSeleccionado[pago.id] ?? 'transferencia_bcp'
     setLiberandoPago(pago.id)
     try {
       const adminUid = auth.currentUser?.uid ?? 'admin'
-      await liberarPago(pago.id, adminUid, 'yape', pago.cuentaDestino ?? '')
+      await liberarPago(pago.id, adminUid, banco, pago.cuentaDestino ?? '')
       setPagosRetenidos(prev => prev.filter(p => p.id !== pago.id))
       onToast(`Pago liberado: ${pago.negocioNombre} — S/ ${(pago.montoNetoCents / 100).toFixed(0)}`, 'ok')
     } catch { onToast('Error al liberar el pago', 'error') }
@@ -402,6 +421,36 @@ const TabPagos: React.FC<{
               </div>
             )}
 
+            {/* ADM-02: Checklist automático de validación de voucher */}
+            {statusGrupo === 'voucher_subido' && (() => {
+              const totalGrupoSoles = (grupo.pedidos.reduce((s, x) => s + x.totalCents, 0) / 100).toFixed(2)
+              const metodoOk = p.metodoPago === 'yape' || p.metodoPago === 'transferencia'
+              const tieneImagen = !!p.voucherUrl
+              const fechaOk = (() => { try { const d = new Date(p.createdAt); return !isNaN(d.getTime()) } catch { return false } })()
+              const checks = [
+                { label: 'Imagen del comprobante', ok: tieneImagen },
+                { label: `Monto esperado: S/ ${totalGrupoSoles}`, ok: tieneImagen },
+                { label: `Método: ${p.metodoPago === 'yape' ? 'Yape/Plin' : p.metodoPago === 'transferencia' ? 'Transferencia' : p.metodoPago ?? '—'}`, ok: metodoOk },
+                { label: `Fecha del pedido válida`, ok: fechaOk },
+              ]
+              const allOk = checks.every(c => c.ok)
+              return (
+                <div style={{ marginBottom: 12, padding: '10px 12px', background: '#0d0d0d', borderRadius: 8, border: `1px solid ${allOk ? 'var(--tw-sage)' + '44' : 'var(--tw-warning)' + '44'}` }}>
+                  <p style={{ margin: '0 0 7px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: allOk ? 'var(--tw-sage)' : 'var(--tw-warning)', fontFamily: 'Montserrat, sans-serif' }}>
+                    Checklist de validación {allOk ? '✓' : '⚠'}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {checks.map((c, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, color: c.ok ? 'var(--tw-text-muted)' : 'var(--tw-warning)' }}>
+                        <span style={{ fontSize: 11, color: c.ok ? 'var(--tw-sage)' : 'var(--tw-warning)' }}>{c.ok ? '✓' : '⚠'}</span>
+                        {c.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
             {statusGrupo === 'voucher_subido' && (
               <div style={{ display: 'flex', gap: 10 }}>
                 <BtnAccion label="✓ Verificar" onClick={() => verificar(p.id, p.grupoCheckoutId)} color={'var(--tw-sage)'} disabled={accionando === p.id} />
@@ -443,10 +492,25 @@ const TabPagos: React.FC<{
                     <div>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>{pago.negocioNombre}</p>
                       <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>Pedido: {pago.pedidoRef} · Estado: RETENIDO</p>
+                      {pago.cuentaDestino && (
+                        <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                          CCI: {pago.cuentaDestino}
+                        </p>
+                      )}
                       {pago.motivo && <p style={{ margin: '3px 0 0', fontSize: 10, color: 'var(--tw-terra)' }}>Motivo: {pago.motivo}</p>}
                     </div>
                     <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tw-terra)', flexShrink: 0 }}>S/ {(pago.montoNetoCents / 100).toFixed(0)}</span>
                   </div>
+                  {/* ESC-05: selector de banco — solo BCP/Interbank/BN, sin Yape */}
+                  <select
+                    value={bancoSeleccionado[pago.id] ?? 'transferencia_bcp'}
+                    onChange={e => setBancoSeleccionado(prev => ({ ...prev, [pago.id]: e.target.value as 'transferencia_bcp' | 'transferencia_interbank' | 'transferencia_bn' }))}
+                    style={{ width: '100%', marginBottom: 8, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'var(--tw-bg)', color: 'var(--tw-text)', fontSize: 12, fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    <option value="transferencia_bcp">🏦 BCP</option>
+                    <option value="transferencia_interbank">🏦 Interbank</option>
+                    <option value="transferencia_bn">🏦 Banco de la Nación</option>
+                  </select>
                   <BtnAccion
                     label="💸 Liberar pago"
                     onClick={() => handleLiberarPago(pago)}
@@ -1840,6 +1904,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
   const [pendingB2B, setPendingB2B] = useState(0)
   const [pendingReviewer, setPendingReviewer] = useState(0)
   const [pendingDisputas, setPendingDisputas] = useState(0)
+  const [pagosRetenidosCount, setPagosRetenidosCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [toasts, setToasts] = useState<ToastMsg[]>([])
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -1862,6 +1927,10 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
           const activos: EstadoReclamo[] = ['ABIERTO', 'EN_REVISION', 'ESPERANDO_INFO', 'ESCALADO', 'DECISION_PENDIENTE', 'EJECUCION_FINANCIERA', 'EJECUCION_FALLIDA']
           setPendingDisputas(recs.filter(r => activos.includes(r.estado)).length)
         }).catch(() => {})
+        // ADM-06: contar pagos retenidos a caficultores para KPI del dashboard
+        getDocs(query(collection(db, 'one_pagos_caficultor'), where('estado', '==', 'RETENIDO')))
+          .then(snap => setPagosRetenidosCount(snap.size))
+          .catch(() => {})
       }
     } catch (e) {
       toast('No se pudieron cargar los pedidos.', 'error')
@@ -1959,7 +2028,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
           )}
           {!loading && (
             <>
-              {tab === 'dashboard'   && <TabDashboard  pedidos={pedidos} />}
+              {tab === 'dashboard'   && <TabDashboard  pedidos={pedidos} pendingB2B={pendingB2B} pendingDisputas={pendingDisputas} pagosRetenidosCount={pagosRetenidosCount} />}
               {tab === 'pagos'       && <TabPagos      pedidos={pedidos} onAccion={cargar} isDemo={isDemo} onToast={toast} />}
               {tab === 'soporte'     && <TabSoporte    pedidos={pedidos} />}
               {tab === 'cuentas_b2b' && <TabCuentasB2B onToast={toast} />}

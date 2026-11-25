@@ -605,7 +605,8 @@ export interface ResponderCotizacionInput {
 // Registro de cada pago liberado por TW al caficultor (escrow → pago)
 
 export type EstadoPagoCaficultor = 'PENDIENTE' | 'LIBERADO' | 'RETENIDO'
-export type MetodoPagoCaficultor = 'yape' | 'transferencia_bcp' | 'transferencia_interbank'
+// ESC-05 INVARIANTE: caficultor recibe solo vía transferencia bancaria (BCP/Interbank/BN) — sin Yape
+export type MetodoPagoCaficultor = 'transferencia_bcp' | 'transferencia_interbank' | 'transferencia_bn'
 
 export interface PagoCaficultorONE {
   id: string
@@ -617,7 +618,7 @@ export interface PagoCaficultorONE {
   montoNetoCents: number             // Después de comisión TW (fase 1 = mismo)
   estado: EstadoPagoCaficultor
   metodoPago?: MetodoPagoCaficultor
-  cuentaDestino?: string             // Número Yape o CCI
+  cuentaDestino?: string             // CCI (BCP/Interbank/BN) — ESC-05: solo transferencia bancaria
   liberadoPor?: string               // UID del admin que liberó
   liberadoAt?: string                // ISO
   motivo?: string                    // Si está retenido: motivo
