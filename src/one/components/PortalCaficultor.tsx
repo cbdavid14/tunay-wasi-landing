@@ -10,7 +10,7 @@ import {
   crearProducto, updateProducto, updateCaficultor, despacharAgencia,
   fetchUbigeos, fetchLogisticaCaficultor, saveLogisticaCaficultor,
   fetchCotizacionesCaficultor, responderCotizacion,
-  fetchPagosByCaficultor,
+  fetchPagosByCaficultor, fetchReclamosByCaficultor,
 } from '../service'
 import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
@@ -22,7 +22,7 @@ import {
   demoFetchUbigeos, demoFetchLogisticaCaficultor, demoSaveLogisticaCaficultor,
 } from '../demoService'
 import { PROCESO_LABELS, calcularPrecioFinal, FORMATOS_FIXED, FORMATOS_NEGOTIABLE, FORMATO_LABELS } from '../config'
-import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE, AgenciaLogisticaONE, CotizacionONE, PagoCaficultorONE, FormatoONE, LogisticaStatusONE } from '../types'
+import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE, AgenciaLogisticaONE, CotizacionONE, PagoCaficultorONE, FormatoONE, LogisticaStatusONE, ReclamoONE } from '../types'
 import ChatPedido from './ChatPedido'
 import WasiChat from './WasiChat'
 import { type DireccionONE } from './ModalDireccion'
@@ -137,7 +137,7 @@ const UploadFoto: React.FC<{
 }
 
 type Tab = 'productos' | 'pedidos' | 'historial' | 'pagos' | 'perfil' | 'wasi' | 'alertas'
-type PedidoSubTab = 'ofertas' | 'activos' | 'historial'
+type PedidoSubTab = 'ofertas' | 'activos' | 'historial' | 'reclamos'
 type SettingsTab = 'perfil' | 'finca' | 'cobros' | 'envio' | 'direcciones' | 'notificaciones' | 'seguridad' | null
 
 // ─── Filter bar shared component ──────────────────────────────────────────────
@@ -995,6 +995,10 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
   const [pagos, setPagos] = useState<PagoCaficultorONE[]>([])
   const [pagosLoading, setPagosLoading] = useState(false)
 
+  // Reclamos activos donde el caficultor es el vendedor (vista defensiva F-10)
+  const [reclamosCaf, setReclamosCaf] = useState<ReclamoONE[]>([])
+  const [reclamosCafLoading, setReclamosCafLoading] = useState(false)
+
   // Drawer detalle pedido
   const [pedidoDetalle, setPedidoDetalle] = useState<PedidoONE | null>(null)
 
@@ -1085,6 +1089,16 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       .then(data => setPagos(data))
       .catch(() => toast('No se pudieron cargar los pagos', 'error'))
       .finally(() => setPagosLoading(false))
+  }, [tab, caficultorId, isDemo]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cargar reclamos donde este caficultor es vendedor (vista defensiva F-10)
+  useEffect(() => {
+    if (tab !== 'pedidos' || isDemo) return
+    setReclamosCafLoading(true)
+    fetchReclamosByCaficultor(caficultorId)
+      .then(data => setReclamosCaf(data))
+      .catch(() => console.warn('[PortalCaficultor] No se pudieron cargar reclamos del caficultor'))
+      .finally(() => setReclamosCafLoading(false))
   }, [tab, caficultorId, isDemo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleResponderCotizacion() {
@@ -1448,6 +1462,117 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
     )
   }
 
+  // ─── Vista defensiva F-10: reclamos activos donde el caficultor es vendedor ──
+  function renderReclamosCaficultor() {
+    const activos = reclamosCaf.filter(r =>
+      r.estado === 'ABIERTO' || r.estado === 'EN_REVISION' || r.estado === 'ESPERANDO_INFO' || r.estado === 'ESCALADO'
+    )
+    const resueltos = reclamosCaf.filter(r => !activos.includes(r))
+
+    function slaLabel(r: ReclamoONE): string {
+      const ms = Number(r.createdAt) || new Date(r.createdAt).getTime()
+      if (!ms) return ''
+      const sla7d = 7 * 24 * 60 * 60 * 1000
+      const restMs = (ms + sla7d) - Date.now()
+      const dias = Math.ceil(restMs / (24 * 60 * 60 * 1000))
+      return dias > 0
+        ? `⏱ SLA: ${dias} día${dias === 1 ? '' : 's'} hábil${dias === 1 ? '' : 'es'} restante${dias === 1 ? '' : 's'}`
+        : '⚠ Plazo SLA vencido — escalando'
+    }
+
+    function estadoColor(estado: string): string {
+      if (estado === 'ABIERTO') return '#ef4444'
+      if (estado === 'EN_REVISION') return '#f59e0b'
+      if (estado === 'ESPERANDO_INFO') return '#f39c12'
+      if (estado === 'ESCALADO') return '#c96e4b'
+      if (estado.startsWith('RESUELTO_COMPRADOR') || estado.startsWith('RESOLUCION_COMPRADOR')) return '#8faf8a'
+      return '#888'
+    }
+
+    function estadoLabelLocal(estado: string): string {
+      const MAP: Record<string, string> = {
+        ABIERTO: 'Abierto', EN_REVISION: 'En revisión', ESPERANDO_INFO: 'Esperando info',
+        ESCALADO: 'Escalado', DECISION_PENDIENTE: 'Decisión pendiente',
+        RESOLUCION_COMPRADOR: 'Res. comprador', RESOLUCION_CAFICULTOR: 'Res. caficultor',
+        EJECUCION_FINANCIERA: 'Ejec. financiera', RESUELTO_COMPRADOR: 'Resuelto (comprador)',
+        RESUELTO_CAFICULTOR: 'Cerrado sin reembolso', EJECUCION_FALLIDA: 'Ejecución fallida',
+      }
+      return MAP[estado] ?? estado
+    }
+
+    if (reclamosCafLoading) return <div style={{ padding: 32, textAlign: 'center', color: 'var(--tw-text-muted)' }}>Cargando reclamos&hellip;</div>
+
+    return (
+      <div>
+        {activos.length > 0 && (
+          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>&#9888;</span>
+            <div>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#ef4444' }}>{activos.length} reclamo{activos.length > 1 ? 's' : ''} activo{activos.length > 1 ? 's' : ''}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>Un comprador reportó un problema. TunayWasi revisará la evidencia. Tienes 18h para aportar información adicional si se solicita.</p>
+            </div>
+          </div>
+        )}
+        {reclamosCaf.length === 0 ? (
+          <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--tw-text-muted)' }}>
+            <p style={{ fontSize: 32, margin: '0 0 8px' }}>&#10003;</p>
+            <p style={{ margin: 0, fontSize: 14 }}>No tienes reclamos activos</p>
+          </div>
+        ) : (
+          <div>
+            {activos.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Activos</p>
+                {activos.map(r => (
+                  <div key={r.id} style={{ background: 'var(--tw-surface)', border: '1px solid var(--tw-border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>{r.tipo.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: estadoColor(r.estado) + '22', color: estadoColor(r.estado), border: `1px solid ${estadoColor(r.estado)}44` }}>
+                        {estadoLabelLocal(r.estado)}
+                      </span>
+                    </div>
+                    <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--tw-text-muted)' }}>Pedido {r.pedidoRef} &bull; {r.negocioNombre}</p>
+                    <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--tw-text-muted)' }}>{r.descripcion.slice(0, 100)}{r.descripcion.length > 100 ? '…' : ''}</p>
+                    {slaLabel(r) && (
+                      <p style={{ margin: 0, fontSize: 10, color: r.estado === 'ABIERTO' ? '#ef4444' : '#f59e0b', fontWeight: 600 }}>{slaLabel(r)}</p>
+                    )}
+                    {r.fotosUrls && r.fotosUrls.length > 0 && (
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                        {r.fotosUrls.map((url: string, i: number) => (
+                          <img key={i} src={url} alt={`evidencia-${i + 1}`} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--tw-border)' }} />
+                        ))}
+                      </div>
+                    )}
+                    <p style={{ margin: '8px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>
+                      &#128274; El pago está retenido (escrow) hasta la resolución del reclamo. El equipo TunayWasi contactará a ambas partes.
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {resueltos.length > 0 && (
+              <div>
+                <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Resueltos</p>
+                {resueltos.map(r => (
+                  <div key={r.id} style={{ background: 'var(--tw-surface)', border: '1px solid var(--tw-border)', borderRadius: 8, padding: '10px 14px', marginBottom: 8, opacity: 0.7 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: 'var(--tw-text-muted)' }}>{r.tipo.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: estadoColor(r.estado) + '22', color: estadoColor(r.estado) }}>
+                        {estadoLabelLocal(r.estado)}
+                      </span>
+                    </div>
+                    <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>Pedido {r.pedidoRef} &bull; {r.negocioNombre}</p>
+                    {r.notaTW && <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>&#128203; TunayWasi: {r.notaTW}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   function renderPedidosTab() {
     const tabStyle = (active: boolean): React.CSSProperties => ({
       padding: '8px 16px', borderRadius: 0, border: 'none',
@@ -1460,6 +1585,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       { id: 'ofertas',  label: '🤝 Ofertas' },
       { id: 'activos',  label: '📦 Pedidos activos' },
       { id: 'historial', label: '📋 Historial' },
+      { id: 'reclamos', label: '⚠ Reclamos' },
     ]
     return (
       <div>
@@ -1472,12 +1598,18 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                   {cotizaciones.filter(c => c.estado === 'ENVIADA' || c.estado === 'RESPONDIDA' || c.estado === 'CONTRAOFERTA').length}
                 </span>
               )}
+              {s.id === 'reclamos' && reclamosCaf.filter(r => r.estado === 'ABIERTO' || r.estado === 'EN_REVISION' || r.estado === 'ESPERANDO_INFO').length > 0 && (
+                <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 10, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700 }}>
+                  {reclamosCaf.filter(r => r.estado === 'ABIERTO' || r.estado === 'EN_REVISION' || r.estado === 'ESPERANDO_INFO').length}
+                </span>
+              )}
             </button>
           ))}
         </div>
         {pedidoSubTab === 'ofertas'   && renderOfertasCaf()}
         {pedidoSubTab === 'activos'   && renderPedidos()}
         {pedidoSubTab === 'historial' && renderHistorial()}
+        {pedidoSubTab === 'reclamos'  && renderReclamosCaficultor()}
       </div>
     )
   }

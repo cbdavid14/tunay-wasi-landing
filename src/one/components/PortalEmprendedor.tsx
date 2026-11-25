@@ -931,6 +931,8 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
   async function handleCrearReclamo() {
     if (!reclamoForm.pedidoId) { toast('Selecciona el pedido relacionado', 'error'); return }
     if (reclamoForm.descripcion.trim().length < 20) { toast('Describe el problema con más detalle (mínimo 20 caracteres)', 'error'); return }
+    // DIS-01 / mockup: foto obligatoria (mínimo 1 evidencia fotográfica)
+    if (reclamoFotos.length === 0) { toast('Adjunta al menos una foto de evidencia para continuar', 'error'); return }
     setReclamoEnviando(true)
     try {
       const pedidoSeleccionado = pedidos.find(p => p.id === reclamoForm.pedidoId)

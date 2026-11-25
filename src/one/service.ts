@@ -1296,6 +1296,18 @@ export async function fetchReclamosByNegocio(negocioId: string): Promise<Reclamo
     .sort((a, b) => ((b as any).createdAt ?? '').localeCompare((a as any).createdAt ?? ''))
 }
 
+export async function fetchReclamosByCaficultor(caficultorId: string): Promise<ReclamoONE[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, ONE_COLLECTIONS.RECLAMOS),
+      where('caficultorId', '==', caficultorId),
+    )
+  )
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as ReclamoONE))
+    .sort((a, b) => ((b as any).createdAt ?? '').localeCompare((a as any).createdAt ?? ''))
+}
+
 export async function fetchReclamoById(reclamoId: string): Promise<ReclamoONE | null> {
   const snap = await getDoc(doc(db, ONE_COLLECTIONS.RECLAMOS, reclamoId))
   if (!snap.exists()) return null
