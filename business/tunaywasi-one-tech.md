@@ -8,9 +8,9 @@
 
 ```
 React 18 + TypeScript + Vite
-Firebase Auth (email + OTP)
+Firebase Auth (email + Google OAuth)
 Firestore
-Cloudinary (uploads)
+Cloudinary (todos los uploads de imágenes — migrado desde Firebase Storage)
 Zustand + React Query
 Zod
 Yape / Transferencia BCP
@@ -132,12 +132,25 @@ interface ProductoONE {
 
 ### `one_pedidos/{pedidoId}`
 
+> **MODELO ACTUAL — N pedidos independientes por checkout (desde Noviembre 2026)**
+>
+> Al hacer checkout con productos de N caficultores distintos se crean N documentos `PedidoONE` separados — uno por caficultor. El pago es único (un voucher cubre todos) y los pedidos del mismo checkout se vinculan por `grupoCheckoutId`. Inspiración: modelo Temu (órdenes separadas por vendedor/logística).
+>
+> Para el modelo anterior (un pedido con `enviosCaficultor`) ver sección **[DEPRECATED] Modelo multi-caficultor unificado** al final de este archivo.
+
 ```typescript
 interface PedidoONE {
-  id: string                      // ONE-{año}-{4 dígitos random}
+  id: string                      // ONE-{año}-{4 dígitos}-{letra}
+                                  // Ej: ONE-2026-4821-A, ONE-2026-4821-B
+                                  // La letra identifica el sub-pedido dentro del grupo
+
+  // Vinculación al grupo de checkout (si el checkout tuvo >1 caficultor)
+  grupoCheckoutId?: string        // "{timestamp}-{negocioId}" — compartido entre sub-pedidos
+  subPedidoLetra?: string         // 'A' | 'B' | 'C' | ... — orden dentro del grupo
 
   // Comprador
-  emprendedorId: string           // FK → one_usuarios
+  negocioId: string               // FK → one_usuarios (renombrado desde emprendedorId)
+  emprendedorId: string           // alias de negocioId — mantener por compatibilidad
   emprendedorNombre: string
   emprendedorEmail: string
   emprendedorTelefono: string
@@ -146,10 +159,14 @@ interface PedidoONE {
   nombreLocal: string             // "Café El Origen"
   distritoLocal: string           // "Miraflores"
 
-  // Items
+  // Caficultor de ESTE pedido (único — un pedido = un caficultor)
+  caficultorId: string            // FK → one_caficultores
+
+  // Items — solo productos del caficultorId de este pedido
   items: {
     productoId: string
     productoNombre: string
+    caficultorId: string          // debe coincidir con el caficultorId raíz del pedido
     caficultorNombre: string
     formato: '250g' | '1kg' | '5kg'
     cantidad: number              // Número de unidades del formato
@@ -157,33 +174,53 @@ interface PedidoONE {
     subtotalCents: number
   }[]
 
-  // Totales
+  // Totales (de este sub-pedido, no del grupo completo)
   subtotalCents: number
   deliveryCents: number
   totalCents: number
 
-  // Pago
+  // Pago — compartido con el grupo (el voucher cubre todos los sub-pedidos)
   metodoPago: 'yape' | 'transferencia'
   pagoStatus: 'pendiente' | 'voucher_subido' | 'verificado' | 'rechazado'
-  voucherUrl?: string             // Cloudinary
+  voucherUrl?: string             // Cloudinary — mismo URL en todos los sub-pedidos del grupo
 
-  // Logística
+  // Logística — de este pedido individual (el caficultor despacha el suyo)
   direccionEntrega: string
-  logisticaStatus: 'preparando' | 'despachado' | 'entregado'
+  logisticaStatus: 'preparando' | 'en_agencia' | 'entregado'
   notasEntrega?: string
+  agencia?: 'olva' | 'shalom' | 'servientrega' | 'otra'
+  codigoAgencia?: string
+  fotoDespacho?: string
+  recepcionConfirmada: boolean    // el comprador confirma recepción por pedido individual
 
-  // Kit de identidad
-  kitGenerado: boolean            // Si se generó el kit post-compra
+  // Chat y calificación — por pedido individual
+  calificado: boolean
+
+  // Kit de identidad (aplica a nivel de grupo, puede estar en el sub-pedido A)
+  kitGenerado: boolean
   kitId?: string                  // FK → one_kits
 
-  // Compromiso mensual (modelo atado)
-  esKitProveedor: boolean         // Si incluyó Kit Proveedor
-  compromisoMeses?: number        // 3 meses mínimo si esKitProveedor
+  esKitProveedor: boolean
 
   createdAt: string
   updatedAt: string
 }
 ```
+
+#### Campos eliminados vs. modelo anterior
+
+| Campo | Estado | Motivo |
+|-------|--------|--------|
+| `enviosCaficultor` | ELIMINADO | Ya no existe — cada pedido tiene su propio caficultor |
+| `envioDetalle` | ELIMINADO | Reemplazado por los campos de logística a nivel raíz |
+
+#### Campos nuevos
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `caficultorId` | `string` | El único caficultor de este pedido |
+| `grupoCheckoutId` | `string?` | Vincula sub-pedidos del mismo checkout |
+| `subPedidoLetra` | `string?` | `'A'`, `'B'`, `'C'`... — orden dentro del grupo |
 
 ---
 
@@ -628,14 +665,31 @@ fetchCaficultor(id: string): Promise<CaficultorONE>
 fetchCaficultores(): Promise<CaficultorONE[]>
 
 // ─── PEDIDOS ───────────────────────────────────────────
-createPedido(data: CreatePedidoInput): Promise<string>
+// Checkout multi-caficultor: recibe los items agrupados por caficultor y crea N pedidos
+// Devuelve array de IDs en el mismo orden que los grupos recibidos
+confirmarPagoInline(input: CheckoutInput): Promise<string[]>
+// Firma interna:
+//   1. Generar grupoCheckoutId = `${Date.now()}-${negocioId}`
+//   2. Agrupar items por caficultorId
+//   3. Para cada grupo (en orden A, B, C...):
+//      - Crear PedidoONE con caficultorId, items filtrados, grupoCheckoutId, subPedidoLetra
+//      - ID: ONE-{año}-{random4}-{letra}
+//   4. Subir voucherUrl a todos los pedidos del grupo (si ya disponible)
+//   Resultado: N documentos en one_pedidos, todos comparten grupoCheckoutId
+
+createPedido(data: CreatePedidoInput): Promise<string>   // Para pedido de UN solo caficultor
 fetchPedido(id: string): Promise<PedidoONE>
-fetchPedidosByEmprendedor(uid: string): Promise<PedidoONE[]>
+fetchPedidosByNegocio(uid: string): Promise<PedidoONE[]>
+fetchPedidosByCaficultor(caficultorId: string): Promise<PedidoONE[]>
 fetchPedidosAdmin(): Promise<PedidoONE[]>
-subirVoucher(pedidoId: string, file: File): Promise<void>
+fetchPedidosByGrupo(grupoCheckoutId: string): Promise<PedidoONE[]>
+subirVoucherGrupo(grupoCheckoutId: string, url: string): Promise<void>  // aplica a todos los pedidos del grupo
+subirVoucher(pedidoId: string, url: string): Promise<void>              // aplica a un pedido individual
 verificarPago(pedidoId: string): Promise<void>
 rechazarPago(pedidoId: string): Promise<void>
-updateLogistica(pedidoId: string, status: string): Promise<void>
+updateLogistica(pedidoId: string, status: LogisticaStatusONE): Promise<void>
+// despacharAgencia: escribe logística directamente en el pedido (ya no hay sub-mapa por caficultor)
+despacharAgencia(pedidoId: string, data: { codigoAgencia: string; fotoDespacho?: string; agencia?: string }): Promise<void>
 
 // ─── USUARIOS ──────────────────────────────────────────
 crearUsuario(uid: string, data: CreateUsuarioInput): Promise<void>
@@ -646,6 +700,65 @@ updateUsuario(uid: string, data: Partial<UsuarioONE>): Promise<void>
 generarKit(pedidoId: string): Promise<string>
 fetchKit(kitId: string): Promise<KitIdentidadONE>
 fetchKitByPedido(pedidoId: string): Promise<KitIdentidadONE | null>
+```
+
+### Pseudocódigo de `confirmarPagoInline`
+
+```typescript
+async function confirmarPagoInline(input: CheckoutInput): Promise<string[]> {
+  const { negocioId, items, voucherUrl, metodoPago, direccionEntrega, ... } = input
+
+  // 1. Agrupar items por caficultor
+  const grupos = groupBy(items, 'caficultorId')
+  const caficultorIds = Object.keys(grupos)
+
+  // 2. ID compartido para todo el checkout
+  const grupoCheckoutId = `${Date.now()}-${negocioId}`
+  const letras = ['A', 'B', 'C', 'D', 'E', 'F']
+
+  const pedidoIds: string[] = []
+
+  for (let i = 0; i < caficultorIds.length; i++) {
+    const caficultorId = caficultorIds[i]
+    const letra = caficultorIds.length > 1 ? letras[i] : undefined
+    const random4 = Math.floor(1000 + Math.random() * 9000)
+    const año = new Date().getFullYear()
+    const pedidoId = letra
+      ? `ONE-${año}-${random4}-${letra}`
+      : `ONE-${año}-${random4}`
+
+    const itemsCaficultor = grupos[caficultorId]
+    const subtotal = itemsCaficultor.reduce((s, x) => s + x.subtotalCents, 0)
+
+    await setDoc(doc(db, 'one_pedidos', pedidoId), {
+      id: pedidoId,
+      grupoCheckoutId: caficultorIds.length > 1 ? grupoCheckoutId : undefined,
+      subPedidoLetra: letra,
+      caficultorId,
+      negocioId,
+      emprendedorId: negocioId,  // alias para retrocompatibilidad
+      items: itemsCaficultor,
+      subtotalCents: subtotal,
+      deliveryCents: input.deliveryCents,
+      totalCents: subtotal + input.deliveryCents,
+      metodoPago,
+      pagoStatus: voucherUrl ? 'voucher_subido' : 'pendiente',
+      voucherUrl: voucherUrl ?? null,
+      direccionEntrega,
+      logisticaStatus: 'preparando',
+      recepcionConfirmada: false,
+      calificado: false,
+      kitGenerado: false,
+      esKitProveedor: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+
+    pedidoIds.push(pedidoId)
+  }
+
+  return pedidoIds
+}
 ```
 
 ---
@@ -736,3 +849,147 @@ Cuando haya 10 clientes activos, se evalúa qué agregar.
 
 *Documento técnico de referencia para la construcción de TunayWasi ONE.*
 *Actualizar con cada decisión de arquitectura que se tome durante el desarrollo.*
+
+---
+
+## Cambios de arquitectura (Noviembre 2026)
+
+### 1. Firebase Storage → Cloudinary
+
+Todos los uploads de imágenes migraron a Cloudinary. Firebase Storage ya no se usa para archivos nuevos.
+
+**Variables de entorno requeridas:**
+```
+VITE_CLOUDINARY_CLOUD_NAME=
+VITE_CLOUDINARY_UPLOAD_PRESET=
+```
+
+**Patrón de upload** (ver `PortalCaficultor.tsx` → `subirFotoStorage`):
+```typescript
+const fd = new FormData()
+fd.append('file', file)
+fd.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
+fd.append('folder', 'one_caficultor')
+const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+  method: 'POST', body: fd
+})
+const { secure_url } = await res.json()
+```
+
+---
+
+### 2. [NUEVO] Checkout multi-caficultor — N pedidos independientes
+
+**Decisión (Noviembre 2026):** cuando el carrito contiene productos de N caficultores distintos, el checkout crea N `PedidoONE` separados en lugar de un único pedido con sub-mapa de envíos.
+
+**Inspiración:** modelo Temu — órdenes separadas por vendedor/logística.
+
+#### Por qué este modelo
+
+| Problema del modelo anterior | Solución con pedidos independientes |
+|-------------------------------|-------------------------------------|
+| Estado logístico mezclado en un solo doc con sub-mapas `enviosCaficultor` | Cada pedido tiene su propio `logisticaStatus`, `codigoAgencia`, `fotoDespacho` |
+| Chat por caficultor dentro del mismo pedido era confuso | Chat en la subcolección `mensajes/` del pedido individual |
+| Reseña/calificación por caficultor dentro del mismo pedido | `calificado` en cada pedido independiente |
+| Reglas Firestore complejas para acceso por caficultor | El caficultor lee directamente `where('caficultorId', '==', uid)` |
+| UI del comprador debía filtrar items por caficultor | Cada tarjeta de pedido ya tiene solo los items de ese caficultor |
+
+#### Vinculación entre sub-pedidos
+
+```
+grupoCheckoutId: "1732480000000-uid-negocio-xyz"
+                       │
+     ┌─────────────────┼──────────────────┐
+     ▼                 ▼                  ▼
+ONE-2026-4821-A    ONE-2026-4821-B    ONE-2026-4821-C
+caficultorId=X     caficultorId=Y     caficultorId=Z
+subPedidoLetra=A   subPedidoLetra=B   subPedidoLetra=C
+voucherUrl=same    voucherUrl=same    voucherUrl=same
+```
+
+#### Reglas de negocio
+
+- El pago es uno solo: el voucher se propaga al `voucherUrl` de todos los pedidos del grupo.
+- Si el admin verifica el pago de un pedido del grupo, debe verificar todos (o la UI lo hace en batch).
+- Cada caficultor despacha y actualiza logística solo en sus pedidos.
+- El comprador confirma recepción por pedido individual — puede confirmar el de un caficultor antes que el otro.
+- La calificación (reseña) se hace por pedido individual.
+- Si el checkout tiene un solo caficultor, `grupoCheckoutId` y `subPedidoLetra` quedan `undefined` y el ID no lleva letra.
+
+---
+
+### 3. [DEPRECATED] Modelo multi-caficultor unificado
+
+> Este modelo está deprecado desde Noviembre 2026. No construir nuevas funcionalidades sobre él.
+> Los documentos existentes en `one_pedidos` que tengan el campo `enviosCaficultor` son del modelo anterior.
+
+El modelo anterior guardaba todos los items (de múltiples caficultores) en un solo `PedidoONE`:
+
+```typescript
+// DEPRECATED — no usar para pedidos nuevos
+interface PedidoONELegacy {
+  id: string                      // ONE-{año}-{4 dígitos random} (sin letra)
+  items: {
+    productoId: string
+    caficultorId: string          // mezclado — items de distintos caficultores en la misma lista
+    caficultorNombre: string
+    // ...
+  }[]
+
+  // Sub-mapa de logística por caficultor — DEPRECATED
+  enviosCaficultor?: Record<string, {
+    codigoAgencia: string
+    agencia?: 'olva' | 'shalom' | 'servientrega' | 'otra'
+    fotoDespacho?: string
+    logisticaStatus: 'preparando' | 'en_agencia' | 'entregado'
+  }>
+
+  // Campos globales de logística (compatibilidad pedidos de un caficultor) — DEPRECATED para uso multi
+  logisticaStatus: 'preparando' | 'en_agencia' | 'entregado'
+  codigoAgencia?: string
+  fotoDespacho?: string
+}
+```
+
+**Firma deprecada de `despacharAgencia`** — no usar para pedidos nuevos:
+```typescript
+// DEPRECATED
+despacharAgencia(pedidoId: string, data: {
+  codigoAgencia: string
+  fotoDespacho?: string
+  caficultorId?: string   // si se pasaba → escribía en enviosCaficultor.[id]
+  agencia?: string
+}): Promise<void>
+```
+
+---
+
+### 4. Subir voucher — 3 puntos de entrada (sin cambios)
+
+El comprobante de pago se puede subir desde:
+
+| Punto | Ubicación | Componente |
+|-------|-----------|-----------|
+| A | Checkout `carritoVista === 'espera_pago'` | `PortalEmprendedor.tsx` |
+| B | Tarjeta de pedido activo, botón "Subir voucher →" | `PortalEmprendedor.tsx` |
+| C | Drawer de detalle de pedido, botón "Subir comprobante de pago →" | `PortalEmprendedor.tsx` |
+
+Con el nuevo modelo, subir el voucher desde cualquiera de estos puntos llama `subirVoucherGrupo(grupoCheckoutId, url)` si el pedido pertenece a un grupo, o `subirVoucher(pedidoId, url)` si es un pedido individual.
+
+---
+
+### 5. Admin auto-rol (Google login)
+
+En `src/one/authService.ts`, cuando un usuario hace login con Google por primera vez y no tiene doc en `one_usuarios`, se evalúa el email:
+
+```typescript
+const ADMIN_EMAILS = ['tunaywasi@gmail.com']
+
+if (ADMIN_EMAILS.includes(email) || email.endsWith('@tunaywasi.pe')) {
+  await crearUsuario(uid, { uid, rol: 'admin', nombre, email })
+  return { uid, esNuevo: false, ... }
+}
+// Si no cumple → flujo normal de registro de nuevo usuario
+```
+
+No se le pide al admin elegir un rol — el doc se crea automáticamente con `rol: 'admin'`.

@@ -121,6 +121,10 @@ VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 
+# Cloudinary (image uploads — replaces Firebase Storage)
+VITE_CLOUDINARY_CLOUD_NAME=
+VITE_CLOUDINARY_UPLOAD_PRESET=
+
 # EmailJS (contact form)
 VITE_EMAILJS_SERVICE_ID=
 VITE_EMAILJS_TEMPLATE_ID=
@@ -165,7 +169,7 @@ CaficultorDoc ←── ProductoDoc ←── PedidoItem ──→ PedidoDoc
 | Service | Purpose |
 |---------|---------|
 | Firebase Firestore | Catalog, orders, configuration |
-| Firebase Storage | Producer photos, Yape/Plin vouchers |
+| Cloudinary | All image uploads (producer photos, vouchers, dispatch photos) |
 | EmailJS | Contact form → admin email notification |
 | Yape / Plin | QR manual transfer with voucher upload |
 | Niubiz | Peruvian card payments |
@@ -173,8 +177,10 @@ CaficultorDoc ←── ProductoDoc ←── PedidoItem ──→ PedidoDoc
 
 ### Firebase Storage Paths
 
-- `tunaywasi/caficultores/{id}/` — producer profile and farm photos
-- `pedidos/vouchers/{id}.jpg` — Yape/Plin payment vouchers
+> **Deprecated**: Firebase Storage is no longer used for new uploads. All image uploads now go to Cloudinary.
+> Legacy paths (for reference only):
+> - `tunaywasi/caficultores/{id}/` — producer profile and farm photos
+> - `pedidos/vouchers/{id}.jpg` — Yape/Plin payment vouchers
 
 ## Pre-Launch Checklist
 

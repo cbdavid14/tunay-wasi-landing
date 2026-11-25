@@ -11,8 +11,10 @@ import Cafe from '@/features/catalog/components/Cafe';
 import Contacto from '@/features/contact/components/Contacto';
 import Checkout from '@/features/checkout/components/Checkout';
 import GrainOverlay from '@/components/decor/GrainOverlay';
+import { useTheme } from '@/shared/useTheme';
 
 export default function App() {
+  useTheme();
   return (
     <>
       <GrainOverlay/>

@@ -506,8 +506,8 @@ El caficultor **aterriza en el catálogo público**, no en un dashboard KPI.
 
 | Acción | Disponible | Notas |
 |---|---|---|
-| Ver lista de pedidos donde aparece su café | ✅ | Filtrado por `items[].caficultorId` |
-| Filtrar pedidos por estado | ✅ | Todos / Preparando / En agencia / Entregado |
+| Ver lista de pedidos donde aparece su café | ✅ | Query directa por `caficultorId == uid` — cada pedido ya contiene solo sus items |
+| Filtrar pedidos por estado | ✅ | Todos / Preparando / En agencia / Entregado / En disputa |
 | Despachar un pedido (`preparando` → `en_agencia`) | ✅ | Modal con código de tracking requerido + foto opcional |
 | Ingresar agencia (Olva / Shalom / Servientrega / Otra) | ✅ | Campo en modal de despacho |
 | Ingresar código de tracking | ✅ | Obligatorio para confirmar despacho |
@@ -575,19 +575,26 @@ El emprendedor **aterriza en el catálogo público**, no en un resumen financier
 
 #### Tab 2 — Mis pedidos
 
+> **Modelo de datos:** cada documento en `one_pedidos` corresponde a un solo caficultor. Si en un checkout hay N caficultores se crean N pedidos separados, vinculados por `grupoCheckoutId`. La vista puede mostrarlos agrupados (colapsable) o como lista plana.
+
 | Acción | Disponible | Notas |
 |---|---|---|
-| Ver lista de sus pedidos activos | ✅ | Estado actual + stepper de 5 pasos |
+| Ver lista de sus pedidos activos | ✅ | Estado actual + stepper de 5 pasos — por pedido individual |
+| Ver grupo de sub-pedidos del mismo checkout | ✅ | Agrupados por `grupoCheckoutId` si hay >1 caficultor |
 | Filtrar por estado | ✅ | Todos / Pago pendiente / Verificado / En agencia |
-| Subir voucher de pago | ✅ | Foto de Yape / transferencia BCP |
+| Subir voucher de pago | ✅ | Foto de Yape / transferencia BCP — se propaga a todos los pedidos del grupo |
 | Ver código de tracking cuando el pedido está en agencia | ✅ | Ingresado por el caficultor al despachar |
-| Confirmar recepción del pedido | ✅ | Solo disponible en estado `en_agencia` |
-| Calificar al caficultor | ✅ | Solo disponible si `recepcionConfirmada === true` |
+| Confirmar recepción del pedido ("✓ Todo bien") | ✅ | Por pedido individual — solo disponible en estado `en_agencia` → `entregado`, escrow liberado |
+| Iniciar disputa ("⚠ Tengo un problema") | ✅ | Por pedido individual — solo en `en_agencia` → `en_disputa`, abre formulario de reclamo pre-llenado, escrow retenido |
+| Ver estado de reclamo activo | ✅ | Visible cuando `logisticaStatus === 'en_disputa'` |
+| Calificar al caficultor | ✅ | Por pedido individual — solo disponible si `recepcionConfirmada === true` |
 | Cancelar un pedido | ❌ | Coordinación manual vía WhatsApp |
 
-**Stepper de 5 pasos:** `Pendiente` → `Pago verificado` → `En agencia` → `Recibido` → `Calificado ✓`
+**Stepper de 6 pasos (por pedido individual):** `Pendiente` → `Pago verificado` → `En agencia` → `Recibido` → `Calificado ✓` (o `En disputa` → `Resuelto` si el comprador reportó un problema)
 
-**Anti-fraude:** la calificación está bloqueada hasta que el emprendedor confirme recepción. El botón "Calificar" no aparece si `recepcionConfirmada === false` — el texto muestra "Confirma la recepción para calificar".
+**Anti-fraude:** la calificación está bloqueada hasta que el emprendedor confirme recepción ("✓ Todo bien"). El botón "Calificar" no aparece si `recepcionConfirmada === false` — el texto muestra "Confirma la recepción para calificar". Un pedido en `en_disputa` tampoco habilita la calificación hasta que el reviewer resuelva el reclamo.
+
+**Auto-entregado:** si el emprendedor no realiza ninguna acción tras 7 días calendario de que el pedido llega a `en_agencia`, el sistema marca automáticamente `logisticaStatus: 'entregado'`. Este mecanismo **no aplica** si el pedido ya está en `en_disputa`.
 
 #### Tab 3 — Historial
 

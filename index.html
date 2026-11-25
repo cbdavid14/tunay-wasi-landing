@@ -63,6 +63,16 @@
   }
   </script>
 
+  <!-- Anti-flash: apply stored theme before React mounts -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('tw-theme') || 'cream';
+      var bg = t === 'dark' ? '#0d0b09' : t === 'white' ? '#f5f5f5' : '#f2e0cc';
+      document.documentElement.setAttribute('data-theme', t);
+      document.write('<style>body{background:' + bg + '}</style>');
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700&family=Mulish:wght@500;600;700;800&family=Bowlby+One&family=Bowlby+One+SC&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -70,8 +80,8 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
-      background: #f2e0cc;
-      color: #1f3028;
+      background-color: var(--tw-bg, #f2e0cc);
+      color: var(--tw-text, #1f3028);
       font-family: 'Montserrat', system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;

@@ -113,6 +113,17 @@ Brand guide in `brand/` as PNG exports from PDF (`page-1-img-0.png`, `page-2-img
 - If two valid approaches exist, present the options with trade-offs and wait for a decision before writing code.
 - When in doubt about branding (copy, color, imagery), pause and ask rather than ship something inconsistent.
 
+## Integrations — image uploads
+
+All image uploads use **Cloudinary** (not Firebase Storage). Required env vars:
+
+```
+VITE_CLOUDINARY_CLOUD_NAME=
+VITE_CLOUDINARY_UPLOAD_PRESET=
+```
+
+Upload pattern: `POST https://api.cloudinary.com/v1_1/{cloudName}/image/upload` with `FormData` containing `file` and `upload_preset`. Used in `PortalCaficultor.tsx` (product/farm photos) and `PortalEmprendedor.tsx` (vouchers, dispatch photos).
+
 ## MCP Tools: code-review-graph
 
 **IMPORTANT: This project has a knowledge graph. ALWAYS use the
