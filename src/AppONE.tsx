@@ -1207,8 +1207,8 @@ const AppONE: React.FC = () => {
   return withHeader(
     <>
       <PageMeta
-        title="Tunay Wasi — Café de especialidad con transparencia radical"
-        description="Compra café de especialidad directamente del caficultor peruano. Lavado, Natural, Honey. Trazabilidad completa, precio justo y despacho directo desde el origen."
+        title="Tunay Wasi — Marketplace de Café de Especialidad Peruano | Compra Directa del Productor"
+        description="Marketplace de café de especialidad en Perú. Compra café verde sin tostar, tostado en grano o molido directamente del caficultor peruano. Trazabilidad completa, precio justo, despacho a Lima y provincias."
         canonical={BASE_URL}
       />
       <CatalogoPublico
