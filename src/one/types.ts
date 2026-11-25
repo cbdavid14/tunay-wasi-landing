@@ -566,10 +566,11 @@ export interface CotizacionONE {
   negocioId: string
   negocioNombre: string
   negocioRazonSocial?: string        // razón social de la empresa B2B
+  negocioRuc?: string                // RUC empresa B2B (B2B-05 / TRIB-02)
   estado: EstadoCotizacion
   rondas: RondaCotizacion[]
   rondaActual: number                // 1–3
-  expiraAt?: string                  // ISO — 24h desde última ronda
+  expiraAt?: string                  // ISO — 7d para negociación activa; null al ACEPTAR/RECHAZAR
   pedidoId?: string                  // si se convirtió en pedido
   createdAt: string
   updatedAt: string
@@ -583,6 +584,7 @@ export interface CreateCotizacionInput {
   negocioId: string
   negocioNombre: string
   negocioRazonSocial?: string
+  negocioRuc?: string               // RUC empresa B2B — forwarded to pedido on accept
   kgSolicitados: number
   precioOfertadoCents: number
   plazoEntrega: string

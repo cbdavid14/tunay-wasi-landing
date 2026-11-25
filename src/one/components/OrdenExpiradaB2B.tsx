@@ -75,7 +75,7 @@ const OrdenExpiradaB2B: React.FC<{
             Tiempo de pago vencido
           </div>
           <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.6 }}>
-            Tu oferta aceptada el {fechaAceptacion} no fue pagada en <strong style={{ color: 'var(--tw-terra)' }}>24 horas</strong>.
+            Tu oferta aceptada el {fechaAceptacion} no fue pagada en <strong style={{ color: 'var(--tw-terra)' }}>72 horas</strong>.
             El stock fue restaurado automáticamente.
           </div>
         </div>
@@ -179,7 +179,7 @@ const OrdenExpiradaB2B: React.FC<{
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>¿Qué pasó?</div>
         <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.7 }}>
           La oferta fue aceptada y se creó la orden, pero el pago debía confirmarse en{' '}
-          <strong style={{ color: 'var(--tw-text)' }}>24 horas</strong>. Al vencer el plazo sin pago,
+          <strong style={{ color: 'var(--tw-text)' }}>72 horas</strong>. Al vencer el plazo sin pago,
           la orden se canceló automáticamente y el lote volvió a estar disponible.
           Puedes contactar al caficultor para renegociar o hacer una nueva oferta.
         </div>

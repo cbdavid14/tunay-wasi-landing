@@ -218,6 +218,8 @@ export async function createPedido(input: CreatePedidoInput): Promise<string> {
     ...(input.envioDetalle ? { envioDetalle: input.envioDetalle } : {}),
     isReposicion: input.isReposicion ?? false,
     ...(input.reposicionIds?.length ? { reposicionIds: input.reposicionIds } : {}),
+    // ORD-02: expiresAt = 24h para B2C (comprador tiene 24h para subir voucher)
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -1006,6 +1008,11 @@ function expiraAt7d(): string {
   return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 }
 
+/** ORD-03: B2B orders expire in 72 h (3 days) after payment window opens */
+function expiraAtB2BPedido(): string {
+  return new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+}
+
 export async function createCotizacion(input: CreateCotizacionInput): Promise<string> {
   const now = new Date().toISOString()
   const ronda1 = {
@@ -1025,6 +1032,7 @@ export async function createCotizacion(input: CreateCotizacionInput): Promise<st
     negocioId: input.negocioId,
     negocioNombre: input.negocioNombre,
     negocioRazonSocial: input.negocioRazonSocial ?? '',
+    ...(input.negocioRuc ? { negocioRuc: input.negocioRuc } : {}),
     estado: 'ENVIADA',
     rondas: [ronda1],
     rondaActual: 1,
@@ -1155,6 +1163,14 @@ export async function createPedidoFromCotizacion(cotizacionId: string): Promise<
     logisticaStatus: 'preparando' as const,
     estado: 'confirmado',
     origenCotizacion: cotizacionId,
+    // ORD-03: B2B orders expire in 72 h (3 days) — not 24h like B2C
+    expiraAt: expiraAtB2BPedido(),
+    // B2B-05 / TRIB-02: fiscal fields forwarded from cotización
+    rolComprador: 'buyer_b2b',
+    ...(cot.negocioRuc ? { rucEmpresa: cot.negocioRuc } : {}),
+    ...(cot.negocioRazonSocial ? { razonSocialEmpresa: cot.negocioRazonSocial } : {}),
+    // buyer_b2b always receives factura per TRIB-02
+    tipoComprobante: 'factura',
     payment: { status: 'RETAINED' },
     kitGenerado: false,
     calificado: false,
