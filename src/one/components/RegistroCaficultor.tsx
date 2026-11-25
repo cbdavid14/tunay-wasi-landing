@@ -198,7 +198,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
     if (!nombre.trim()) return 'Ingresa tu nombre completo.'
     if (!email.includes('@')) return 'Ingresa un email válido.'
     if (!telefono.trim()) return 'Ingresa tu número de WhatsApp.'
-    if (password.length < 6) return 'La contraseña debe tener al menos 6 caracteres.'
+    if (password.length < 8 || !/\d/.test(password)) return 'La contraseña debe tener al menos 8 caracteres y 1 número.'
     if (password !== passwordConfirm) return 'Las contraseñas no coinciden.'
     return null
   }
@@ -207,6 +207,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
     if (!region) return 'Selecciona tu región.'
     if (!distrito.trim()) return 'Ingresa tu distrito o localidad.'
     if (!variedadPrincipal) return 'Selecciona la variedad principal.'
+    if (!proceso) return 'Selecciona el proceso de beneficio.'
     if (!tipoRegistroCaficultor) return 'Selecciona tu modalidad tributaria.'
     return null
   }
@@ -441,7 +442,7 @@ const Paso1: React.FC<{
         </Field>
         <div className="reg-caf-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <Field label="Contraseña" required>
-            <input type="password" placeholder="Mínimo 6 caracteres" value={password}
+            <input type="password" placeholder="Mínimo 8 caracteres + 1 número" value={password}
               onChange={e => setPassword(e.target.value)}
               onFocus={() => setFocused('pass')} onBlur={() => setFocused('')}
               style={getInputStyle(focused === 'pass')} />

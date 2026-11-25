@@ -386,7 +386,10 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
                 {enviando ? 'Creando cuenta...' : 'Crear cuenta →'}
               </button>
               <button
-                onClick={() => { setDni(dni || '00000000'); setPaso('confirmacion') }}
+                onClick={() => {
+                  if (dni.length !== 8) { setError('Ingresa tu DNI antes de continuar. Es requerido para la boleta electrónica.'); return }
+                  setPaso('confirmacion')
+                }}
                 style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 10, background: 'none', border: 'none', color: 'var(--tw-text-faint)', fontSize: 12, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
               >
                 Omitir dirección por ahora →

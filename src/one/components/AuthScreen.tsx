@@ -94,7 +94,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
       'auth/wrong-password': 'Contraseña incorrecta.',
       'auth/email-already-in-use': 'Ya existe una cuenta con ese email.',
       'auth/invalid-email': 'El email no es válido.',
-      'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+      'auth/weak-password': 'La contraseña debe tener al menos 8 caracteres e incluir 1 número.',
       'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos.',
       'auth/invalid-credential': 'Email o contraseña incorrectos.',
     }
@@ -747,7 +747,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
             {!googlePendingTipo && (
               <>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Contraseña <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-                <input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" style={inputStyle} />
+                <input type="password" placeholder="Mínimo 8 caracteres + 1 número" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" style={inputStyle} />
               </>
             )}
             {googlePendingTipo && (
@@ -760,9 +760,10 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
               onClick={() => {
                 const n = googlePendingTipo ? pendingNombre : nombre
                 if (!n.trim()) { setError('Ingresa tu nombre.'); return }
-                if (!googlePendingTipo) {
+                  if (!googlePendingTipo) {
                   if (!email.includes('@')) { setError('Ingresa un email válido.'); return }
-                  if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres.'); return }
+                  if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return }
+                  if (!/\d/.test(password)) { setError('La contraseña debe incluir al menos 1 número.'); return }
                 }
                 setError(null)
                 if (rolRegistro === 'buyer_b2c') setPaso('datos_persona')
@@ -978,7 +979,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                   <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Email <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
                   <input type="email" placeholder="tu@correo.com" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required style={inputStyle} />
                   <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Contraseña <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-                  <input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" required style={inputStyle} />
+                  <input type="password" placeholder="Mínimo 8 caracteres + 1 número" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" required style={inputStyle} />
                   <button type="submit" disabled={cargando} style={{ width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: cargando ? 'not-allowed' : 'pointer', opacity: cargando ? 0.6 : 1, marginTop: 4 }}>
                     {cargando ? 'Cargando...' : 'Siguiente →'}
                   </button>
@@ -1058,7 +1059,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Contraseña <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-                    <input type="password" placeholder="Mínimo 6 chars" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" style={inputStyle} />
+                    <input type="password" placeholder="Mín. 8 chars + 1 núm" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" style={inputStyle} />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Confirmar <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
@@ -1078,7 +1079,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                   if (!cafYape.trim()) { setError('Ingresa tu WhatsApp.'); return }
                   if (!googlePendingTipo) {
                     if (!email.includes('@')) { setError('Ingresa un email válido.'); return }
-                    if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres.'); return }
+                    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return }
+                    if (!/\d/.test(password)) { setError('La contraseña debe incluir al menos 1 número.'); return }
                     // flujo email: crear cuenta y avanzar a finca
                     handleEmailRegistro({ preventDefault: () => {} } as React.FormEvent)
                     return
