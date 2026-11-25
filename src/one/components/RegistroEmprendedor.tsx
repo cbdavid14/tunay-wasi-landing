@@ -266,7 +266,8 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
             dirFiscal,
             dirEnvio: mismaDirFiscal ? dirFiscal : dirEnvio,
             estadoAprobacion: 'PENDING_APPROVAL',
-            solicitudAt: new Date().toISOString(),
+            // GAP-12: usar serverTimestamp() en lugar de new Date().toISOString()
+            solicitudAt: serverTimestamp(),
           },
           updatedAt: serverTimestamp(),
         }, { merge: true })
@@ -280,7 +281,7 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
     }
   }
 
-  // ─── Pantalla confirmación ────────────────────────────────────────────────────
+  // ─── Pantalla confirmación (PENDING_APPROVAL) ────────────────────────────────
   if (paso === 'confirmacion') {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: 'Montserrat, sans-serif' }}>
@@ -292,28 +293,40 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 18px', fontSize: 32, color: 'var(--tw-sage)',
             }}>✓</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 20, background: 'var(--tw-terra-muted)', border: '1px solid rgba(201,110,75,.3)', fontSize: 10, fontWeight: 700, color: 'var(--tw-terra)', marginBottom: 16 }}>
-              buyer_b2b · RUC verificado
+            {/* GAP-13: badge PENDING_APPROVAL en vez de "buyer_b2b · RUC verificado" */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 20, background: 'rgba(212,168,0,.12)', border: '1px solid rgba(212,168,0,.4)', fontSize: 10, fontWeight: 700, color: '#d4a800', marginBottom: 16 }}>
+              En revisión · PENDING_APPROVAL
             </div>
             <h2 style={{ margin: '0 0 6px', fontSize: 22, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>
-              ¡Cuenta creada!
+              ¡Solicitud enviada!
             </h2>
             <p style={{ margin: '0 0 4px', fontSize: 13, color: 'var(--tw-text-muted)' }}>{razonSocial || nombre}</p>
             <p style={{ margin: '0 0 20px', fontSize: 11, color: 'var(--tw-text-faint)' }}>RUC {ruc} · Verificado SUNAT</p>
           </div>
+
+          {/* Banner estado pendiente */}
+          <div style={{ background: 'rgba(212,168,0,.08)', border: '1px solid rgba(212,168,0,.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 20, textAlign: 'left' }}>
+            <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: '#d4a800' }}>¿Qué pasa ahora?</p>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11, color: 'var(--tw-text-muted)', lineHeight: 1.7 }}>
+              <li>Nuestro equipo revisará tus datos en <strong>1-2 días hábiles</strong></li>
+              <li>Recibirás un email de aprobación en <strong>{email || 'tu correo'}</strong></li>
+              <li>Una vez aprobado tendrás acceso a lotes TYPE_A y precios por volumen</li>
+            </ul>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{
+            <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{
               display: 'block', padding: 14, borderRadius: 10, textAlign: 'center',
               background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700,
             }}>
-              Ver catálogo →
+              Ver mi estado →
             </a>
-            <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{
+            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{
               display: 'block', padding: 12, borderRadius: 10, textAlign: 'center',
               background: 'none', border: '1px solid var(--tw-border)', color: 'var(--tw-text-muted)',
               textDecoration: 'none', fontSize: 13, fontWeight: 600,
             }}>
-              Mi portal →
+              Explorar catálogo (solo lectura)
             </a>
           </div>
         </div>
