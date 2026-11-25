@@ -1181,7 +1181,9 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
     return undefined
   }
 
-  const paraDespachar = pedidos.filter(p => p.pagoStatus === 'verificado' && miStatusEnPedido(p) === 'preparando')
+  // ESC-04: canonical pagoStatus is 'PAID'; 'verificado' kept for legacy records
+  const pagoConfirmado = (p: PedidoONE) => (p.pagoStatus as string) === 'PAID' || (p.pagoStatus as string) === 'verificado'
+  const paraDespachar = pedidos.filter(p => pagoConfirmado(p) && miStatusEnPedido(p) === 'preparando')
   const enCamino = pedidos.filter(p => miStatusEnPedido(p) === 'en_agencia')
   const entregados = pedidos.filter(p => miStatusEnPedido(p) === 'entregado')
 
@@ -1487,7 +1489,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       return true
     })
 
-    const porCobrarCents = todos.filter(p => p.pagoStatus !== 'verificado').reduce((s, p) => s + p.totalCents, 0)
+    const porCobrarCents = todos.filter(p => (p.pagoStatus as string) !== 'PAID' && (p.pagoStatus as string) !== 'verificado').reduce((s, p) => s + p.totalCents, 0)
     const cobradoMesCents = entregados.reduce((s, p) => s + p.totalCents, 0)
 
     const kpis = [
@@ -1546,7 +1548,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
               const miStatus = miStatusEnPedido(p)
               const isPend = miStatus === 'preparando'
               const isAgencia = miStatus === 'en_agencia' || miStatus === 'en_disputa'
-              const pagoOk = p.pagoStatus === 'verificado'
+              const pagoOk = (p.pagoStatus as string) === 'PAID' || (p.pagoStatus as string) === 'verificado'
 
               const statusColor = isPend && pagoOk ? 'var(--tw-sage)'
                 : isPend ? '#f39c12'
@@ -3427,7 +3429,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         const miStatus = miStatusEnPedido(p)
         const isPend = miStatus === 'preparando'
         const isAgencia = miStatus === 'en_agencia' || miStatus === 'en_disputa'
-        const pagoOk = p.pagoStatus === 'verificado'
+        const pagoOk = (p.pagoStatus as string) === 'PAID' || (p.pagoStatus as string) === 'verificado'
         const miCodigo = miCodigoEnPedido(p)
         const total = misItems(p).reduce((s, i) => s + i.subtotalCents, 0)
 
