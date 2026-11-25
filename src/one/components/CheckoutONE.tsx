@@ -865,10 +865,11 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
     }
   }
 
-  // Para Yape: puede confirmar sin voucher (voucher es opcional)
-  // Para transferencia: voucher es obligatorio
+  // PAY-02: Voucher requerido para ambos métodos — sin voucher no hay pedido
+  // Para Yape: requiere haber confirmado el pago Y subido el voucher
+  // Para transferencia: voucher obligatorio
   const puedeConfirmar = metodoPago === 'yape'
-    ? yapePagado
+    ? yapePagado && !!(voucherUrl) && !subiendoArchivo
     : !!(voucherUrl) && !subiendoArchivo
 
   return (
@@ -986,10 +987,10 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
             ))}
           </div>
 
-          {/* Voucher opcional para Yape */}
+          {/* Voucher obligatorio para Yape (PAY-02) */}
           <div style={{ marginBottom: 20 }}>
-            <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
-              Opcionalmente puedes adjuntar el screenshot de tu Yape:
+            <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>
+              Adjunta el screenshot de tu Yape <span style={{ color: 'var(--tw-terra)' }}>*</span>
             </p>
             <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFile} />
             {!voucherPreview ? (
@@ -1001,8 +1002,8 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
                   cursor: 'pointer', background: 'var(--tw-card)',
                 }}
               >
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
-                  📎 Adjuntar screenshot (opcional)
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-faint)', fontFamily: 'Montserrat, sans-serif' }}>
+                  📎 Adjuntar screenshot del Yape
                 </p>
               </div>
             ) : (
@@ -1030,10 +1031,10 @@ const Paso2Form: React.FC<Paso2FormProps> = ({
             <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--tw-error)', fontFamily: 'Montserrat, sans-serif' }}>{uploadError}</p>
           )}
 
-          {/* Botón "Ya pagué" */}
+          {/* Botón "Ya pagué" — requiere voucher primero (PAY-02) */}
           {!yapePagado ? (
-            <PrimaryBtn onClick={() => setYapePagado(true)}>
-              ✓ Ya pagué con Yape
+            <PrimaryBtn onClick={() => setYapePagado(true)} disabled={!voucherUrl || subiendoArchivo}>
+              {(!voucherUrl || subiendoArchivo) ? 'Adjunta el screenshot para continuar' : '✓ Ya pagué con Yape'}
             </PrimaryBtn>
           ) : (
             <div style={{ padding: '16px', borderRadius: 10, background: '#0d1f0d', border: `1px solid ${'var(--tw-sage)'}55`, marginBottom: 0, textAlign: 'center' }}>
@@ -1219,11 +1220,11 @@ const Paso3Screen: React.FC<{ pedidoId: string; nombreLocal: string; totalCents:
       </p>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Yapea a</span>
-        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>+51 917 959 370</span>
+        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'Montserrat, sans-serif' }}>{ONE_CONFIG.YAPE_NUMERO}</span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <span style={{ fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif' }}>Cuenta BCP</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'JetBrains Mono, monospace' }}>191-92345678-0-12</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'JetBrains Mono, monospace' }}>{ONE_CONFIG.BCP_CUENTA}</span>
       </div>
       <div style={{ height: 1, background: 'var(--tw-border)', margin: '0 0 10px' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
