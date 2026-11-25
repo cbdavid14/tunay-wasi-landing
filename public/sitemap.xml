@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
-  <!-- Raíz — catálogo principal (SPA con hash router: solo la raíz es indexable) -->
+  <!-- Catálogo principal -->
   <url>
     <loc>https://tunaywasi.com/</loc>
     <lastmod>2026-11-25</lastmod>
@@ -11,27 +11,76 @@
     <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/" />
   </url>
 
-  <!--
-    NOTA TÉCNICA: Las siguientes rutas usan hash fragments (#/ruta).
-    Los hash fragments NO son rastreados por los motores de búsqueda (el fragmento
-    se procesa solo en el cliente). Para que estas páginas sean indexables, se
-    requiere migrar a un router de servidor-side (SSR) o pre-rendering (SSG).
-    Se listan aquí como referencia, pero no serán rastreadas por Google/Bing.
-    VER PLAN DE ACCIÓN: auditoria/seo-aeo-2026-11.md — Hallazgo Crítico #1.
-  -->
+  <!-- Landing para caficultores -->
+  <url>
+    <loc>https://tunaywasi.com/para-caficultores</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/para-caficultores" />
+  </url>
 
-  <!-- Landing para caficultores — hash route, NO indexable actualmente -->
-  <!-- <url>
-    <loc>https://tunaywasi.com/#/para-caficultores</loc>
+  <!-- Landing para cafeterías / emprendedores -->
+  <url>
+    <loc>https://tunaywasi.com/para-cafeterias</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/para-cafeterias" />
+  </url>
+
+  <!-- Catálogo de caficultores -->
+  <url>
+    <loc>https://tunaywasi.com/caficultores</loc>
+    <lastmod>2026-11-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url> -->
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/caficultores" />
+  </url>
 
-  <!-- Landing para cafeterías / emprendedores — hash route, NO indexable actualmente -->
-  <!-- <url>
-    <loc>https://tunaywasi.com/#/para-cafeterias</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url> -->
+  <!-- Soporte -->
+  <url>
+    <loc>https://tunaywasi.com/soporte</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/soporte" />
+  </url>
+
+  <!-- Guías / Docs -->
+  <url>
+    <loc>https://tunaywasi.com/docs</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/docs" />
+  </url>
+
+  <!-- Términos y condiciones -->
+  <url>
+    <loc>https://tunaywasi.com/terminos</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/terminos" />
+  </url>
+
+  <!-- Privacidad -->
+  <url>
+    <loc>https://tunaywasi.com/privacidad</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/privacidad" />
+  </url>
+
+  <!-- Libro de reclamaciones -->
+  <url>
+    <loc>https://tunaywasi.com/reclamaciones</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/reclamaciones" />
+  </url>
 
 </urlset>

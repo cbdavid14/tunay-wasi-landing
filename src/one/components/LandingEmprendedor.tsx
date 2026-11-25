@@ -30,6 +30,10 @@ const FAQ = [
     p: '¿Puedo pedir poco para probar?',
     r: 'Sí. Las presentaciones arrancan desde 1kg. Puedes probar un lote antes de comprometerte con un volumen mayor.',
   },
+  {
+    p: '¿Qué pasa si tengo un problema con mi pedido?',
+    r: 'Tienes hasta 7 días calendario desde la entrega para reportar un problema. Para cuentas persona: respondemos en 48 horas hábiles. Para cuentas empresa: en 72 horas hábiles. Los casos complejos se resuelven en hasta 7 días hábiles con mediación de TunayWasi. El dinero queda retenido en escrow hasta que haya resolución.',
+  },
 ]
 
 // ─── Átomos ───────────────────────────────────────────────────────────────────

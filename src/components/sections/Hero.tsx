@@ -180,7 +180,7 @@ export default function Hero() {
             {([
               [farmCount > 0 ? `${farmCount}` : '12+', 'fincas asociadas'],
               [altitudMedia, 'altitud media'],
-              ['Hasta 50%', 'directo al productor'],
+              ['0% comisión', 'en fase beta'],
             ] as [string, string][]).map(([n, l]) => (
               <div key={l} style={{ textAlign: 'center' }}>
                 <div style={{

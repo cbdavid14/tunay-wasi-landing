@@ -16,7 +16,7 @@ const PROJECT = 'tunay-wasi'
 async function loginYObtenerToken(page: Parameters<typeof test>[1] extends (args: { page: infer P }) => unknown ? P : never, email: string, password: string): Promise<{ uid: string; token: string } | null> {
   await page.goto(`${BASE}/#/login`)
   await page.waitForLoadState('networkidle')
-  const btnEmail = page.getByRole('button', { name: /ingresar con email/i }).first()
+  const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()
     await page.waitForTimeout(500)
@@ -150,6 +150,8 @@ async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0
 test.describe.configure({ mode: 'serial' })
 
 test('setup: barista (buyer_b2b APPROVED)', async ({ page }) => {
+  await page.goto(`${BASE}/#/login`)
+  await page.waitForLoadState('networkidle')
   const data = await loginYObtenerToken(page, 'barista@tunaywasi.qa', 'Tunay2026!')
   expect(data, 'No se pudo loguear barista — verificar que el usuario existe').not.toBeNull()
   await actualizarEmpresaB2B(page, data!.uid, data!.token, 'APPROVED')
@@ -179,7 +181,7 @@ test('setup: caficultor (seller) — registrar en app si no existe', async ({ pa
   // Intentar login — si falla, registrar
   await page.goto(`${BASE}/#/login`)
   await page.waitForLoadState('networkidle')
-  const btnEmail = page.getByRole('button', { name: /ingresar con email/i }).first()
+  const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()
     await page.waitForTimeout(500)

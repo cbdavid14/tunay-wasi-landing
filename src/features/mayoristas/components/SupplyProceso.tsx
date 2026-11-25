@@ -5,7 +5,7 @@ const pasos = [
   {
     n: '01', titulo: 'Eliges el lote',
     sub: 'Trazado en finca',
-    desc: 'Revisas la ficha técnica, notas de cata y precio FOB Lima. Pides muestra de 200 g si necesitas catar antes de cerrar.',
+    desc: 'Revisas la ficha técnica, notas de cata y precio del lote. La solicitud de muestra previa estará disponible próximamente.',
     meta: 'Día 0',
   },
   {

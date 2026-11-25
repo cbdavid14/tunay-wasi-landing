@@ -391,7 +391,7 @@ const INSTALACION_PASOS = [
   {
     n: '2',
     titulo: 'Crea tu cuenta de caficultor',
-    texto: 'Ingresa con tu cuenta Google o con tu correo. Selecciona el rol "Caficultor" y completa tu perfil: nombre, región, altitud y una foto de tu finca.',
+    texto: 'Ingresa con tu cuenta Google o con tu correo. Selecciona el rol "Caficultor" y completa tu perfil: nombre, región, altitud y una foto de tu finca. También elige tu modalidad tributaria: persona natural con DNI, con RUC propio o cooperativa.',
     color: '#c96e4b',
   },
   {

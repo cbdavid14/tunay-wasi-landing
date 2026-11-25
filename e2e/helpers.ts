@@ -14,7 +14,7 @@ export async function loginEmail(page: Page, email: string, password: string) {
   await page.goto('/#/login')
   await page.waitForLoadState('networkidle')
   // Paso 1: si aparece pantalla de selección de método, clic en "Ingresar con email"
-  const btnEmail = page.getByRole('button', { name: /ingresar con email/i }).first()
+  const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()
     await page.waitForTimeout(500)
