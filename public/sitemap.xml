@@ -1,60 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
-  <!-- Catálogo principal -->
+  <!-- Raíz — catálogo principal (SPA con hash router: solo la raíz es indexable) -->
   <url>
     <loc>https://tunaywasi.com/</loc>
+    <lastmod>2026-11-25</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/" />
   </url>
 
-  <!-- Landing caficultores -->
-  <url>
+  <!--
+    NOTA TÉCNICA: Las siguientes rutas usan hash fragments (#/ruta).
+    Los hash fragments NO son rastreados por los motores de búsqueda (el fragmento
+    se procesa solo en el cliente). Para que estas páginas sean indexables, se
+    requiere migrar a un router de servidor-side (SSR) o pre-rendering (SSG).
+    Se listan aquí como referencia, pero no serán rastreadas por Google/Bing.
+    VER PLAN DE ACCIÓN: auditoria/seo-aeo-2026-11.md — Hallazgo Crítico #1.
+  -->
+
+  <!-- Landing para caficultores — hash route, NO indexable actualmente -->
+  <!-- <url>
     <loc>https://tunaywasi.com/#/para-caficultores</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
+  </url> -->
 
-  <!-- Landing cafeterías / emprendedores -->
-  <url>
+  <!-- Landing para cafeterías / emprendedores — hash route, NO indexable actualmente -->
+  <!-- <url>
     <loc>https://tunaywasi.com/#/para-cafeterias</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
-
-  <!-- Directorio de cafeterías -->
-  <url>
-    <loc>https://tunaywasi.com/#/cafeterias</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- Registro caficultor -->
-  <url>
-    <loc>https://tunaywasi.com/#/registro-caficultor</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- Registro emprendedor -->
-  <url>
-    <loc>https://tunaywasi.com/#/registro-emprendedor</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- Soporte -->
-  <url>
-    <loc>https://tunaywasi.com/#/soporte</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
-
-  <!-- Documentación -->
-  <url>
-    <loc>https://tunaywasi.com/#/docs</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
+  </url> -->
 
 </urlset>

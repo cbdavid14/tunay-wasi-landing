@@ -1,0 +1,174 @@
+name: E2E Tests — TunayWasi ONE
+
+on:
+  workflow_dispatch:
+    inputs:
+      flows:
+        description: |
+          Flujos a correr. Opciones:
+            all          → todos los specs
+            F-01         → un flujo específico
+            F-01,F-02    → varios flujos
+            @alta        → por prioridad
+            27,28        → por número de spec
+        required: false
+        default: 'all'
+      skip:
+        description: 'Flujos o specs a saltar (ej: F-05,F-08 ó 32,33)'
+        required: false
+        default: ''
+      environment:
+        description: 'Ambiente a testear'
+        required: true
+        default: 'qa'
+        type: choice
+        options:
+          - qa
+          - prod
+      bail:
+        description: 'Detener al primer fallo'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+  # También se puede disparar desde qa_one o main_one manualmente
+  push:
+    branches: []  # No auto-trigger — solo manual vía workflow_dispatch
+
+env:
+  NODE_VERSION: '20'
+  QA_URL: 'https://alpaso-mvp.web.app'
+  PROD_URL: 'https://tunay-wasi-mvp.web.app'
+
+jobs:
+  e2e:
+    name: 'E2E · ${{ github.event.inputs.flows || ''all'' }} · ${{ github.event.inputs.environment || ''qa'' }}'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolver URL del ambiente
+        id: env_url
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "prod" ]; then
+            echo "url=${{ env.PROD_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=${{ env.QA_URL }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Construir grep pattern desde inputs
+        id: grep
+        run: |
+          FLOWS="${{ github.event.inputs.flows || 'all' }}"
+          SKIP="${{ github.event.inputs.skip || '' }}"
+
+          if [ "$FLOWS" = "all" ]; then
+            GREP_ARG=""
+          else
+            # Convierte "F-01,F-02" → "\[F-01\]|\[F-02\]"
+            # Convierte "@alta,@media" → "@alta|@media"
+            # Convierte "27,28" → "^27|^28" (por número de spec)
+            PATTERN=$(echo "$FLOWS" | tr ',' '\n' | sed 's/F-\([0-9]*\)/\\[F-\1\\]/g' | tr '\n' '|' | sed 's/|$//')
+            GREP_ARG="--grep \"$PATTERN\""
+          fi
+
+          if [ -n "$SKIP" ]; then
+            SKIP_PATTERN=$(echo "$SKIP" | tr ',' '\n' | sed 's/F-\([0-9]*\)/\\[F-\1\\]/g' | tr '\n' '|' | sed 's/|$//')
+            SKIP_ARG="--grep-invert \"$SKIP_PATTERN\""
+          else
+            SKIP_ARG=""
+          fi
+
+          BAIL_ARG=""
+          if [ "${{ github.event.inputs.bail }}" = "true" ]; then
+            BAIL_ARG="--bail"
+          fi
+
+          echo "grep=$GREP_ARG" >> $GITHUB_OUTPUT
+          echo "skip=$SKIP_ARG" >> $GITHUB_OUTPUT
+          echo "bail=$BAIL_ARG" >> $GITHUB_OUTPUT
+          echo "command=npx playwright test $GREP_ARG $SKIP_ARG $BAIL_ARG" >> $GITHUB_OUTPUT
+
+      - name: Correr tests E2E
+        id: run_tests
+        run: eval "${{ steps.grep.outputs.command }}"
+        env:
+          E2E_BASE_URL: ${{ steps.env_url.outputs.url }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+        continue-on-error: true
+
+      - name: Publicar reporte HTML como artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report-${{ github.event.inputs.environment || 'qa' }}-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Publicar anotaciones JUnit en GitHub
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 'E2E Results · ${{ github.event.inputs.flows || ''all'' }}'
+          path: playwright-report/results.junit.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Generar resumen de ejecución
+        if: always()
+        run: |
+          DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
+          FLOWS="${{ github.event.inputs.flows || 'all' }}"
+          ENV="${{ github.event.inputs.environment || 'qa' }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ARTIFACT_URL="${RUN_URL}#artifacts"
+
+          # Parsear results.json para contar passed/failed/skipped
+          if [ -f playwright-report/results.json ]; then
+            TOTAL=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.expected)")
+            PASSED=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.expected - r.stats.unexpected - r.stats.skipped)")
+            FAILED=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.unexpected)")
+            SKIPPED=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.skipped)")
+          else
+            TOTAL="?"; PASSED="?"; FAILED="?"; SKIPPED="?"
+          fi
+
+          STATUS_ICON="✅"
+          if [ "${{ steps.run_tests.outcome }}" = "failure" ]; then STATUS_ICON="❌"; fi
+
+          echo "## $STATUS_ICON E2E Run #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Fecha | $DATE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flujos | \`$FLOWS\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Ambiente | $ENV |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total tests | $TOTAL |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Pasaron | $PASSED |" >> $GITHUB_STEP_SUMMARY
+          echo "| ❌ Fallaron | $FAILED |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⏭ Saltados | $SKIPPED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Reporte | [Ver artifact]($ARTIFACT_URL) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fallar si hubo errores
+        if: steps.run_tests.outcome == 'failure'
+        run: exit 1
