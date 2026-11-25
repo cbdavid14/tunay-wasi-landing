@@ -860,7 +860,7 @@ const AppONE: React.FC = () => {
   // ─── Helper: envuelve contenido con el header global ─────────────────────
 
   // Rutas que no muestran el header (fullscreen)
-  const sinHeader = hash === '#/login' || hash === '#/login?registro=1' || hash === '#/registro-caficultor' || hash === '#/registro-emprendedor' || hash === '#/registro'
+  const sinHeader = hash === '#/login' || hash === '#/login?registro=1' || hash === '#/registro-caficultor' || hash === '#/registro-emprendedor' || hash === '#/registro' || hash === '#/para-caficultores' || hash === '#/para-cafeterias'
 
   function withHeader(content: React.ReactNode) {
     if (sinHeader) return <>{content}</>
