@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, esperarCarga, USERS } from './helpers'
+import { loginEmail, loginYEsperarAuth, irA, esperarCarga, USERS } from './helpers'
 
 // US-16 · PR-01 (NEGOTIABLE) · B2B-02 · INV-04
 
@@ -87,7 +87,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
   })
 
   test('5 — Portal negocio tab Ofertas carga lista de cotizaciones (US-16 B2B)', async ({ page }) => {
-    await loginEmail(page, USERS.barista.email, USERS.barista.password)
+    await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await irA(page, '/portal')
     await esperarCarga(page)
     await page.waitForFunction(

@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, esperarCarga, USERS } from './helpers'
+import { loginYEsperarAuth, irA, esperarCarga, USERS } from './helpers'
 
 // US-03 · PR-01 · US-42 · N1-01
 
 test.describe('34 — Portal caficultor: crear y gestionar lotes', () => {
 
   async function cargarPortalCaficultor(page: any) {
-    await loginEmail(page, USERS.caficultor.email, USERS.caficultor.password)
+    // loginYEsperarAuth garantiza que Firebase Auth está propagado antes de navegar al portal
+    await loginYEsperarAuth(page, USERS.caficultor.email, USERS.caficultor.password)
     await irA(page, '/caficultor-portal')
     await esperarCarga(page)
     await page.waitForFunction(

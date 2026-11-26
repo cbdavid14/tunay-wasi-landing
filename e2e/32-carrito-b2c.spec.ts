@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, esperarCarga, inyectarCarritoDemo, USERS } from './helpers'
+import { loginEmail, loginYEsperarAuth, irA, esperarCarga, inyectarCarritoDemo, USERS } from './helpers'
 
 // US-12 B2C · US-13 · US-14 · TIPO-01
 
@@ -65,7 +65,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   })
 
   test('3 — B2C: carrito inyectado aparece en checkout (US-13)', async ({ page }) => {
-    await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
     await page.waitForTimeout(800)
@@ -76,7 +76,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   })
 
   test('4 — B2C: checkout muestra opciones de envío (US-14)', async ({ page }) => {
-    await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
     await page.waitForTimeout(800)
@@ -85,7 +85,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   })
 
   test('5 — B2C: checkout paso 1 incluye campos de dirección (US-14)', async ({ page }) => {
-    await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
     await page.waitForTimeout(800)
@@ -94,7 +94,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   })
 
   test('6 — B2C: carrito vacío en checkout muestra mensaje apropiado (US-13)', async ({ page }) => {
-    await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
     // Sin inyectar carrito — ir al checkout con carrito vacío
     await irA(page, '/checkout')
     await page.waitForTimeout(800)
@@ -120,7 +120,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
   })
 
   test('8 — B2C: cambiar cantidad de item en carrito actualiza el total (US-13)', async ({ page }) => {
-    await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
     await page.waitForTimeout(800)

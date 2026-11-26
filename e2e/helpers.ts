@@ -68,3 +68,16 @@ export async function inyectarCarritoDemo(page: Page, producto = {
   // Sin reload — la app lee localStorage al navegar a la siguiente ruta
   await page.waitForTimeout(300)
 }
+
+// ── Login + esperar que Firebase Auth esté propagado en la SPA ──────────────
+// Uso para tests de checkout: garantiza que el guard de /checkout no redirige a /login
+// por race condition entre page.goto() y la hidratación de Firebase Auth SDK
+export async function loginYEsperarAuth(page: Page, email: string, password: string) {
+  await loginEmail(page, email, password)
+  // Navegar al catálogo y esperar que el catálogo cargue
+  // Esto confirma que Firebase Auth ya está propagado en la SPA (loading=false, user!=null)
+  await page.goto('/?demo=1')
+  await esperarCarga(page)
+  // Esperar que aparezca alguna tarjeta de producto (confirma carga completa con auth)
+  await page.locator('.sc-product-card').first().waitFor({ timeout: 10_000 }).catch(() => {})
+}

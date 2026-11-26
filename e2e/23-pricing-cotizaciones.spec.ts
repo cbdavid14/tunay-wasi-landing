@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, esperarCarga, USERS } from './helpers'
+import { loginEmail, loginYEsperarAuth, irA, esperarCarga, USERS } from './helpers'
 
 // US-16 · PR-01 INVARIANTE · PR-03 · US-42 acciones
 
@@ -73,7 +73,7 @@ test.describe('23 — Pricing y cotizaciones', () => {
   })
 
   test('6 — B2B PENDING: cotizaciones bloqueadas — banner de aprobación (B2B-01 · US-16)', async ({ page }) => {
-    await loginEmail(page, USERS.pending.email, USERS.pending.password)
+    await loginYEsperarAuth(page, USERS.pending.email, USERS.pending.password)
     await irA(page, '/portal')
     await esperarCarga(page)
     await page.waitForFunction(

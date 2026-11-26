@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, esperarCarga, inyectarCarritoDemo, USERS } from './helpers'
+import { loginEmail, loginYEsperarAuth, irA, esperarCarga, inyectarCarritoDemo, USERS } from './helpers'
 
 // US-12 · US-13 · US-14 · PR-01 · PR-03 INVARIANTE
 
@@ -45,7 +45,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('3 — Carrito inyectado muestra resumen correcto (US-13)', async ({ page }) => {
-    await loginEmail(page, USERS.barista.email, USERS.barista.password)
+    await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     // Ir directamente al checkout
     await irA(page, '/checkout')
@@ -58,7 +58,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('4 — Checkout paso 1: opciones de envío visibles (US-14)', async ({ page }) => {
-    await loginEmail(page, USERS.barista.email, USERS.barista.password)
+    await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
     await page.waitForTimeout(800)
@@ -70,7 +70,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('5 — Checkout paso 2: campos de dirección obligatorios (US-14 validación)', async ({ page }) => {
-    await loginEmail(page, USERS.barista.email, USERS.barista.password)
+    await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
     await page.waitForTimeout(800)
@@ -89,7 +89,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('6 — Checkout paso 3: resumen con total en S/ (US-14 CA)', async ({ page }) => {
-    await loginEmail(page, USERS.barista.email, USERS.barista.password)
+    await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
     await page.waitForTimeout(800)
