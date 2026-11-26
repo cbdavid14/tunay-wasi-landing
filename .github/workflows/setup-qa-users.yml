@@ -1,0 +1,117 @@
+name: Setup QA Users — TunayWasi ONE
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    name: Crear usuarios QA en Firebase alpaso-app
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar firebase-admin
+        run: npm install firebase-admin
+
+      - name: Crear usuarios QA
+        run: |
+          cat << 'EOF' > create-qa-users.js
+          const admin = require('firebase-admin')
+
+          const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+          admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
+
+          const auth = admin.auth()
+          const db = admin.firestore()
+
+          const USERS = [
+            {
+              email: 'cliente@tunaywasi.qa',
+              password: 'Tunay2026!',
+              displayName: 'Cliente QA',
+              firestoreDoc: {
+                rol: 'buyer_b2c',
+                nombre: 'Cliente QA',
+                email: 'cliente@tunaywasi.qa',
+                createdAt: new Date().toISOString(),
+              }
+            },
+            {
+              email: 'barista@tunaywasi.qa',
+              password: 'Tunay2026!',
+              displayName: 'Barista QA',
+              firestoreDoc: {
+                rol: 'buyer_b2b',
+                nombre: 'Barista QA',
+                email: 'barista@tunaywasi.qa',
+                createdAt: new Date().toISOString(),
+                empresa: {
+                  nombreLocal: 'Cafetería QA',
+                  distritoLocal: 'Miraflores',
+                  etapa: 'planificando',
+                  estadoAprobacion: 'APPROVED',
+                  pedidoIds: [],
+                }
+              }
+            },
+            {
+              email: 'b2b-pending@tunaywasi.qa',
+              password: 'Tunay2026!',
+              displayName: 'B2B Pending QA',
+              firestoreDoc: {
+                rol: 'buyer_b2b',
+                nombre: 'B2B Pending QA',
+                email: 'b2b-pending@tunaywasi.qa',
+                createdAt: new Date().toISOString(),
+                empresa: {
+                  nombreLocal: 'Empresa Pendiente QA',
+                  distritoLocal: 'San Isidro',
+                  etapa: 'planificando',
+                  estadoAprobacion: 'PENDING_APPROVAL',
+                  pedidoIds: [],
+                }
+              }
+            },
+          ]
+
+          async function main() {
+            for (const u of USERS) {
+              try {
+                // Crear o recuperar usuario en Auth
+                let userRecord
+                try {
+                  userRecord = await auth.getUserByEmail(u.email)
+                  console.log(`⚠️  Ya existe: ${u.email} (uid: ${userRecord.uid})`)
+                } catch {
+                  userRecord = await auth.createUser({
+                    email: u.email,
+                    password: u.password,
+                    displayName: u.displayName,
+                    emailVerified: true,
+                  })
+                  console.log(`✅ Creado: ${u.email} (uid: ${userRecord.uid})`)
+                }
+                // Crear/actualizar doc en Firestore one_usuarios
+                await db.collection('one_usuarios').doc(userRecord.uid).set(
+                  { ...u.firestoreDoc, uid: userRecord.uid },
+                  { merge: true }
+                )
+                console.log(`   Firestore one_usuarios/${userRecord.uid} ✅`)
+              } catch (err) {
+                console.error(`❌ Error con ${u.email}:`, err.message)
+                process.exit(1)
+              }
+            }
+            console.log('\n✅ Setup QA completado — 3 usuarios listos')
+          }
+
+          main()
+          EOF
+          node create-qa-users.js
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ALPASO }}
