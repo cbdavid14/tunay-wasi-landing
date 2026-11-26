@@ -11,6 +11,7 @@ import {
   fetchUbigeos, fetchLogisticaCaficultor, saveLogisticaCaficultor,
   fetchCotizacionesCaficultor, responderCotizacion,
   fetchPagosByCaficultor, fetchReclamosByCaficultor,
+  fetchEvidenciasByProducto, crearEvidencia,
 } from '../service'
 import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
@@ -22,7 +23,7 @@ import {
   demoFetchUbigeos, demoFetchLogisticaCaficultor, demoSaveLogisticaCaficultor,
 } from '../demoService'
 import { PROCESO_LABELS, calcularPrecioFinal, FORMATOS_FIXED, FORMATOS_NEGOTIABLE, FORMATO_LABELS } from '../config'
-import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE, AgenciaLogisticaONE, CotizacionONE, PagoCaficultorONE, FormatoONE, LogisticaStatusONE, ReclamoONE } from '../types'
+import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE, AgenciaLogisticaONE, CotizacionONE, PagoCaficultorONE, FormatoONE, LogisticaStatusONE, ReclamoONE, EvidenciaONE, NivelEvidencia } from '../types'
 import ChatPedido from './ChatPedido'
 import WasiChat from './WasiChat'
 import { type DireccionONE } from './ModalDireccion'
@@ -1004,6 +1005,13 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
   // Ficha lote evidencias
   const [fichaLoteId, setFichaLoteId] = useState<string | null>(null)
+  const [fichaEvidencias, setFichaEvidencias] = useState<EvidenciaONE[]>([])
+  const [fichaEvidenciasLoading, setFichaEvidenciasLoading] = useState(false)
+  // Upload evidencia state
+  const evidenciaInputRef = useRef<HTMLInputElement>(null)
+  const [evidenciaSubiendo, setEvidenciaSubiendo] = useState(false)
+  const [evidenciaNivelSel, setEvidenciaNivelSel] = useState<NivelEvidencia>('N1')
+  const [evidenciaMostrarSelector, setEvidenciaMostrarSelector] = useState(false)
 
   // Modal despacho por agencia
   const [modalDespacho, setModalDespacho] = useState<{ pedidoId: string; agencia: string } | null>(null)
@@ -1171,6 +1179,17 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
     }).catch(() => toast('Error al cargar datos de logística', 'error'))
       .finally(() => setLogisticaCargando(false))
   }, [tab, caficultorId, isDemo, ubigeos.length])
+
+  // Cargar evidencias cuando se abre la ficha de un lote
+  useEffect(() => {
+    if (!fichaLoteId || isDemo) return
+    setFichaEvidenciasLoading(true)
+    fetchEvidenciasByProducto(fichaLoteId)
+      .then(evs => setFichaEvidencias(evs))
+      .catch(() => {/* silencio — UI muestra lista vacía */})
+      .finally(() => setFichaEvidenciasLoading(false))
+  }, [fichaLoteId, isDemo])
+
   function misItems(pedido: PedidoONE) {
     return pedido.items.filter(i => productoIds.has(i.productoId) || i.caficultorId === caficultorId)
   }
@@ -1464,10 +1483,11 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
 
   // ─── Vista defensiva F-10: reclamos activos donde el caficultor es vendedor ──
   function renderReclamosCaficultor() {
-    const activos = reclamosCaf.filter(r =>
-      r.estado === 'ABIERTO' || r.estado === 'EN_REVISION' || r.estado === 'ESPERANDO_INFO' || r.estado === 'ESCALADO'
-    )
-    const resueltos = reclamosCaf.filter(r => !activos.includes(r))
+    const ESTADOS_ACTIVOS: ReclamoONE['estado'][] = [
+      'ABIERTO', 'EN_REVISION', 'ESPERANDO_INFO', 'ESCALADO', 'DECISION_PENDIENTE',
+    ]
+    const activos = reclamosCaf.filter(r => ESTADOS_ACTIVOS.includes(r.estado))
+    const resueltos = reclamosCaf.filter(r => !ESTADOS_ACTIVOS.includes(r.estado))
 
     function slaLabel(r: ReclamoONE): string {
       const ms = Number(r.createdAt) || new Date(r.createdAt).getTime()
@@ -1485,6 +1505,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       if (estado === 'EN_REVISION') return '#f59e0b'
       if (estado === 'ESPERANDO_INFO') return '#f39c12'
       if (estado === 'ESCALADO') return '#c96e4b'
+      if (estado === 'DECISION_PENDIENTE') return '#7c3aed'
       if (estado.startsWith('RESUELTO_COMPRADOR') || estado.startsWith('RESOLUCION_COMPRADOR')) return '#8faf8a'
       return '#888'
     }
@@ -3768,7 +3789,6 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         if (!prod) return null
         const rawProd = prod as any
         const nivel: 1 | 2 | 3 = rawProd.nivelEvidencia ?? 1
-        const evidencias: { tipo: string; url?: string; verificado: boolean; fecha?: string }[] = rawProd.evidencias ?? []
 
         const NIVELES = [
           { n: 1, label: 'N1 Básico', color: '#6495ED', desc: 'Fotos del lote, declaración de origen' },
@@ -3776,8 +3796,69 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           { n: 3, label: 'N3 Orgánico', color: 'var(--tw-terra)', desc: 'Certificación orgánica, informe SCA' },
         ]
 
+        const NIVEL_LABELS: Record<NivelEvidencia, string> = {
+          N1: 'N1 — Descripción sensorial / fotos',
+          N2: 'N2 — Informe Q-Grader',
+          N3: 'N3 — Certificado Q-Grader',
+        }
+
+        const ESTADO_COLOR: Record<string, string> = {
+          PENDING_REVIEW: '#f59e0b',
+          APPROVED: 'var(--tw-sage)',
+          REJECTED: '#e74c3c',
+          DISPUTED: '#9b59b6',
+        }
+
+        const ESTADO_LABEL: Record<string, string> = {
+          PENDING_REVIEW: 'En revisión',
+          APPROVED: 'Aprobada',
+          REJECTED: 'Rechazada',
+          DISPUTED: 'En disputa',
+        }
+
+        async function handleEvidenciaFile(file: File) {
+          if (evidenciaSubiendo) return
+          setEvidenciaSubiendo(true)
+          try {
+            const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+            const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+            const esPdf = file.type === 'application/pdf'
+            const resourceType = esPdf ? 'raw' : 'image'
+            const fd = new FormData()
+            fd.append('file', file)
+            fd.append('upload_preset', uploadPreset)
+            fd.append('folder', 'one_evidencias')
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, { method: 'POST', body: fd })
+            const data = await res.json()
+            if (!data.secure_url) throw new Error(data.error?.message ?? 'Cloudinary upload failed')
+            const archivoUrl: string = data.secure_url
+            const archivoTipo: 'imagen' | 'pdf' = esPdf ? 'pdf' : 'imagen'
+            const caficultorNombre = caficultor?.nombre ?? caficultorId
+            await crearEvidencia({
+              productoId: fichaLoteId!,
+              productoNombre: prod!.nombre,
+              caficultorId,
+              caficultorNombre,
+              nivel: evidenciaNivelSel,
+              titulo: `${NIVEL_LABELS[evidenciaNivelSel]} — ${prod!.nombre}`,
+              archivoUrl,
+              archivoTipo,
+            })
+            // Recargar lista
+            const evs = await fetchEvidenciasByProducto(fichaLoteId!)
+            setFichaEvidencias(evs)
+            setEvidenciaMostrarSelector(false)
+            toast('Evidencia subida — pendiente de revisión', 'ok')
+          } catch (e) {
+            toast('Error al subir evidencia: ' + (e instanceof Error ? e.message : 'intenta de nuevo'), 'error')
+          } finally {
+            setEvidenciaSubiendo(false)
+            if (evidenciaInputRef.current) evidenciaInputRef.current.value = ''
+          }
+        }
+
         return (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex' }} onClick={() => setFichaLoteId(null)}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex' }} onClick={() => { setFichaLoteId(null); setEvidenciaMostrarSelector(false) }}>
             <div style={{ flex: 1, background: 'rgba(0,0,0,0.75)' }} />
             <div
               style={{ width: 'min(500px, 100vw)', background: 'var(--tw-card)', borderLeft: `1px solid var(--tw-border)`, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
@@ -3790,7 +3871,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                   <h2 style={{ margin: '0 0 2px', fontSize: 20, fontFamily: 'Cormorant Garamond, serif', color: 'var(--tw-text)', fontWeight: 700 }}>{prod.nombre}</h2>
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--tw-text-muted)' }}>{prod.variedad} · {prod.cosecha || '—'}</p>
                 </div>
-                <button onClick={() => setFichaLoteId(null)} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', fontSize: 22, cursor: 'pointer', padding: '0 0 0 16px', lineHeight: 1 }}>×</button>
+                <button onClick={() => { setFichaLoteId(null); setEvidenciaMostrarSelector(false) }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', fontSize: 22, cursor: 'pointer', padding: '0 0 0 16px', lineHeight: 1 }}>×</button>
               </div>
 
               <div style={{ padding: '20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -3819,27 +3900,27 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                   </div>
                 </div>
 
-                {/* Tabla de evidencias */}
+                {/* Tabla de evidencias desde Firestore */}
                 <div>
                   <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Documentos adjuntos</p>
-                  {evidencias.length === 0 ? (
+                  {fichaEvidenciasLoading ? (
+                    <div style={{ padding: '20px', textAlign: 'center' }}>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--tw-text-muted)' }}>Cargando evidencias...</p>
+                    </div>
+                  ) : fichaEvidencias.length === 0 ? (
                     <div style={{ padding: '20px', textAlign: 'center', border: `1px dashed var(--tw-border)`, borderRadius: 10 }}>
                       <p style={{ margin: 0, fontSize: 13, color: 'var(--tw-text-muted)' }}>Aún no hay evidencias adjuntas</p>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {evidencias.map((ev, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'var(--tw-bg)', border: `1px solid var(--tw-border)` }}>
-                          <span style={{ fontSize: 18 }}>{ev.verificado ? '✅' : '📄'}</span>
+                      {fichaEvidencias.map((ev) => (
+                        <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'var(--tw-bg)', border: `1px solid var(--tw-border)` }}>
+                          <span style={{ fontSize: 18 }}>{ev.archivoTipo === 'pdf' ? '📄' : '🖼️'}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: '0 0 1px', fontSize: 12, fontWeight: 600, color: 'var(--tw-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{ev.tipo}</p>
-                            {ev.fecha && <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)' }}>{ev.fecha}</p>}
+                            <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 600, color: 'var(--tw-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{ev.nivel} — {ev.titulo}</p>
+                            <p style={{ margin: 0, fontSize: 10, color: ESTADO_COLOR[ev.estado] ?? 'var(--tw-text-muted)' }}>{ESTADO_LABEL[ev.estado] ?? ev.estado}</p>
                           </div>
-                          {ev.url ? (
-                            <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--tw-terra)', textDecoration: 'none', flexShrink: 0 }}>Ver →</a>
-                          ) : (
-                            <span style={{ fontSize: 10, color: ev.verificado ? 'var(--tw-sage)' : '#f59e0b', flexShrink: 0 }}>{ev.verificado ? 'Verificado' : 'Pendiente'}</span>
-                          )}
+                          <a href={ev.archivoUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--tw-terra)', textDecoration: 'none', flexShrink: 0 }}>Ver →</a>
                         </div>
                       ))}
                     </div>
@@ -3850,7 +3931,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                 {nivel < 3 && (
                   <div style={{ padding: '14px 16px', borderRadius: 10, background: 'var(--tw-sage)0A', border: `1px solid var(--tw-sage)33` }}>
                     <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: 'var(--tw-sage)' }}>
-                      🎯 Sube a N{nivel + 1} y desbloqueas:
+                      Sube a N{nivel + 1} y desbloqueas:
                     </p>
                     <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)', lineHeight: 1.6 }}>
                       {nivel === 1
@@ -3860,13 +3941,71 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                   </div>
                 )}
 
-                {/* Botón agregar evidencia */}
-                <button
-                  onClick={() => toast('Próximamente: subir evidencias desde el portal web', 'info')}
-                  style={{ padding: '14px 0', borderRadius: 10, border: `1px solid var(--tw-terra)`, background: 'var(--tw-terra)11', color: 'var(--tw-terra)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
-                >
-                  ＋ Agregar evidencia N{Math.min(nivel + 1, 3)} / N3
-                </button>
+                {/* Selector de nivel + botón agregar evidencia */}
+                {!isDemo && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {evidenciaMostrarSelector && (
+                      <div style={{ padding: '14px 16px', borderRadius: 10, border: `1px solid var(--tw-border)`, background: 'var(--tw-bg)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Selecciona el nivel de evidencia</p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {(['N1', 'N2', 'N3'] as NivelEvidencia[]).map(n => (
+                            <button
+                              key={n}
+                              onClick={() => setEvidenciaNivelSel(n)}
+                              style={{
+                                flex: 1, padding: '8px 0', borderRadius: 8,
+                                border: `1px solid ${evidenciaNivelSel === n ? 'var(--tw-terra)' : 'var(--tw-border)'}`,
+                                background: evidenciaNivelSel === n ? 'var(--tw-terra)22' : 'transparent',
+                                color: evidenciaNivelSel === n ? 'var(--tw-terra)' : 'var(--tw-text-muted)',
+                                fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif',
+                                transition: 'all 0.15s',
+                              }}
+                            >{n}</button>
+                          ))}
+                        </div>
+                        <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.5 }}>
+                          {evidenciaNivelSel === 'N1' && 'Foto del lote o descripción sensorial (imagen o PDF).'}
+                          {evidenciaNivelSel === 'N2' && 'Informe de catación Q-Grader (imagen o PDF).'}
+                          {evidenciaNivelSel === 'N3' && 'Certificado oficial Q-Grader (imagen o PDF).'}
+                        </p>
+                        <button
+                          onClick={() => evidenciaInputRef.current?.click()}
+                          disabled={evidenciaSubiendo}
+                          style={{
+                            padding: '10px 0', borderRadius: 8, border: `1px solid var(--tw-terra)`,
+                            background: 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700,
+                            cursor: evidenciaSubiendo ? 'wait' : 'pointer', fontFamily: 'Montserrat, sans-serif',
+                            opacity: evidenciaSubiendo ? 0.7 : 1,
+                          }}
+                        >
+                          {evidenciaSubiendo ? 'Subiendo...' : 'Seleccionar archivo (imagen o PDF)'}
+                        </button>
+                        <button
+                          onClick={() => setEvidenciaMostrarSelector(false)}
+                          style={{ padding: '6px 0', borderRadius: 8, border: `1px solid var(--tw-border)`, background: 'none', color: 'var(--tw-text-muted)', fontSize: 11, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                        >Cancelar</button>
+                      </div>
+                    )}
+
+                    {!evidenciaMostrarSelector && (
+                      <button
+                        onClick={() => setEvidenciaMostrarSelector(true)}
+                        style={{ padding: '14px 0', borderRadius: 10, border: `1px solid var(--tw-terra)`, background: 'var(--tw-terra)11', color: 'var(--tw-terra)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                      >
+                        + Agregar evidencia N1 / N2 / N3
+                      </button>
+                    )}
+
+                    {/* Input oculto */}
+                    <input
+                      ref={evidenciaInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      style={{ display: 'none' }}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleEvidenciaFile(f) }}
+                    />
+                  </div>
+                )}
 
               </div>
             </div>

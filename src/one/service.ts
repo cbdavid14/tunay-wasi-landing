@@ -1269,6 +1269,26 @@ export async function rechazarEvidencia(input: RechazarEvidenciaInput): Promise<
   })
 }
 
+export async function crearEvidencia(input: {
+  productoId: string
+  productoNombre: string
+  caficultorId: string
+  caficultorNombre: string
+  nivel: 'N1' | 'N2' | 'N3'
+  titulo: string
+  archivoUrl: string
+  archivoTipo: 'imagen' | 'pdf'
+}): Promise<string> {
+  const now = new Date().toISOString()
+  const ref = await addDoc(collection(db, ONE_COLLECTIONS.EVIDENCIAS), {
+    ...input,
+    estado: 'PENDING_REVIEW',
+    createdAt: now,
+    updatedAt: now,
+  })
+  return ref.id
+}
+
 // ─── RECLAMOS / DEVOLUCIONES ─────────────────────────────────────────────────
 
 export async function createReclamo(input: CreateReclamoInput, uid: string): Promise<string> {
