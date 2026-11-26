@@ -13,8 +13,10 @@ export const USERS = {
 export async function loginEmail(page: Page, email: string, password: string) {
   await page.goto('/login')
   await page.waitForLoadState('networkidle')
+  await esperarCarga(page)
   // Paso 1: si aparece pantalla de selección de método, clic en "Ingresar con email"
   const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+  await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()
     await page.waitForTimeout(500)
@@ -35,22 +37,19 @@ export async function loginEmail(page: Page, email: string, password: string) {
 export async function irA(page: Page, path: string) {
   await page.goto(path)
   await page.waitForLoadState('networkidle').catch(() => {})
+  await esperarCarga(page)
   await page.waitForTimeout(500)
 }
 
-// ── Esperar que el catálogo cargue (desaparece el splash, aparecen tarjetas o estado vacío)
+// ── Esperar a que desaparezca el splash (estático de index.html y el de React mientras resuelve auth)
+// El splash dura ≥1 s (SPLASH_MIN_MS) y tapa toda la UI: cualquier isVisible() inmediato fallaría.
 export async function esperarCarga(page: Page) {
-  // Esperar que el texto del splash "Del campo a tu negocio" desaparezca
   await page.waitForFunction(
-    () => {
-      const splash = document.querySelector('[style*="splashIn"]')
-      const textoSplash = [...document.querySelectorAll('div')].find(el =>
-        el.textContent?.trim() === 'Del campo a tu negocio'
-      )
-      return !splash && !textoSplash
-    },
-    { timeout: 10_000 }
-  ).catch(() => {}) // Si ya no hay splash, seguir
+    () => !document.querySelector('#tw-boot-splash, [data-testid="tw-splash"]') &&
+      ![...document.querySelectorAll('div')].some(el => el.textContent?.trim() === 'Del campo a tu negocio'),
+    undefined,
+    { timeout: 20_000 }
+  ).catch(() => {}) // Si el splash no desaparece, que falle la aserción siguiente con su propio mensaje
 }
 
 // ── Inyectar un item de carrito vía localStorage (evita flujo UI completo)

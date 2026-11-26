@@ -8,6 +8,7 @@ test.describe('27 — Registro y login gate', () => {
   test('1 — Página de registro B2C carga sin sesión (US-01)', async ({ page }) => {
     await page.goto('/registro')
     await page.waitForLoadState('networkidle')
+    await esperarCarga(page)
     const body = await page.locator('body').textContent()
     // Debe mostrar formulario de registro, no redirigir a login
     expect(body).toMatch(/registr|cuenta|email|nombre/i)
@@ -17,6 +18,7 @@ test.describe('27 — Registro y login gate', () => {
   test('2 — Formulario de registro B2C tiene campos obligatorios (US-01)', async ({ page }) => {
     await page.goto('/registro')
     await page.waitForLoadState('networkidle')
+    await esperarCarga(page)
     // Campos mínimos para crear cuenta
     const inputEmail = page.getByPlaceholder(/email|correo|tu@/i).first()
     const inputPassword = page.getByPlaceholder(/contraseña|password|••/i).first()
@@ -39,6 +41,7 @@ test.describe('27 — Registro y login gate', () => {
   test('3 — Registro B2B muestra campos de empresa (US-02)', async ({ page }) => {
     await page.goto('/registro')
     await page.waitForLoadState('networkidle')
+    await esperarCarga(page)
     const body = await page.locator('body').textContent()
     // Puede haber un toggle para tipo de cuenta o una ruta separada
     if (!body?.match(/empresa|negocio|RUC|B2B/i)) {
@@ -144,8 +147,10 @@ test.describe('27 — Registro y login gate', () => {
   test('9 — Página de login muestra formulario email+contraseña (US-02)', async ({ page }) => {
     await page.goto('/login')
     await page.waitForLoadState('networkidle')
+    await esperarCarga(page)
     // Puede tener pantalla de selección primero
     const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+    await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
     if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
       await btnEmail.click()
       await page.waitForTimeout(500)
@@ -161,7 +166,9 @@ test.describe('27 — Registro y login gate', () => {
   test('10 — Login con credenciales incorrectas muestra error (US-02 validación)', async ({ page }) => {
     await page.goto('/login')
     await page.waitForLoadState('networkidle')
+    await esperarCarga(page)
     const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+    await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
     if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
       await btnEmail.click()
       await page.waitForTimeout(500)

@@ -862,7 +862,7 @@ const AppONE: React.FC = () => {
 
   if (loading || splashMinDone === false) {
     return (
-      <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+      <div data-testid="tw-splash" style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
         {/* Sin animación de entrada: continúa el splash estático de index.html sin saltos */}
         {/* Anillos decorativos */}
         {[300, 460, 620].map((size, i) => (

@@ -158,8 +158,8 @@ jobs:
 
           # Parsear results.json para contar passed/failed/skipped
           if [ -f playwright-report/results.json ]; then
-            TOTAL=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.expected)")
-            PASSED=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.expected - r.stats.unexpected - r.stats.skipped)")
+            TOTAL=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.expected + r.stats.unexpected + r.stats.skipped + (r.stats.flaky||0))")
+            PASSED=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.expected)")
             FAILED=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.unexpected)")
             SKIPPED=$(node -e "const r=require('./playwright-report/results.json'); console.log(r.stats.skipped)")
           else
