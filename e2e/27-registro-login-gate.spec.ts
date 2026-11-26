@@ -204,6 +204,10 @@ const emailQA = (tag: string) => `qa+${tag}-${Date.now()}@tunaywasi.qa`
 
 async function paso1Emprendedor(page: Page, email: string) {
   await irA(page, '/registro-emprendedor')
+  // Paso 0: "¿Cómo quieres registrarte?" → Negocio → Continuar
+  await page.getByRole('button', { name: /Negocio/ }).click()
+  await page.getByRole('button', { name: /Continuar/ }).click()
+  await page.getByPlaceholder('María García López').waitFor({ timeout: 10_000 })
   await page.getByPlaceholder('María García López').fill('QA Unicidad RUC')
   await page.getByPlaceholder('compras@empresa.com').fill(email)
   await page.getByPlaceholder('+51 1 480 0000').fill('+51 999 000 010')
