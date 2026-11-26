@@ -64,15 +64,6 @@ export async function inyectarCarritoDemo(page: Page, producto = {
     const item = { producto: p, formato: '1kg', qty: 1 }
     localStorage.setItem('one_carrito_items', JSON.stringify([item]))
   }, producto)
-  await page.reload()
-  // Esperar que el splash desaparezca y la app cargue
-  await page.waitForFunction(
-    () => {
-      const textoSplash = [...document.querySelectorAll('div')].find(el =>
-        el.textContent?.trim() === 'Del campo a tu negocio'
-      )
-      return !textoSplash && (document.body.textContent?.length ?? 0) > 100
-    },
-    { timeout: 10_000 }
-  ).catch(() => {})
+  // Sin reload — la app lee localStorage al navegar a la siguiente ruta
+  await page.waitForTimeout(300)
 }
