@@ -74,49 +74,58 @@ jobs:
             echo "url=${{ env.QA_URL }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Construir grep pattern desde inputs
-        id: grep
+      - name: Resolver specs a correr
+        id: specs
         run: |
           FLOWS="${{ github.event.inputs.flows || 'all' }}"
-          SKIP="${{ github.event.inputs.skip || '' }}"
+
+          # Mapeo F-XX → archivo(s) de spec
+          resolve_spec() {
+            case "$1" in
+              F-01) echo "e2e/27-registro-login-gate.spec.ts" ;;
+              F-02) echo "e2e/27-registro-login-gate.spec.ts" ;;
+              F-03) echo "e2e/27-registro-login-gate.spec.ts" ;;
+              F-04) echo "e2e/28-filtros-catalogo.spec.ts e2e/29-tarjetas-catalogo.spec.ts e2e/30-ficha-lote-detalle.spec.ts" ;;
+              F-05) echo "e2e/26-flujo-compra.spec.ts e2e/32-carrito-b2c.spec.ts" ;;
+              F-06) echo "e2e/23-pricing-cotizaciones.spec.ts e2e/26-flujo-compra.spec.ts e2e/33-cotizacion-b2b.spec.ts" ;;
+              F-07) echo "e2e/24-portal-caficultor.spec.ts e2e/34-portal-caficultor-crear-lote.spec.ts" ;;
+              F-08) echo "e2e/25-portal-negocio.spec.ts" ;;
+              F-09) echo "e2e/25-portal-negocio.spec.ts e2e/31-perfil-cuenta.spec.ts" ;;
+              F-10) echo "e2e/25-portal-negocio.spec.ts" ;;
+              F-11) echo "e2e/24-portal-caficultor.spec.ts e2e/34-portal-caficultor-crear-lote.spec.ts e2e/35-evidencias-n2-n3.spec.ts" ;;
+              F-12) echo "e2e/24-portal-caficultor.spec.ts" ;;
+              F-13) echo "e2e/21-acceso-por-rol.spec.ts" ;;
+              *)    echo "$1" ;;  # número de spec directo ej: "27"
+            esac
+          }
 
           if [ "$FLOWS" = "all" ]; then
-            GREP_PATTERN=""
+            SPEC_ARGS=""
           else
-            # Convierte "F-01,F-02" → "\[F-01\]|\[F-02\]"
-            GREP_PATTERN=$(echo "$FLOWS" | tr ',' '\n' | sed 's/F-\([0-9]*\)/\\[F-\1\\]/g' | tr '\n' '|' | sed 's/|$//')
+            SPEC_ARGS=""
+            for FLOW in $(echo "$FLOWS" | tr ',' ' '); do
+              SPEC_ARGS="$SPEC_ARGS $(resolve_spec $FLOW)"
+            done
+            # Deduplicar
+            SPEC_ARGS=$(echo $SPEC_ARGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
           fi
 
-          if [ -n "$SKIP" ]; then
-            SKIP_PATTERN=$(echo "$SKIP" | tr ',' '\n' | sed 's/F-\([0-9]*\)/\\[F-\1\\]/g' | tr '\n' '|' | sed 's/|$//')
-          else
-            SKIP_PATTERN=""
+          BAIL_ARG=""
+          if [ "${{ github.event.inputs.bail }}" = "true" ]; then
+            BAIL_ARG="--bail"
           fi
 
-          echo "pattern=$GREP_PATTERN" >> $GITHUB_OUTPUT
-          echo "skip_pattern=$SKIP_PATTERN" >> $GITHUB_OUTPUT
+          echo "specs=$SPEC_ARGS" >> $GITHUB_OUTPUT
+          echo "bail=$BAIL_ARG" >> $GITHUB_OUTPUT
 
       - name: Correr tests E2E
         id: run_tests
-        run: |
-          ARGS=""
-          if [ -n "$GREP_PATTERN" ]; then
-            ARGS="$ARGS --grep $GREP_PATTERN"
-          fi
-          if [ -n "$SKIP_PATTERN" ]; then
-            ARGS="$ARGS --grep-invert $SKIP_PATTERN"
-          fi
-          if [ "${{ github.event.inputs.bail }}" = "true" ]; then
-            ARGS="$ARGS --bail"
-          fi
-          npx playwright test $ARGS
+        run: npx playwright test ${{ steps.specs.outputs.specs }} ${{ steps.specs.outputs.bail }}
         env:
           E2E_BASE_URL: ${{ steps.env_url.outputs.url }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-          GREP_PATTERN: ${{ steps.grep.outputs.pattern }}
-          SKIP_PATTERN: ${{ steps.grep.outputs.skip_pattern }}
         continue-on-error: true
 
       - name: Publicar reporte HTML como artifact
