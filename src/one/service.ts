@@ -1211,7 +1211,7 @@ export async function fetchPagosByCaficultor(caficultorId: string): Promise<Pago
     .sort((a, b) => ((b as any).createdAt ?? '').localeCompare((a as any).createdAt ?? ''))
 }
 
-export async function liberarPago(pagoId: string, adminUid: string, metodoPago: string, cuentaDestino: string): Promise<void> {
+export async function liberarPago(pagoId: string, adminUid: string, metodoPago: string, cuentaDestino: string, numeroComprobante?: string): Promise<void> {
   const ref = doc(db, ONE_COLLECTIONS.PAGOS_CAFICULTOR, pagoId)
   await updateDoc(ref, {
     estado: 'LIBERADO',
@@ -1219,6 +1219,7 @@ export async function liberarPago(pagoId: string, adminUid: string, metodoPago: 
     cuentaDestino,
     liberadoPor: adminUid,
     liberadoAt: new Date().toISOString(),
+    ...(numeroComprobante ? { numeroComprobante } : {}),
   })
 }
 

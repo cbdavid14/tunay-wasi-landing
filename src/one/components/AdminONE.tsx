@@ -270,6 +270,8 @@ const TabPagos: React.FC<{
   const [liberandoPago, setLiberandoPago] = useState<string | null>(null)
   // ESC-05: banco seleccionado por pago (BCP/Interbank/BN — sin Yape)
   const [bancoSeleccionado, setBancoSeleccionado] = useState<Record<string, 'transferencia_bcp' | 'transferencia_interbank' | 'transferencia_bn'>>({})
+  // TRIB-03: número de Liquidación de Compra para caficultores SOLO_DNI
+  const [numeroComprobante, setNumeroComprobante] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (isDemo) return
@@ -286,10 +288,11 @@ const TabPagos: React.FC<{
   // ESC-05 INVARIANTE: caficultor recibe solo vía transferencia bancaria (BCP/Interbank/BN)
   async function handleLiberarPago(pago: PagoCaficultorONE) {
     const banco = bancoSeleccionado[pago.id] ?? 'transferencia_bcp'
+    const numComp = numeroComprobante[pago.id]?.trim()
     setLiberandoPago(pago.id)
     try {
       const adminUid = auth.currentUser?.uid ?? 'admin'
-      await liberarPago(pago.id, adminUid, banco, pago.cuentaDestino ?? '')
+      await liberarPago(pago.id, adminUid, banco, pago.cuentaDestino ?? '', numComp)
       setPagosRetenidos(prev => prev.filter(p => p.id !== pago.id))
       onToast(`Pago liberado: ${pago.negocioNombre} — S/ ${(pago.montoNetoCents / 100).toFixed(0)}`, 'ok')
     } catch { onToast('Error al liberar el pago', 'error') }
@@ -512,6 +515,21 @@ const TabPagos: React.FC<{
                     <option value="transferencia_interbank">🏦 Interbank</option>
                     <option value="transferencia_bn">🏦 Banco de la Nación</option>
                   </select>
+                  {/* TRIB-03: campo número comprobante para caficultores SOLO_DNI */}
+                  {(pago as any).tipoRegistroCaficultor === 'SOLO_DNI' && (
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ background: 'rgba(232,184,75,0.08)', border: '1px solid rgba(232,184,75,0.3)', borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 11, color: '#e8b84b', lineHeight: 1.5 }}>
+                        ⚠️ <strong>TRIB-03:</strong> Caficultor sin RUC — el comprador emite Liquidación de Compra. Registra el número antes de liberar.
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Ej. LC-2026-001234 (opcional pero recomendado)"
+                        value={numeroComprobante[pago.id] ?? ''}
+                        onChange={e => setNumeroComprobante(prev => ({ ...prev, [pago.id]: e.target.value }))}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 7, border: '1px solid rgba(232,184,75,0.4)', background: 'rgba(232,184,75,0.05)', color: '#f2e0cc', fontSize: 12, fontFamily: 'Montserrat, sans-serif', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  )}
                   <BtnAccion
                     label="💸 Liberar pago"
                     onClick={() => handleLiberarPago(pago)}
