@@ -77,6 +77,27 @@ jobs:
                 }
               }
             },
+            {
+              email: 'caficultor@tunaywasi.qa',
+              password: 'Tunay2026!',
+              displayName: 'Caficultor QA',
+              firestoreDoc: {
+                rol: 'seller',
+                nombre: 'Caficultor QA',
+                email: 'caficultor@tunaywasi.qa',
+                createdAt: new Date().toISOString(),
+                estadoKyc: 'ACTIVO',
+                caficultor: {
+                  region: 'Cajamarca',
+                  provincia: 'San Ignacio',
+                  variedad: 'Typica',
+                  proceso: 'Lavado',
+                  tipoRegistroCaficultor: 'SOLO_DNI',
+                  dni: '12345678',
+                  yape: '+51999000004',
+                },
+              }
+            },
           ]
 
           async function main() {
@@ -107,7 +128,7 @@ jobs:
                 process.exit(1)
               }
             }
-            console.log('\n✅ Setup QA completado — 3 usuarios listos')
+            console.log('\n✅ Setup QA completado — 4 usuarios listos')
           }
 
           main()
