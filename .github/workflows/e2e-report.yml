@@ -52,6 +52,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: qa_one
 
       - name: Setup Node ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
