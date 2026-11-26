@@ -988,6 +988,38 @@ const AppONE: React.FC = () => {
     )
   }
 
+  if (path === '/cafe-verde-peru') {
+    return withHeader(
+      <>
+        <PageMeta
+          title="Comprar Café Verde Peruano | Lotes de Especialidad B2B — TunayWasi"
+          description="Accede a lotes de café verde sin tostar directamente de caficultores peruanos. Transparencia de origen, proceso y altitud. Plataforma B2B — registro de empresa gratuito."
+          canonical={`${BASE_URL}/cafe-verde-peru`}
+          breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Café Verde Peruano', url: `${BASE_URL}/cafe-verde-peru` }]}
+        />
+        <Helmet>
+          <script type="application/ld+json">{JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: 'Comprar Café Verde Peruano — TunayWasi',
+            description: 'Plataforma B2B para comprar café verde sin tostar directamente de caficultores peruanos. Trazabilidad de origen, variedad, altitud y proceso.',
+            url: `${BASE_URL}/cafe-verde-peru`,
+            inLanguage: 'es-PE',
+            about: {
+              '@type': 'Product',
+              name: 'Café verde peruano sin tostar',
+              description: 'Lotes de café verde sin tostar (TYPE_A) de caficultores peruanos de especialidad. Regiones: Cajamarca, San Martín, Puno, Cusco, Junín.',
+              brand: { '@type': 'Brand', name: 'TunayWasi' },
+              countryOfOrigin: 'PE',
+            },
+            audience: { '@type': 'Audience', audienceType: 'Tostadores, importadores y cafeterías B2B' },
+          })}</script>
+        </Helmet>
+        <LandingCafeVerde />
+      </>
+    )
+  }
+
   if (path === '/docs' || path.startsWith('/docs/')) {
     return withHeader(
       <>

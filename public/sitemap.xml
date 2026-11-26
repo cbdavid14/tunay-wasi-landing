@@ -29,6 +29,15 @@
     <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/para-cafeterias" />
   </url>
 
+  <!-- Landing SEO: café verde peruano -->
+  <url>
+    <loc>https://tunaywasi.com/cafe-verde-peru</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-PE" href="https://tunaywasi.com/cafe-verde-peru" />
+  </url>
+
   <!-- Catálogo de caficultores -->
   <url>
     <loc>https://tunaywasi.com/caficultores</loc>
