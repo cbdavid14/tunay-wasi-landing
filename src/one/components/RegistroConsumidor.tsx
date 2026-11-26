@@ -4,6 +4,7 @@ import { registrar } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { claveDniB2C, esDniValido, esDocumentoDuplicado } from '../documentos'
 
 type Paso = 1 | 2 | 'confirmacion'
 
@@ -150,7 +151,7 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
   }
 
   function validarPaso2(): string | null {
-    if (dni.length !== 8) return 'El DNI debe tener exactamente 8 dígitos.'
+    if (!esDniValido(dni)) return 'El DNI debe tener exactamente 8 dígitos.'
     return null
   }
 
@@ -167,7 +168,8 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
     try {
       if (!isDemo) {
         try {
-          await registrar(email, password, nombre)
+          // REG-01: el DNI se reserva como DNI_B2C_<dni>; si ya existe se aborta el alta
+          await registrar(email, password, nombre, 'buyer_b2c', [claveDniB2C(dni)])
           const uid = auth.currentUser?.uid
           if (uid) {
             await setDoc(doc(db, 'one_usuarios', uid), {
@@ -183,15 +185,21 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
           }
         } catch (e: unknown) {
           const msg = String((e as { message?: string })?.message ?? e)
+          if (esDocumentoDuplicado(e)) {
+            setError(e.message)
+            setEnviando(false); return
+          }
           if (msg.includes('email-already-in-use')) {
             setError('Ya existe una cuenta con ese email. ¿Quieres iniciar sesión?')
             setEnviando(false); return
           }
+          setError('No se pudo crear tu cuenta. Intenta de nuevo.')
+          setEnviando(false); return
         }
       }
       setPaso('confirmacion')
     } catch {
-      setPaso('confirmacion')
+      setError('No se pudo crear tu cuenta. Intenta de nuevo.')
     } finally {
       setEnviando(false)
     }

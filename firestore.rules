@@ -144,6 +144,27 @@
                           request.auth.token.email == 'tunaywasi@gmail.com');
       }
 
+      // ── one_documentos — índice de unicidad DNI/RUC (REG-01 → REG-03) ───────
+      // Clave = DNI_B2C_<8>, DNI_SELLER_<8> o RUC_<11>. El RUC de cooperativa no se indexa.
+      // create solo si la clave NO existe → unicidad atómica. update solo por el mismo dueño
+      // (reintentos idempotentes). Sin lectura pública: no se puede consultar si un DNI existe.
+      match /one_documentos/{clave} {
+        function camposValidos() {
+          return request.resource.data.keys().hasOnly(['uid', 'rol', 'tipo', 'createdAt']) &&
+                 request.resource.data.uid == request.auth.uid;
+        }
+        function esAdmin() {
+          return request.auth != null &&
+                 (request.auth.token.email.matches('.*@tunaywasi\\.pe') ||
+                  request.auth.token.email == 'tunaywasi@gmail.com');
+        }
+        allow create: if request.auth != null && camposValidos() &&
+                         clave.matches('^(DNI_B2C_[0-9]{8}|DNI_SELLER_[0-9]{8}|RUC_(10|15|17|20)[0-9]{9})$');
+        allow update: if request.auth != null && resource.data.uid == request.auth.uid && camposValidos();
+        allow delete: if (request.auth != null && resource.data.uid == request.auth.uid) || esAdmin();
+        allow read: if esAdmin();
+      }
+
       match /ubigeos/{id} {
         allow read: if true;
         allow write: if false;

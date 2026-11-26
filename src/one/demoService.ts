@@ -351,7 +351,7 @@ export function demoFetchUsuario(uid: string): Promise<UsuarioONE | null> {
   if (base.rol === 'buyer_b2b' && !base.empresa) {
     return Promise.resolve({
       ...base,
-      empresa: { ruc: '20601234567', razonSocial: base.nombre, dirFiscal: 'Lima', dirEnvio: 'Lima', estadoAprobacion: 'APPROVED' as const, solicitudAt: '2026-01-01T00:00:00.000Z' }
+      empresa: { ruc: '20601234565', razonSocial: base.nombre, dirFiscal: 'Lima', dirEnvio: 'Lima', estadoAprobacion: 'APPROVED' as const, solicitudAt: '2026-01-01T00:00:00.000Z' }
     })
   }
   return Promise.resolve(base)

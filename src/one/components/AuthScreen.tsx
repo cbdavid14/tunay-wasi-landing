@@ -8,6 +8,7 @@ import { loginConGoogle, login, registrar, resetPassword } from '../authService'
 import { fetchUsuario } from '../service'
 import type { RolONE } from '../types'
 import { track, setAnalyticsUser } from '../analytics'
+import { claveDniB2C, claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado, reservarDocumentos } from '../documentos'
 
 type Paso = 'inicio' | 'email_login' | 'email_registro' | 'reset' | 'seleccion_rol' | 'seleccion_rol_registro' | 'cuenta_email' | 'seleccion_tipo_cliente' | 'datos_persona' | 'datos_negocio' | 'registro_caficultor' | 'registro_caficultor_finca' | 'registro_caficultor_identidad' | 'verifica_correo' | 'cargando' | 'cargando_cuenta' | 'abriendo_google' | 'google_loading'
 
@@ -248,11 +249,13 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
     setRucEstado('idle')
     setRazonSocial('')
     if (valor.length === 11) {
+      // REG-04: formato + dígito verificador antes de consultar SUNAT
+      if (errorFormatoRuc(valor, ['10', '20'])) { setRucEstado('err'); return }
       setRucEstado('checking')
       setTimeout(() => {
         if (valor === '20000000001') {
           setRucEstado('err')
-        } else if (valor === '20601234567') {
+        } else if (valor === '20601234565') {
           setRucEstado('ok')
           setRazonSocial('CAFÉ EL ORIGEN S.A.C.')
         } else {
@@ -263,30 +266,59 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
     }
   }
 
+  async function guardarDatosPersona(uid: string) {
+    const { db } = await import('@/shared/firebase')
+    const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+    await setDoc(doc(db, 'one_usuarios', uid), {
+      telefono: telefono.trim(),
+      consumidor: { dni },
+      updatedAt: serverTimestamp(),
+    }, { merge: true })
+  }
+
+  async function guardarDatosEmpresa(uid: string) {
+    const { db } = await import('@/shared/firebase')
+    const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+    await setDoc(doc(db, 'one_usuarios', uid), {
+      empresa: {
+        ruc,
+        razonSocial: razonSocial.trim(),
+        dirFiscal: '',
+        dirEnvio: '',
+        estadoAprobacion: 'PENDING_APPROVAL',
+        solicitudAt: serverTimestamp(),
+      },
+      updatedAt: serverTimestamp(),
+    }, { merge: true })
+  }
+
   async function completarConDatosPersona() {
-    if (dniEstado !== 'ok') { setError('Ingresa un DNI válido de 8 dígitos.'); return }
+    if (dniEstado !== 'ok' || !esDniValido(dni)) { setError('Ingresa un DNI válido de 8 dígitos.'); return }
     if (!telefono.trim()) { setError('Ingresa tu número de teléfono.'); return }
     setError(null)
     setPaso('cargando_cuenta')
     try {
       if (googlePendingTipo && pendingUid) {
+        // REG-01: reservar DNI antes de crear el perfil (si está duplicado no se crea nada)
+        await reservarDocumentos(pendingUid, 'buyer_b2c', [claveDniB2C(dni)])
         const { completarRegistroGoogle } = await import('../authService')
         await completarRegistroGoogle(pendingUid, pendingNombre, pendingEmail, 'buyer_b2c')
+        await guardarDatosPersona(pendingUid)
         limpiarGooglePending()
         setAnalyticsUser(pendingUid, 'buyer_b2c')
         track('registro_completado', { rolUsuario: 'buyer_b2c' })
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
         navigate('/catalogo')
       } else {
-        await registrar(email, password, nombre.trim(), 'buyer_b2c')
+        await registrar(email, password, nombre.trim(), 'buyer_b2c', [claveDniB2C(dni)])
         const { auth } = await import('@/shared/firebase')
         const uid = auth.currentUser?.uid
-        if (uid) { setAnalyticsUser(uid, 'buyer_b2c') }
+        if (uid) { await guardarDatosPersona(uid); setAnalyticsUser(uid, 'buyer_b2c') }
         track('registro_completado', { rolUsuario: 'buyer_b2c' })
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
-      setError(traducirError((e as { code?: string }).code ?? ''))
+      setError(esDocumentoDuplicado(e) ? e.message : traducirError((e as { code?: string }).code ?? ''))
       setPaso('datos_persona')
     } finally {
       setCargando(false)
@@ -294,43 +326,36 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
   }
 
   async function completarConDatosNegocio() {
+    const errRuc = errorFormatoRuc(ruc, ['10', '20'])
+    if (errRuc) { setError(errRuc); return }
     if (rucEstado !== 'ok') { setError('Ingresa un RUC válido y verificado.'); return }
     if (!razonSocial.trim()) { setError('La razón social es requerida.'); return }
     setError(null)
     setPaso('cargando_cuenta')
     try {
       if (googlePendingTipo && pendingUid) {
+        // REG-02: reservar RUC antes de crear el perfil
+        await reservarDocumentos(pendingUid, 'buyer_b2b', [claveRuc(ruc)])
         const { completarRegistroGoogle } = await import('../authService')
         await completarRegistroGoogle(pendingUid, pendingNombre, pendingEmail, 'buyer_b2b')
         // Guardar empresa — completarRegistroGoogle solo crea negocio, no empresa
-        const { db } = await import('@/shared/firebase')
-        const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
-        await setDoc(doc(db, 'one_usuarios', pendingUid), {
-          empresa: {
-            ruc,
-            razonSocial: razonSocial.trim(),
-            dirFiscal: '',
-            dirEnvio: '',
-            estadoAprobacion: 'PENDING_APPROVAL',
-            solicitudAt: new Date().toISOString(),
-          },
-          updatedAt: serverTimestamp(),
-        }, { merge: true })
+        await guardarDatosEmpresa(pendingUid)
         limpiarGooglePending()
         setAnalyticsUser(pendingUid, 'buyer_b2b')
         track('registro_completado', { rolUsuario: 'buyer_b2b' })
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
         navigate('/catalogo')
       } else {
-        await registrar(email, password, nombre.trim(), 'buyer_b2b')
+        await registrar(email, password, nombre.trim(), 'buyer_b2b', [claveRuc(ruc)])
         const { auth } = await import('@/shared/firebase')
         const uid = auth.currentUser?.uid
-        if (uid) { setAnalyticsUser(uid, 'buyer_b2b') }
+        // B2B-01: el flujo email no guardaba empresa ni PENDING_APPROVAL
+        if (uid) { await guardarDatosEmpresa(uid); setAnalyticsUser(uid, 'buyer_b2b') }
         track('registro_completado', { rolUsuario: 'buyer_b2b' })
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
-      setError(traducirError((e as { code?: string }).code ?? ''))
+      setError(esDocumentoDuplicado(e) ? e.message : traducirError((e as { code?: string }).code ?? ''))
       setPaso('datos_negocio')
     } finally {
       setCargando(false)
@@ -907,7 +932,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
               <div style={{ fontSize: 11, fontWeight: 600, color: '#8faf8a', marginTop: -10, marginBottom: 14 }}>✓ RUC activo en SUNAT</div>
             )}
             {rucEstado === 'err' && (
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#ef4444', marginTop: -10, marginBottom: 14 }}>✗ RUC no encontrado en SUNAT</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#ef4444', marginTop: -10, marginBottom: 14 }}>✗ {errorFormatoRuc(ruc, ['10', '20']) ?? 'RUC no encontrado en SUNAT'}</div>
             )}
             <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Razón social <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
             <input
@@ -1211,6 +1236,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                 try {
                   let uidSeller: string | undefined
                   if (googlePendingTipo && pendingUid) {
+                    // REG-01: reservar DNI antes de crear el perfil
+                    await reservarDocumentos(pendingUid, 'seller', [claveDniSeller(cafDni.trim())])
                     const { completarRegistroGoogle } = await import('../authService')
                     await completarRegistroGoogle(pendingUid, pendingNombre, pendingEmail, 'seller')
                     limpiarGooglePending()
@@ -1225,6 +1252,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                       await new Promise(r => setTimeout(r, 800))
                       uidSeller = auth.currentUser?.uid
                     }
+                    // REG-01: la cuenta ya existe (creada en handleEmailRegistro) — reservar DNI ahora
+                    if (uidSeller) await reservarDocumentos(uidSeller, 'seller', [claveDniSeller(cafDni.trim())])
                   }
                   // Guardar datos de finca y pago en ambos flujos
                   if (uidSeller) {
@@ -1249,8 +1278,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                   }
                   track('registro_completado', { rolUsuario: 'seller' })
                   navigate('/caficultor-portal')
-                } catch {
-                  setError('Error al guardar tu perfil. Intenta de nuevo.')
+                } catch (e: unknown) {
+                  setError(esDocumentoDuplicado(e) ? e.message : 'Error al guardar tu perfil. Intenta de nuevo.')
                   setPaso('registro_caficultor_identidad')
                 }
               }}

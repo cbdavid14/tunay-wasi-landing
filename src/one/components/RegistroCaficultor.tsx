@@ -9,6 +9,13 @@ import { registrarCaficultor } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado } from '../documentos'
+
+// REG-04 / TRIB-04: RUC propio = 10 o 20 · Cooperativa = RUC 20 de la cooperativa
+const PREFIJOS_RUC: Record<'RUC_PROPIO' | 'COOPERATIVA', readonly string[]> = {
+  RUC_PROPIO: ['10', '20'],
+  COOPERATIVA: ['20'],
+}
 
 async function uploadKycPhoto(file: File): Promise<string> {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
@@ -189,6 +196,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
   const [variedadPrincipal, setVariedadPrincipal] = useState('')
   const [proceso, setProceso] = useState('')
   const [tipoRegistroCaficultor, setTipoRegistroCaficultor] = useState<TipoRegistroCaficultor>('SOLO_DNI')
+  const [ruc, setRuc] = useState('')
 
   // Paso 3 — Identidad
   const [dni, setDni] = useState('')
@@ -227,11 +235,18 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
     if (!variedadPrincipal) return 'Selecciona la variedad principal.'
     if (!proceso) return 'Selecciona el proceso de beneficio.'
     if (!tipoRegistroCaficultor) return 'Selecciona tu modalidad tributaria.'
+    if (tipoRegistroCaficultor !== 'SOLO_DNI') {
+      const err = errorFormatoRuc(ruc, PREFIJOS_RUC[tipoRegistroCaficultor])
+      if (err) return tipoRegistroCaficultor === 'COOPERATIVA' ? `RUC de la cooperativa: ${err}` : err
+    }
     return null
   }
 
   function validarPaso3(): string | null {
-    if (dni.length !== 8 || !/^\d+$/.test(dni)) return 'El DNI debe tener exactamente 8 dígitos.'
+    if (!esDniValido(dni)) return 'El DNI debe tener exactamente 8 dígitos.'
+    // RUC 10 = persona natural: contiene el DNI del titular (posiciones 3-10)
+    if (tipoRegistroCaficultor === 'RUC_PROPIO' && ruc.startsWith('10') && ruc.slice(2, 10) !== dni)
+      return 'Tu RUC 10 no corresponde a este DNI. Revisa ambos números.'
     if (!fotoDniFile) return 'Adjunta la foto frontal de tu DNI.'
     if (!fotoSelfieFile) return 'Adjunta una selfie sosteniendo tu DNI.'
     if (!numeroYape.trim()) return 'Ingresa tu número Yape para recibir pagos.'
@@ -267,11 +282,15 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
         ])
       }
       if (!isDemo) {
+        // REG-01/02: DNI único entre caficultores; RUC propio único en el sistema.
+        // El RUC de cooperativa NO se reserva: lo comparten todos sus socios (REG-03).
+        const documentos = [claveDniSeller(dni)]
+        if (tipoRegistroCaficultor === 'RUC_PROPIO') documentos.push(claveRuc(ruc))
         await registrarCaficultor(email, password, nombre, {
           region, distrito, altitudMsnm, kgDisponibles,
           variedadPrincipal, telefono,
           fotoDniUrl, fotoSelfieUrl,
-        })
+        }, documentos)
         const uid = auth.currentUser?.uid
         if (uid) {
           await updateDoc(doc(db, 'one_usuarios', uid), {
@@ -280,6 +299,8 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
             'caficultor.numeroYape': numeroYape,
             'caficultor.kgDisponibles': kgDisponibles,
             'caficultor.tipoRegistroCaficultor': tipoRegistroCaficultor,
+            ...(tipoRegistroCaficultor === 'RUC_PROPIO' ? { 'caficultor.ruc': ruc } : {}),
+            ...(tipoRegistroCaficultor === 'COOPERATIVA' ? { 'caficultor.rucCooperativa': ruc } : {}),
             updatedAt: serverTimestamp(),
           })
         }
@@ -287,7 +308,9 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
       setPaso('confirmacion')
     } catch (e: unknown) {
       const msg = String((e as { message?: string; code?: string })?.message ?? (e as { code?: string })?.code ?? e)
-      if (msg.includes('email-already-in-use')) {
+      if (esDocumentoDuplicado(e)) {
+        setError(e.message)
+      } else if (msg.includes('email-already-in-use')) {
         setError('Ya existe una cuenta con ese email. ¿Quieres iniciar sesión?')
       } else {
         setError('No se pudo crear tu cuenta. Intenta de nuevo.')
@@ -401,6 +424,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
               variedadPrincipal={variedadPrincipal} setVariedadPrincipal={setVariedadPrincipal}
               proceso={proceso} setProceso={setProceso}
               tipoRegistroCaficultor={tipoRegistroCaficultor} setTipoRegistroCaficultor={setTipoRegistroCaficultor}
+              ruc={ruc} setRuc={setRuc}
               error={error}
               onNext={handlePaso2}
               getInputStyle={getInputStyle}
@@ -510,10 +534,11 @@ const Paso2: React.FC<{
   variedadPrincipal: string; setVariedadPrincipal: (v: string) => void
   proceso: string; setProceso: (v: string) => void
   tipoRegistroCaficultor: TipoRegistroCaficultor; setTipoRegistroCaficultor: (v: TipoRegistroCaficultor) => void
+  ruc: string; setRuc: (v: string) => void
   error: string | null
   onNext: () => void
   getInputStyle: GetInputStyle
-}> = ({ region, setRegion, distrito, setDistrito, altitudMsnm, setAltitudMsnm, kgDisponibles, setKgDisponibles, variedadPrincipal, setVariedadPrincipal, proceso, setProceso, tipoRegistroCaficultor, setTipoRegistroCaficultor, error, onNext, getInputStyle }) => {
+}> = ({ region, setRegion, distrito, setDistrito, altitudMsnm, setAltitudMsnm, kgDisponibles, setKgDisponibles, variedadPrincipal, setVariedadPrincipal, proceso, setProceso, tipoRegistroCaficultor, setTipoRegistroCaficultor, ruc, setRuc, error, onNext, getInputStyle }) => {
   const [focused, setFocused] = useState('')
   return (
     <div>
@@ -597,6 +622,26 @@ const Paso2: React.FC<{
             })}
           </div>
         </Field>
+
+        {/* TRIB-04 / REG-03: RUC propio o RUC 20 de la cooperativa (el DNI propio se pide en el paso 3) */}
+        {tipoRegistroCaficultor !== 'SOLO_DNI' && (
+          <Field
+            label={tipoRegistroCaficultor === 'COOPERATIVA' ? 'RUC de tu cooperativa' : 'Tu RUC'}
+            required
+            hint={tipoRegistroCaficultor === 'COOPERATIVA'
+              ? 'RUC 20 de la cooperativa de la que eres socio. Tu cuenta sigue siendo personal (con tu DNI).'
+              : 'RUC 10 (persona natural) o 20 (empresa). Con él emitirás tus comprobantes.'}
+          >
+            <input type="text" inputMode="numeric" placeholder="20123456789" maxLength={11} value={ruc}
+              onChange={e => setRuc(e.target.value.replace(/\D/g, '').slice(0, 11))}
+              onFocus={() => setFocused('ruc')} onBlur={() => setFocused('')}
+              style={getInputStyle(focused === 'ruc')} />
+            {ruc.length === 11 && (() => {
+              const err = errorFormatoRuc(ruc, PREFIJOS_RUC[tipoRegistroCaficultor])
+              return <p style={{ margin: '5px 0 0', fontSize: 11, fontWeight: 600, color: err ? '#ef4444' : 'var(--tw-sage)' }}>{err ? `✗ ${err}` : '✓ Formato de RUC válido'}</p>
+            })()}
+          </Field>
+        )}
       </div>
 
       {error && <p style={{ margin: '12px 0 0', padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', fontSize: 12, color: '#ef4444' }}>{error}</p>}

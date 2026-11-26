@@ -9,6 +9,10 @@ import { registrar } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { claveRuc, errorFormatoRuc, esDocumentoDuplicado } from '../documentos'
+
+// REG-04: comprador B2B con RUC 10 (persona natural con negocio) o 20 (persona jurídica)
+const PREFIJOS_RUC_B2B = ['10', '20'] as const
 
 type Paso = 0 | 1 | 2 | 3 | 'confirmacion'
 type RucEstado = 'idle' | 'checking' | 'ok' | 'err'
@@ -126,7 +130,7 @@ function consultarSunat(ruc: string): Promise<{ ok: boolean; razonSocial: string
     setTimeout(() => {
       if (ruc === '20000000001') {
         resolve({ ok: false, razonSocial: '' })
-      } else if (ruc === '20601234567') {
+      } else if (ruc === '20601234565') {
         resolve({ ok: true, razonSocial: 'CAFÉ EL ORIGEN S.A.C.' })
       } else {
         resolve({ ok: true, razonSocial: 'EMPRESA DEMO S.A.C.' })
@@ -181,6 +185,8 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
     if (rucTimerRef.current) clearTimeout(rucTimerRef.current)
 
     if (cleaned.length === 11) {
+      // REG-04: formato + dígito verificador antes de consultar SUNAT
+      if (errorFormatoRuc(cleaned, PREFIJOS_RUC_B2B)) { setRucEstado('err'); return }
       setRucEstado('checking')
       consultarSunat(cleaned).then(res => {
         if (res.ok) {
@@ -205,7 +211,8 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
   }
 
   function validarPaso2(): string | null {
-    if (ruc.length !== 11) return 'Ingresa un RUC de 11 dígitos.'
+    const errFormato = errorFormatoRuc(ruc, PREFIJOS_RUC_B2B)
+    if (errFormato) return errFormato
     if (rucEstado === 'checking') return 'Esperando verificación SUNAT...'
     if (rucEstado === 'err') return 'RUC no encontrado en SUNAT — revisa el número.'
     if (rucEstado !== 'ok') return 'Verifica el RUC antes de continuar.'
@@ -232,10 +239,15 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
       if (!isDemo) {
         let uid: string | undefined
         try {
-          await registrar(email, password, nombre)
+          // REG-02: el RUC se reserva como RUC_<ruc>; si ya existe se aborta el alta
+          await registrar(email, password, nombre, 'buyer_b2b', [claveRuc(ruc)])
           uid = auth.currentUser?.uid
         } catch (e: unknown) {
           const msg = String((e as { message?: string })?.message ?? e)
+          if (esDocumentoDuplicado(e)) {
+            setError(e.message)
+            setEnviando(false); return
+          }
           if (msg.includes('email-already-in-use')) {
             setError('Ya existe una cuenta con ese email. ¿Quieres iniciar sesión?')
             setEnviando(false); return
@@ -504,7 +516,7 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
                     </div>
                   )}
                   {rucEstado === 'ok' && <p style={{ margin: '5px 0 0', fontSize: 11, fontWeight: 600, color: 'var(--tw-sage)' }}>✓ RUC verificado en SUNAT</p>}
-                  {rucEstado === 'err' && <p style={{ margin: '5px 0 0', fontSize: 11, fontWeight: 600, color: '#ef4444' }}>✗ RUC no encontrado en SUNAT — revisa el número</p>}
+                  {rucEstado === 'err' && <p style={{ margin: '5px 0 0', fontSize: 11, fontWeight: 600, color: '#ef4444' }}>✗ {errorFormatoRuc(ruc, PREFIJOS_RUC_B2B) ?? 'RUC no encontrado en SUNAT — revisa el número'}</p>}
                 </div>
 
                 {/* Razón social autofill */}

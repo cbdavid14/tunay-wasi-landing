@@ -8,9 +8,12 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  deleteUser,
+  type User,
 } from 'firebase/auth'
 import { auth } from '@/shared/firebase'
 import { crearUsuario, fetchUsuario } from './service'
+import { reservarDocumentos } from './documentos'
 import type { CreateUsuarioInput, RolONE } from './types'
 
 const GOOGLE_PENDING_KEY = 'one_google_pending_registro'
@@ -75,13 +78,27 @@ export async function completarRegistroGoogle(
   await crearUsuario(uid, input)
 }
 
+// REG-01/02: reserva DNI/RUC justo después de crear la cuenta Auth. Si está duplicado,
+// borra la cuenta recién creada (no queda usuario huérfano) y relanza el error.
+async function reservarOBorrarCuenta(user: User, rol: RolONE, documentos: string[]): Promise<void> {
+  if (!documentos.length) return
+  try {
+    await reservarDocumentos(user.uid, rol, documentos)
+  } catch (e) {
+    await deleteUser(user).catch(() => {})
+    throw e
+  }
+}
+
 export async function registrar(
   email: string,
   password: string,
   nombre: string,
-  rol: RolONE = 'buyer_b2b'
+  rol: RolONE = 'buyer_b2b',
+  documentos: string[] = []
 ): Promise<void> {
   const cred = await createUserWithEmailAndPassword(auth, email, password)
+  await reservarOBorrarCuenta(cred.user, rol, documentos)
   await updateProfile(cred.user, { displayName: nombre })
   const input: CreateUsuarioInput = {
     uid: cred.user.uid,
@@ -113,9 +130,11 @@ export async function registrarCaficultor(
     fotoUrl?: string
     fotoDniUrl?: string
     fotoSelfieUrl?: string
-  }
+  },
+  documentos: string[] = []
 ): Promise<void> {
   const cred = await createUserWithEmailAndPassword(auth, email, password)
+  await reservarOBorrarCuenta(cred.user, 'seller', documentos)
   await updateProfile(cred.user, { displayName: nombre })
   const input: CreateUsuarioInput = {
     uid: cred.user.uid,
