@@ -14,7 +14,16 @@ import { esperarCarga, dniUnico, PNG_1X1 } from './helpers'
 // RUCs sintéticos QA con dígito verificador válido (REG-04) — uno por cuenta (REG-02)
 const RUC_QA = { APPROVED: '20999999019', PENDING_APPROVAL: '20999999027' } as const
 
-const PROJECT = 'tunay-wasi'
+// El proyecto Firebase se toma del propio token (claim `aud`): así el setup escribe siempre
+// en el mismo proyecto contra el que corre la suite (QA = alpaso-app, PROD = tunay-wasi).
+// Antes estaba fijo en 'tunay-wasi' (prod) → PATCH 403 en QA y todos los usuarios B2B sin configurar.
+// Base de datos: QA usa "(default)", PROD usa "default" (ver workflows alpaso-app-one / tunay-wasi-one).
+function firestoreDocUrl(token: string, path: string): string {
+  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8')) as { aud: string }
+  const project = process.env.E2E_FIREBASE_PROJECT ?? payload.aud
+  const database = process.env.E2E_FIRESTORE_DB ?? (project === 'tunay-wasi' ? 'default' : '(default)')
+  return `https://firestore.googleapis.com/v1/projects/${project}/databases/${encodeURIComponent(database)}/documents/${path}`
+}
 
 async function loginYObtenerToken(page: Parameters<typeof test>[1] extends (args: { page: infer P }) => unknown ? P : never, email: string, password: string): Promise<{ uid: string; token: string } | null> {
   await page.goto('/login')
@@ -61,7 +70,7 @@ async function loginYObtenerToken(page: Parameters<typeof test>[1] extends (args
 }
 
 async function actualizarEmpresaB2B(page: Parameters<typeof loginYObtenerToken>[0], uid: string, token: string, estadoAprobacion: string): Promise<void> {
-  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/default/documents/one_usuarios/${uid}?updateMask.fieldPaths=rol&updateMask.fieldPaths=empresa`
+  const url = `${firestoreDocUrl(token, `one_usuarios/${uid}`)}?updateMask.fieldPaths=rol&updateMask.fieldPaths=empresa`
   const body = {
     fields: {
       rol: { stringValue: 'buyer_b2b' },
