@@ -34,9 +34,8 @@ on:
           - 'true'
           - 'false'
 
-  # También se puede disparar desde qa_one o main_one manualmente
-  push:
-    branches: []  # No auto-trigger — solo manual vía workflow_dispatch
+  # Solo manual (workflow_dispatch). `push: branches: []` NO desactiva el trigger:
+  # GitHub lo disparaba en cada push, en paralelo con el deploy (contra la web vieja).
 
 env:
   NODE_VERSION: '20'
