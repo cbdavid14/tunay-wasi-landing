@@ -1489,3 +1489,53 @@ export async function cancelarPedido(pedidoId: string, motivo: string): Promise<
     })
   })
 }
+
+// Cancela un pedido expirado por no subir voucher (pagoStatus === 'pendiente').
+// Restaura stock usando kgDisponibles en one_productos para cada item del pedido.
+// NO permite cancelar si pagoStatus === 'verificado' o 'voucher_subido' — esos van por cancelarPedido().
+export async function cancelarPedidoExpirado(pedidoId: string, adminUid?: string): Promise<void> {
+  const pedidoRef = doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId)
+  await runTransaction(db, async (tx) => {
+    const pedidoSnap = await tx.get(pedidoRef)
+    if (!pedidoSnap.exists()) throw new Error('Pedido no encontrado')
+    const pedido = pedidoSnap.data()
+
+    if (pedido.cancelado) throw new Error('El pedido ya fue cancelado')
+
+    if (pedido.pagoStatus === 'verificado' || pedido.pagoStatus === 'voucher_subido') {
+      throw new Error(
+        `No se puede cancelar como expirado un pedido con pagoStatus="${pedido.pagoStatus}". Usar cancelarPedido() para pedidos en flujo normal.`
+      )
+    }
+
+    if (pedido.pagoStatus !== 'pendiente') {
+      throw new Error(
+        `cancelarPedidoExpirado solo acepta pagoStatus="pendiente". Estado actual: "${pedido.pagoStatus}"`
+      )
+    }
+
+    // Restaurar stock: iterar items y sumar kg correspondientes a kgDisponibles del producto
+    const items: Array<{ productoId: string; qty: number; presentacion: string }> = pedido.items ?? []
+    for (const item of items) {
+      const prodRef = doc(db, ONE_COLLECTIONS.PRODUCTOS, item.productoId)
+      const prodSnap = await tx.get(prodRef)
+      if (prodSnap.exists()) {
+        const kgARestaurar = parseKgFromPresentacion(item.presentacion as FormatoONE, item.qty)
+        const kgActual = prodSnap.data().kgDisponibles ?? 0
+        tx.update(prodRef, {
+          kgDisponibles: kgActual + kgARestaurar,
+          updatedAt: new Date().toISOString(),
+        })
+      }
+    }
+
+    tx.update(pedidoRef, {
+      cancelado: true,
+      motivoCancelacion: 'PAYMENT_EXPIRED',
+      cancellationReason: 'PAYMENT_EXPIRED',
+      canceladoAt: new Date().toISOString(),
+      ...(adminUid ? { canceladoPor: adminUid } : {}),
+      updatedAt: new Date().toISOString(),
+    })
+  })
+}
