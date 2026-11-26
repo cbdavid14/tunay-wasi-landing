@@ -12,7 +12,7 @@ export const USERS = {
 // Placeholder real del email: "tu@email.com" — el paso inicio ya muestra email+contraseña
 export async function loginEmail(page: Page, email: string, password: string) {
   await page.goto('/login')
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   // Paso 1: si aparece pantalla de selección de método, clic en "Ingresar con email"
   const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
@@ -33,10 +33,16 @@ export async function loginEmail(page: Page, email: string, password: string) {
   )
 }
 
+// ── networkidle acotado: con sesión iniciada Firestore mantiene conexiones abiertas (listeners
+// en tiempo real) y la red nunca queda "idle" → sin límite, el test se colgaba hasta su timeout.
+export async function esperarRedQuieta(page: Page, timeout = 5_000) {
+  await page.waitForLoadState('networkidle', { timeout }).catch(() => {})
+}
+
 // ── Navegar a una ruta (History API)
 export async function irA(page: Page, path: string) {
   await page.goto(path)
-  await page.waitForLoadState('networkidle').catch(() => {})
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   await page.waitForTimeout(500)
 }

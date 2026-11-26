@@ -993,6 +993,11 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
   const nombreLocal = usuario?.negocio?.nombreLocal ?? pedidos[0]?.nombreLocal ?? nombreUsuario
   const distritoLocal = usuario?.negocio?.distritoLocal ?? pedidos[0]?.distritoLocal ?? ''
 
+  // F-05 ORD-02: countdown para espera pago. Debe ir ANTES del `if (loading) return`:
+  // un hook después de un return condicional cambia el nº de hooks entre renders → React #310
+  // (el portal se caía en blanco para todo usuario B2B al terminar de cargar).
+  const countdown = useCountdown(pedidoConfirmadoExpiresAt)
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2036,9 +2041,6 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
       </div>
     )
   }
-
-  // F-05 ORD-02: countdown para espera pago — llamado a nivel componente (reglas de hooks)
-  const countdown = useCountdown(pedidoConfirmadoExpiresAt)
 
   function renderCarrito() {
     const subtotalCents = carritoItems.reduce((s, i) =>
