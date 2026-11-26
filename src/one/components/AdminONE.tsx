@@ -30,8 +30,8 @@ import {
   liberarPago,
 } from '../service'
 import { db } from '@/shared/firebase'
-import { collection, query, where, getDocs } from 'firebase/firestore'
-import type { PedidoONE, SolicitudB2B, EvidenciaONE, ReclamoONE, EstadoReclamo, PagoCaficultorONE } from '../types'
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore'
+import type { PedidoONE, SolicitudB2B, EvidenciaONE, ReclamoONE, EstadoReclamo, PagoCaficultorONE, UsuarioONE } from '../types'
 import {
   demoFetchPedidosAdmin,
   demoVerificarPago,
@@ -40,16 +40,17 @@ import {
 import { logout } from '../authService'
 import ChatPedido from './ChatPedido'
 
-type Tab = 'dashboard' | 'pagos' | 'soporte' | 'cuentas_b2b' | 'reviewer' | 'disputas' | 'perfil'
+type Tab = 'dashboard' | 'pagos' | 'soporte' | 'cuentas_b2b' | 'reviewer' | 'disputas' | 'kyc_caficultores' | 'perfil'
 
 const NAV_ITEMS: { id: Tab; label: string; emoji: string }[] = [
-  { id: 'dashboard',   label: 'Dashboard',   emoji: '📊' },
-  { id: 'pagos',       label: 'Pagos',       emoji: '💳' },
-  { id: 'soporte',     label: 'Soporte',     emoji: '💬' },
-  { id: 'cuentas_b2b', label: 'Cuentas B2B', emoji: '🏢' },
-  { id: 'reviewer',    label: 'Reviewer',    emoji: '🔍' },
-  { id: 'disputas',    label: 'Disputas',    emoji: '⚠' },
-  { id: 'perfil',      label: 'Perfil',      emoji: '👤' },
+  { id: 'dashboard',        label: 'Dashboard',   emoji: '📊' },
+  { id: 'pagos',            label: 'Pagos',       emoji: '💳' },
+  { id: 'soporte',          label: 'Soporte',     emoji: '💬' },
+  { id: 'cuentas_b2b',      label: 'Cuentas B2B', emoji: '🏢' },
+  { id: 'kyc_caficultores', label: 'KYC Sellers', emoji: '🪪' },
+  { id: 'reviewer',         label: 'Reviewer',    emoji: '🔍' },
+  { id: 'disputas',         label: 'Disputas',    emoji: '⚠' },
+  { id: 'perfil',           label: 'Perfil',      emoji: '👤' },
 ]
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -1803,9 +1804,10 @@ const Sidebar: React.FC<{
   pendingB2B: number
   pendingReviewer: number
   pendingDisputas: number
+  pendingKyc: number
   onLogout: () => void
   collapsed: boolean; onToggle: () => void
-}> = ({ tab, onChange, vouchersCount, pendingB2B, pendingReviewer, pendingDisputas, onLogout, collapsed, onToggle }) => (
+}> = ({ tab, onChange, vouchersCount, pendingB2B, pendingReviewer, pendingDisputas, pendingKyc, onLogout, collapsed, onToggle }) => (
   <nav style={{
     position: 'fixed', left: 0, top: 0, bottom: 0, width: collapsed ? 56 : 220,
     background: '#0d0d0d', borderRight: `1px solid ${"var(--tw-border)"}`,
@@ -1881,6 +1883,15 @@ const Sidebar: React.FC<{
               top: collapsed ? 6 : undefined, right: collapsed ? 6 : undefined,
             }}>{pendingDisputas}</span>
           )}
+          {item.id === 'kyc_caficultores' && pendingKyc > 0 && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              minWidth: 18, height: 18, borderRadius: 9,
+              background: '#8b5cf6', color: '#fff', fontSize: 10, fontWeight: 700, padding: '0 4px',
+              position: collapsed ? 'absolute' : 'relative',
+              top: collapsed ? 6 : undefined, right: collapsed ? 6 : undefined,
+            }}>{pendingKyc}</span>
+          )}
         </button>
       ))}
     </div>
@@ -1896,6 +1907,127 @@ const Sidebar: React.FC<{
   </nav>
 )
 
+// ─── Tab KYC Caficultores ─────────────────────────────────────────────────────
+
+const TabKycCaficultores: React.FC<{ onToast: (t: string, tipo?: 'ok' | 'error' | 'info') => void }> = ({ onToast }) => {
+  const [pendientes, setPendientes] = useState<UsuarioONE[]>([])
+  const [loading, setLoading] = useState(true)
+  const [accionando, setAccionando] = useState<string | null>(null)
+
+  async function cargar() {
+    setLoading(true)
+    try {
+      const snap = await getDocs(query(collection(db, 'one_usuarios'), where('estadoKyc', '==', 'PENDING_REVIEW')))
+      setPendientes(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UsuarioONE)))
+    } catch {
+      onToast('No se pudieron cargar las solicitudes KYC', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { cargar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleAprobar(uid: string) {
+    setAccionando(uid)
+    try {
+      await updateDoc(doc(db, 'one_usuarios', uid), { estadoKyc: 'ACTIVO' })
+      onToast('Caficultor verificado y activado', 'ok')
+      await cargar()
+    } catch {
+      onToast('Error al aprobar', 'error')
+    } finally {
+      setAccionando(null)
+    }
+  }
+
+  async function handleRechazar(uid: string) {
+    setAccionando(uid)
+    try {
+      await updateDoc(doc(db, 'one_usuarios', uid), { estadoKyc: 'RECHAZADO' })
+      onToast('Verificación rechazada', 'info')
+      await cargar()
+    } catch {
+      onToast('Error al rechazar', 'error')
+    } finally {
+      setAccionando(null)
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--tw-text-muted)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Verificación de identidad</p>
+          <p style={{ margin: '2px 0 0', fontSize: 20, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>KYC Caficultores</p>
+        </div>
+        <button onClick={cargar} style={{ background: 'none', border: `1px solid ${'var(--tw-border)'}`, color: 'var(--tw-text-muted)', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12 }}>↻</button>
+      </div>
+
+      {loading && <p style={{ color: 'var(--tw-text-muted)', fontSize: 13 }}>Cargando...</p>}
+
+      {!loading && pendientes.length === 0 && (
+        <div style={{ padding: '32px 24px', textAlign: 'center', border: `1px dashed ${'var(--tw-border)'}`, borderRadius: 12 }}>
+          <p style={{ margin: 0, color: 'var(--tw-text-muted)', fontSize: 13 }}>No hay solicitudes KYC pendientes.</p>
+        </div>
+      )}
+
+      {pendientes.map(u => (
+        <div key={u.uid} style={{ background: 'var(--tw-card)', border: `1px solid ${'var(--tw-border)'}`, borderRadius: 12, padding: '16px 18px', marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, color: 'var(--tw-text)', fontSize: 14 }}>{u.nombre}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--tw-text-muted)' }}>{u.email}</p>
+              {u.caficultor && (
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--tw-text-faint)' }}>
+                  DNI: {(u.caficultor as Record<string, unknown>).dni as string ?? '—'} · Tipo: {(u.caficultor as Record<string, unknown>).tipoRegistroCaficultor as string ?? '—'}
+                </p>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => handleAprobar(u.uid)}
+                disabled={accionando === u.uid}
+                style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: accionando === u.uid ? 'not-allowed' : 'pointer' }}
+              >
+                Aprobar
+              </button>
+              <button
+                onClick={() => handleRechazar(u.uid)}
+                disabled={accionando === u.uid}
+                style={{ padding: '7px 16px', borderRadius: 8, border: `1px solid #ef4444`, background: 'none', color: '#ef4444', fontSize: 12, fontWeight: 700, cursor: accionando === u.uid ? 'not-allowed' : 'pointer' }}
+              >
+                Rechazar
+              </button>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {u.fotoDniUrl && (
+              <div>
+                <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--tw-text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Foto DNI</p>
+                <a href={u.fotoDniUrl} target="_blank" rel="noopener noreferrer">
+                  <img src={u.fotoDniUrl} alt="DNI" style={{ width: 160, height: 100, objectFit: 'cover', borderRadius: 8, border: `1px solid ${'var(--tw-border)'}`, display: 'block' }} />
+                </a>
+              </div>
+            )}
+            {u.fotoSelfieUrl && (
+              <div>
+                <p style={{ margin: '0 0 4px', fontSize: 10, color: 'var(--tw-text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Selfie con DNI</p>
+                <a href={u.fotoSelfieUrl} target="_blank" rel="noopener noreferrer">
+                  <img src={u.fotoSelfieUrl} alt="Selfie" style={{ width: 160, height: 100, objectFit: 'cover', borderRadius: 8, border: `1px solid ${'var(--tw-border)'}`, display: 'block' }} />
+                </a>
+              </div>
+            )}
+            {!u.fotoDniUrl && !u.fotoSelfieUrl && (
+              <p style={{ fontSize: 12, color: 'var(--tw-text-muted)', margin: 0 }}>Sin fotos adjuntas.</p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
@@ -1904,6 +2036,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
   const [pendingB2B, setPendingB2B] = useState(0)
   const [pendingReviewer, setPendingReviewer] = useState(0)
   const [pendingDisputas, setPendingDisputas] = useState(0)
+  const [pendingKyc, setPendingKyc] = useState(0)
   const [pagosRetenidosCount, setPagosRetenidosCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [toasts, setToasts] = useState<ToastMsg[]>([])
@@ -1930,6 +2063,10 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
         // ADM-06: contar pagos retenidos a caficultores para KPI del dashboard
         getDocs(query(collection(db, 'one_pagos_caficultor'), where('estado', '==', 'RETENIDO')))
           .then(snap => setPagosRetenidosCount(snap.size))
+          .catch(() => {})
+        // KYC pendientes
+        getDocs(query(collection(db, 'one_usuarios'), where('estadoKyc', '==', 'PENDING_REVIEW')))
+          .then(snap => setPendingKyc(snap.size))
           .catch(() => {})
       }
     } catch (e) {
@@ -1974,6 +2111,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
           pendingB2B={pendingB2B}
           pendingReviewer={pendingReviewer}
           pendingDisputas={pendingDisputas}
+          pendingKyc={pendingKyc}
           onLogout={() => logout().then(() => { navigate('/') })}
           collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(prev => !prev)}
         />
@@ -2028,13 +2166,14 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
           )}
           {!loading && (
             <>
-              {tab === 'dashboard'   && <TabDashboard  pedidos={pedidos} pendingB2B={pendingB2B} pendingDisputas={pendingDisputas} pagosRetenidosCount={pagosRetenidosCount} />}
-              {tab === 'pagos'       && <TabPagos      pedidos={pedidos} onAccion={cargar} isDemo={isDemo} onToast={toast} />}
-              {tab === 'soporte'     && <TabSoporte    pedidos={pedidos} />}
-              {tab === 'cuentas_b2b' && <TabCuentasB2B onToast={toast} />}
-              {tab === 'reviewer'    && <TabReviewer   onToast={toast} />}
-              {tab === 'disputas'    && <TabDisputas   onToast={toast} />}
-              {tab === 'perfil'      && <TabPerfil     onLogout={() => logout().then(() => { navigate('/') })} />}
+              {tab === 'dashboard'        && <TabDashboard        pedidos={pedidos} pendingB2B={pendingB2B} pendingDisputas={pendingDisputas} pagosRetenidosCount={pagosRetenidosCount} />}
+              {tab === 'pagos'            && <TabPagos            pedidos={pedidos} onAccion={cargar} isDemo={isDemo} onToast={toast} />}
+              {tab === 'soporte'          && <TabSoporte          pedidos={pedidos} />}
+              {tab === 'cuentas_b2b'      && <TabCuentasB2B       onToast={toast} />}
+              {tab === 'kyc_caficultores' && <TabKycCaficultores  onToast={toast} />}
+              {tab === 'reviewer'         && <TabReviewer         onToast={toast} />}
+              {tab === 'disputas'         && <TabDisputas         onToast={toast} />}
+              {tab === 'perfil'           && <TabPerfil           onLogout={() => logout().then(() => { navigate('/') })} />}
             </>
           )}
         </div>

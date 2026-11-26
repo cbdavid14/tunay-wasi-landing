@@ -12,6 +12,7 @@ import {
   fetchCotizacionesCaficultor, responderCotizacion,
   fetchPagosByCaficultor, fetchReclamosByCaficultor,
   fetchEvidenciasByProducto, crearEvidencia,
+  fetchUsuario,
 } from '../service'
 import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
@@ -944,6 +945,7 @@ interface Props {
 const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId, isDemo = false, tab: tabProp }) => {
   const tab: Tab = tabProp ?? 'productos'
   const [caficultor, setCaficultor] = useState<CaficultorONE | null>(null)
+  const [estadoKyc, setEstadoKyc] = useState<'PENDING_REVIEW' | 'ACTIVO' | 'RECHAZADO' | null>(null)
   const [pedidos, setPedidos] = useState<PedidoONE[]>([])
   const [productos, setProductos] = useState<ProductoONE[]>([])
   const [calificaciones, setCalificaciones] = useState<CalificacionCaficultor[]>([])
@@ -1067,6 +1069,9 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         setPedidos(peds)
         setProductos(prods)
         if (!isDemo) {
+          fetchUsuario(caficultorId).then(u => {
+            setEstadoKyc(u.estadoKyc ?? null)
+          }).catch(() => {})
           const cals = await fetchCalificacionesByCaficultor(caficultorId).catch(() => [])
           setCalificaciones(cals)
         }
@@ -1312,6 +1317,41 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           <p style={{ color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', fontSize: 13 }}>Cargando...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    )
+  }
+
+  if (estadoKyc === 'PENDING_REVIEW') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Montserrat, sans-serif' }}>
+        <div style={{ maxWidth: 420, textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, color: 'var(--tw-cream)', marginBottom: 12, margin: '0 0 12px' }}>
+            Tu cuenta está en revisión
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--tw-text-muted)', lineHeight: 1.7, marginBottom: 20 }}>
+            Estamos verificando tu identidad (24–48 horas hábiles). Te notificaremos por email cuando tu cuenta esté activa.
+          </p>
+          <div style={{ background: 'rgba(143,175,138,0.07)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 10, padding: '12px 16px', fontSize: 12, color: 'var(--tw-sage)' }}>
+            ¿Tienes dudas? Escríbenos a soporte@tunaywasi.com
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (estadoKyc === 'RECHAZADO') {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--tw-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Montserrat, sans-serif' }}>
+        <div style={{ maxWidth: 420, textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, color: '#ef4444', marginBottom: 12, margin: '0 0 12px' }}>
+            Verificación rechazada
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--tw-text-muted)', lineHeight: 1.7 }}>
+            No pudimos verificar tu identidad. Por favor contáctanos a soporte@tunaywasi.com para resolver el problema.
+          </p>
+        </div>
       </div>
     )
   }

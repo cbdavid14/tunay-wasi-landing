@@ -291,6 +291,11 @@ export interface UsuarioONE {
   }
 
   createdAt: string
+
+  // KYC — verificación de identidad caficultor
+  estadoKyc?: 'PENDING_REVIEW' | 'ACTIVO' | 'RECHAZADO'
+  fotoDniUrl?: string
+  fotoSelfieUrl?: string
 }
 
 // Vista para el panel admin (incluye datos B2B resumidos)
@@ -370,6 +375,9 @@ export interface CreateUsuarioInput {
   negocio?: NegocioB2B
   empresa?: EmpresaB2B
   caficultor?: UsuarioONE['caficultor']
+  estadoKyc?: 'PENDING_REVIEW' | 'ACTIVO' | 'RECHAZADO'
+  fotoDniUrl?: string
+  fotoSelfieUrl?: string
 }
 
 // ─── CALIFICACIONES ──────────────────────────────────────────────────────────

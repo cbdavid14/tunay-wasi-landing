@@ -111,6 +111,8 @@ export async function registrarCaficultor(
     variedadPrincipal: string
     telefono: string
     fotoUrl?: string
+    fotoDniUrl?: string
+    fotoSelfieUrl?: string
   }
 ): Promise<void> {
   const cred = await createUserWithEmailAndPassword(auth, email, password)
@@ -128,6 +130,11 @@ export async function registrarCaficultor(
       foto: datos.fotoUrl ?? '',
       activo: false,
     },
+    ...(datos.fotoDniUrl ? {
+      estadoKyc: 'PENDING_REVIEW' as const,
+      fotoDniUrl: datos.fotoDniUrl,
+      fotoSelfieUrl: datos.fotoSelfieUrl ?? '',
+    } : {}),
   }
   await crearUsuario(cred.user.uid, input)
 }

@@ -3,12 +3,26 @@
  * Flujo 3 pasos: Paso 1 (cuenta) → Paso 2 (finca) → Paso 3 (identidad + Yape) → Portal
  * Ruta: #/registro-caficultor
  */
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { navigate } from '@/router'
 import { registrarCaficultor } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+
+async function uploadKycPhoto(file: File): Promise<string> {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', uploadPreset)
+  fd.append('folder', 'one_kyc')
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: fd })
+  if (!res.ok) throw new Error('Error subiendo foto')
+  const data = await res.json()
+  if (!data.secure_url) throw new Error(data.error?.message ?? 'Cloudinary upload failed')
+  return data.secure_url as string
+}
 
 const REGIONES = ['Cajamarca', 'Amazonas', 'San Martín', 'Cusco', 'Puno', 'Junín', 'Pasco', 'Huánuco', 'Ayacucho']
 const VARIEDADES = ['Bourbon', 'Caturra', 'Typica', 'Geisha', 'Catimor', 'Pache', 'Wush Wush', 'Otra']
@@ -179,6 +193,10 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
   // Paso 3 — Identidad
   const [dni, setDni] = useState('')
   const [numeroYape, setNumeroYape] = useState('')
+  const [fotoDniFile, setFotoDniFile] = useState<File | null>(null)
+  const [fotoDniPreview, setFotoDniPreview] = useState<string | null>(null)
+  const [fotoSelfieFile, setFotoSelfieFile] = useState<File | null>(null)
+  const [fotoSelfiePreview, setFotoSelfiePreview] = useState<string | null>(null)
 
   const [paso, setPaso] = useState<Paso>(1)
   const [enviando, setEnviando] = useState(false)
@@ -214,6 +232,8 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
 
   function validarPaso3(): string | null {
     if (dni.length !== 8 || !/^\d+$/.test(dni)) return 'El DNI debe tener exactamente 8 dígitos.'
+    if (!fotoDniFile) return 'Adjunta la foto frontal de tu DNI.'
+    if (!fotoSelfieFile) return 'Adjunta una selfie sosteniendo tu DNI.'
     if (!numeroYape.trim()) return 'Ingresa tu número Yape para recibir pagos.'
     return null
   }
@@ -238,10 +258,19 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
     setError(null)
     setEnviando(true)
     try {
+      let fotoDniUrl = ''
+      let fotoSelfieUrl = ''
+      if (!isDemo && fotoDniFile && fotoSelfieFile) {
+        [fotoDniUrl, fotoSelfieUrl] = await Promise.all([
+          uploadKycPhoto(fotoDniFile),
+          uploadKycPhoto(fotoSelfieFile),
+        ])
+      }
       if (!isDemo) {
         await registrarCaficultor(email, password, nombre, {
           region, distrito, altitudMsnm, kgDisponibles,
           variedadPrincipal, telefono,
+          fotoDniUrl, fotoSelfieUrl,
         })
         const uid = auth.currentUser?.uid
         if (uid) {
@@ -383,6 +412,10 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
             <Paso3
               dni={dni} setDni={setDni}
               numeroYape={numeroYape} setNumeroYape={setNumeroYape}
+              fotoDniFile={fotoDniFile} setFotoDniFile={setFotoDniFile}
+              fotoDniPreview={fotoDniPreview} setFotoDniPreview={setFotoDniPreview}
+              fotoSelfieFile={fotoSelfieFile} setFotoSelfieFile={setFotoSelfieFile}
+              fotoSelfiePreview={fotoSelfiePreview} setFotoSelfiePreview={setFotoSelfiePreview}
               error={error}
               enviando={enviando}
               onRegistrar={handleRegistrar}
@@ -578,17 +611,41 @@ const Paso2: React.FC<{
 const Paso3: React.FC<{
   dni: string; setDni: (v: string) => void
   numeroYape: string; setNumeroYape: (v: string) => void
+  fotoDniFile: File | null; setFotoDniFile: (f: File | null) => void
+  fotoDniPreview: string | null; setFotoDniPreview: (s: string | null) => void
+  fotoSelfieFile: File | null; setFotoSelfieFile: (f: File | null) => void
+  fotoSelfiePreview: string | null; setFotoSelfiePreview: (s: string | null) => void
   error: string | null
   enviando: boolean
   onRegistrar: () => void
   getInputStyle: GetInputStyle
-}> = ({ dni, setDni, numeroYape, setNumeroYape, error, enviando, onRegistrar, getInputStyle }) => {
+}> = ({ dni, setDni, numeroYape, setNumeroYape, fotoDniFile, setFotoDniFile, fotoDniPreview, setFotoDniPreview, fotoSelfieFile, setFotoSelfieFile, fotoSelfiePreview, setFotoSelfiePreview, error, enviando, onRegistrar, getInputStyle }) => {
   const [focused, setFocused] = useState('')
+  const refDni = useRef<HTMLInputElement>(null)
+  const refSelfie = useRef<HTMLInputElement>(null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, tipo: 'dni' | 'selfie') {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { alert('Solo se permiten imágenes.'); return }
+    if (file.size > 5 * 1024 * 1024) { alert('La imagen no debe superar 5 MB.'); return }
+    const preview = URL.createObjectURL(file)
+    if (tipo === 'dni') { setFotoDniFile(file); setFotoDniPreview(preview) }
+    else { setFotoSelfieFile(file); setFotoSelfiePreview(preview) }
+  }
+
+  const uploadBoxStyle = (hasFile: boolean): React.CSSProperties => ({
+    border: `2px dashed ${hasFile ? 'var(--tw-sage)' : 'var(--tw-border)'}`,
+    borderRadius: 10, padding: hasFile ? '4px' : '18px 12px', textAlign: 'center',
+    cursor: 'pointer', background: 'var(--tw-bg)', transition: 'border-color 0.15s',
+    overflow: 'hidden', minHeight: 72, display: 'flex', alignItems: 'center', justifyContent: 'center',
+  })
+
   return (
     <div>
       <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 700, color: 'var(--tw-sage)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Paso 3 de 3</p>
       <h1 style={{ margin: '0 0 4px', fontSize: 24, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif', fontWeight: 700 }}>Verifica tu identidad</h1>
-      <p style={{ margin: '0 0 24px', fontSize: 12, color: 'var(--tw-text-muted)' }}>Tu DNI y selfie se verifican con IA en segundos (N1). Necesario para recibir pagos y publicar lotes.</p>
+      <p style={{ margin: '0 0 24px', fontSize: 12, color: 'var(--tw-text-muted)' }}>Sube tu DNI y selfie para que nuestro equipo verifique tu identidad. Tu cuenta quedará activa en 24–48 horas hábiles.</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Field label="Número de DNI" required>
@@ -598,41 +655,43 @@ const Paso3: React.FC<{
             style={getInputStyle(focused === 'dni')} />
         </Field>
 
-        {/* Upload placeholders */}
+        {/* Upload fotos KYC */}
         <div className="reg-caf-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <Field label="Foto frontal DNI" required>
-            <div
-              style={{
-                border: '2px dashed var(--tw-border)', borderRadius: 10,
-                padding: '18px 12px', textAlign: 'center', cursor: 'pointer',
-                background: 'var(--tw-bg)', transition: 'border-color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--tw-terra)')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--tw-border)')}
+            <input ref={refDni} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => handleFileChange(e, 'dni')} />
+            <div style={uploadBoxStyle(!!fotoDniFile)}
+              onClick={() => refDni.current?.click()}
+              onMouseEnter={e => { if (!fotoDniFile) e.currentTarget.style.borderColor = 'var(--tw-terra)' }}
+              onMouseLeave={e => { if (!fotoDniFile) e.currentTarget.style.borderColor = 'var(--tw-border)' }}
             >
-              <div style={{ fontSize: 22, marginBottom: 4 }}>📷</div>
-              <div style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>Adjuntar imagen</div>
+              {fotoDniPreview
+                ? <img src={fotoDniPreview} alt="DNI" style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
+                : <><div style={{ fontSize: 22, marginBottom: 4 }}>📷</div><div style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>Adjuntar imagen</div></>
+              }
             </div>
+            {fotoDniFile && <div style={{ fontSize: 10, color: 'var(--tw-sage)', marginTop: 4, textAlign: 'center' }}>✓ {fotoDniFile.name}</div>}
           </Field>
           <Field label="Selfie sosteniendo el DNI" required>
-            <div
-              style={{
-                border: '2px dashed var(--tw-border)', borderRadius: 10,
-                padding: '18px 12px', textAlign: 'center', cursor: 'pointer',
-                background: 'var(--tw-bg)', transition: 'border-color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--tw-terra)')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--tw-border)')}
+            <input ref={refSelfie} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => handleFileChange(e, 'selfie')} />
+            <div style={uploadBoxStyle(!!fotoSelfieFile)}
+              onClick={() => refSelfie.current?.click()}
+              onMouseEnter={e => { if (!fotoSelfieFile) e.currentTarget.style.borderColor = 'var(--tw-terra)' }}
+              onMouseLeave={e => { if (!fotoSelfieFile) e.currentTarget.style.borderColor = 'var(--tw-border)' }}
             >
-              <div style={{ fontSize: 22, marginBottom: 4 }}>🤳</div>
-              <div style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>Adjuntar foto</div>
+              {fotoSelfiePreview
+                ? <img src={fotoSelfiePreview} alt="Selfie" style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
+                : <><div style={{ fontSize: 22, marginBottom: 4 }}>🤳</div><div style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>Adjuntar foto</div></>
+              }
             </div>
+            {fotoSelfieFile && <div style={{ fontSize: 10, color: 'var(--tw-sage)', marginTop: 4, textAlign: 'center' }}>✓ {fotoSelfieFile.name}</div>}
           </Field>
         </div>
 
-        {/* AI verification badge */}
+        {/* Verificación manual badge */}
         <div style={{ background: 'rgba(143,175,138,.07)', border: '1px solid rgba(143,175,138,.2)', borderRadius: 9, padding: '11px 13px', fontSize: 11, color: 'var(--tw-sage)', lineHeight: 1.6 }}>
-          🤖 <strong>Verificación automática</strong> — La IA compara tu DNI con tu selfie en segundos. Tu nivel inicial sube a N1 y puedes publicar tu primer lote.
+          📋 <strong>Verificación manual (24–48 horas hábiles)</strong> — Tu cuenta quedará en revisión hasta que nuestro equipo valide tu identidad.
         </div>
 
         <Field label="Número Yape" required hint="Al número donde recibirás tus pagos. Debe ser titular del mismo DNI.">
@@ -651,7 +710,7 @@ const Paso3: React.FC<{
         color: '#fff', border: 'none', fontSize: 14, fontWeight: 700,
         cursor: enviando ? 'not-allowed' : 'pointer',
       }}>
-        {enviando ? 'Creando cuenta...' : 'Crear cuenta →'}
+        {enviando ? 'Subiendo fotos y creando cuenta...' : 'Crear cuenta →'}
       </button>
     </div>
   )
