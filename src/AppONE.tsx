@@ -33,6 +33,7 @@ import RegistroConsumidor from '@/one/components/RegistroConsumidor'
 import RegistroCaficultor from '@/one/components/RegistroCaficultor'
 import LandingCaficultores from '@/one/components/LandingCaficultores'
 import LandingEmprendedor from '@/one/components/LandingEmprendedor'
+import LandingCafeVerde from '@/one/components/LandingCafeVerde'
 import DocsONE from '@/one/components/DocsONE'
 import SoporteONE from '@/one/components/SoporteONE'
 import TerminosONE from '@/one/components/TerminosONE'
@@ -640,12 +641,13 @@ function breadcrumbLD(items: { name: string; url: string }[]) {
   })
 }
 
-function PageMeta({ title, description, image, canonical, breadcrumb }: {
+function PageMeta({ title, description, image, canonical, breadcrumb, schema }: {
   title: string
   description: string
   image?: string
   canonical?: string
   breadcrumb?: { name: string; url: string }[]
+  schema?: object
 }) {
   const fullTitle = title.includes('Tunay Wasi') ? title : `${title} | Tunay Wasi`
   const img = image ?? DEFAULT_OG_IMAGE
@@ -664,6 +666,9 @@ function PageMeta({ title, description, image, canonical, breadcrumb }: {
       <meta name="twitter:image" content={img} />
       {breadcrumb && (
         <script type="application/ld+json">{breadcrumbLD(breadcrumb)}</script>
+      )}
+      {schema && (
+        <script type="application/ld+json">{JSON.stringify(schema)}</script>
       )}
     </Helmet>
   )
@@ -880,7 +885,7 @@ const AppONE: React.FC = () => {
   // ─── Helper: envuelve contenido con el header global ─────────────────────
 
   // Rutas que no muestran el header (fullscreen)
-  const sinHeader = path === '/login' || path.startsWith('/login') || path === '/registro-caficultor' || path === '/registro-emprendedor' || path === '/registro' || path === '/para-caficultores' || path === '/para-cafeterias' || path === '/soporte' || path === '/docs' || path.startsWith('/docs/')
+  const sinHeader = path === '/login' || path.startsWith('/login') || path === '/registro-caficultor' || path === '/registro-emprendedor' || path === '/registro' || path === '/para-caficultores' || path === '/para-cafeterias' || path === '/cafe-verde-peru' || path === '/soporte' || path === '/docs' || path.startsWith('/docs/')
 
   function withHeader(content: React.ReactNode) {
     if (sinHeader) return <>{content}</>
@@ -954,7 +959,21 @@ const AppONE: React.FC = () => {
   if (path === '/para-caficultores') {
     return withHeader(
       <>
-        <PageMeta title="Vende tu café de especialidad en Perú — Para caficultores peruanos" description="Publica tu lote de café en Tunay Wasi y vende online a cafeterías y negocios de todo el país. Café verde, tostado o molido. 0% comisión en fase beta. Cajamarca, Junín, Cusco, San Martín y más." canonical={`${BASE_URL}/para-caficultores`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Para caficultores', url: `${BASE_URL}/para-caficultores` }]} />
+        <PageMeta
+          title="Vende tu Café de Especialidad Online | TunayWasi para Caficultores"
+          description="Conecta directamente con cafeterías y negocios. Sin intermediarios. Publica tus lotes, fija tu precio y recibe pagos seguros en escrow. Caficultores peruanos — plataforma gratuita en fase beta."
+          canonical={`${BASE_URL}/para-caficultores`}
+          breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Para caficultores', url: `${BASE_URL}/para-caficultores` }]}
+          schema={{
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: 'TunayWasi para Caficultores',
+            description: 'Plataforma marketplace para caficultores peruanos. Vende café de especialidad online — verde, tostado o molido — directamente a cafeterías y negocios. Sin intermediarios. Marketplace café productor Perú.',
+            url: `${BASE_URL}/para-caficultores`,
+            inLanguage: 'es-PE',
+            audience: { '@type': 'Audience', audienceType: 'Caficultores peruanos' },
+          }}
+        />
         <LandingCaficultores />
       </>
     )

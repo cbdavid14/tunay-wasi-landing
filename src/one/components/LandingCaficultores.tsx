@@ -219,8 +219,8 @@ const Hero: React.FC<{ onRegistrar: () => void }> = ({ onRegistrar }) => {
           fontWeight: 700, color: 'var(--tw-text)',
           margin: '20px 0 18px', lineHeight: 1.05,
         }}>
-          Tu café peruano,<br />
-          <span style={{ color: 'var(--tw-terra)' }}>en manos de los mejores negocios.</span>
+          Vende tu café de especialidad<br />
+          <span style={{ color: 'var(--tw-terra)' }}>directamente a negocios en Perú.</span>
         </h1>
 
         <p style={{
@@ -294,7 +294,7 @@ const SeccionBeneficios: React.FC = () => (
     <div style={{ maxWidth: 1000, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 52 }}>
         <Chip>Lo que ganas</Chip>
-        <H2>Una plataforma que trabaja<br />para ti, no contra ti</H2>
+        <H2>Marketplace café productor Perú:<br />una plataforma que trabaja para ti</H2>
       </div>
       <div style={{
         display: 'grid',
@@ -339,7 +339,7 @@ const SeccionFAQ: React.FC = () => {
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <Chip>Preguntas frecuentes</Chip>
-          <H2>Resolvemos tus dudas</H2>
+          <H2>Pagos seguros con escrow —<br />sin comisión en fase beta</H2>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {FAQ.map((f, i) => (
@@ -433,7 +433,7 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
     <div style={{ maxWidth: 960, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 60 }}>
         <Chip color={'var(--tw-terra)'}>Cómo instalar</Chip>
-        <H2>En 5 pasos estás<br />publicando tu café</H2>
+        <H2>¿Cómo funciona la plataforma<br />para caficultores peruanos?</H2>
         <p style={{
           fontFamily: 'Montserrat, sans-serif', fontSize: 15,
           color: 'var(--tw-text-muted)', lineHeight: 1.7,
@@ -488,7 +488,7 @@ const SeccionInstalacion: React.FC<{ onDescargar: () => void }> = ({ onDescargar
       {/* Funcionalidades */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <Chip>Qué puedes hacer</Chip>
-        <H2>Todo lo que tiene<br />la app para ti</H2>
+        <H2>Publica tus lotes de café verde<br />sin intermediarios</H2>
       </div>
 
       <div style={{
