@@ -86,7 +86,7 @@ jobs:
               F-01) echo "e2e/27-registro-login-gate.spec.ts" ;;
               F-02) echo "e2e/27-registro-login-gate.spec.ts" ;;
               F-03) echo "e2e/27-registro-login-gate.spec.ts" ;;
-              F-04) echo "e2e/22-ficha-tecnica.spec.ts e2e/28-filtros-catalogo.spec.ts e2e/29-tarjetas-catalogo.spec.ts e2e/30-ficha-lote-detalle.spec.ts" ;;
+              F-04) echo "e2e/22-ficha-tecnica.spec.ts e2e/28-filtros-catalogo.spec.ts e2e/29-tarjetas-catalogo-por-rol.spec.ts e2e/30-ficha-lote-detalle.spec.ts" ;;
               F-05) echo "e2e/26-flujo-compra.spec.ts e2e/32-carrito-b2c.spec.ts" ;;
               F-06) echo "e2e/23-pricing-cotizaciones.spec.ts e2e/26-flujo-compra.spec.ts e2e/33-cotizacion-b2b.spec.ts" ;;
               F-07) echo "e2e/24-portal-caficultor.spec.ts e2e/34-portal-caficultor-crear-lote.spec.ts" ;;
