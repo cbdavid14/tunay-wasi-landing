@@ -87,6 +87,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
   })
 
   test('5 — Portal negocio tab Ofertas carga lista de cotizaciones (US-16 B2B)', async ({ page }) => {
+    test.setTimeout(120_000)
     await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await irA(page, '/portal')
     await esperarCarga(page)

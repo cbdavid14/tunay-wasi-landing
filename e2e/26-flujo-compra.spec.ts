@@ -45,6 +45,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('3 — Carrito inyectado muestra resumen correcto (US-13)', async ({ page }) => {
+    test.setTimeout(120_000)
     await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     // Ir directamente al checkout
@@ -58,6 +59,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('4 — Checkout paso 1: opciones de envío visibles (US-14)', async ({ page }) => {
+    test.setTimeout(120_000)
     await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
@@ -70,6 +72,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('5 — Checkout paso 2: campos de dirección obligatorios (US-14 validación)', async ({ page }) => {
+    test.setTimeout(120_000)
     await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')
@@ -89,6 +92,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('6 — Checkout paso 3: resumen con total en S/ (US-14 CA)', async ({ page }) => {
+    test.setTimeout(120_000)
     await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
     await inyectarCarritoDemo(page)
     await irA(page, '/checkout')

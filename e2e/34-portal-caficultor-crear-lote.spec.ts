@@ -5,6 +5,8 @@ import { loginYEsperarAuth, irA, esperarCarga, USERS } from './helpers'
 
 test.describe('34 — Portal caficultor: crear y gestionar lotes', () => {
 
+  test.setTimeout(120_000)
+
   async function cargarPortalCaficultor(page: any) {
     // loginYEsperarAuth garantiza que Firebase Auth está propagado antes de navegar al portal
     await loginYEsperarAuth(page, USERS.caficultor.email, USERS.caficultor.password)

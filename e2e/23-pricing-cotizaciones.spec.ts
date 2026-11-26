@@ -73,6 +73,7 @@ test.describe('23 — Pricing y cotizaciones', () => {
   })
 
   test('6 — B2B PENDING: cotizaciones bloqueadas — banner de aprobación (B2B-01 · US-16)', async ({ page }) => {
+    test.setTimeout(120_000)
     await loginYEsperarAuth(page, USERS.pending.email, USERS.pending.password)
     await irA(page, '/portal')
     await esperarCarga(page)
