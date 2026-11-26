@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extraerLoteDesdeVoz = exports.cancelarPedidosExpiradosONE = exports.reporteDiarioAnalytics = exports.recordatorioEnvioMuestrasHub = exports.onLoteAprobadoPorCertificacion = exports.onSolicitudCertificacionCreada = exports.asistenteCatacion = exports.liberarReservasExpiradas = exports.onPedidoPagoVerificado = exports.onPedidoCreated = exports.izipayWebhook = exports.metaCapi = void 0;
+exports.extraerLoteDesdeVoz = exports.avisarExpiracionB2B = exports.cancelarPedidosExpiradosONE = exports.reporteDiarioAnalytics = exports.recordatorioEnvioMuestrasHub = exports.onLoteAprobadoPorCertificacion = exports.onSolicitudCertificacionCreada = exports.asistenteCatacion = exports.liberarReservasExpiradas = exports.onPedidoPagoVerificado = exports.onPedidoCreated = exports.izipayWebhook = exports.metaCapi = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const node_fetch_1 = require("node-fetch");
@@ -808,6 +808,104 @@ exports.cancelarPedidosExpiradosONE = functions
         });
     }
     functions.logger.info(`cancelarPedidosExpiradosONE: ${cancelados} pedido(s) cancelado(s) de ${docsMap.size} expirado(s)`);
+});
+// ── 12. AVISAR EXPIRACIÓN B2B — cron cada 15 minutos ─────────────────────────
+//
+// Envía notificación FCM a compradores B2B 2 horas antes de que su pedido expire.
+// Ventana: pedidos que expiran entre now+1h45m y now+2h15m y que no hayan sido
+// avisados aún (avisado2h !== true).
+// Colección: one_pedidos
+// Campos: rolComprador=='buyer_b2b', pagoStatus=='pendiente', expiraAt (string ISO),
+//         negocioId (string), avisado2h (bool)
+// FCM tokens del comprador: one_usuarios/{negocioId}.fcmTokens (array de strings)
+const FCM_LAMBDA_URL = "https://duod5kcqi2inx52uinzrxm6gfu0njlby.lambda-url.sa-east-1.on.aws/";
+exports.avisarExpiracionB2B = functions
+    .region("us-central1")
+    .pubsub.schedule("every 15 minutes")
+    .onRun(async () => {
+    var _a, _b;
+    const limiteInferior = new Date(Date.now() + (105 * 60 * 1000)).toISOString(); // now + 1h45m
+    const limiteSuperior = new Date(Date.now() + (135 * 60 * 1000)).toISOString(); // now + 2h15m
+    functions.logger.info("avisarExpiracionB2B: buscando pedidos en ventana", {
+        limiteInferior,
+        limiteSuperior,
+    });
+    // Firestore no soporta range en campo + desigualdad en otro campo con índice compuesto fácil,
+    // así que filtramos por la ventana de expiraAt y luego descartamos los ya avisados en memoria.
+    const snap = await db
+        .collection("one_pedidos")
+        .where("rolComprador", "==", "buyer_b2b")
+        .where("pagoStatus", "==", "pendiente")
+        .where("expiraAt", ">=", limiteInferior)
+        .where("expiraAt", "<=", limiteSuperior)
+        .get();
+    if (snap.empty) {
+        functions.logger.info("avisarExpiracionB2B: sin pedidos en ventana");
+        return;
+    }
+    let avisados = 0;
+    for (const doc of snap.docs) {
+        const pedido = doc.data();
+        // Skip si ya fue avisado
+        if (pedido.avisado2h === true)
+            continue;
+        const negocioId = pedido.negocioId;
+        if (!negocioId) {
+            functions.logger.warn("avisarExpiracionB2B: pedido sin negocioId", { pedidoId: doc.id });
+            continue;
+        }
+        // Leer fcmTokens del comprador B2B desde one_usuarios
+        const usuarioSnap = await db.collection("one_usuarios").doc(negocioId).get();
+        const fcmTokens = (_b = (_a = usuarioSnap.data()) === null || _a === void 0 ? void 0 : _a.fcmTokens) !== null && _b !== void 0 ? _b : [];
+        if (fcmTokens.length === 0) {
+            functions.logger.info("avisarExpiracionB2B: sin fcmTokens para negocio", { negocioId, pedidoId: doc.id });
+        }
+        else {
+            // Enviar notificación FCM a cada token via Lambda
+            const titulo = "⏰ Tu pedido expira en 2 horas";
+            const cuerpo = "Tienes 2 horas para subir el comprobante de pago. Si no lo haces, el pedido será cancelado automáticamente.";
+            await Promise.all(fcmTokens.map(async (fcmToken) => {
+                try {
+                    const response = await (0, node_fetch_1.default)(FCM_LAMBDA_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            fcmToken,
+                            titulo,
+                            cuerpo,
+                            data: { pedidoId: doc.id, tipo: "expiracion_b2b" },
+                        }),
+                    });
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        functions.logger.warn("avisarExpiracionB2B: Lambda FCM error", {
+                            pedidoId: doc.id,
+                            status: response.status,
+                            errText,
+                        });
+                    }
+                }
+                catch (err) {
+                    functions.logger.warn("avisarExpiracionB2B: error al llamar Lambda FCM", {
+                        pedidoId: doc.id,
+                        err,
+                    });
+                }
+            }));
+        }
+        // Marcar pedido como avisado
+        await doc.ref.update({
+            avisado2h: true,
+            avisado2hAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        avisados++;
+        functions.logger.info("avisarExpiracionB2B: pedido avisado", {
+            pedidoId: doc.id,
+            negocioId,
+            tokensEnviados: fcmTokens.length,
+        });
+    }
+    functions.logger.info(`avisarExpiracionB2B: ${avisados} pedido(s) avisado(s) de ${snap.size} en ventana`);
 });
 exports.extraerLoteDesdeVoz = functions
     .region("us-central1")
