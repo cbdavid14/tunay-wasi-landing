@@ -582,8 +582,10 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
   const [empNombreLocal, setEmpNombreLocal] = useState(empNeg?.nombreLocal ?? '')
   const [empDistrito, setEmpDistrito] = useState(empNeg?.distritoLocal ?? '')
   const [empVolumen, setEmpVolumen] = useState(empNeg?.volumenMensual ?? '')
-  const [empRuc, setEmpRuc] = useState(empNeg?.ruc ?? '')
-  const [empRazonSocial, setEmpRazonSocial] = useState(empNeg?.razonSocial ?? '')
+  // REG-02: el RUC vive en empresa.ruc (reservado en one_documentos) y no se edita desde el portal.
+  // negocio.ruc/razonSocial solo como respaldo de cuentas antiguas no migradas.
+  const empRuc: string = usuario?.empresa?.ruc ?? empNeg?.ruc ?? ''
+  const empRazonSocial: string = usuario?.empresa?.razonSocial ?? empNeg?.razonSocial ?? ''
   const [empNombre, setEmpNombre] = useState(empNeg?.contactoNombre ?? (usuario?.nombre ?? '').split(' ')[0] ?? '')
   const [empApellido, setEmpApellido] = useState(empNeg?.contactoApellido ?? (usuario?.nombre ?? '').split(' ').slice(1).join(' ') ?? '')
   const [empTelefono, setEmpTelefono] = useState(empNeg?.telefono ?? '')
@@ -596,8 +598,6 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
         'negocio.nombreLocal': empNombreLocal.trim() || empNeg?.nombreLocal,
         'negocio.distritoLocal': empDistrito,
         'negocio.volumenMensual': empVolumen,
-        'negocio.ruc': empRuc.trim(),
-        'negocio.razonSocial': empRazonSocial.trim(),
         'negocio.contactoNombre': empNombre.trim(),
         'negocio.contactoApellido': empApellido.trim(),
         'negocio.telefono': empTelefono.trim(),
@@ -1547,8 +1547,8 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
 
                               {/* Destinatario — siempre visible */}
                               {(() => {
-                                const ruc = (usuario?.negocio as any)?.ruc
-                                const razonSocial = (usuario?.negocio as any)?.razonSocial
+                                const ruc = usuario?.empresa?.ruc ?? (usuario?.negocio as any)?.ruc
+                                const razonSocial = usuario?.empresa?.razonSocial ?? (usuario?.negocio as any)?.razonSocial
                                 const contactoNombre = [(usuario?.negocio as any)?.contactoNombre, (usuario?.negocio as any)?.contactoApellido].filter(Boolean).join(' ') || p.negocioNombre
                                 return (
                                   <div style={{ padding: '6px 14px 8px', borderTop: '1px solid var(--tw-border)' }}>
@@ -1676,8 +1676,8 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
                                     )}
                                     {/* Destinatario */}
                                     {(() => {
-                                      const ruc = (usuario?.negocio as any)?.ruc
-                                      const razonSocial = (usuario?.negocio as any)?.razonSocial
+                                      const ruc = usuario?.empresa?.ruc ?? (usuario?.negocio as any)?.ruc
+                                      const razonSocial = usuario?.empresa?.razonSocial ?? (usuario?.negocio as any)?.razonSocial
                                       const contactoNombre = [(usuario?.negocio as any)?.contactoNombre, (usuario?.negocio as any)?.contactoApellido].filter(Boolean).join(' ') || p.negocioNombre
                                       return (
                                         <div style={{ padding: '4px 0 6px', marginBottom: 4 }}>
@@ -2480,8 +2480,8 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
             negocioNombre: usuario?.nombre ?? pagoNombreLocal,
             negocioEmail: usuario?.email ?? '',
             negocioTelefono: usuario?.telefono ?? '',
-            negocioRazonSocial: (usuario?.negocio as any)?.razonSocial || undefined,
-            negocioRuc: (usuario?.negocio as any)?.ruc || undefined,
+            negocioRazonSocial: usuario?.empresa?.razonSocial || (usuario?.negocio as any)?.razonSocial || undefined,
+            negocioRuc: usuario?.empresa?.ruc || (usuario?.negocio as any)?.ruc || undefined,
             nombreLocal: pagoNombreLocal,
             distritoLocal: pagoDistrito,
             items: items.map(l => ({
@@ -3068,9 +3068,9 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
 
       const esB2B = usuario?.rol === 'buyer_b2b'
       const negocio = usuario?.negocio as any
-      const rucEmpresa: string = negocio?.ruc ?? ''
-      const razonSocial: string = negocio?.razonSocial ?? negocio?.nombreLocal ?? ''
-      const dirFiscal: string = negocio?.direccionFiscal ?? negocio?.direccionLocal ?? ''
+      const rucEmpresa: string = usuario?.empresa?.ruc ?? negocio?.ruc ?? ''
+      const razonSocial: string = usuario?.empresa?.razonSocial ?? negocio?.razonSocial ?? negocio?.nombreLocal ?? ''
+      const dirFiscal: string = usuario?.empresa?.dirFiscal || negocio?.direccionFiscal || negocio?.direccionLocal || ''
       const tieneRUC = !!rucEmpresa
 
       const bloqueFacturacionB2B = esB2B ? (
@@ -5009,17 +5009,17 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
                 </div>
               </div>
               <div style={{ marginBottom: 20 }}>
-                <div style={sTitle}>Datos fiscales <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--tw-text-muted)' }}>(opcional)</span></div>
-                <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginBottom: 10 }}>Requerido para recibir facturas en tus compras.</div>
+                <div style={sTitle}>Datos fiscales</div>
+                <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginBottom: 10 }}>Se usan para emitir tus facturas. Registrados al crear tu cuenta empresa.</div>
                 <div className="grid-empresa-form">
                   <div>
                     <div style={fLabel}>RUC</div>
-                    <input style={inputSt} value={empRuc} onChange={e => setEmpRuc(e.target.value)} placeholder="20XXXXXXXXX" maxLength={11} />
-                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 3 }}>Se valida contra SUNAT</div>
+                    <input style={{ ...inputSt, opacity: 0.7, cursor: 'not-allowed' }} value={empRuc || '—'} readOnly aria-readonly="true" />
+                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 3 }}>Vinculado a tu cuenta. Para cambiarlo escribe a tunaywasi@gmail.com</div>
                   </div>
                   <div>
                     <div style={fLabel}>Razón social</div>
-                    <input style={inputSt} value={empRazonSocial} onChange={e => setEmpRazonSocial(e.target.value)} placeholder="Mi Empresa S.A.C." />
+                    <input style={{ ...inputSt, opacity: 0.7, cursor: 'not-allowed' }} value={empRazonSocial || '—'} readOnly aria-readonly="true" />
                   </div>
                 </div>
               </div>
@@ -5392,17 +5392,17 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
               </div>
               {/* Datos fiscales */}
               <div style={{ marginBottom: 20 }}>
-                <div style={sectionTitle}>Datos fiscales <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--tw-text-muted)' }}>(opcional)</span></div>
-                <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginBottom: 10 }}>Si tienes RUC, agrégatelo para recibir facturas en tus compras.</div>
+                <div style={sectionTitle}>Datos fiscales</div>
+                <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', marginBottom: 10 }}>Se usan para emitir tus facturas. Registrados al crear tu cuenta empresa.</div>
                 <div className="grid-empresa-form">
                   <div>
                     <div style={fieldLabel}>RUC</div>
-                    <input style={inputStyle} value={empRuc} onChange={e => setEmpRuc(e.target.value)} placeholder="20XXXXXXXXX" maxLength={11} />
-                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 3 }}>Se valida contra SUNAT</div>
+                    <input style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} value={empRuc || '—'} readOnly aria-readonly="true" />
+                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 3 }}>Vinculado a tu cuenta. Para cambiarlo escribe a tunaywasi@gmail.com</div>
                   </div>
                   <div>
                     <div style={fieldLabel}>Razón social</div>
-                    <input style={inputStyle} value={empRazonSocial} onChange={e => setEmpRazonSocial(e.target.value)} placeholder="Mi Empresa S.A.C." />
+                    <input style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} value={empRazonSocial || '—'} readOnly aria-readonly="true" />
                   </div>
                 </div>
               </div>

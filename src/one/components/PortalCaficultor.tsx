@@ -24,7 +24,7 @@ import {
   demoFetchUbigeos, demoFetchLogisticaCaficultor, demoSaveLogisticaCaficultor,
 } from '../demoService'
 import { PROCESO_LABELS, calcularPrecioFinal, FORMATOS_FIXED, FORMATOS_NEGOTIABLE, FORMATO_LABELS } from '../config'
-import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE, AgenciaLogisticaONE, CotizacionONE, PagoCaficultorONE, FormatoONE, LogisticaStatusONE, ReclamoONE, EvidenciaONE, NivelEvidencia } from '../types'
+import type { PedidoONE, ProductoONE, CaficultorONE, CalificacionCaficultor, UbigeoONE, LogisticaCaficultorONE, AgenciaLogisticaONE, CotizacionONE, PagoCaficultorONE, FormatoONE, LogisticaStatusONE, ReclamoONE, EvidenciaONE, NivelEvidencia, UsuarioONE } from '../types'
 import ChatPedido from './ChatPedido'
 import WasiChat from './WasiChat'
 import { type DireccionONE } from './ModalDireccion'
@@ -237,17 +237,19 @@ const PROCESOS: { value: string; label: string }[] = [
 
 const ModalProducto: React.FC<{
   caficultorId: string; caficultorNombre: string; producto?: ProductoONE; isDemo: boolean
+  /** TRIB-01: caficultor registrado solo con DNI → solo puede publicar café verde (TYPE_A) */
+  soloDni?: boolean
   onClose: () => void
   onToast: (t: string, tipo?: 'ok' | 'error' | 'info') => void
   onGuardado: (p: ProductoONE) => void
-}> = ({ caficultorId, caficultorNombre, producto, isDemo, onClose, onToast, onGuardado }) => {
+}> = ({ caficultorId, caficultorNombre, producto, isDemo, soloDni = false, onClose, onToast, onGuardado }) => {
   const esEdicion = !!producto
 
   const [form, setForm] = useState<ProductoFormData>({
     nombre: producto?.nombre ?? '',
     variedad: producto?.variedad ?? '',
     proceso: producto?.proceso ?? 'lavado',
-    tipoCafe: ((producto as any)?.tipoCafe ?? 'tostado') as ProductoFormData['tipoCafe'],
+    tipoCafe: ((producto as any)?.tipoCafe ?? (soloDni ? 'verde' : 'tostado')) as ProductoFormData['tipoCafe'],
     altitudMsnm: String(producto?.altitudMsnm ?? ''),
     cosecha: producto?.cosecha ?? '',
     notasSabor: producto?.notasSabor?.join(', ') ?? '',
@@ -283,6 +285,11 @@ const ModalProducto: React.FC<{
     // G-07: PR-04 — NEGOTIABLE solo se puede seleccionar con TYPE_A (café verde)
     if (form.pricingMode === 'NEGOTIABLE' && form.tipoCafe !== 'verde') {
       onToast('El precio negociable (NEGOTIABLE) solo está permitido para café verde (TYPE_A). Cambia el tipo de café o selecciona precio fijo.', 'error')
+      return
+    }
+    // TRIB-01 INVARIANTE: solo DNI no puede publicar TYPE_B / TYPE_C (no puede emitir comprobante)
+    if (soloDni && form.tipoCafe !== 'verde') {
+      onToast('Con registro solo DNI únicamente puedes publicar café verde (TYPE_A). Para vender tostado o molido necesitas RUC propio o de tu cooperativa — escríbenos a tunaywasi@gmail.com.', 'error')
       return
     }
     // G-04: Validar mínimo 4 fotos al publicar lote
@@ -477,18 +484,23 @@ const ModalProducto: React.FC<{
                 const sel = form.tipoCafe === t.value
                 const esVerde = t.value === 'verde'
                 const col = esVerde ? 'var(--tw-sage)' : 'var(--tw-terra)'
+                const bloqueado = soloDni && !esVerde   // TRIB-01
                 return (
-                  <button key={t.value} type="button" onClick={() => setForm(prev => ({
+                  <button key={t.value} type="button" disabled={bloqueado}
+                    title={bloqueado ? 'Requiere RUC (TRIB-01) — tu registro es solo DNI' : undefined}
+                    onClick={() => setForm(prev => ({
                     ...prev,
                     tipoCafe: t.value,
                     // TYPE_B y TYPE_C solo FIXED (PR-04) — resetear si venía de verde con NEGOTIABLE
                     pricingMode: t.value !== 'verde' ? 'FIXED' : prev.pricingMode,
                   }))} style={{
-                    padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
                     border: `1px solid ${sel ? col : 'var(--tw-border)'}`,
                     background: sel ? col + '22' : 'transparent',
                     color: sel ? col : 'var(--tw-text-muted)',
                     fontFamily: 'Montserrat, sans-serif',
+                    opacity: bloqueado ? 0.4 : 1,
+                    cursor: bloqueado ? 'not-allowed' : 'pointer',
                   }}>{t.label}</button>
                 )
               })}
@@ -945,6 +957,8 @@ interface Props {
 const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId, isDemo = false, tab: tabProp }) => {
   const tab: Tab = tabProp ?? 'productos'
   const [caficultor, setCaficultor] = useState<CaficultorONE | null>(null)
+  // TRIB-04 / REG: identidad y modalidad tributaria (de one_usuarios.caficultor)
+  const [perfilFiscal, setPerfilFiscal] = useState<Pick<NonNullable<UsuarioONE['caficultor']>, 'dni' | 'tipoRegistroCaficultor' | 'ruc' | 'rucCooperativa'> | null>(null)
   const [estadoKyc, setEstadoKyc] = useState<'PENDING_REVIEW' | 'ACTIVO' | 'RECHAZADO' | null>(null)
   const [pedidos, setPedidos] = useState<PedidoONE[]>([])
   const [productos, setProductos] = useState<ProductoONE[]>([])
@@ -1071,6 +1085,12 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         if (!isDemo) {
           fetchUsuario(caficultorId).then(u => {
             setEstadoKyc(u.estadoKyc ?? null)
+            setPerfilFiscal({
+              dni: u.caficultor?.dni,
+              tipoRegistroCaficultor: u.caficultor?.tipoRegistroCaficultor,
+              ruc: u.caficultor?.ruc,
+              rucCooperativa: u.caficultor?.rucCooperativa,
+            })
           }).catch(() => {})
           const cals = await fetchCalificacionesByCaficultor(caficultorId).catch(() => [])
           setCalificaciones(cals)
@@ -3067,9 +3087,26 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                   </div>
                   <div>
                     <div style={fieldLabel}>DNI</div>
-                    <input style={inputStyle} defaultValue={(caficultor as any).dni ?? ''} placeholder="DNI" />
+                    {/* TRIB-04 / REG-01: el DNI es inmutable — reservado en one_documentos */}
+                    <input style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} value={perfilFiscal?.dni ?? (caficultor as any).dni ?? '—'} readOnly aria-readonly="true" />
                   </div>
                 </div>
+                {/* TRIB-04: modalidad tributaria (solo lectura — cambiarla requiere al reviewer) */}
+                <div className="grid-2col" style={{ marginBottom: 10 }}>
+                  <div>
+                    <div style={fieldLabel}>Modalidad tributaria</div>
+                    <input style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} readOnly aria-readonly="true"
+                      value={perfilFiscal?.tipoRegistroCaficultor ? { SOLO_DNI: 'Solo DNI — solo café verde', RUC_PROPIO: 'RUC propio', COOPERATIVA: 'Socio de cooperativa' }[perfilFiscal.tipoRegistroCaficultor] : 'No registrada'} />
+                  </div>
+                  {perfilFiscal?.tipoRegistroCaficultor && perfilFiscal.tipoRegistroCaficultor !== 'SOLO_DNI' && (
+                    <div>
+                      <div style={fieldLabel}>{perfilFiscal.tipoRegistroCaficultor === 'COOPERATIVA' ? 'RUC de la cooperativa' : 'RUC'}</div>
+                      <input style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} readOnly aria-readonly="true"
+                        value={(perfilFiscal.tipoRegistroCaficultor === 'COOPERATIVA' ? perfilFiscal.rucCooperativa : perfilFiscal.ruc) ?? '—'} />
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', margin: '-4px 0 10px' }}>DNI, modalidad y RUC están vinculados a tu cuenta. Para cambiarlos escribe a tunaywasi@gmail.com.</div>
                 <div style={{ marginBottom: 10 }}>
                   <div style={fieldLabel}>Teléfono / WhatsApp</div>
                   <input style={inputStyle} defaultValue={(caficultor as any).telefono ?? ''} placeholder="+51 9xx xxx xxx" />
@@ -3824,6 +3861,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           caficultorNombre={nombreCaficultor}
           producto={modalProducto.editar}
           isDemo={isDemo}
+          soloDni={perfilFiscal?.tipoRegistroCaficultor === 'SOLO_DNI'}
           onClose={() => setModalProducto({ abierto: false })}
           onToast={toast}
           onGuardado={(p) => {

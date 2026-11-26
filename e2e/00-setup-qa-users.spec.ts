@@ -9,7 +9,10 @@
  *   npx playwright test e2e/00-setup-qa-users.spec.ts
  */
 import { test, expect } from '@playwright/test'
-import { esperarCarga } from './helpers'
+import { esperarCarga, dniUnico, PNG_1X1 } from './helpers'
+
+// RUCs sintéticos QA con dígito verificador válido (REG-04) — uno por cuenta (REG-02)
+const RUC_QA = { APPROVED: '20999999019', PENDING_APPROVAL: '20999999027' } as const
 
 const PROJECT = 'tunay-wasi'
 
@@ -66,7 +69,7 @@ async function actualizarEmpresaB2B(page: Parameters<typeof loginYObtenerToken>[
         mapValue: {
           fields: {
             estadoAprobacion: { stringValue: estadoAprobacion },
-            ruc: { stringValue: '20000000000' },
+            ruc: { stringValue: RUC_QA[estadoAprobacion as keyof typeof RUC_QA] ?? '20999999035' },
             razonSocial: { stringValue: 'Empresa QA Test SAC' },
             dirFiscal: { stringValue: 'Av. Test 123, Lima' },
             dirEnvio: { stringValue: 'Av. Test 123, Lima' },
@@ -106,7 +109,7 @@ async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0
   await page.getByPlaceholder('María Quispe Condori').fill(nombre)
   await page.getByPlaceholder('+51 987 654 321').fill('+51 999 000 004')
   await page.getByPlaceholder('tu@correo.com').fill(email)
-  await page.getByPlaceholder('Mínimo 6 caracteres').fill(password)
+  await page.getByPlaceholder('Mínimo 8 caracteres + 1 número').fill(password)
   await page.getByPlaceholder('Repite').fill(password)
   await page.getByRole('button', { name: /siguiente/i }).click()
   await page.waitForTimeout(1000)
@@ -135,8 +138,11 @@ async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0
     return false
   }
 
-  // Paso 3: DNI + Yape
-  await page.getByPlaceholder('12345678').fill('12345678')
+  // Paso 3: DNI (único por ejecución — REG-01) + fotos KYC obligatorias + Yape
+  await page.getByPlaceholder('12345678').fill(dniUnico())
+  const inputsFoto = page.locator('input[type="file"]')
+  await inputsFoto.nth(0).setInputFiles(PNG_1X1)
+  await inputsFoto.nth(1).setInputFiles(PNG_1X1)
   await page.getByPlaceholder('+51 987 654 321').fill('+51 999 000 004')
   await page.getByRole('button', { name: /crear cuenta/i }).click()
   await page.waitForTimeout(4000)

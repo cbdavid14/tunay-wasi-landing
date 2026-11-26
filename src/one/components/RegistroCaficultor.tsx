@@ -10,6 +10,7 @@ import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado } from '../documentos'
+import type { TipoRegistroCaficultor } from '../types'
 
 // REG-04 / TRIB-04: RUC propio = 10 o 20 · Cooperativa = RUC 20 de la cooperativa
 const PREFIJOS_RUC: Record<'RUC_PROPIO' | 'COOPERATIVA', readonly string[]> = {
@@ -36,7 +37,6 @@ const VARIEDADES = ['Bourbon', 'Caturra', 'Typica', 'Geisha', 'Catimor', 'Pache'
 const PROCESOS = ['Natural (seco)', 'Washed (lavado)', 'Honey', 'Anaerobic']
 
 // TRIB-04: Modalidades tributarias del caficultor
-type TipoRegistroCaficultor = 'SOLO_DNI' | 'RUC_PROPIO' | 'COOPERATIVA'
 const TIPOS_REGISTRO: { value: TipoRegistroCaficultor; label: string; desc: string }[] = [
   { value: 'SOLO_DNI',   label: 'Solo DNI',   desc: 'Solo puedes vender café TYPE_A. Cobra con Yape/Plin.' },
   { value: 'RUC_PROPIO', label: 'RUC propio', desc: 'Emites facturas. Puedes vender todos los tipos.' },

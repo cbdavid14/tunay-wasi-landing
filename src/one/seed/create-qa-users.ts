@@ -42,7 +42,7 @@ const QA_USERS = [
     password: 'Tunay2026!',
     displayName: 'Barista QA (B2B Aprobado)',
     firestoreRole: 'buyer_b2b',
-    firestoreExtra: { estadoB2B: 'APPROVED', empresa: { nombre: 'Cafetería QA Test', ruc: '20123456789' } },
+    firestoreExtra: { estadoB2B: 'APPROVED', empresa: { nombre: 'Cafetería QA Test', ruc: '20999999019' } },
   },
   {
     email: 'cliente@tunaywasi.qa',
@@ -56,7 +56,7 @@ const QA_USERS = [
     password: 'Tunay2026!',
     displayName: 'B2B Pendiente QA',
     firestoreRole: 'buyer_b2b',
-    firestoreExtra: { estadoB2B: 'PENDING', empresa: { nombre: 'Negocio Pendiente QA', ruc: '20987654321' } },
+    firestoreExtra: { estadoB2B: 'PENDING', empresa: { nombre: 'Negocio Pendiente QA', ruc: '20999999027' } },
   },
 ]
 

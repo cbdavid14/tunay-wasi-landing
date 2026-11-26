@@ -80,3 +80,31 @@ export async function loginYEsperarAuth(page: Page, email: string, password: str
   // Esperar que aparezca alguna tarjeta de producto (confirma carga completa con auth)
   await page.locator('.sc-product-card').first().waitFor({ timeout: 10_000 }).catch(() => {})
 }
+
+// ── Documentos de prueba (REG-01/REG-02: DNI y RUC son únicos en el sistema) ──
+// Cada ejecución genera valores nuevos para no chocar con el índice one_documentos.
+// RUC con dígito verificador válido (REG-04). Prefijo 2099… = rango sintético de QA.
+export function dniUnico(): string {
+  return String(Date.now() % 100_000_000).padStart(8, '0')
+}
+
+export function rucConDigito(base10: string): string {
+  const pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
+  const suma = pesos.reduce((acc, p, i) => acc + p * Number(base10[i]), 0)
+  let dv = 11 - (suma % 11)
+  if (dv === 10) dv = 0
+  if (dv === 11) dv = 1
+  return base10 + dv
+}
+
+export function rucUnico(): string {
+  return rucConDigito('2099' + String(Date.now() % 1_000_000).padStart(6, '0'))
+}
+
+// PNG 1×1 para los uploads obligatorios de KYC (foto DNI + selfie)
+export const PNG_1X1 = {
+  name: 'qa.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'),
+}
+

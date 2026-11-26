@@ -32,7 +32,7 @@ async function registrarConsumidor(page: Page, email: string, password: string, 
   // PASO 2: DNI, dirección → "Crear cuenta →"
   const inputDni = page.getByPlaceholder('12345678').first()
   if (await inputDni.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await inputDni.fill('12345678')
+    await inputDni.fill(String(Date.now() % 100_000_000).padStart(8, '0'))  // REG-01: DNI único por ejecución
   }
   const inputDir = page.getByPlaceholder('Av. Larco 1301, Miraflores').first()
   if (await inputDir.isVisible({ timeout: 1500 }).catch(() => false)) {
@@ -114,7 +114,7 @@ async function registrarB2BSimple(page: Page, email: string, password: string, n
           mapValue: {
             fields: {
               estadoAprobacion: { stringValue: estadoB2B },
-              ruc: { stringValue: '20000000000' },
+              ruc: { stringValue: estadoB2B === 'APPROVED' ? '20999999019' : '20999999027' },  // REG-02/04: RUC QA válido y distinto por cuenta
               razonSocial: { stringValue: 'Empresa QA Test SAC' },
               dirFiscal: { stringValue: 'Av. Test 123, Lima' },
               dirEnvio: { stringValue: 'Av. Test 123, Lima' },

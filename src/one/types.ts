@@ -218,6 +218,9 @@ export type EtapaNegocio = 'planificando' | 'proxima_apertura' | 'abierto'
 // Estado de aprobación B2B — controlado solo por admin (US-02)
 export type EstadoAprobacionB2B = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
 
+// TRIB-04: modalidad tributaria del caficultor
+export type TipoRegistroCaficultor = 'SOLO_DNI' | 'RUC_PROPIO' | 'COOPERATIVA'
+
 export interface ConsumidorB2C {
   dni?: string
   dirEntrega?: string | null
@@ -252,7 +255,7 @@ export interface NegocioB2B {
 }
 
 export interface EmpresaB2B {
-  ruc: string                        // 11 dígitos, validado SUNAT
+  ruc: string                        // 11 dígitos, validado SUNAT · único en el sistema (REG-02) · fuente única del RUC B2B (no usar negocio.ruc)
   razonSocial: string                // Auto-completado SUNAT
   dirFiscal: string
   dirEnvio: string
@@ -288,6 +291,14 @@ export interface UsuarioONE {
     foto?: string
     coordenadas?: { lat: number; lng: number }
     activo: boolean
+    proceso?: string
+    kgDisponibles?: number
+    numeroYape?: string
+    // Identidad y modalidad tributaria (TRIB-04 · REG-01→REG-04)
+    dni?: string                                   // inmutable — reservado en one_documentos (DNI_SELLER_)
+    tipoRegistroCaficultor?: TipoRegistroCaficultor
+    ruc?: string                                   // solo RUC_PROPIO — reservado (RUC_)
+    rucCooperativa?: string                        // solo COOPERATIVA — RUC 20 compartido, NO reservado (REG-03)
   }
 
   createdAt: string
