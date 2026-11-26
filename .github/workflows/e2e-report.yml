@@ -108,6 +108,9 @@ jobs:
             for FLOW in $(echo "$FLOWS" | tr ',' ' '); do
               SPEC_ARGS="$SPEC_ARGS $(resolve_spec $FLOW)"
             done
+            # Siempre incluir el setup de usuarios QA (barista, b2b-pending, caficultor…):
+            # sin él los flujos F-05..F-13 fallan en cascada al correrlos por separado.
+            SPEC_ARGS="e2e/00-setup-qa-users.spec.ts $SPEC_ARGS"
             # Deduplicar
             SPEC_ARGS=$(echo $SPEC_ARGS | tr ' ' '\n' | sort -u | tr '\n' ' ')
           fi
