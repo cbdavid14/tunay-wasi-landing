@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onLoteAprobadoPorCertificacion = exports.onSolicitudCertificacionCreada = exports.asistenteCatacion = exports.liberarReservasExpiradas = exports.onPedidoPagoVerificado = exports.onPedidoCreated = exports.izipayWebhook = exports.metaCapi = void 0;
+exports.extraerLoteDesdeVoz = exports.cancelarPedidosExpiradosONE = exports.reporteDiarioAnalytics = exports.recordatorioEnvioMuestrasHub = exports.onLoteAprobadoPorCertificacion = exports.onSolicitudCertificacionCreada = exports.asistenteCatacion = exports.liberarReservasExpiradas = exports.onPedidoPagoVerificado = exports.onPedidoCreated = exports.izipayWebhook = exports.metaCapi = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const node_fetch_1 = require("node-fetch");
@@ -459,5 +459,415 @@ exports.onLoteAprobadoPorCertificacion = functions
         <p style="color: #c4b297; font-size: 12px;">Tunay Wasi — Plataforma B2B de café de especialidad</p>
       </div>
       `);
+});
+// ── 9. RECORDATORIO HUB LIMA — Caficultores con lotes publicados sin muestras ──
+// Corre todos los días a las 9am hora Lima.
+// Busca lotes publicados donde stockMuestrasHub === 0 y muestraEnCamino !== true.
+// Envía email + notif in-app al caficultor para que envíe muestras al hub.
+exports.recordatorioEnvioMuestrasHub = functions
+    .region("us-central1")
+    .pubsub.schedule("0 9 * * *")
+    .timeZone("America/Lima")
+    .onRun(async () => {
+    var _a;
+    const lotesSnap = await db
+        .collection("mkt_lotes")
+        .where("status", "==", "publicado")
+        .where("stockMuestrasHub", "==", 0)
+        .get();
+    if (lotesSnap.empty)
+        return;
+    for (const loteDoc of lotesSnap.docs) {
+        const lote = loteDoc.data();
+        // Saltar si ya hay muestras en camino declaradas por el caficultor
+        if (lote.muestraEnCamino === true)
+            continue;
+        // Obtener perfil del caficultor
+        const caficultorSnap = await db.doc(`usuarios_perfil/${lote.caficultorId}`).get();
+        if (!caficultorSnap.exists)
+            continue;
+        const caficultor = caficultorSnap.data();
+        // Notificación in-app
+        const notifRef = db
+            .collection("mkt_notificaciones")
+            .doc(lote.caficultorId)
+            .collection("items")
+            .doc();
+        await notifRef.set({
+            id: notifRef.id,
+            titulo: "📦 Envía muestras al hub Lima",
+            cuerpo: `Tu lote "${lote.nombreLote}" está publicado pero no tiene muestras en el hub. Envía 3-5 muestras de 200g para que las cafeterías puedan pedirlas.`,
+            url: "mis_lotes",
+            leida: false,
+            createdAt: new Date().toISOString(),
+        });
+        // Email
+        if (!caficultor.email)
+            continue;
+        await sendEmail(caficultor.email, `📦 Tu lote "${lote.nombreLote}" necesita muestras en el hub Lima`, `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1f3028;">📦 Envía muestras al hub Lima</h2>
+          <p>Hola <strong>${(_a = caficultor.nombre) !== null && _a !== void 0 ? _a : "caficultor"}</strong>,</p>
+          <p>Tu lote <strong>${lote.nombreLote}</strong> está publicado en el marketplace pero aún no tiene muestras disponibles en el hub Lima.</p>
+          <p style="background: #fdf8f2; border-left: 3px solid #c96e4b; padding: 12px 16px; border-radius: 4px;">
+            Las cafeterías no pueden solicitar muestras hasta que envíes <strong>3-5 muestras de 200g</strong> al hub y Tunay Wasi confirme su recepción.
+          </p>
+          <h3 style="color: #533b22;">¿Cómo enviarlas?</h3>
+          <ol style="color: #533b22; line-height: 1.8;">
+            <li>Prepara 3-5 bolsas de 200g de tu lote <strong>${lote.nombreLote}</strong></li>
+            <li>Envíalas por Shalom, Olva o Cruz del Sur a:<br/>
+              <strong>Tunay Wasi — Hub Lima</strong><br/>
+              Jr. Ucayali 850, Cercado de Lima</li>
+            <li>Ingresa al portal y registra el courier + número de guía en tu lote</li>
+          </ol>
+          <hr style="border: none; border-top: 1px solid #e8e2da; margin: 24px 0;" />
+          <p style="color: #c4b297; font-size: 12px;">Tunay Wasi — Plataforma B2B de café de especialidad</p>
+        </div>
+        `);
+    }
+});
+// ── 11. REPORTE DIARIO DE ANALYTICS — corre a las 11:00 PM hora Lima ──────────
+//
+// Lee la colección `one_analytics` del día anterior, calcula el funnel
+// de conversión y envía un reporte HTML a tunaywasi@gmail.com.
+// Colección: one_analytics/{docId}
+// Campos esperados: evento, sessionId, userId, rolUsuario, fecha (YYYY-MM-DD)
+exports.reporteDiarioAnalytics = functions
+    .region("us-central1")
+    .pubsub.schedule("0 23 * * *")
+    .timeZone("America/Lima")
+    .onRun(async () => {
+    var _a, _b, _c;
+    // Fecha del día actual (Lima)
+    const hoy = new Date().toLocaleDateString("es-PE", {
+        timeZone: "America/Lima",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).split("/").reverse().join("-"); // → "YYYY-MM-DD"
+    functions.logger.info("reporteDiarioAnalytics: procesando", { fecha: hoy });
+    // Leer todos los eventos del día
+    const snap = await db
+        .collection("one_analytics")
+        .where("fecha", "==", hoy)
+        .get();
+    if (snap.empty) {
+        functions.logger.info("reporteDiarioAnalytics: sin eventos hoy");
+        return;
+    }
+    const eventos = snap.docs.map(d => d.data());
+    // ── Métricas de funnel ────────────────────────────────────────────────────
+    const contar = (ev) => eventos.filter(e => e.evento === ev).length;
+    const sesionesUnicas = (ev) => new Set(eventos.filter(e => e.evento === ev).map(e => e.sessionId)).size;
+    const totalEventos = eventos.length;
+    const sesionesTotal = new Set(eventos.map(e => e.sessionId)).size;
+    const usuariosAnonimos = new Set(eventos.filter(e => e.userId === "anonimo").map(e => e.sessionId)).size;
+    const usuariosAuth = new Set(eventos.filter(e => e.userId !== "anonimo").map(e => e.userId)).size;
+    const mobile = eventos.filter(e => e.mobile === true).length;
+    const mobilePorc = totalEventos > 0 ? Math.round((mobile / totalEventos) * 100) : 0;
+    // Funnel
+    const f_catalogo = sesionesUnicas("catalogo_visto");
+    const f_carrito = sesionesUnicas("carrito_agregado");
+    const f_checkout_intent = sesionesUnicas("checkout_intentado");
+    const f_login_req = contar("login_requerido");
+    const f_login_ok = contar("login_exitoso");
+    const f_registro = contar("registro_completado");
+    const f_checkout = sesionesUnicas("checkout_inicio");
+    const f_pago = sesionesUnicas("checkout_paso2");
+    const f_confirmado = contar("checkout_confirmado");
+    const errores = contar("error_capturado");
+    // Tasa de conversión catálogo → pedido
+    const convRate = f_catalogo > 0 ? ((f_confirmado / f_catalogo) * 100).toFixed(1) : "0.0";
+    const abandonoLogin = f_login_req > 0
+        ? `${Math.round(((f_login_req - f_login_ok) / f_login_req) * 100)}% no completaron login`
+        : "—";
+    // Productos más vistos / agregados
+    const productosAgregados = {};
+    for (const e of eventos.filter(ev => ev.evento === "carrito_agregado")) {
+        const nombre = (_b = (_a = e.productoNombre) !== null && _a !== void 0 ? _a : e.productoId) !== null && _b !== void 0 ? _b : "desconocido";
+        productosAgregados[nombre] = ((_c = productosAgregados[nombre]) !== null && _c !== void 0 ? _c : 0) + 1;
+    }
+    const topProductos = Object.entries(productosAgregados)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([n, c]) => `<tr><td style="padding:6px 10px;border-bottom:1px solid #333">${n}</td><td style="padding:6px 10px;border-bottom:1px solid #333;text-align:center">${c}x</td></tr>`)
+        .join("") || '<tr><td colspan="2" style="padding:6px 10px;color:#888">Sin datos</td></tr>';
+    // Total recaudado estimado del día
+    const totalCentsDia = eventos
+        .filter(e => e.evento === "checkout_confirmado" && e.totalCents)
+        .reduce((s, e) => { var _a; return s + ((_a = e.totalCents) !== null && _a !== void 0 ? _a : 0); }, 0);
+    const totalSoles = (totalCentsDia / 100).toFixed(0);
+    // ── Generar HTML del reporte ──────────────────────────────────────────────
+    const funnelRow = (label, n, base, color) => {
+        const pct = base > 0 ? Math.round((n / base) * 100) : 0;
+        const bar = Math.max(4, pct);
+        return `
+        <tr>
+          <td style="padding:8px 12px;color:#c4b297;font-size:13px">${label}</td>
+          <td style="padding:8px 12px;text-align:center;font-weight:700;color:#f2e0cc">${n}</td>
+          <td style="padding:8px 12px">
+            <div style="background:#1f1f1f;border-radius:4px;overflow:hidden;height:14px">
+              <div style="background:${color};height:14px;width:${bar}%;border-radius:4px"></div>
+            </div>
+            <span style="font-size:10px;color:#666">${pct}%</span>
+          </td>
+        </tr>`;
+    };
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/></head>
+<body style="background:#0a0a0a;color:#f2e0cc;font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:24px">
+  <div style="max-width:640px;margin:0 auto">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1f3028,#0a1a10);border-radius:12px;padding:24px 28px;margin-bottom:20px">
+      <p style="margin:0 0 4px;font-size:10px;letter-spacing:.1em;color:#8faf8a;text-transform:uppercase">Tunay Wasi · Analytics</p>
+      <h1 style="margin:0 0 4px;font-size:26px;font-weight:700;color:#f2e0cc">Reporte del ${hoy}</h1>
+      <p style="margin:0;font-size:13px;color:#8faf8a">${sesionesTotal} sesiones · ${totalEventos} eventos · ${usuariosAnonimos} anónimos · ${usuariosAuth} autenticados</p>
+    </div>
+
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      ${[
+        { label: "Pedidos hoy", value: f_confirmado, color: "#8faf8a" },
+        { label: "Recaudado estimado", value: `S/ ${totalSoles}`, color: "#c96e4b" },
+        { label: "Conversión", value: `${convRate}%`, color: "#c4b297" },
+    ].map(k => `
+        <div style="background:#141414;border:1px solid #222;border-radius:10px;padding:16px;text-align:center">
+          <p style="margin:0 0 6px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#555">${k.label}</p>
+          <p style="margin:0;font-size:22px;font-weight:800;color:${k.color}">${k.value}</p>
+        </div>`).join("")}
+    </div>
+
+    <!-- Funnel -->
+    <div style="background:#111;border:1px solid #222;border-radius:10px;margin-bottom:20px;overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid #222">
+        <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555">Funnel de conversión</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        ${funnelRow("Visitaron catálogo", f_catalogo, f_catalogo, "#4a90c4")}
+        ${funnelRow("Agregaron al carrito", f_carrito, f_catalogo, "#8faf8a")}
+        ${funnelRow("Intentaron checkout", f_checkout_intent, f_catalogo, "#c4b297")}
+        ${funnelRow("Bloqueados por login", f_login_req, f_checkout_intent, "#d4a017")}
+        ${funnelRow("Login exitoso", f_login_ok, f_login_req || 1, "#8faf8a")}
+        ${funnelRow("Registros nuevos", f_registro, f_login_ok || 1, "#9b59b6")}
+        ${funnelRow("Entraron al checkout", f_checkout, f_catalogo, "#c96e4b")}
+        ${funnelRow("Llegaron al pago", f_pago, f_checkout || 1, "#e07050")}
+        ${funnelRow("Pedido confirmado", f_confirmado, f_pago || 1, "#8faf8a")}
+      </table>
+    </div>
+
+    <!-- Top productos -->
+    <div style="background:#111;border:1px solid #222;border-radius:10px;margin-bottom:20px;overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid #222">
+        <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555">Top productos agregados al carrito</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        ${topProductos}
+      </table>
+    </div>
+
+    <!-- Insights -->
+    <div style="background:#141414;border:1px solid #222;border-radius:10px;padding:18px 20px;margin-bottom:20px">
+      <p style="margin:0 0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555">Insights del día</p>
+      <ul style="margin:0;padding-left:18px;color:#c4b297;font-size:13px;line-height:2">
+        <li>Abandono en login: <strong>${abandonoLogin}</strong></li>
+        <li>Tráfico mobile: <strong>${mobilePorc}%</strong> del total</li>
+        <li>Errores JS capturados: <strong>${errores}</strong></li>
+        ${f_login_req > f_confirmado ? `<li style="color:#d4a017">⚠️ ${f_login_req} usuarios bloqueados por login — evalúa simplificar el acceso</li>` : ""}
+        ${f_carrito > f_checkout_intent * 2 ? `<li style="color:#d4a017">⚠️ Mucho carrito, poco checkout — ¿el botón es visible?</li>` : ""}
+        ${errores > 5 ? `<li style="color:#e05a4e">🔴 ${errores} errores JS — revisar logs de Firebase</li>` : ""}
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <p style="text-align:center;font-size:11px;color:#333;margin-top:24px">
+      Generado automáticamente por Tunay Wasi Analytics · ${hoy}
+    </p>
+  </div>
+</body>
+</html>`;
+    await sendEmail("tunaywasi@gmail.com", `📊 Tunay Wasi — Analytics ${hoy} | ${f_confirmado} pedidos · S/ ${totalSoles} · Conv ${convRate}%`, html);
+    functions.logger.info("reporteDiarioAnalytics: reporte enviado", {
+        fecha: hoy,
+        sesiones: sesionesTotal,
+        pedidos: f_confirmado,
+        totalSoles,
+    });
+});
+// ── 10. CANCELAR PEDIDOS ONE EXPIRADOS — cron cada hora ──────────────────────
+//
+// Cancela pedidos one_pedidos con pagoStatus='pendiente' cuyo tiempo de pago
+// expiró: B2C 24h (campo expiresAt ISO) o B2B 72h (campo expiraAt ISO).
+// Android escribe también expiraEn (Timestamp) como fallback.
+// Al cancelar: restaura kgDisponibles en one_productos usando FieldValue.increment.
+// Guard: nunca cancela si el pedido tiene disputaId activo.
+//
+// Reglas de negocio: ORD-02 (B2C 24h) · ORD-03 (B2B 72h)
+function parseKgFromPresentacion(presentacion, qty) {
+    const p = presentacion.toLowerCase();
+    if (p.includes("250g") || p.includes("0.25"))
+        return 0.25 * qty;
+    if (p.includes("500g") || p.includes("0.5"))
+        return 0.5 * qty;
+    if (p.includes("25kg"))
+        return 25.0 * qty;
+    if (p.includes("10kg"))
+        return 10.0 * qty;
+    if (p.includes("5kg"))
+        return 5.0 * qty;
+    if (p.includes("1quintal"))
+        return 46.0 * qty;
+    if (p.includes("1saco"))
+        return 60.0 * qty;
+    if (p.includes("20kg"))
+        return 20.0 * qty;
+    if (p.includes("1kg"))
+        return 1.0 * qty;
+    return qty; // fallback: treat qty as kg
+}
+exports.cancelarPedidosExpiradosONE = functions
+    .region("us-central1")
+    .pubsub.schedule("every 60 minutes")
+    .onRun(async () => {
+    var _a, _b, _c;
+    const ahora = new Date();
+    const ahoraISO = ahora.toISOString();
+    // Query pedidos pendientes de pago — filtramos por expiresAt (B2C) y expiraAt (B2B)
+    // Firestore no soporta OR en donde; hacemos dos queries independientes y deduplicamos.
+    const [snapB2C, snapB2B] = await Promise.all([
+        db
+            .collection("one_pedidos")
+            .where("pagoStatus", "==", "pendiente")
+            .where("expiresAt", "<", ahoraISO)
+            .get(),
+        db
+            .collection("one_pedidos")
+            .where("pagoStatus", "==", "pendiente")
+            .where("expiraAt", "<", ahoraISO)
+            .get(),
+    ]);
+    // Deduplicar por ID (un pedido puede aparecer en ambas queries si tiene ambos campos)
+    const docsMap = new Map();
+    for (const d of [...snapB2C.docs, ...snapB2B.docs]) {
+        docsMap.set(d.id, d);
+    }
+    // Fallback: buscar pedidos con expiraEn (Timestamp) vencido que no hayan aparecido ya
+    const snapExpiraEn = await db
+        .collection("one_pedidos")
+        .where("pagoStatus", "==", "pendiente")
+        .where("expiraEn", "<", admin.firestore.Timestamp.fromDate(ahora))
+        .get();
+    for (const d of snapExpiraEn.docs) {
+        docsMap.set(d.id, d);
+    }
+    if (docsMap.size === 0) {
+        functions.logger.info("cancelarPedidosExpiradosONE: sin pedidos expirados");
+        return;
+    }
+    let cancelados = 0;
+    for (const doc of docsMap.values()) {
+        const pedido = doc.data();
+        // Guard: no cancelar si tiene disputa activa
+        if (pedido.disputaId) {
+            functions.logger.info("cancelarPedidosExpiradosONE: skip — tiene disputaId", {
+                pedidoId: doc.id,
+                disputaId: pedido.disputaId,
+            });
+            continue;
+        }
+        const batch = db.batch();
+        // Cancelar el pedido
+        batch.update(doc.ref, {
+            cancelado: true,
+            motivoCancelacion: "PAYMENT_EXPIRED",
+            cancellationReason: "PAYMENT_EXPIRED",
+            canceladoAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: ahoraISO,
+        });
+        // Restaurar stock: por cada item, sumar kgEquivalentes a kgDisponibles
+        const items = (_a = pedido.items) !== null && _a !== void 0 ? _a : [];
+        for (const item of items) {
+            if (!item.productoId)
+                continue;
+            const kgRestaurar = parseKgFromPresentacion((_b = item.presentacion) !== null && _b !== void 0 ? _b : "", (_c = item.qty) !== null && _c !== void 0 ? _c : 1);
+            if (kgRestaurar <= 0)
+                continue;
+            const productoRef = db.collection("one_productos").doc(item.productoId);
+            batch.update(productoRef, {
+                kgDisponibles: admin.firestore.FieldValue.increment(kgRestaurar),
+                updatedAt: ahoraISO,
+            });
+        }
+        await batch.commit();
+        cancelados++;
+        functions.logger.info("cancelarPedidosExpiradosONE: pedido cancelado", {
+            pedidoId: doc.id,
+            items: items.length,
+        });
+    }
+    functions.logger.info(`cancelarPedidosExpiradosONE: ${cancelados} pedido(s) cancelado(s) de ${docsMap.size} expirado(s)`);
+});
+exports.extraerLoteDesdeVoz = functions
+    .region("us-central1")
+    .https.onCall(async (data) => {
+    const { transcripcion } = data;
+    if (!transcripcion || typeof transcripcion !== "string" || transcripcion.trim().length < 5) {
+        throw new functions.https.HttpsError("invalid-argument", "Se requiere el campo transcripcion");
+    }
+    const apiKey = process.env.KIMI_API_KEY || "";
+    if (!apiKey) {
+        throw new functions.https.HttpsError("internal", "Kimi API key no configurada");
+    }
+    const PROCESOS_VALIDOS = ["lavado", "natural", "honey", "anaerobico", "doble_fermentacion"];
+    const anio = new Date().getFullYear();
+    const systemPrompt = `Eres un asistente de Tunay Wasi, plataforma de café de especialidad peruano.
+Extrae datos de un lote de café desde texto libre en español (puede ser transcripción de audio).
+Devuelve SOLO un JSON válido con exactamente estos campos (usa null si no se menciona):
+{
+  "nombreLote": string | null,
+  "variedad": string | null,
+  "proceso": "lavado" | "natural" | "honey" | "anaerobico" | "doble_fermentacion" | null,
+  "altitud": string | null,
+  "kgDisponibles": string | null,
+  "precioKgPEN": string | null,
+  "cosecha": string | null
+}
+Reglas:
+- proceso: normaliza sinónimos ("fermentado natural"→"natural", "miel"→"honey", "washed"→"lavado")
+- altitud: solo el número sin unidad (ej: "1800")
+- cosecha: formato "Mes YYYY" (ej: "Junio ${anio}") — si no dice el año asume ${anio}
+- precioKgPEN y kgDisponibles: solo el número sin texto
+- No inventes datos que no estén en el texto`;
+    const response = await (0, node_fetch_1.default)("https://api.moonshot.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            model: "kimi-k3",
+            max_tokens: 256,
+            response_format: { type: "json_object" },
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: transcripcion.trim() },
+            ],
+        }),
+    });
+    if (!response.ok) {
+        const err = await response.text();
+        functions.logger.error("Kimi API error", { status: response.status, err });
+        throw new functions.https.HttpsError("internal", "Error al llamar a Kimi API");
+    }
+    const json = await response.json();
+    const rawText = json.choices[0].message.content.trim();
+    const campos = JSON.parse(rawText);
+    // Validar que proceso sea uno de los valores permitidos
+    if (campos.proceso && !PROCESOS_VALIDOS.includes(campos.proceso)) {
+        campos.proceso = null;
+    }
+    return { ok: true, campos };
 });
 //# sourceMappingURL=index.js.map

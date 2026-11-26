@@ -853,6 +853,126 @@ export const reporteDiarioAnalytics = functions
   });
 
 
+// ── 10. CANCELAR PEDIDOS ONE EXPIRADOS — cron cada hora ──────────────────────
+//
+// Cancela pedidos one_pedidos con pagoStatus='pendiente' cuyo tiempo de pago
+// expiró: B2C 24h (campo expiresAt ISO) o B2B 72h (campo expiraAt ISO).
+// Android escribe también expiraEn (Timestamp) como fallback.
+// Al cancelar: restaura kgDisponibles en one_productos usando FieldValue.increment.
+// Guard: nunca cancela si el pedido tiene disputaId activo.
+//
+// Reglas de negocio: ORD-02 (B2C 24h) · ORD-03 (B2B 72h)
+
+function parseKgFromPresentacion(presentacion: string, qty: number): number {
+  const p = presentacion.toLowerCase();
+  if (p.includes("250g") || p.includes("0.25")) return 0.25 * qty;
+  if (p.includes("500g") || p.includes("0.5"))  return 0.5  * qty;
+  if (p.includes("25kg"))                        return 25.0 * qty;
+  if (p.includes("10kg"))                        return 10.0 * qty;
+  if (p.includes("5kg"))                         return 5.0  * qty;
+  if (p.includes("1quintal"))                    return 46.0 * qty;
+  if (p.includes("1saco"))                       return 60.0 * qty;
+  if (p.includes("20kg"))                        return 20.0 * qty;
+  if (p.includes("1kg"))                         return 1.0  * qty;
+  return qty; // fallback: treat qty as kg
+}
+
+export const cancelarPedidosExpiradosONE = functions
+  .region("us-central1")
+  .pubsub.schedule("every 60 minutes")
+  .onRun(async () => {
+    const ahora = new Date();
+    const ahoraISO = ahora.toISOString();
+
+    // Query pedidos pendientes de pago — filtramos por expiresAt (B2C) y expiraAt (B2B)
+    // Firestore no soporta OR en donde; hacemos dos queries independientes y deduplicamos.
+    const [snapB2C, snapB2B] = await Promise.all([
+      db
+        .collection("one_pedidos")
+        .where("pagoStatus", "==", "pendiente")
+        .where("expiresAt", "<", ahoraISO)
+        .get(),
+      db
+        .collection("one_pedidos")
+        .where("pagoStatus", "==", "pendiente")
+        .where("expiraAt", "<", ahoraISO)
+        .get(),
+    ]);
+
+    // Deduplicar por ID (un pedido puede aparecer en ambas queries si tiene ambos campos)
+    const docsMap = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+    for (const d of [...snapB2C.docs, ...snapB2B.docs]) {
+      docsMap.set(d.id, d);
+    }
+
+    // Fallback: buscar pedidos con expiraEn (Timestamp) vencido que no hayan aparecido ya
+    const snapExpiraEn = await db
+      .collection("one_pedidos")
+      .where("pagoStatus", "==", "pendiente")
+      .where("expiraEn", "<", admin.firestore.Timestamp.fromDate(ahora))
+      .get();
+    for (const d of snapExpiraEn.docs) {
+      docsMap.set(d.id, d);
+    }
+
+    if (docsMap.size === 0) {
+      functions.logger.info("cancelarPedidosExpiradosONE: sin pedidos expirados");
+      return;
+    }
+
+    let cancelados = 0;
+
+    for (const doc of docsMap.values()) {
+      const pedido = doc.data();
+
+      // Guard: no cancelar si tiene disputa activa
+      if (pedido.disputaId) {
+        functions.logger.info("cancelarPedidosExpiradosONE: skip — tiene disputaId", {
+          pedidoId: doc.id,
+          disputaId: pedido.disputaId,
+        });
+        continue;
+      }
+
+      const batch = db.batch();
+
+      // Cancelar el pedido
+      batch.update(doc.ref, {
+        cancelado: true,
+        motivoCancelacion: "PAYMENT_EXPIRED",
+        cancellationReason: "PAYMENT_EXPIRED",
+        canceladoAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: ahoraISO,
+      });
+
+      // Restaurar stock: por cada item, sumar kgEquivalentes a kgDisponibles
+      const items: Array<{ productoId: string; presentacion: string; qty: number }> =
+        pedido.items ?? [];
+
+      for (const item of items) {
+        if (!item.productoId) continue;
+        const kgRestaurar = parseKgFromPresentacion(item.presentacion ?? "", item.qty ?? 1);
+        if (kgRestaurar <= 0) continue;
+
+        const productoRef = db.collection("one_productos").doc(item.productoId);
+        batch.update(productoRef, {
+          kgDisponibles: admin.firestore.FieldValue.increment(kgRestaurar),
+          updatedAt: ahoraISO,
+        });
+      }
+
+      await batch.commit();
+      cancelados++;
+
+      functions.logger.info("cancelarPedidosExpiradosONE: pedido cancelado", {
+        pedidoId: doc.id,
+        items: items.length,
+      });
+    }
+
+    functions.logger.info(`cancelarPedidosExpiradosONE: ${cancelados} pedido(s) cancelado(s) de ${docsMap.size} expirado(s)`);
+  });
+
 export const extraerLoteDesdeVoz = functions
   .region("us-central1")
   .https.onCall(async (data) => {
