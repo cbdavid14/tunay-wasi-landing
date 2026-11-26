@@ -46,7 +46,7 @@ export default function ContratoCompradorONE() {
           title: '6. Devoluciones',
           body: [
             'Se aceptan devoluciones si el producto presenta: peso inferior al declarado (tolerancia ±3 %), especie o proceso diferente al publicado, o daño visible causado en el transporte.',
-            'El comprador debe enviar fotografías al correo soporte@tunay-wasi.com dentro del plazo de reclamación.',
+            'El comprador debe enviar fotografías al correo tunaywasi@gmail.com dentro del plazo de reclamación.',
             'En caso de devolución procedente, Tunay Wasi gestiona la recolección del producto y procesa el reembolso en un plazo máximo de 5 días hábiles.',
           ],
         },

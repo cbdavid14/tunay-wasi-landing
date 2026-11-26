@@ -189,7 +189,7 @@ Los siguientes elementos deben quedar **exactamente como están** después de es
 | `lib/checkout.js` — adaptadores Yape/Niubiz/Stripe | Stubs pendientes de integración real con SDKs |
 | `lib/checkout.js` — función `checkStock()` | Pendiente endpoint `POST /api/stock/check` |
 | `components/Contacto.jsx` — función `submit` | Pendiente endpoint `POST /api/contact` |
-| `components/Contacto.jsx` — email y dirección | `hola@tunaywasi.pe` y `Jr. Independencia 240, Barranco` ya son **correctos** |
+| `components/Contacto.jsx` — email y dirección | `tunaywasi@gmail.com` y `Jr. Independencia 240, Barranco` ya son **correctos** |
 | `lib/useCartTotals.js` — `SHIPPING_RULES` | Ya coincide con producción (Lima S/8 free@S/100, Prov S/15 free@S/150) |
 | `components/Nav.jsx` | Copy y links ya son correctos |
 | `components/Footer.jsx` | Correcto |
@@ -236,7 +236,7 @@ Precio referencia:  S/ 49.88  (bolsa 250g)
 ══════════════════════════════════════════════════
 CONTACTO
 ══════════════════════════════════════════════════
-Email:              hola@tunaywasi.pe
+Email:              tunaywasi@gmail.com
 Oficina:            Jr. Independencia 240, Barranco, Lima
 WhatsApp:           +51 917 959 370
 App URL:            https://tunay-wasi.web.app
@@ -274,7 +274,7 @@ Ejecutar `npx serve .` y abrir el navegador:
 - [ ] **Carrito:** el porcentaje al caficultor dice "42%" (no "50%")
 - [ ] **Checkout:** banner ciclo muestra "31 may." y "agosto"
 - [ ] **ImageSlot** no fue modificado en ninguna sección
-- [ ] **Contacto:** `hola@tunaywasi.pe` y dirección Barranco intactos
+- [ ] **Contacto:** `tunaywasi@gmail.com` y dirección Barranco intactos
 - [ ] **Envíos:** Lima S/8 gratis desde S/100 (sin cambios)
 - [ ] **Hero:** "12 fincas" y "+1,400 m" tienen comentario TODO en el código
 

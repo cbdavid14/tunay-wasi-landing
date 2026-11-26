@@ -12,7 +12,7 @@ const TEMAS: [Tema, string][] = [
 ];
 
 const STATIC_CONTACTS: [string, string][] = [
-  ['Correo', 'hola@tunaywasi.pe'],
+  ['Correo', 'tunaywasi@gmail.com'],
   ['Lima', 'Jr. Independencia 240, Barranco'],
   ['Cosecha', 'Acopio en Cusco · San Martín · Puno'],
 ];
@@ -45,7 +45,7 @@ export default function Contacto() {
     setValues((v) => ({ ...v, [k]: e.target.value }));
   const onBlur = (k: keyof ContactoForm) => () => setTouched((t) => ({ ...t, [k]: true }));
 
-  const whatsappNumber = landingConfig?.contact?.whatsapp ?? '+51917959370';
+  const whatsappNumber = landingConfig?.contact?.whatsapp ?? '+51905933391';
 
   const buildWhatsAppUrl = () => {
     const temaLabels: Record<string, string> = { cafe: 'Comprar café', mayorista: 'Mayorista', caficultor: 'Soy caficultor', prensa: 'Prensa' };

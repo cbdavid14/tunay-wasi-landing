@@ -21,11 +21,11 @@ const FAQ_SOPORTE = [
   },
   {
     p: '¿Qué hago si el caficultor no responde?',
-    r: 'Usa el chat del pedido para contactarlo directamente. Si no recibes respuesta en 48 horas, escríbenos por WhatsApp al +51 917 959 370 con el número de tu pedido y lo gestionamos.',
+    r: 'Usa el chat del pedido para contactarlo directamente. Si no recibes respuesta en 48 horas, escríbenos por WhatsApp al +51 905 933 391 con el número de tu pedido y lo gestionamos.',
   },
   {
     p: '¿Cómo contacto a TunayWasi si hay un problema con mi pedido?',
-    r: 'Escríbenos por WhatsApp al +51 917 959 370. Incluye tu número de pedido y una descripción breve del problema. Respondemos en horario de lunes a sábado de 9am a 6pm.',
+    r: 'Escríbenos por WhatsApp al +51 905 933 391. Incluye tu número de pedido y una descripción breve del problema. Respondemos en horario de lunes a sábado de 9am a 6pm.',
   },
   {
     p: '¿Puedo cambiar o cancelar un pedido después de confirmarlo?',
@@ -152,7 +152,7 @@ const CANALES: Canal[] = [
     titulo: 'WhatsApp',
     descripcion: 'Respuesta más rápida. Lunes a sábado de 9am a 6pm.',
     ctaLabel: 'Escribir por WhatsApp',
-    href: 'https://wa.me/51917959370',
+    href: 'https://wa.me/51905933391',
     color: '#25D366',
     bgColor: '#0a2a18',
   },
@@ -161,7 +161,7 @@ const CANALES: Canal[] = [
     titulo: 'Email',
     descripcion: 'Para consultas detalladas o temas que requieran documentación.',
     ctaLabel: 'Enviar un correo',
-    href: 'mailto:soporte@tunaywasi.pe',
+    href: 'mailto:tunaywasi@gmail.com',
     color: 'var(--tw-terra)',
     bgColor: '#1a0d05',
   },
@@ -335,7 +335,7 @@ const SeccionFAQ: React.FC = () => {
             ¿No encontraste lo que buscabas?
           </p>
           <a
-            href="https://wa.me/51917959370"
+            href="https://wa.me/51905933391"
             target="_blank"
             rel="noopener noreferrer"
             style={{

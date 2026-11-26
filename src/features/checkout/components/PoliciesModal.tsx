@@ -185,13 +185,13 @@ export default function PoliciesModal({ onClose }: Props) {
             <Item>Preferencia de sabor. El café de especialidad tiene perfiles complejos (acidez brillante, notas frutales) distintos al café comercial.</Item>
             <Item>Error en el tipo de molienda elegido por el cliente.</Item>
             <Item>Demoras del courier fuera del control de Tunay Wasi.</Item>
-            <P>Para iniciar una devolución, envía foto del producto por WhatsApp al <strong>+51 917 959 370</strong> dentro de las <strong>48 horas</strong> de recibido. Los reembolsos aprobados se procesan por Yape o Plin en 48 horas.</P>
+            <P>Para iniciar una devolución, envía foto del producto por WhatsApp al <strong>+51 905 933 391</strong> dentro de las <strong>48 horas</strong> de recibido. Los reembolsos aprobados se procesan por Yape o Plin en 48 horas.</P>
           </Section>
 
           <Section title="7. Métodos de Pago">
             <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #1f302818' }}>
-              <Row label="Yape — 917 959 370" value="Danny Santa Cruz Rojas" />
-              <Row label="Plin — 917 959 370" value="Alpaso Live Commerce SAC" />
+              <Row label="Yape — 905 933 391" value="Danny Santa Cruz Rojas" />
+              <Row label="Plin — 905 933 391" value="Alpaso Live Commerce SAC" />
               <Row label="Transferencia BCP — 193-7332599054" value="Alpaso Live Commerce SAC" />
             </div>
             <div style={{ marginTop: 10 }}><P>No aceptamos tarjetas de crédito, débito ni efectivo en esta fase.</P></div>
@@ -203,7 +203,7 @@ export default function PoliciesModal({ onClose }: Props) {
           </Section>
 
           <Section title="9. Contacto">
-            <Item><strong>WhatsApp:</strong> +51 917 959 370</Item>
+            <Item><strong>WhatsApp:</strong> +51 905 933 391</Item>
             <Item><strong>Email:</strong> tunaywasi@gmail.com</Item>
             <Item><strong>Horario:</strong> Lunes a viernes, 9:00 am – 6:00 pm (Lima)</Item>
           </Section>

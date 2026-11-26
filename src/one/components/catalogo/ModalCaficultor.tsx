@@ -102,7 +102,7 @@ export const ModalCaficultor: React.FC<Props> = ({ caficultorId, onClose }) => {
             <button onClick={onClose} style={{ flex: 1, padding: '13px', borderRadius: 10, border: 'none', background: '#c96e4b', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
               Ver cafés de {c.nombre.split(' ')[0]} →
             </button>
-            <button onClick={() => window.open(`https://wa.me/51917959370?text=Hola, me interesa el café de ${c.nombre}`, '_blank')} style={{ flex: 1, padding: '13px', borderRadius: 10, border: '1px solid rgba(37,211,102,.4)', background: 'rgba(37,211,102,.08)', color: '#25d366', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
+            <button onClick={() => window.open(`https://wa.me/51905933391?text=Hola, me interesa el café de ${c.nombre}`, '_blank')} style={{ flex: 1, padding: '13px', borderRadius: 10, border: '1px solid rgba(37,211,102,.4)', background: 'rgba(37,211,102,.08)', color: '#25d366', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
               💬 Contactar por WhatsApp
             </button>
           </div>

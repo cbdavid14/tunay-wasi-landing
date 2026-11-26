@@ -53,7 +53,7 @@ export default function PaginaLegal({ titulo, subtitulo, fecha, sections }: Pagi
 
       <div style={{ marginTop: 48, paddingTop: 20, borderTop: '1px solid var(--tw-border)', fontSize: 11, color: 'var(--tw-text-faint)' }}>
         AL PASO LIVE S.A.C. · RUC 20615431631 · Cal. El Greco 223 Dpto. 302, San Borja, Lima, Perú
-        · soporte@tunay-wasi.com
+        · tunaywasi@gmail.com
       </div>
     </div>
   )

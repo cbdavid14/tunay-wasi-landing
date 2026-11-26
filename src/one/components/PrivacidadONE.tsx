@@ -9,7 +9,7 @@ export default function PrivacidadONE() {
       sections={[
         {
           title: '1. Responsable del tratamiento',
-          body: 'AL PASO LIVE S.A.C., con RUC 20615431631, domiciliada en Cal. El Greco 223 Dpto. 302, San Borja, Lima, Perú. Correo de contacto para privacidad: soporte@tunay-wasi.com.',
+          body: 'AL PASO LIVE S.A.C., con RUC 20615431631, domiciliada en Cal. El Greco 223 Dpto. 302, San Borja, Lima, Perú. Correo de contacto para privacidad: tunaywasi@gmail.com.',
         },
         {
           title: '2. Datos que recopilamos',
@@ -55,7 +55,7 @@ export default function PrivacidadONE() {
             'Rectificación: corregir datos inexactos.',
             'Cancelación: solicitar la eliminación de sus datos cuando no sean necesarios.',
             'Oposición: oponerse al tratamiento para fines de marketing.',
-            'Para ejercer sus derechos, envíe un correo a soporte@tunay-wasi.com con asunto "ARCO + su nombre". Respondemos en 10 días hábiles.',
+            'Para ejercer sus derechos, envíe un correo a tunaywasi@gmail.com con asunto "ARCO + su nombre". Respondemos en 10 días hábiles.',
           ],
         },
         {

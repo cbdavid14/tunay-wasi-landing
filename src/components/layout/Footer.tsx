@@ -194,18 +194,18 @@ export default function Footer() {
               <div className="tw-footer-col-title">Contacto</div>
               <div className="tw-footer-col-links">
                 <a
-                  href="https://wa.me/51917959370"
+                  href="https://wa.me/51905933391"
                   className="tw-footer-wa-btn"
                   target="_blank" rel="noopener noreferrer"
                 >
                   {WA_SVG}
                   <div>
-                    <div className="tw-footer-wa-num">+51 917 959 370</div>
+                    <div className="tw-footer-wa-num">+51 905 933 391</div>
                     <div className="tw-footer-wa-sub">WhatsApp · soporte</div>
                   </div>
                 </a>
-                <a href="mailto:soporte@tunay-wasi.com" className="tw-footer-email-link">
-                  {EMAIL_SVG}soporte@tunay-wasi.com
+                <a href="mailto:tunaywasi@gmail.com" className="tw-footer-email-link">
+                  {EMAIL_SVG}tunaywasi@gmail.com
                 </a>
                 <div className="tw-footer-address">
                   {PIN_SVG}

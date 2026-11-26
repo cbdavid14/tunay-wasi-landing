@@ -221,7 +221,7 @@ export interface LandingConfigData {
 export const STATIC_LANDING_CONFIG: LandingConfigData = {
   contact: {
     email: 'tunaywasi@gmail.com',
-    whatsapp: '+51917959370',
+    whatsapp: '+51905933391',
     address: 'Jr. Independencia 240, Barranco, Lima',
     appUrl: 'https://app.tunaywasi.pe',
     adminEmail: 'tunaywasi@gmail.com',
@@ -250,8 +250,8 @@ export interface YapePlinData {
 
 export const STATIC_YAPE_PLIN: YapePlinData = {
   enabled: true,
-  yape: { phone: '+51917959370', accountName: 'Tunay Wasi' },
-  plin: { phone: '+51917959370', accountName: 'Tunay Wasi' },
+  yape: { phone: '+51905933391', accountName: 'Tunay Wasi' },
+  plin: { phone: '+51905933391', accountName: 'Tunay Wasi' },
   instructions: ['Abre Yape o tu app bancaria', 'Escanea el QR o busca el número', 'Confirma el monto exacto', 'Sube la captura del comprobante'],
 };
 
@@ -420,7 +420,7 @@ export const STATIC_SUPPLY_LANDING: SupplyLandingConfigData = {
   ],
   contactB2B: {
     email: "tunaywasi@gmail.com",
-    whatsapp: "+51 917 959 370",
+    whatsapp: "+51 905 933 391",
     bodega: "Jr. El Greco 223, San Borja, Lima · L–V · 9 — 17h"
   },
   heroCard: {

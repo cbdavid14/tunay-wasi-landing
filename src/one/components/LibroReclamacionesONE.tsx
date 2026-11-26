@@ -59,7 +59,7 @@ export default function LibroReclamacionesONE() {
       setCodigoReclamo(codigo)
       setPaso('enviado')
     } catch {
-      setError('Error al enviar. Intenta de nuevo o escríbenos a soporte@tunay-wasi.com')
+      setError('Error al enviar. Intenta de nuevo o escríbenos a tunaywasi@gmail.com')
     } finally {
       setSending(false)
     }

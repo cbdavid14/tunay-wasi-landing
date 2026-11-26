@@ -1333,7 +1333,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
             Estamos verificando tu identidad (24–48 horas hábiles). Te notificaremos por email cuando tu cuenta esté activa.
           </p>
           <div style={{ background: 'rgba(143,175,138,0.07)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 10, padding: '12px 16px', fontSize: 12, color: 'var(--tw-sage)' }}>
-            ¿Tienes dudas? Escríbenos a soporte@tunaywasi.com
+            ¿Tienes dudas? Escríbenos a tunaywasi@gmail.com
           </div>
         </div>
       </div>
@@ -1349,7 +1349,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
             Verificación rechazada
           </h2>
           <p style={{ fontSize: 13, color: 'var(--tw-text-muted)', lineHeight: 1.7 }}>
-            No pudimos verificar tu identidad. Por favor contáctanos a soporte@tunaywasi.com para resolver el problema.
+            No pudimos verificar tu identidad. Por favor contáctanos a tunaywasi@gmail.com para resolver el problema.
           </p>
         </div>
       </div>
@@ -2971,7 +2971,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         <div style={{ background: 'var(--tw-card)', borderRadius: 14, padding: '16px 18px', border: `1px solid var(--tw-border)` }}>
           <p style={{ margin: '0 0 12px', fontSize: 11, color: 'var(--tw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>¿Necesitas ayuda?</p>
           <a
-            href={`https://wa.me/51917959370?text=Hola, soy ${caficultor.nombre} y necesito ayuda con mi portal`}
+            href={`https://wa.me/51905933391?text=Hola, soy ${caficultor.nombre} y necesito ayuda con mi portal`}
             target="_blank" rel="noopener noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10, background: '#25D36622', border: `1px solid '#25D36644'`, textDecoration: 'none' }}
           >

@@ -779,7 +779,7 @@ export default function Checkout() {
   const { data: transferencia } = useTransferencia();
 
   const activeZones = shippingZones ?? [];
-  const activeYapePlin = yapePlin ?? { enabled: true, yape: { phone: '+51917959370', accountName: 'Tunay Wasi' }, plin: { phone: '+51917959370', accountName: 'Tunay Wasi' } };
+  const activeYapePlin = yapePlin ?? { enabled: true, yape: { phone: '+51905933391', accountName: 'Tunay Wasi' }, plin: { phone: '+51905933391', accountName: 'Tunay Wasi' } };
   const activeTransferencia = transferencia ?? { enabled: true, accountHolder: 'ALPASO LIVE COMMERCE SAC', banks: [{ name: 'BCP', accountType: 'Cuenta Corriente', accountNumber: '193-7332599054', cci: '002-193-0073325990541-4' }], instructions: [] };
 
   useEffect(() => {

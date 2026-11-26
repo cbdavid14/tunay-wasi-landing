@@ -573,7 +573,7 @@ export function emailPedidoRecibido(data: {
         </tr>
       </table>
 
-      ${ctaButton('¿Dudas? Escríbenos →', `https://wa.me/51917959370?text=Hola%2C+mi+pedido+es+${encodeURIComponent(data.orderId)}`)}
+      ${ctaButton('¿Dudas? Escríbenos →', `https://wa.me/51905933391?text=Hola%2C+mi+pedido+es+${encodeURIComponent(data.orderId)}`)}
     `, `Pedido ${data.orderId} recibido — verificamos tu pago en 24 h`),
   }
 }

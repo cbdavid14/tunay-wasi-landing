@@ -290,7 +290,7 @@ export interface LandingConfigDoc {
   moliendas: GrindDef[];
 
   contact: {
-    email: string;        // "hola@tunaywasi.pe"
+    email: string;        // "tunaywasi@gmail.com"
     whatsapp: string;     // "+51917959370"
     address: string;      // "Jr. Independencia 240, Barranco, Lima"
     appUrl: string;       // "https://tunay-wasi.web.app"

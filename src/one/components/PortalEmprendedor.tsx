@@ -4412,7 +4412,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
                 ⚠ Error en la ejecución del reembolso
               </div>
               <div style={{ fontSize: 12, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.5, marginTop: 6 }}>
-                Hubo un problema al procesar tu reembolso. Nuestro equipo lo está revisando. Escríbenos a soporte@tunaywasi.com indicando #{r.pedidoRef}.
+                Hubo un problema al procesar tu reembolso. Nuestro equipo lo está revisando. Escríbenos a tunaywasi@gmail.com indicando #{r.pedidoRef}.
               </div>
             </div>
           )}
@@ -4510,7 +4510,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
               <div style={{ background: 'rgba(102,102,102,.1)', borderRadius: 8, padding: '14px 16px', border: '1px solid rgba(102,102,102,.3)', marginBottom: 16 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#aaa', fontFamily: 'Montserrat, sans-serif', marginBottom: 6 }}>Reclamo cerrado sin reembolso</div>
                 <div style={{ fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', lineHeight: 1.6 }}>
-                  Si no estás de acuerdo, escríbenos a <strong style={{ color: 'var(--tw-text)' }}>soporte@tunaywasi.com</strong> en las próximas 48h indicando #{r.pedidoRef}.
+                  Si no estás de acuerdo, escríbenos a <strong style={{ color: 'var(--tw-text)' }}>tunaywasi@gmail.com</strong> en las próximas 48h indicando #{r.pedidoRef}.
                 </div>
               </div>
             )}
