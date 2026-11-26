@@ -81,40 +81,42 @@ jobs:
           SKIP="${{ github.event.inputs.skip || '' }}"
 
           if [ "$FLOWS" = "all" ]; then
-            GREP_ARG=""
+            GREP_PATTERN=""
           else
             # Convierte "F-01,F-02" → "\[F-01\]|\[F-02\]"
-            # Convierte "@alta,@media" → "@alta|@media"
-            # Convierte "27,28" → "^27|^28" (por número de spec)
-            PATTERN=$(echo "$FLOWS" | tr ',' '\n' | sed 's/F-\([0-9]*\)/\\[F-\1\\]/g' | tr '\n' '|' | sed 's/|$//')
-            GREP_ARG="--grep \"$PATTERN\""
+            GREP_PATTERN=$(echo "$FLOWS" | tr ',' '\n' | sed 's/F-\([0-9]*\)/\\[F-\1\\]/g' | tr '\n' '|' | sed 's/|$//')
           fi
 
           if [ -n "$SKIP" ]; then
             SKIP_PATTERN=$(echo "$SKIP" | tr ',' '\n' | sed 's/F-\([0-9]*\)/\\[F-\1\\]/g' | tr '\n' '|' | sed 's/|$//')
-            SKIP_ARG="--grep-invert \"$SKIP_PATTERN\""
           else
-            SKIP_ARG=""
+            SKIP_PATTERN=""
           fi
 
-          BAIL_ARG=""
-          if [ "${{ github.event.inputs.bail }}" = "true" ]; then
-            BAIL_ARG="--bail"
-          fi
-
-          echo "grep=$GREP_ARG" >> $GITHUB_OUTPUT
-          echo "skip=$SKIP_ARG" >> $GITHUB_OUTPUT
-          echo "bail=$BAIL_ARG" >> $GITHUB_OUTPUT
-          echo "command=npx playwright test $GREP_ARG $SKIP_ARG $BAIL_ARG" >> $GITHUB_OUTPUT
+          echo "pattern=$GREP_PATTERN" >> $GITHUB_OUTPUT
+          echo "skip_pattern=$SKIP_PATTERN" >> $GITHUB_OUTPUT
 
       - name: Correr tests E2E
         id: run_tests
-        run: eval "${{ steps.grep.outputs.command }}"
+        run: |
+          ARGS=""
+          if [ -n "$GREP_PATTERN" ]; then
+            ARGS="$ARGS --grep $GREP_PATTERN"
+          fi
+          if [ -n "$SKIP_PATTERN" ]; then
+            ARGS="$ARGS --grep-invert $SKIP_PATTERN"
+          fi
+          if [ "${{ github.event.inputs.bail }}" = "true" ]; then
+            ARGS="$ARGS --bail"
+          fi
+          npx playwright test $ARGS
         env:
           E2E_BASE_URL: ${{ steps.env_url.outputs.url }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          GREP_PATTERN: ${{ steps.grep.outputs.pattern }}
+          SKIP_PATTERN: ${{ steps.grep.outputs.skip_pattern }}
         continue-on-error: true
 
       - name: Publicar reporte HTML como artifact
