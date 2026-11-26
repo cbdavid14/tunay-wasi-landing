@@ -336,6 +336,31 @@ function guardarCarrito(items: ItemCarritoLocal[]) {
   } catch { /* ok */ }
 }
 
+// ─── Hook countdown 24h espera pago (F-05 ORD-02) ────────────────────────────
+
+function useCountdown(expiresAt: string | null) {
+  const [remaining, setRemaining] = useState(() => {
+    if (!expiresAt) return 0
+    const diff = new Date(expiresAt).getTime() - Date.now()
+    return Math.max(0, diff)
+  })
+
+  useEffect(() => {
+    if (!expiresAt || remaining <= 0) return
+    const interval = setInterval(() => {
+      const diff = new Date(expiresAt).getTime() - Date.now()
+      setRemaining(Math.max(0, diff))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [expiresAt])
+
+  const horas = Math.floor(remaining / (1000 * 60 * 60))
+  const minutos = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))
+  const segundos = Math.floor((remaining % (1000 * 60)) / 1000)
+
+  return { horas, minutos, segundos, expirado: remaining <= 0 }
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 interface Props {
@@ -653,6 +678,8 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
   const [pagoConfirmando, setPagoConfirmando] = useState(false)
   const [pagoError, setPagoError] = useState<string | null>(null)
   const [pedidoConfirmadoId, setPedidoConfirmadoId] = useState<string | null>(null)
+  // expiresAt del pedido recién creado — para countdown 24h (F-05 ORD-02)
+  const [pedidoConfirmadoExpiresAt, setPedidoConfirmadoExpiresAt] = useState<string | null>(null)
   // Nuevo modelo: múltiples pedidos por checkout (uno por caficultor)
   const [pedidoConfirmadoIds, setPedidoConfirmadoIds] = useState<string[]>([])
   const [grupoCheckoutIdConfirmado, setGrupoCheckoutIdConfirmado] = useState<string | null>(null)
@@ -2010,6 +2037,9 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
     )
   }
 
+  // F-05 ORD-02: countdown para espera pago — llamado a nivel componente (reglas de hooks)
+  const countdown = useCountdown(pedidoConfirmadoExpiresAt)
+
   function renderCarrito() {
     const subtotalCents = carritoItems.reduce((s, i) =>
       s + calcularPrecioFinal(i.producto.precioBaseKgCents, i.formato) * i.qty, 0)
@@ -2131,6 +2161,45 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
           </div>
 
           {/* Card datos de pago */}
+          {/* Countdown 24h — F-05 ORD-02 */}
+          {countdown.expirado ? (
+            <div style={{ background: 'rgba(234,179,8,.1)', border: '1px solid rgba(234,179,8,.35)', borderRadius: 12, padding: '14px 16px', marginBottom: 16, textAlign: 'center' }}>
+              <div style={{ fontSize: 22, marginBottom: 4 }}>⏰</div>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#b45309', fontFamily: 'Montserrat, sans-serif' }}>
+                Este pedido ha expirado
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>
+                El tiempo para subir el comprobante venció. Contáctanos por WhatsApp si necesitas ayuda.
+              </p>
+            </div>
+          ) : (
+            <div style={{ background: 'rgba(201,110,75,.06)', border: '1px solid rgba(201,110,75,.2)', borderRadius: 12, padding: '14px 16px', marginBottom: 16, textAlign: 'center' }}>
+              <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 600, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Tiempo restante para subir tu voucher
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'flex-end' }}>
+                {[
+                  { val: String(countdown.horas).padStart(2, '0'), label: 'horas' },
+                  { val: String(countdown.minutos).padStart(2, '0'), label: 'min' },
+                  { val: String(countdown.segundos).padStart(2, '0'), label: 'seg' },
+                ].map((item, idx) => (
+                  <React.Fragment key={item.label}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 8, padding: '6px 14px', minWidth: 52, textAlign: 'center' }}>
+                        <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--tw-terra)', fontFamily: 'JetBrains Mono, monospace', lineHeight: 1 }}>
+                          {item.val}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 4, fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>{item.label}</span>
+                    </div>
+                    {idx < 2 && <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--tw-terra)', marginBottom: 18, lineHeight: 1 }}>:</span>}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Card datos de pago */}
           <div style={{ background: 'rgba(201,110,75,.05)', border: '1px solid rgba(201,110,75,.2)', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
             <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: 'var(--tw-terra)' }}>📱 Datos para el pago</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -2149,7 +2218,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
           </div>
 
           {/* Zona upload voucher */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, opacity: countdown.expirado ? 0.4 : 1, pointerEvents: countdown.expirado ? 'none' : 'auto' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 8 }}>📸 Sube tu comprobante</div>
             {pagoVoucherPreview ? (
               <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', marginBottom: 8 }}>
@@ -2228,8 +2297,8 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
                 return
               }
               setCarritoVista('confirmado')
-            }} style={{ width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              Enviar comprobante →
+            }} disabled={countdown.expirado} style={{ width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: countdown.expirado ? 'var(--tw-border)' : 'var(--tw-terra)', color: countdown.expirado ? 'var(--tw-text-muted)' : '#fff', fontSize: 13, fontWeight: 700, cursor: countdown.expirado ? 'not-allowed' : 'pointer', opacity: countdown.expirado ? 0.6 : 1 }}>
+              {countdown.expirado ? 'Pedido expirado' : 'Enviar comprobante →'}
             </button>
             <a href={`https://wa.me/${ONE_CONFIG.ADMIN_WHATSAPP?.replace(/\s+/g, '')}?text=${waText}`}
               target="_blank" rel="noopener noreferrer"
@@ -2452,6 +2521,8 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
         // 5. Guardar IDs y grupo para las vistas de confirmación
         setPedidoConfirmadoIds(pedidoIds)
         setPedidoConfirmadoId(pedidoIds[0] ?? null)
+        // ORD-02: fijar expiresAt = ahora + 24h (igual que en service.ts)
+        setPedidoConfirmadoExpiresAt(new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString())
         setGrupoCheckoutIdConfirmado(grupoCheckoutId ?? null)
         setCarritoItems([])
         setCarritoVista('espera_pago')

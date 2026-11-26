@@ -203,6 +203,9 @@ export interface PedidoONE {
   isReposicion?: boolean
   reposicionIds?: string[]
 
+  // ORD-02: expiresAt = createdAt + 24h — comprador tiene 24h para subir voucher
+  expiresAt?: string
+
   createdAt: string
   updatedAt: string
 }
