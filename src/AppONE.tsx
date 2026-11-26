@@ -674,10 +674,20 @@ function PageMeta({ title, description, image, canonical, breadcrumb, schema }: 
   )
 }
 
+const SPLASH_MIN_MS = 1000
+
 const AppONE: React.FC = () => {
   useTheme()
   const isDemo = new URLSearchParams(window.location.search).get('demo') === '1'
   const { user, usuarioONE, loading, isAdmin } = useAuthONE(isDemo)
+
+  // Splash visible al menos SPLASH_MIN_MS desde que se abrió la página (cuenta el tiempo de carga del bundle)
+  const [splashMinDone, setSplashMinDone] = useState(() => performance.now() >= SPLASH_MIN_MS)
+  useEffect(() => {
+    if (splashMinDone) return
+    const id = setTimeout(() => setSplashMinDone(true), SPLASH_MIN_MS - performance.now())
+    return () => clearTimeout(id)
+  }, [splashMinDone])
   const path = usePathname()
 
   const [carritoItems, setCarritoItems] = useState<ItemCarrito[]>(leerCarritoStorage)
@@ -850,9 +860,10 @@ const AppONE: React.FC = () => {
   }, 0)
   const carritoProductoIds = new Set(carritoItems.map(i => i.producto.id))
 
-  if (loading) {
+  if (loading || splashMinDone === false) {
     return (
-      <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, animation: 'splashIn 0.4s cubic-bezier(0.22,1,0.36,1) both' }}>
+      <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+        {/* Sin animación de entrada: continúa el splash estático de index.html sin saltos */}
         {/* Anillos decorativos */}
         {[300, 460, 620].map((size, i) => (
           <div key={i} style={{ position: 'absolute', width: size, height: size, borderRadius: '50%', border: `1px solid rgba(201,110,75,${0.08 - i * 0.025})`, top: '50%', left: '50%', transform: 'translate(-50%, -55%)', pointerEvents: 'none' }} />

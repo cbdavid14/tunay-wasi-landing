@@ -61,7 +61,7 @@
     "contactPoint": [
       {
         "@type": "ContactPoint",
-        "telephone": "+51-917-959-370",
+        "telephone": "+51-905-933-391",
         "contactType": "customer service",
         "availableLanguage": ["Spanish"],
         "contactOption": "TollFree"
@@ -234,10 +234,40 @@
     }
     a { color: inherit; }
     ::selection { background: #c96e4b; color: #f2e0cc; }
+
+    /* Splash estático: visible desde el primer paint, antes de que cargue el bundle JS.
+       React lo reemplaza al montar (AppONE muestra el mismo splash mientras resuelve auth). */
+    #tw-boot-splash { position: fixed; inset: 0; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; animation: splashIn .4s cubic-bezier(.22,1,.36,1) both; }
+    #tw-boot-splash .ring { position: absolute; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%,-55%); pointer-events: none; }
+    #tw-boot-splash .glow { position: absolute; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(201,110,75,.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-60%); pointer-events: none; }
+    #tw-boot-splash .logo { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1; }
+    #tw-boot-splash .cup { font-size: 64px; margin-bottom: 18px; line-height: 1; }
+    #tw-boot-splash .name { font-size: 38px; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 700; color: #f2e0cc; letter-spacing: -.01em; margin-bottom: 8px; }
+    #tw-boot-splash .name span { color: #c96e4b; }
+    #tw-boot-splash .tag { font-size: 12px; color: #6b6b6b; font-family: 'Montserrat', system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 48px; }
+    #tw-boot-splash .dots { display: flex; gap: 8px; }
+    #tw-boot-splash .dots i { width: 7px; height: 7px; border-radius: 50%; background: #c96e4b; animation: splashDot 1.2s ease-in-out infinite; }
+    #tw-boot-splash .dots i:nth-child(2) { animation-delay: .2s; }
+    #tw-boot-splash .dots i:nth-child(3) { animation-delay: .4s; }
+    @keyframes splashIn { from { opacity: 0; transform: scale(.88) } to { opacity: 1; transform: scale(1) } }
+    @keyframes splashDot { 0%,100% { opacity: .25; transform: scale(1) } 50% { opacity: 1; transform: scale(1.4) } }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div id="tw-boot-splash" aria-label="Cargando Tunay Wasi" role="status">
+      <div class="ring" style="width:300px;height:300px;border:1px solid rgba(201,110,75,.08)"></div>
+      <div class="ring" style="width:460px;height:460px;border:1px solid rgba(201,110,75,.055)"></div>
+      <div class="ring" style="width:620px;height:620px;border:1px solid rgba(201,110,75,.03)"></div>
+      <div class="glow"></div>
+      <div class="logo">
+        <div class="cup">☕</div>
+        <div class="name">Tunay · <span>Wasi</span></div>
+        <div class="tag">Del campo a tu negocio</div>
+        <div class="dots"><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
