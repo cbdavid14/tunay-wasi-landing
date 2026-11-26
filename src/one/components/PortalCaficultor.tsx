@@ -1530,7 +1530,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
             <span style={{ fontSize: 20 }}>&#9888;</span>
             <div>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#ef4444' }}>{activos.length} reclamo{activos.length > 1 ? 's' : ''} activo{activos.length > 1 ? 's' : ''}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>Un comprador reportó un problema. TunayWasi revisará la evidencia. Tienes 18h para aportar información adicional si se solicita.</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>Un comprador ha reportado un problema con este pedido. El equipo de TunayWasi está revisando el caso. Tienes hasta 72h para agregar información adicional si lo necesitas.</p>
             </div>
           </div>
         )}
@@ -1552,8 +1552,18 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                         {estadoLabelLocal(r.estado)}
                       </span>
                     </div>
-                    <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--tw-text-muted)' }}>Pedido {r.pedidoRef} &bull; {r.negocioNombre}</p>
-                    <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--tw-text-muted)' }}>{r.descripcion.slice(0, 100)}{r.descripcion.length > 100 ? '…' : ''}</p>
+                    <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--tw-text-muted)' }}>Pedido <strong>{r.pedidoRef}</strong> &bull; {r.negocioNombre}</p>
+                    <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--tw-text-muted)' }}>Motivo: {r.descripcion.slice(0, 100)}{r.descripcion.length > 100 ? '…' : ''}</p>
+                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: '4px 0 6px' }}>
+                      <span style={{ fontSize: 10, color: 'var(--tw-text-muted)' }}>
+                        &#128197; Abierto: {formatFecha(r.createdAt)}
+                      </span>
+                      {r.montoReembolsoCents != null && (
+                        <span style={{ fontSize: 10, color: 'var(--tw-text-muted)', fontWeight: 600 }}>
+                          Monto en disputa: {formatCents(r.montoReembolsoCents)}
+                        </span>
+                      )}
+                    </div>
                     {slaLabel(r) && (
                       <p style={{ margin: 0, fontSize: 10, color: r.estado === 'ABIERTO' ? '#ef4444' : '#f59e0b', fontWeight: 600 }}>{slaLabel(r)}</p>
                     )}
@@ -1582,7 +1592,10 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                         {estadoLabelLocal(r.estado)}
                       </span>
                     </div>
-                    <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>Pedido {r.pedidoRef} &bull; {r.negocioNombre}</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>Pedido {r.pedidoRef} &bull; {r.negocioNombre} &bull; {formatFecha(r.createdAt)}</p>
+                    {r.montoReembolsoCents != null && (
+                      <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>Monto: {formatCents(r.montoReembolsoCents)}</p>
+                    )}
                     {r.notaTW && <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--tw-text-muted)' }}>&#128203; TunayWasi: {r.notaTW}</p>}
                   </div>
                 ))}
@@ -1619,9 +1632,9 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                   {cotizaciones.filter(c => c.estado === 'ENVIADA' || c.estado === 'RESPONDIDA' || c.estado === 'CONTRAOFERTA').length}
                 </span>
               )}
-              {s.id === 'reclamos' && reclamosCaf.filter(r => r.estado === 'ABIERTO' || r.estado === 'EN_REVISION' || r.estado === 'ESPERANDO_INFO').length > 0 && (
+              {s.id === 'reclamos' && reclamosCaf.filter(r => ['ABIERTO', 'EN_REVISION', 'ESPERANDO_INFO', 'ESCALADO', 'DECISION_PENDIENTE'].includes(r.estado)).length > 0 && (
                 <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 10, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700 }}>
-                  {reclamosCaf.filter(r => r.estado === 'ABIERTO' || r.estado === 'EN_REVISION' || r.estado === 'ESPERANDO_INFO').length}
+                  {reclamosCaf.filter(r => ['ABIERTO', 'EN_REVISION', 'ESPERANDO_INFO', 'ESCALADO', 'DECISION_PENDIENTE'].includes(r.estado)).length}
                 </span>
               )}
             </button>
