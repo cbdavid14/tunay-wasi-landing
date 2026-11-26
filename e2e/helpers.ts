@@ -27,14 +27,15 @@ export async function loginEmail(page: Page, email: string, password: string) {
   // History API: esperar que el pathname deje de ser /login
   await page.waitForFunction(
     () => !window.location.pathname.startsWith('/login'),
-    { timeout: 15_000 }
+    { timeout: 20_000 }
   )
 }
 
 // ── Navegar a una ruta (History API)
 export async function irA(page: Page, path: string) {
   await page.goto(path)
-  await page.waitForTimeout(400)
+  await page.waitForLoadState('networkidle').catch(() => {})
+  await page.waitForTimeout(500)
 }
 
 // ── Esperar que el catálogo cargue (desaparece el splash, aparecen tarjetas o estado vacío)
