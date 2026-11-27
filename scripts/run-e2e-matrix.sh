@@ -48,7 +48,7 @@ if ! command -v gh &>/dev/null; then
   exit 1
 fi
 
-if ! gh auth status 2>&1 | grep -q "Logged in to github.com"; then
+if ! gh auth status --hostname github.com 2>&1 | grep -q "Active account"; then
   echo "ERROR: gh CLI no autenticado en github.com. Correr: gh auth login"
   exit 1
 fi
