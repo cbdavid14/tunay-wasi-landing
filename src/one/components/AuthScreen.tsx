@@ -137,6 +137,10 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
   const [cafDni, setCafDni] = useState('')
   const [cafDniEstado, setCafDniEstado] = useState<'idle' | 'ok'>('idle')
   const [cafYape, setCafYape] = useState('')
+  const [cafFotoDniFile, setCafFotoDniFile] = useState<File | null>(null)
+  const [cafFotoDniPreview, setCafFotoDniPreview] = useState<string | null>(null)
+  const [cafFotoSelfieFile, setCafFotoSelfieFile] = useState<File | null>(null)
+  const [cafFotoSelfiePreview, setCafFotoSelfiePreview] = useState<string | null>(null)
 
   const inputStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
@@ -163,6 +167,20 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
   // Destino tras login: regla única compartida con AppONE (carrito → returnTo → portal del rol)
   function redirigirSegunRol(rol: RolONE) {
     irTrasAcceso(rol, false)
+  }
+
+  // ── KYC file inputs ─────────────────────────────────────────────────────────
+  const refCafDni = useRef<HTMLInputElement>(null)
+  const refCafSelfie = useRef<HTMLInputElement>(null)
+
+  function handleCafFileChange(e: React.ChangeEvent<HTMLInputElement>, tipo: 'dni' | 'selfie') {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { alert('Solo se permiten imágenes.'); return }
+    if (file.size > 5 * 1024 * 1024) { alert('La imagen no debe superar 5 MB.'); return }
+    const preview = URL.createObjectURL(file)
+    if (tipo === 'dni') { setCafFotoDniFile(file); setCafFotoDniPreview(preview) }
+    else { setCafFotoSelfieFile(file); setCafFotoSelfiePreview(preview) }
   }
 
   // ── Google ──────────────────────────────────────────────────────────────────
@@ -1290,17 +1308,33 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 13 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Foto frontal DNI <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-                <div style={{ border: '2px dashed #2a2a2a', borderRadius: 10, padding: '16px 10px', textAlign: 'center', cursor: 'pointer', background: '#111' }}>
-                  <div style={{ fontSize: 20, marginBottom: 4 }}>📷</div>
-                  <div style={{ fontSize: 9, color: '#888' }}>Adjuntar imagen</div>
+                <input ref={refCafDni} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                  onChange={e => handleCafFileChange(e, 'dni')} />
+                <div
+                  style={{ border: `2px dashed ${cafFotoDniFile ? '#8faf8a' : '#2a2a2a'}`, borderRadius: 10, padding: cafFotoDniFile ? '4px' : '16px 10px', textAlign: 'center', cursor: 'pointer', background: '#111', minHeight: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+                  onClick={() => refCafDni.current?.click()}
+                >
+                  {cafFotoDniPreview
+                    ? <img src={cafFotoDniPreview} alt="DNI" style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
+                    : <><div style={{ fontSize: 20, marginBottom: 4 }}>📷</div><div style={{ fontSize: 9, color: '#888' }}>Adjuntar imagen</div></>
+                  }
                 </div>
+                {cafFotoDniFile && <div style={{ fontSize: 9, color: '#8faf8a', marginTop: 4, textAlign: 'center' }}>✓ {cafFotoDniFile.name}</div>}
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Selfie con DNI <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-                <div style={{ border: '2px dashed #2a2a2a', borderRadius: 10, padding: '16px 10px', textAlign: 'center', cursor: 'pointer', background: '#111' }}>
-                  <div style={{ fontSize: 20, marginBottom: 4 }}>🤳</div>
-                  <div style={{ fontSize: 9, color: '#888' }}>Adjuntar foto</div>
+                <input ref={refCafSelfie} type="file" accept="image/*" capture="user" style={{ display: 'none' }}
+                  onChange={e => handleCafFileChange(e, 'selfie')} />
+                <div
+                  style={{ border: `2px dashed ${cafFotoSelfieFile ? '#8faf8a' : '#2a2a2a'}`, borderRadius: 10, padding: cafFotoSelfieFile ? '4px' : '16px 10px', textAlign: 'center', cursor: 'pointer', background: '#111', minHeight: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+                  onClick={() => refCafSelfie.current?.click()}
+                >
+                  {cafFotoSelfiePreview
+                    ? <img src={cafFotoSelfiePreview} alt="Selfie" style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
+                    : <><div style={{ fontSize: 20, marginBottom: 4 }}>🤳</div><div style={{ fontSize: 9, color: '#888' }}>Adjuntar foto</div></>
+                  }
                 </div>
+                {cafFotoSelfieFile && <div style={{ fontSize: 9, color: '#8faf8a', marginTop: 4, textAlign: 'center' }}>✓ {cafFotoSelfieFile.name}</div>}
               </div>
             </div>
             <div style={{ background: 'rgba(143,175,138,0.07)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 9, padding: '11px 13px', fontSize: 10, color: '#8faf8a', lineHeight: 1.6, marginBottom: 13 }}>
@@ -1312,6 +1346,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
             <button
               onClick={async () => {
                 if (cafDniEstado !== 'ok') { setError('Ingresa tu DNI de 8 dígitos.'); return }
+                if (!cafFotoDniFile) { setError('Adjunta la foto frontal de tu DNI.'); return }
+                if (!cafFotoSelfieFile) { setError('Adjunta una selfie sosteniendo tu DNI.'); return }
                 if (!cafYape.trim()) { setError('Ingresa tu número Yape.'); return }
                 setError(null)
                 setPaso('cargando_cuenta')
