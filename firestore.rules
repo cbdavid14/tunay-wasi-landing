@@ -2,6 +2,13 @@
   service cloud.firestore {
     match /databases/{database}/documents {
 
+      // ── Admin con email verificado (SEC-03) — definida primero para reusar en todo el archivo ──
+      function esAdminVerificado() {
+        return request.auth != null && request.auth.token.email_verified == true &&
+               (request.auth.token.email.matches('.*@tunaywasi\\.pe') ||
+                request.auth.token.email == 'tunaywasi@gmail.com');
+      }
+
       match /productos/{id} {
         allow read: if true;
         allow update: if request.auth != null
@@ -64,20 +71,54 @@
 
       // ── ONE (portal caficultor/negocio) ──
 
+      // ── SEC-01/02: one_usuarios ──────────────────────────────────────────────
+      // Lectura pública: solo campos del catálogo (seller). Datos sensibles (DNI,
+      // fotos KYC, tokens FCM, empresa.*) requieren ser el propio dueño o admin.
+      // Escritura: el usuario no puede cambiar rol, scoreConfianza ni aprobación.
       match /one_usuarios/{uid} {
-        allow read: if true;  // perfiles públicos para catálogo
-        allow write: if request.auth != null && request.auth.uid == uid;
+        function esDueno() { return request.auth != null && request.auth.uid == uid; }
+        function camposEscrituraSeguros() {
+          return !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['rol', 'scoreConfianza', 'totalCalificaciones',
+                     'empresa.estadoAprobacion', 'empresa.aprobadoPor',
+                     'empresa.aprobadoAt', 'empresa.motivoRechazo',
+                     'fotoDniUrl', 'fotoSelfieUrl', 'fcmTokens']);
+        }
+        // get: dueño, admin, o perfil seller sin datos KYC (catálogo público)
+        allow get: if esDueno() || esAdminVerificado() ||
+                      (resource.data.rol == 'seller' &&
+                       !resource.data.keys().hasAny(['fotoDniUrl', 'fotoSelfieUrl']));
+        allow list: if request.auth != null;
+        allow create: if esDueno() &&
+                         request.resource.data.uid == uid &&
+                         !request.resource.data.keys().hasAny(
+                           ['scoreConfianza', 'totalCalificaciones',
+                            'empresa.estadoAprobacion', 'empresa.aprobadoPor']);
+        allow update: if esDueno() && camposEscrituraSeguros();
+        allow delete: if false;
       }
 
+      // ── SEC-PRD/05: one_productos ─────────────────────────────────────────────
+      // Solo el caficultor dueño puede crear/modificar sus productos.
+      // No se pueden modificar precios sin ser el dueño — impide manipulación de precio en checkout.
       match /one_productos/{id} {
         allow read: if true;  // catálogo público
-        allow write: if request.auth != null;
+        allow create: if request.auth != null &&
+                         request.resource.data.caficultorId == request.auth.uid;
+        allow update: if request.auth != null &&
+                         resource.data.caficultorId == request.auth.uid;
+        allow delete: if request.auth != null &&
+                         resource.data.caficultorId == request.auth.uid;
       }
 
       match /one_pedidos/{id} {
         allow read, write: if request.auth != null;
+        // ── SEC-11: mensajes — solo las partes del pedido ─────────────────────
         match /mensajes/{mensajeId} {
-          allow read, write: if request.auth != null;
+          allow read, write: if request.auth != null &&
+                                (get(/databases/$(database)/documents/one_pedidos/$(id)).data.buyerId == request.auth.uid ||
+                                 get(/databases/$(database)/documents/one_pedidos/$(id)).data.sellerId == request.auth.uid ||
+                                 esAdminVerificado());
         }
       }
 
@@ -98,14 +139,21 @@
         allow read, write: if request.auth != null;
       }
 
+      // ── SEC-09: one_calificaciones_* ──────────────────────────────────────────
+      // Solo el negocio que realizó el pedido puede crear la calificación.
+      // No se puede modificar ni borrar (una vez enviada es definitiva).
       match /one_calificaciones_caficultor/{id} {
         allow read: if true;
-        allow write: if request.auth != null;
+        allow create: if request.auth != null &&
+                         request.resource.data.negocioId == request.auth.uid;
+        allow update, delete: if false;
       }
 
       match /one_calificaciones_cafeteria/{id} {
         allow read: if true;
-        allow write: if request.auth != null;
+        allow create: if request.auth != null &&
+                         request.resource.data.negocioId == request.auth.uid;
+        allow update, delete: if false;
       }
 
       match /one_solicitudes_caficultor/{id} {
@@ -163,13 +211,6 @@
         allow update: if request.auth != null && resource.data.uid == request.auth.uid && camposValidos();
         allow delete: if (request.auth != null && resource.data.uid == request.auth.uid) || esAdmin();
         allow read: if esAdmin();
-      }
-
-      // ── Admin con email verificado (SEC-03: sin email_verified cualquiera registra x@tunaywasi.pe) ──
-      function esAdminVerificado() {
-        return request.auth != null && request.auth.token.email_verified == true &&
-               (request.auth.token.email.matches('.*@tunaywasi\\.pe') ||
-                request.auth.token.email == 'tunaywasi@gmail.com');
       }
 
       // ── Analytics propia (src/one/analytics.ts) — iter.16 ─────────────────────────

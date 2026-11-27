@@ -35,7 +35,11 @@ import { XMLParser } from 'fast-xml-parser'
 // ── EmailJS — credenciales del proyecto (ya configuradas) ────────────────────
 const EMAILJS_SERVICE_ID  = 'service_ejw2mwn'
 const EMAILJS_PUBLIC_KEY  = '3PFRUEBwFfT36_kUs'
-const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY || 'o_jl1AQEyiJe9UQH-Dz_v'
+const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY
+if (!EMAILJS_PRIVATE_KEY) {
+  process.stderr.write('[digest] ERROR: EMAILJS_PRIVATE_KEY env var no definida\n')
+  process.exit(1)
+}
 
 // ⚠️  Cambia este ID por el template que crees en emailjs.com para el digest
 // Template mínimo: Subject={{subject}}, To={{to_email}}, Body={{{html_content}}}
