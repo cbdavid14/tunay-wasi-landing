@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, esperarCarga, USERS, dniUnico, rucUnico, rucConDigito, esperarRedQuieta } from './helpers'
+import { loginEmail, irA, esperarCarga, USERS, dniUnico, rucUnico, rucConDigito, esperarRedQuieta, abrirMenuHamburguesa } from './helpers'
 import type { Browser, Page } from '@playwright/test'
 
 // US-01 · US-02 · US-43 · INV-01 · Registro B2B / B2C
@@ -343,7 +343,14 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
 
   test('18 — "Ingresar" del header vuelve a la página de origen tras el login', async ({ page }) => {
     await irA(page, '/?origen=e2e-retorno')
-    await page.locator('a.header-login-btn').first().click()
+    // En móvil (≤480 px) .header-login-btn está oculto; se accede desde el menú ☰
+    const btnHeaderLogin = page.locator('a.header-login-btn').first()
+    if (await btnHeaderLogin.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await btnHeaderLogin.click()
+    } else {
+      await abrirMenuHamburguesa(page)
+      await page.locator('nav').getByRole('link', { name: /^Ingresar$/i }).first().click()
+    }
     await page.waitForURL(/\/login/, { timeout: 10_000 })
     await esperarCarga(page)
     await loginDesdeFormulario(page, USERS.cliente.email, USERS.cliente.password)
@@ -413,5 +420,55 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
     await bienvenida.getByRole('button').first().click()
     await page.waitForTimeout(2000)
     expect(new URL(page.url()).pathname).toBe('/')                // sin carrito ni origen → catálogo
+  })
+})
+
+// ── 27e — Acceso desde el menú ☰ en móvil (mobile-qa · Pixel 7) ──────────────
+// El GlobalHeader oculta .header-login-btn y .header-register-btn en ≤480 px.
+// Los tests de escritorio (secciones 27 y 27d) usan esos botones directamente;
+// estos tests verifican el flujo equivalente a través del panel lateral.
+test.describe('27e — Menú ☰: acceso en móvil', () => {
+
+  test('23 — El botón ☰ abre el panel lateral (menú principal)', async ({ page }) => {
+    await irA(page, '/')
+    await abrirMenuHamburguesa(page)
+    // El panel lateral muestra al menos un enlace de navegación
+    const panel = page.locator('nav').filter({ hasText: /catálogo|caficultores/i }).first()
+    await expect(panel).toBeVisible({ timeout: 5_000 })
+  })
+
+  test('24 — Menú ☰ (guest): "Ingresar" navega a /login', async ({ page }) => {
+    await irA(page, '/')
+    await abrirMenuHamburguesa(page)
+    const btnIngresar = page.locator('nav').getByRole('link', { name: /^Ingresar$/i }).first()
+    await expect(btnIngresar).toBeVisible({ timeout: 5_000 })
+    await btnIngresar.click()
+    await page.waitForURL(/\/login/, { timeout: 10_000 })
+    expect(page.url()).toMatch(/\/login/)
+  })
+
+  test('25 — Menú ☰ (guest): "Crear cuenta" navega a /login?registro=1', async ({ page }) => {
+    await irA(page, '/')
+    await abrirMenuHamburguesa(page)
+    const btnCrear = page.locator('nav').getByRole('link', { name: /crear cuenta/i }).first()
+    await expect(btnCrear).toBeVisible({ timeout: 5_000 })
+    await btnCrear.click()
+    await page.waitForURL(/\/login/, { timeout: 10_000 })
+    expect(page.url()).toMatch(/registro=1/)
+    await esperarCarga(page)
+    // Debe mostrar la selección de tipo de cuenta (¿Cómo usarás TunayWasi?)
+    const body = await page.locator('body').textContent()
+    expect(body).toMatch(/¿Cómo usarás TunayWasi\?|Soy Cliente|Soy Negocio|registro/i)
+  })
+
+  test('26 — Menú ☰: "Registrarme como caficultor" navega al registro de caficultor', async ({ page }) => {
+    await irA(page, '/')
+    await abrirMenuHamburguesa(page)
+    const btnCaficultor = page.locator('nav').getByRole('link', { name: /registrarme como caficultor/i }).first()
+    await expect(btnCaficultor).toBeVisible({ timeout: 5_000 })
+    await btnCaficultor.click()
+    await page.waitForTimeout(1000)
+    const body = await page.locator('body').textContent()
+    expect(body).toMatch(/caficultor|registr|productor/i)
   })
 })

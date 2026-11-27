@@ -33,6 +33,15 @@ on:
         options:
           - 'true'
           - 'false'
+      dispositivo:
+        description: 'Proyecto de Playwright a correr'
+        required: false
+        default: 'ambos'
+        type: choice
+        options:
+          - ambos
+          - escritorio
+          - móvil
 
   # Solo manual (workflow_dispatch). `push: branches: []` NO desactiva el trigger:
   # GitHub lo disparaba en cada push, en paralelo con el deploy (contra la web vieja).
@@ -119,12 +128,20 @@ jobs:
             BAIL_ARG="--bail"
           fi
 
+          PROJECT_ARG=""
+          case "${{ github.event.inputs.dispositivo }}" in
+            escritorio) PROJECT_ARG="--project chromium-qa" ;;
+            móvil)      PROJECT_ARG="--project mobile-qa"   ;;
+            *)          PROJECT_ARG=""                       ;;   # ambos: sin filtro
+          esac
+
           echo "specs=$SPEC_ARGS" >> $GITHUB_OUTPUT
           echo "bail=$BAIL_ARG" >> $GITHUB_OUTPUT
+          echo "project=$PROJECT_ARG" >> $GITHUB_OUTPUT
 
       - name: Correr tests E2E
         id: run_tests
-        run: npx playwright test ${{ steps.specs.outputs.specs }} ${{ steps.specs.outputs.bail }}
+        run: npx playwright test ${{ steps.specs.outputs.specs }} ${{ steps.specs.outputs.bail }} ${{ steps.specs.outputs.project }}
         env:
           E2E_BASE_URL: ${{ steps.env_url.outputs.url }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -155,6 +172,7 @@ jobs:
           DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
           FLOWS="${{ github.event.inputs.flows || 'all' }}"
           ENV="${{ github.event.inputs.environment || 'qa' }}"
+          DISPOSITIVO="${{ github.event.inputs.dispositivo || 'ambos' }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ARTIFACT_URL="${RUN_URL}#artifacts"
 
@@ -178,6 +196,7 @@ jobs:
           echo "| Fecha | $DATE |" >> $GITHUB_STEP_SUMMARY
           echo "| Flujos | \`$FLOWS\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Ambiente | $ENV |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dispositivo | $DISPOSITIVO |" >> $GITHUB_STEP_SUMMARY
           echo "| Total tests | $TOTAL |" >> $GITHUB_STEP_SUMMARY
           echo "| ✅ Pasaron | $PASSED |" >> $GITHUB_STEP_SUMMARY
           echo "| ❌ Fallaron | $FAILED |" >> $GITHUB_STEP_SUMMARY

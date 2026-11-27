@@ -107,6 +107,18 @@ export function rucUnico(): string {
   return rucConDigito('2099' + String(Date.now() % 1_000_000).padStart(6, '0'))
 }
 
+// ── Abrir el panel lateral del menú ☰ (GlobalHeader del app ONE)
+// En móvil (≤480 px) los botones "Ingresar" y "Registrarse" del header se ocultan con
+// display:none; el acceso se hace desde el panel lateral que abre el botón hamburguesa.
+export async function abrirMenuHamburguesa(page: Page) {
+  const btn = page.getByRole('button', { name: /menú/i }).first()
+  await expect(btn).toBeVisible({ timeout: 8_000 })
+  await btn.click()
+  // Esperar a que el panel lateral esté visible (contiene "Ingresar")
+  await page.locator('nav').filter({ hasText: /ingresar/i }).waitFor({ timeout: 5_000 }).catch(() => {})
+  await page.waitForTimeout(300)
+}
+
 // PNG 1×1 para los uploads obligatorios de KYC (foto DNI + selfie)
 export const PNG_1X1 = {
   name: 'qa.png',
