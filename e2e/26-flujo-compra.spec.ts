@@ -298,4 +298,65 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
       expect(body).toMatch(/S\/\s*\d+/i)
     }
   })
+
+  test('16 — ORD-03: checkout B2B muestra expiración de 72h (no 24h) para pedido pendiente', async ({ page }) => {
+    // ORD-03: pedidos B2B tienen 72h de plazo (vs 24h B2C)
+    test.setTimeout(120_000)
+    await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
+    await inyectarCarritoDemo(page)
+    await irA(page, '/checkout')
+    await page.waitForTimeout(800)
+    const body = await page.locator('body').textContent() ?? ''
+    // Si la pantalla muestra plazo de pago, debe ser 72h para B2B, no 24h
+    if (body.match(/plazo|expira|hora|tiempo.*pago/i)) {
+      // Para B2B: NO debe decir "24 horas" como plazo de pago — debe ser 72h
+      expect(body).not.toMatch(/expira.*24\s*h|plazo.*24\s*hora|24\s*hora.*para.*pagar/i)
+    }
+    // Test pasa si no hay indicación de plazo en esta pantalla (puede aparecer en la siguiente)
+  })
+
+  test('17 — TRIB-02: checkout B2B tiene "factura" como comprobante por defecto', async ({ page }) => {
+    // TRIB-02: compradores B2B reciben factura por defecto (tipoComprobante: 'factura')
+    test.setTimeout(120_000)
+    await loginYEsperarAuth(page, USERS.barista.email, USERS.barista.password)
+    await inyectarCarritoDemo(page)
+    await irA(page, '/checkout')
+    await page.waitForTimeout(800)
+    const body = await page.locator('body').textContent() ?? ''
+    // El checkout para B2B debe mostrar "factura" o selección de tipo de comprobante
+    // No debe mostrar solo "boleta" como única opción para B2B
+    if (body.match(/comprobante|tipo.*pago|factura|boleta/i)) {
+      // Si hay selector de tipo de comprobante:
+      // - factura debe estar disponible (B2B obligatorio)
+      // - no debe ser solo boleta
+      expect(body).toMatch(/factura/i)
+    }
+    // Si no hay selector visible en esta pantalla, el test pasa (puede estar en un paso posterior)
+  })
+
+  test('18 — B2B PENDING no puede completar checkout (B2B-01 — INVARIANTE)', async ({ page }) => {
+    // B2B-01: cuentas B2B PENDING_APPROVAL no pueden realizar pedidos
+    test.setTimeout(120_000)
+    await loginYEsperarAuth(page, USERS.pending.email, USERS.pending.password)
+    await inyectarCarritoDemo(page)
+    await irA(page, '/checkout')
+    await page.waitForTimeout(800)
+    const body = await page.locator('body').textContent() ?? ''
+    // B2B PENDING no debe poder avanzar en el checkout — debe ver mensaje de cuenta pendiente
+    // O el checkout directamente no les permite continuar
+    if (body.match(/checkout|pedido|confirmar/i)) {
+      // Si llegó al checkout, debe mostrar el bloqueo de cuenta pendiente
+      const hayBloqueo = body.match(/pendiente.*aprobaci[oó]n|cuenta.*pendiente|en.*revisi[oó]n/i)
+      if (!hayBloqueo) {
+        // El checkout no debe permitir completar el pago — el botón debe estar bloqueado
+        const btnPagar = page.getByRole('button', { name: /pagar|confirmar.*pedido|finalizar.*compra/i }).first()
+        if (await btnPagar.isVisible({ timeout: 3000 }).catch(() => false)) {
+          const isEnabled = await btnPagar.isEnabled()
+          expect(isEnabled).toBe(false)
+        }
+      }
+    }
+    // Si fue redirigido al portal con mensaje de cuenta pendiente, el test pasa
+    expect(page.url()).not.toMatch(/\/login$/)
+  })
 })

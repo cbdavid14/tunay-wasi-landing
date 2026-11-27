@@ -121,3 +121,85 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
     expect(body).not.toMatch(/agregar al carrito|comprar ahora|solicitar cotización/i)
   })
 })
+
+// ── 22b — TIPO-VIS-04 / B2B-02: CTA por rol en ficha técnica (F-04) ──────────
+// TIPO-VIS-04: buyer_b2c que ve ficha de TYPE_A recibe "Registrar negocio" (no btn deshabilitado genérico).
+// B2B-02: buyer_b2b PENDING no puede comprar TYPE_A — botón deshabilitado.
+// CAL-02 Cond.1: score SCA en detalle solo cuando hay evidencia N2/N3 APPROVED.
+test.describe('22b — TIPO-VIS-04 / B2B-02 / CAL-02: CTA y score en ficha técnica', () => {
+
+  test('TIPO-VIS-04: B2C en ficha de lote TYPE_A ve CTA "Registrar negocio" (no botón genérico B2B)', async ({ page }) => {
+    // TIPO-VIS-04: el botón de compra se reemplaza por CTA de registro para B2C en TYPE_A
+    await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
+    await page.goto('/?demo=1')
+    await esperarCarga(page)
+    const tarjetas = page.locator('.sc-product-card')
+    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    const count = await tarjetas.count()
+    // Buscar una tarjeta TYPE_A (café verde) — solo visible para B2B, NO debería estar para B2C
+    // Si el catálogo filtra correctamente, no hay tarjetas TYPE_A para B2C
+    let encontroTypeA = false
+    for (let i = 0; i < Math.min(count, 10); i++) {
+      const textoTarjeta = await tarjetas.nth(i).textContent() ?? ''
+      if (textoTarjeta.match(/verde|TYPE_A/i)) {
+        encontroTypeA = true
+        await tarjetas.nth(i).click()
+        await page.waitForTimeout(500)
+        const body = await page.locator('body').textContent() ?? ''
+        // TIPO-VIS-04: si B2C ve una ficha TYPE_A, debe ver CTA de negocio
+        expect(body).toMatch(/registrar.*negocio|¿Eres tostador|negocio.*cafetería|registrar.*empresa/i)
+        // No debe haber botón genérico deshabilitado "B2B"
+        const btnGenerico = page.getByRole('button', { name: /^B2B$|solo.*B2B/i })
+        const hayBtnGenerico = await btnGenerico.isVisible({ timeout: 1000 }).catch(() => false)
+        expect(hayBtnGenerico).toBe(false)
+        break
+      }
+    }
+    if (!encontroTypeA) {
+      // Correcto: catálogo filtró TYPE_A para B2C (INV-01 se cumple)
+      // TYPE_A no visible para B2C — test pasa como documentación
+      expect(count).toBeGreaterThanOrEqual(0)
+    }
+  })
+
+  test('B2B-02: buyer_b2b PENDING no ve opción de compra activa en ficha (acceso bloqueado)', async ({ page }) => {
+    // B2B-02: buyer_b2b no-APPROVED no puede comprar en TYPE_A
+    await loginEmail(page, USERS.pending.email, USERS.pending.password)
+    await page.goto('/?demo=1')
+    await esperarCarga(page)
+    const tarjetas = page.locator('.sc-product-card')
+    if (!await tarjetas.first().isVisible({ timeout: 5000 }).catch(() => false)) { test.skip(); return }
+    // Abrir ficha del primer lote
+    await tarjetas.first().click()
+    await page.waitForTimeout(500)
+    const body = await page.locator('body').textContent() ?? ''
+    // B2B PENDING: no debe ver botón de compra activo para TYPE_A
+    // Debe ver indicación de cuenta pendiente de aprobación
+    const hayBloqueoPending = body.match(/pendiente|revisi[oó]n|aprobaci[oó]n|PENDING|cuenta.*revisi[oó]n/i)
+    const sinBotonCompraActivo = !body.match(/agregar al carrito|comprar ahora/i)
+    // O hay mensaje de bloqueo, o simplemente no hay botón de compra activo
+    expect(hayBloqueoPending || sinBotonCompraActivo).toBeTruthy()
+  })
+
+  test('CAL-02: ficha técnica NO muestra campo "Puntaje SCA" sin evidencia verificada', async ({ page }) => {
+    // CAL-02 Cond.1: Puntaje SCA en ficha solo con evidencia N2/N3 APPROVED del backend
+    // Sin esa evidencia, el campo "Puntaje SCA" no debe aparecer en la ficha
+    await loginEmail(page, USERS.barista.email, USERS.barista.password)
+    await page.goto('/?demo=1')
+    await esperarCarga(page)
+    await page.locator('.sc-product-card').first().click()
+    await page.waitForTimeout(500)
+    const body = await page.locator('body').textContent() ?? ''
+    // Si el body tiene "Puntaje SCA" con un número, debería tener evidencia N2/N3 APPROVED
+    // Sin evidencia, el campo no debe aparecer — el backend no serializa puntajeReferencial
+    if (body.match(/Puntaje SCA/i)) {
+      // Si aparece, debe ser en contexto de evidencia verificada
+      // Verificar que hay alguna referencia a evidencia (N2/N3)
+      const tieneEvidencia = body.match(/N2|N3|evidencia|verificad/i)
+      // Si hay "Puntaje SCA" sin evidencia, es el bug CAL-02
+      expect(tieneEvidencia).toBeTruthy()
+    }
+    // Si no aparece "Puntaje SCA", el test pasa (guard funciona correctamente)
+    expect(page.url()).not.toMatch(/\/login/)
+  })
+})

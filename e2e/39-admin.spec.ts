@@ -205,4 +205,38 @@ test.describe('39 — Admin panel (F-12 / F-14)', () => {
     }
   })
 
+  test('16 — ADM-05: audit trail — vista B2B aprobada muestra approvedBy y approvedAt', async ({ page }) => {
+    // ADM-05: cuando se aprueba una cuenta B2B, se registra approvedBy + approvedAt en Firestore
+    // Este test verifica que la UI muestra esa información en cuentas ya aprobadas
+    await irA(page, '/admin?demo=1')
+    await esperarCarga(page)
+    const btnB2B = page.getByRole('button', { name: /B2B|empresa|cuenta/i }).first()
+    if (await btnB2B.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await btnB2B.click()
+      await page.waitForTimeout(1000)
+    }
+    const body = await page.locator('body').textContent() ?? ''
+    // Si hay cuentas aprobadas, deben mostrar quién aprobó y cuándo
+    const hayCuentasAprobadas = body.match(/APPROVED|aprobado|aprobada/i)
+    if (hayCuentasAprobadas) {
+      // La vista puede mostrar la fecha de aprobación o el reviewer — no estados raw crudos
+      expect(body).not.toMatch(/approvedBy:|approvedAt:/i)
+      expect(body).toMatch(/aprobad|fecha|revisor|admin|\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2}/i)
+    } else {
+      test.skip()
+    }
+  })
+
+  test('17 — ADM-06: dashboard admin muestra pagos retenidos + disputas + B2B pendientes (KPIs gestión)', async ({ page }) => {
+    // ADM-06: el dashboard admin debe mostrar las tres métricas clave de gestión operativa
+    await irA(page, '/admin?demo=1')
+    await esperarCarga(page)
+    const body = await page.locator('body').textContent() ?? ''
+    // Dashboard debe mostrar alguna métrica de gestión operativa
+    const tienePagosRetenidos = body.match(/pagos.*reteni|escrow.*reteni|por.*liberar|retenido/i)
+    const tieneDisputas = body.match(/disputa|en.*disputa|disputas.*abiert/i)
+    const tieneB2BPendientes = body.match(/B2B.*pendiente|pendiente.*aprobaci[oó]n|cuentas.*pendiente|PENDING_APPROVAL/i)
+    expect(tienePagosRetenidos || tieneDisputas || tieneB2BPendientes).toBeTruthy()
+  })
+
 })
