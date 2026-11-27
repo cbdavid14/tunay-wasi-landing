@@ -48,8 +48,8 @@ if ! command -v gh &>/dev/null; then
   exit 1
 fi
 
-if ! gh auth status &>/dev/null; then
-  echo "ERROR: gh CLI no autenticado. Correr: gh auth login"
+if ! gh auth status 2>&1 | grep -q "Logged in to github.com"; then
+  echo "ERROR: gh CLI no autenticado en github.com. Correr: gh auth login"
   exit 1
 fi
 
