@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test'
 
 // Mapeo flujo → specs que lo cubren (para filtrado por F-XX en CI)
 // Uso: npm run e2e -- --grep "F-01" o --grep "F-01|F-02"
@@ -51,6 +51,17 @@ export default defineConfig({
     {
       name: 'chromium-qa',
       use: { baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173' },
+    },
+    // Web en móvil: emula un Pixel 7 (412×915, táctil, user agent móvil) con Chrome.
+    // Por ahora cubre F-01 (registro) + el setup de usuarios QA; se amplía flujo a flujo.
+    {
+      name: 'mobile-qa',
+      testMatch: [/00-setup-qa-users\.spec\.ts/, /27-registro-login-gate\.spec\.ts/],
+      use: {
+        ...devices['Pixel 7'],
+        channel: 'chrome',
+        baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173',
+      },
     },
   ],
 })
