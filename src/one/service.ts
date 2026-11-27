@@ -421,19 +421,47 @@ export async function subirVoucherGrupo(grupoCheckoutId: string, url: string): P
   )
 }
 
+async function crearPagoCaficultor(pedido: PedidoONE): Promise<void> {
+  const caficultorId = pedido.caficultorId
+  if (!caficultorId) return
+  const cafSnap = await getDoc(doc(db, ONE_COLLECTIONS.USUARIOS, caficultorId))
+  const caf = cafSnap.data() as UsuarioONE | undefined
+  const cuentaDestino = caf?.caficultor?.numeroYape ?? caf?.caficultor?.cciCooperativa ?? ''
+  const tipoRegistroCaficultor = caf?.caficultor?.tipoRegistroCaficultor
+  await addDoc(collection(db, ONE_COLLECTIONS.PAGOS_CAFICULTOR), {
+    caficultorId,
+    pedidoId: pedido.id,
+    pedidoRef: pedido.id,
+    negocioNombre: pedido.nombreLocal,
+    montoBrutoCents: pedido.totalCents,
+    montoNetoCents: pedido.totalCents,  // COM-03: 0% comisión en fase beta
+    estado: 'RETENIDO',
+    cuentaDestino,
+    ...(tipoRegistroCaficultor ? { tipoRegistroCaficultor } : {}),
+    createdAt: new Date().toISOString(),
+  })
+}
+
 export async function verificarPago(pedidoId: string): Promise<void> {
+  const pedidoSnap = await getDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId))
   await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, pedidoId), {
     pagoStatus: 'verificado',
     updatedAt: serverTimestamp(),
   })
+  if (pedidoSnap.exists()) {
+    await crearPagoCaficultor({ id: pedidoId, ...pedidoSnap.data() } as PedidoONE)
+  }
 }
 
 export async function verificarPagoGrupo(grupoCheckoutId: string): Promise<void> {
   const pedidos = await fetchPedidosByGrupo(grupoCheckoutId)
-  await Promise.all(pedidos.map(p => updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, p.id), {
-    pagoStatus: 'verificado',
-    updatedAt: serverTimestamp(),
-  })))
+  await Promise.all(pedidos.map(async p => {
+    await updateDoc(doc(db, ONE_COLLECTIONS.PEDIDOS, p.id), {
+      pagoStatus: 'verificado',
+      updatedAt: serverTimestamp(),
+    })
+    await crearPagoCaficultor(p)
+  }))
 }
 
 export async function rechazarPago(pedidoId: string): Promise<void> {
