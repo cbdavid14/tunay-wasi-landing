@@ -305,6 +305,15 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
         onSetFormato={setDetalleFormato}
         onSetCantidad={setDetalleCantidad}
         onAgregar={(p, fmt) => {
+          // GAP-F01-13: sin sesión, igual que el 🔒 de la tarjeta (AUTH-01 matizada) — guarda el
+          // producto (salvo café verde TYPE_A, TIPO-01) y va a "¿Cómo usarás TunayWasi?"
+          if (!rolUsuario) {
+            const esVerde = p.tipoCafe === 'verde' || p.tipoCafe === 'verde_grano' || p.tipoCafe === 'cafe_verde'
+            if (!esVerde) onSeleccionar?.(p, fmt)
+            marcarOrigenOnboarding('detalle_lote')
+            irALogin({ registro: true })
+            return
+          }
           onSeleccionar?.(p, fmt)
           setProductoDetalle(null)
           showToast(`Agregado: ${p.nombre}`)

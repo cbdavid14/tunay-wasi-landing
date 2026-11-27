@@ -370,4 +370,18 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
     await expect(page.getByText(/¿Cómo usarás TunayWasi\?/i).first()).toBeVisible({ timeout: 10_000 })
     await expect(page.getByText(/Soy Cliente/i).first()).toBeVisible()
   })
+
+  test('21 — "Agregar al carrito" del detalle (guest) también va a /login?registro=1 (GAP-F01-13)', async ({ page }) => {
+    await irA(page, '/')
+    // Abrir el detalle de una tarjeta que no sea café verde (el guest sí puede guardarla)
+    const tarjeta = page.locator('.sc-product-card').filter({ hasNotText: /verde/i }).first()
+    await expect(tarjeta).toBeVisible({ timeout: 10_000 })
+    await tarjeta.click()
+    const btn = page.getByRole('button', { name: /agregar al carrito/i }).first()
+    await expect(btn).toBeVisible({ timeout: 10_000 })
+    await btn.click()
+    await page.waitForURL(/\/login\?registro=1/, { timeout: 10_000 })
+    const carrito = await page.evaluate(() => localStorage.getItem('one_carrito_items'))
+    expect(JSON.parse(carrito ?? '[]').length).toBeGreaterThan(0)   // el producto queda guardado
+  })
 })
