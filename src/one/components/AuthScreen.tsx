@@ -52,6 +52,12 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
     : googlePendingGuardado ? 'seleccion_rol_registro' : (pasoInicial ?? 'inicio')
 
   const [paso, setPaso] = useState<Paso>(pasoRestaurado)
+  // GAP-F01-17: P3 (/registro) entra directo al formulario Persona; "Volver" regresa a la página de origen.
+  const [entradaDirecta] = useState(pasoInicial === 'cuenta_email')
+  function volverAlOrigen() {
+    if (window.history.length > 1) window.history.back()
+    else navigate('/')
+  }
   const [error, setError] = useState<string | null>(null)
   const [resetEnviado, setResetEnviado] = useState(false)
 
@@ -123,6 +129,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
   const [dni, setDni] = useState('')
   const [dniEstado, setDniEstado] = useState<'idle' | 'ok'>('idle')
   const [telefono, setTelefono] = useState('')
+  const [dirEntrega, setDirEntrega] = useState('')
   const [ruc, setRuc] = useState('')
   const [rucEstado, setRucEstado] = useState<'idle' | 'checking' | 'ok' | 'err'>('idle')
   const [razonSocial, setRazonSocial] = useState('')
@@ -160,7 +167,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
     const map: Record<string, string> = {
       'auth/user-not-found': 'No encontramos una cuenta con ese email.',
       'auth/wrong-password': 'Contraseña incorrecta.',
-      'auth/email-already-in-use': 'Ya existe una cuenta con ese email.',
+      'auth/email-already-in-use': 'Ya existe una cuenta con ese email. ¿Quieres iniciar sesión?',
       'auth/invalid-email': 'El email no es válido.',
       'auth/weak-password': 'La contraseña debe tener al menos 8 caracteres e incluir 1 número.',
       'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos.',
@@ -347,18 +354,22 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
     const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
     await setDoc(doc(db, 'one_usuarios', uid), {
       telefono: telefono.trim(),
-      consumidor: { dni },
+      consumidor: { dni, dirEntrega: dirEntrega.trim() || null },
       updatedAt: serverTimestamp(),
     }, { merge: true })
   }
 
   async function guardarDatosEmpresa(uid: string) {
+    // GAP-NEW-01: validar teléfono antes de guardar
+    if (!telefono.trim()) { setError('Ingresa tu teléfono.'); throw new Error('telefono_requerido') }
     const { db } = await import('@/shared/firebase')
     const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
     await setDoc(doc(db, 'one_usuarios', uid), {
+      telefono: telefono.trim(),
       empresa: {
         ruc,
         razonSocial: razonSocial.trim(),
+        // GAP-NEW-02: dirFiscal/dirEnvio se completan en /registro-emprendedor
         dirFiscal: '',
         dirEnvio: '',
         estadoAprobacion: 'PENDING_APPROVAL',
@@ -370,7 +381,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
 
   async function completarConDatosPersona() {
     if (dniEstado !== 'ok' || !esDniValido(dni)) { setError('Ingresa un DNI válido de 8 dígitos.'); return }
-    if (!telefono.trim()) { setError('Ingresa tu número de teléfono.'); return }
+    if (!telefono.trim()) { setError('Ingresa tu teléfono.'); setPaso('cuenta_email'); return }
     setError(null)
     marcarConfirmacionPendiente()   // antes de crear la cuenta: AppONE no redirige
     setPaso('cargando_cuenta')
@@ -831,7 +842,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
         {/* ── Paso 1 Tu cuenta (email y Google) ── */}
         {paso === 'cuenta_email' && (
           <div style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column' }}>
-            <button onClick={() => { setError(null); setPaso('seleccion_tipo_cliente') }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, marginBottom: 24, padding: 0, fontFamily: 'Montserrat, sans-serif', alignSelf: 'flex-start' }}>← Volver</button>
+            <button onClick={() => { setError(null); if (entradaDirecta && !googlePendingTipo) volverAlOrigen(); else setPaso('seleccion_tipo_cliente') }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, marginBottom: 24, padding: 0, fontFamily: 'Montserrat, sans-serif', alignSelf: 'flex-start' }}>← Volver</button>
             <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'var(--tw-terra)' }} />
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: '#2a2a2a' }} />
@@ -857,6 +868,12 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
               readOnly={emailBloqueadoGoogle}
               style={{ ...inputStyle, ...(emailBloqueadoGoogle ? { opacity: 0.6, cursor: 'not-allowed', background: '#111' } : {}) }}
             />
+            {(rolRegistro === 'buyer_b2c' || rolRegistro === 'buyer_b2b') && (
+              <>
+                <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Teléfono / WhatsApp <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
+                <input type="tel" placeholder="+51 987 654 321" value={telefono} onChange={e => setTelefono(e.target.value)} autoComplete="tel" style={inputStyle} />
+              </>
+            )}
             {!googlePendingTipo && (
               <>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Contraseña <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
@@ -883,6 +900,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                   if (!/\d/.test(password)) { setError('La contraseña debe incluir al menos 1 número.'); return }
                   if (password !== passwordConfirm) { setError('Las contraseñas no coinciden.'); return }   // BUG-REG-05
                 }
+                if ((rolRegistro === 'buyer_b2c' || rolRegistro === 'buyer_b2b') && !telefono.trim()) { setError('Ingresa tu teléfono.'); return }   // D-15-03 / GAP-NEW-01
+                if (!(googlePendingTipo ? pendingEmail : email).includes('@')) { setError('Ingresa un email válido.'); return }
                 setError(null)
                 if (rolRegistro === 'buyer_b2c') setPaso('datos_persona')
                 else setPaso('datos_negocio')
@@ -891,6 +910,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
             >Siguiente →</button>
             {!googlePendingTipo && (
               <div style={{ textAlign: 'center', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--tw-border)' }}>
+                <button type="button" onClick={handleGoogle} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, textDecoration: 'underline', padding: 0, marginBottom: 12, fontFamily: 'Montserrat, sans-serif' }}>o continúa con Google</button>
                 <p style={{ margin: 0, fontSize: 11, color: 'var(--tw-text-muted)' }}>
                   ¿Ya tienes cuenta?{' '}
                   <button onClick={() => { setError(null); setPaso('email_login') }} style={{ background: 'none', border: 'none', color: 'var(--tw-terra)', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>Ingresar</button>
@@ -964,15 +984,15 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
         {/* ── Datos Persona (DNI) ── */}
         {paso === 'datos_persona' && (
           <div style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column' }}>
-            <button onClick={() => { setError(null); setPaso('seleccion_tipo_cliente') }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, marginBottom: 24, padding: 0, fontFamily: 'Montserrat, sans-serif', alignSelf: 'flex-start' }}>← Volver</button>
+            <button onClick={() => { setError(null); setPaso('cuenta_email') }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, marginBottom: 24, padding: 0, fontFamily: 'Montserrat, sans-serif', alignSelf: 'flex-start' }}>← Volver</button>
             <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'var(--tw-terra)' }} />
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'var(--tw-terra)' }} />
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: '#2a2a2a' }} />
             </div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#8faf8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Paso 1 · Verificación</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#8faf8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Paso 2 · Verificación</div>
             <h2 style={{ margin: '0 0 4px', fontSize: 22, fontFamily: 'Cormorant Garamond, serif', color: 'var(--tw-text)', fontWeight: 700 }}>Tu DNI</h2>
-            <div style={{ fontSize: 11, color: '#888', marginBottom: 22, lineHeight: 1.5 }}>Necesitamos verificar tu identidad para activar tu cuenta.</div>
+            <div style={{ fontSize: 11, color: '#888', marginBottom: 22, lineHeight: 1.5 }}>Necesario para emitir tu boleta electrónica.</div>
             {error && <p style={{ color: '#f87171', fontSize: 12, marginBottom: 14, padding: '10px 14px', background: 'rgba(248,113,113,0.1)', borderRadius: 8 }}>{error}</p>}
             <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Número de DNI <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
             <input
@@ -985,8 +1005,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                 ✓ DNI válido
               </div>
             )}
-            <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Teléfono / WhatsApp <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-            <input type="tel" placeholder="+51 987 654 321" value={telefono} onChange={e => setTelefono(e.target.value)} style={inputStyle} />
+            <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Dirección de envío <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span></label>
+            <input type="text" placeholder="Jr. Lima 123, Miraflores" value={dirEntrega} onChange={e => setDirEntrega(e.target.value)} autoComplete="street-address" style={inputStyle} />
             <button
               onClick={completarConDatosPersona}
               disabled={cargando}
@@ -1565,6 +1585,15 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
             >
               {textoBotonTrasRegistro(rolRegistro)}
             </button>
+            {/* GAP-NEW-02: B2B — completar dirFiscal/dirEnvio en /registro-emprendedor */}
+            {rolRegistro === 'buyer_b2b' && (
+              <button
+                onClick={() => { limpiarConfirmacion(); navigate('/registro-emprendedor') }}
+                style={{ width: '100%', padding: '11px 0', borderRadius: 10, border: '1px solid rgba(143,175,138,0.4)', background: 'rgba(143,175,138,0.07)', color: '#8faf8a', fontSize: 12, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', marginBottom: 10 }}
+              >
+                Completar datos de empresa →
+              </button>
+            )}
             <button
               onClick={async () => {
                 setError(null)

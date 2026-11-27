@@ -10,7 +10,7 @@ import { registrar } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
-import { claveRuc, errorFormatoRuc, esDocumentoDuplicado } from '../documentos'
+import { claveRuc, errorFormatoRuc, esDocumentoDuplicado, DocumentoDuplicadoError } from '../documentos'
 import { completarOnboarding, useOnboardingTracking } from '../onboarding'
 
 // REG-04: comprador B2B con RUC 10 (persona natural con negocio) o 20 (persona jurídica)
@@ -252,7 +252,7 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
         } catch (e: unknown) {
           const msg = String((e as { message?: string })?.message ?? e)
           if (esDocumentoDuplicado(e)) {
-            setError(e.message)
+            setError((e as DocumentoDuplicadoError).message)
             setEnviando(false); return
           }
           if (msg.includes('email-already-in-use')) {

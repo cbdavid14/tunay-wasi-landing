@@ -222,10 +222,10 @@ async function registrarB2C(browser: Browser, dni: string): Promise<string> {
   const ctx = await browser.newContext()   // contexto limpio: sin sesión previa
   const page = await ctx.newPage()
   await irA(page, '/registro')
-  await page.getByPlaceholder('Juan Carlos Pérez Ríos').fill('QA Unicidad DNI')
-  await page.getByPlaceholder('juan@email.com').fill(emailQA('dni'))
+  await page.getByPlaceholder('Juan Pérez').fill('QA Unicidad DNI')
+  await page.getByPlaceholder('tu@correo.com').fill(emailQA('dni'))
   await page.getByPlaceholder('+51 987 654 321').fill('+51 999 000 011')
-  await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(PASS_QA)
+  await page.getByPlaceholder('Mínimo 8 caracteres + 1 número').fill(PASS_QA)
   await page.getByPlaceholder('Repite').fill(PASS_QA)
   await page.getByRole('button', { name: /siguiente/i }).click()
   await page.getByPlaceholder('12345678').first().fill(dni)
@@ -294,6 +294,66 @@ test.describe('27b — Unicidad y formato DNI/RUC (REG-01→REG-04)', () => {
     expect(primero).not.toMatch(/No se pudo crear tu cuenta|Error al registrar/i)
     const segundo = await registrarB2B(browser, ruc)
     expect(segundo).toMatch(/RUC ya está registrado/i)
+  })
+
+  // ── GAP-NEW-06 · Flujo completo B2B hasta PENDING_APPROVAL ───────────────────
+
+  test('27b-X — flujo completo B2B: 3 pasos → PENDING_APPROVAL', async ({ page }) => {
+    const email = `qa+b2b-x-${Date.now()}@tunaywasi.qa`
+    const rucDemo = '20601234565'   // RUC demo que pasa la simulación SUNAT
+
+    // Paso 0: navega a /registro-emprendedor y elige "Negocio"
+    await irA(page, '/registro-emprendedor')
+    await page.getByRole('button', { name: /Negocio/ }).click()
+    await page.getByRole('button', { name: /Continuar/ }).click()
+
+    // Paso 1: nombre, email único, contraseña
+    await page.getByPlaceholder('María García López').waitFor({ timeout: 10_000 })
+    await page.getByPlaceholder('María García López').fill('QA B2B Flujo Completo')
+    await page.getByPlaceholder('compras@empresa.com').fill(email)
+    await page.getByPlaceholder('+51 1 480 0000').fill('+51 999 000 020')
+    await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(PASS_QA)
+    await page.getByPlaceholder('Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /siguiente/i }).click()
+
+    // Paso 2: RUC demo, dirFiscal, dirEnvio
+    await page.getByPlaceholder('20XXXXXXXXX').waitFor({ timeout: 8_000 })
+    await page.getByPlaceholder('20XXXXXXXXX').fill(rucDemo)
+    await page.waitForTimeout(1500)   // simulación SUNAT (900 ms)
+    await page.getByPlaceholder('Av. República de Panamá 3030, San Isidro').fill('Av. QA B2B 456, Lima')
+    await page.getByRole('button', { name: /siguiente/i }).click()
+
+    // Paso 3: resumen — click "Crear cuenta →"
+    await page.getByRole('button', { name: /crear cuenta/i }).waitFor({ timeout: 8_000 })
+    await page.getByRole('button', { name: /crear cuenta/i }).click()
+    await page.waitForTimeout(5000)
+
+    // Verifica pantalla PENDING_APPROVAL (texto "revisión" o "pendiente") — solo UI, sin Firestore
+    const body = (await page.locator('body').textContent()) ?? ''
+    expect(body).toMatch(/revisi[oó]n|pendiente|aprobaci[oó]n|PENDING/i)
+  })
+
+  test('27b-Y — flujo B2B requiere teléfono en paso 1', async ({ page }) => {
+    // Paso 0: navega a /registro-emprendedor y elige "Negocio"
+    await irA(page, '/registro-emprendedor')
+    await page.getByRole('button', { name: /Negocio/ }).click()
+    await page.getByRole('button', { name: /Continuar/ }).click()
+
+    // Paso 1: completa todos los campos excepto teléfono
+    await page.getByPlaceholder('María García López').waitFor({ timeout: 10_000 })
+    await page.getByPlaceholder('María García López').fill('QA B2B Sin Telefono')
+    await page.getByPlaceholder('compras@empresa.com').fill(`qa+b2b-y-${Date.now()}@tunaywasi.qa`)
+    // No se llena el campo de teléfono (+51 1 480 0000)
+    await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(PASS_QA)
+    await page.getByPlaceholder('Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /siguiente/i }).click()
+    await page.waitForTimeout(500)
+
+    // Verifica error de teléfono o que el botón no avanzó (sigue en paso 1)
+    const body = (await page.locator('body').textContent()) ?? ''
+    const sigueEnPaso1 = !body.match(/20XXXXXXXXX|RUC|dirección fiscal/i)
+    const hayErrorTelefono = body.match(/tel[eé]fono|phone|ingresa.*tel[eé]fono/i) !== null
+    expect(sigueEnPaso1 || hayErrorTelefono).toBeTruthy()
   })
 })
 
@@ -408,11 +468,11 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
     await page.getByRole('button', { name: /Continuar →/ }).first().click()
     await vis('Juan Pérez').fill('QA Bienvenida')
     await vis('tu@correo.com').fill(emailQA('bienvenida'))     // antes este campo no guardaba lo escrito
+    await vis('+51 987 654 321').fill('+51 999 111 222')       // D-15-03: el teléfono va en el paso 1
     const pw = page.locator('input[type=password]:visible')
     for (let i = 0; i < await pw.count(); i++) await pw.nth(i).fill(PASS_QA)
     await page.getByRole('button', { name: /Siguiente →/ }).first().click()
     await vis('12345678').fill(dniUnico())
-    await vis('+51 987 654 321').fill('+51 999 111 222')
     await page.waitForTimeout(1000)
     await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
     const bienvenida = page.getByTestId('onboarding-bienvenida')
@@ -632,6 +692,7 @@ test.describe('27f — Alta caficultor por /login (BUG-REG-04/05/06)', () => {
     await page.getByRole('button', { name: /Continuar →/ }).first().click()
     await vis(page, 'Juan Pérez').fill('QA Confirmar')
     await vis(page, 'tu@correo.com').fill(emailQA('confcli'))
+    await vis(page, '+51 987 654 321').fill('+51 999 111 223')
     await vis(page, 'Mínimo 8 caracteres + 1 número').fill(PASS_QA)
     await vis(page, 'Repite').fill('OtraClave99')
     await page.getByRole('button', { name: /Siguiente →/ }).first().click()
@@ -1074,4 +1135,91 @@ test.describe('27h — ESC-06: Yape restringido por modalidad tributaria', () =>
     //
     // Criterio ESC-06: RUC_PROPIO puede cobrar con Yape (Yape Business para personas jurídicas).
   })
+})
+
+// ── 27i — F-01 iteración #18: formulario Persona único, Google y modo demo ───
+test.describe('27i — F-01 formulario Persona único (GAP-F01-17)', () => {
+  const campo = (page: Page, ph: string) => page.locator(`input[placeholder="${ph}"]:visible`).first()
+
+  test('44 — /registro (P3) abre "Paso 1 · Tu cuenta" con teléfono y Google', async ({ page }) => {
+    await irA(page, '/registro')
+    await expect(page.getByText('Paso 1 · Tu cuenta').first()).toBeVisible({ timeout: 10_000 })
+    for (const ph of ['Juan Pérez', 'tu@correo.com', '+51 987 654 321', 'Mínimo 8 caracteres + 1 número', 'Repite'])
+      await expect(campo(page, ph)).toBeEditable()
+    await expect(page.getByRole('button', { name: 'o continúa con Google' })).toBeVisible()
+  })
+
+  test('45 — Sin teléfono no se pasa del paso 1 (D-15-03)', async ({ page }) => {
+    await irA(page, '/registro')
+    await campo(page, 'Juan Pérez').fill('QA Sin Telefono')
+    await campo(page, 'tu@correo.com').fill(emailQA('sintel'))
+    await campo(page, 'Mínimo 8 caracteres + 1 número').fill(PASS_QA)
+    await campo(page, 'Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Ingresa tu teléfono.').first()).toBeVisible()
+  })
+
+  test('46 — Alta por /registro guarda teléfono, DNI y dirección, y muestra "¡Bienvenido/a!"', async ({ page }) => {
+    test.setTimeout(90_000)
+    const dni = dniUnico()
+    await irA(page, '/registro')
+    await campo(page, 'Juan Pérez').fill('QA Persona P3')
+    await campo(page, 'tu@correo.com').fill(emailQA('p3'))
+    await campo(page, '+51 987 654 321').fill('+51 999 111 333')
+    await campo(page, 'Mínimo 8 caracteres + 1 número').fill(PASS_QA)
+    await campo(page, 'Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Paso 2 · Verificación').first()).toBeVisible()
+    await campo(page, '12345678').fill(dni)
+    await campo(page, 'Jr. Lima 123, Miraflores').fill('Av. QA 456, Lima')
+    await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
+    await expect(page.getByTestId('onboarding-bienvenida')).toBeVisible({ timeout: 30_000 })
+    const perfil = await page.evaluate(async () => {
+      const src = await (await fetch('/src/one/authService.ts')).text()
+      const url = src.match(/from\s+["']([^"']*firebase_firestore[^"']*)["']/)![1]
+      const fs = await import(/* @vite-ignore */ url)
+      const { auth, db } = await import(/* @vite-ignore */ '/src/shared/firebase.ts')
+      return (await fs.getDoc(fs.doc(db, 'one_usuarios', auth.currentUser!.uid))).data()
+    })
+    expect(perfil?.rol).toBe('buyer_b2c')
+    expect(perfil?.telefono).toBe('+51 999 111 333')
+    expect(perfil?.consumidor?.dni).toBe(dni)
+    expect(perfil?.consumidor?.dirEntrega).toBe('Av. QA 456, Lima')
+  })
+
+  test('47 — Google nuevo pasa siempre por "¿Cómo quieres registrarte?"', async ({ page }) => {
+    await irA(page, '/login?registro=1')
+    const correo = emailQA('googletipo')
+    await page.evaluate(async ({ correo, pass }) => {
+      const src = await (await fetch('/src/one/authService.ts')).text()
+      const authUrl = src.match(/from\s+["']([^"']*firebase_auth[^"']*)["']/)![1]
+      const fa = await import(/* @vite-ignore */ authUrl)
+      const { auth } = await import(/* @vite-ignore */ '/src/shared/firebase.ts')
+      const cred = await fa.createUserWithEmailAndPassword(auth, correo, pass)
+      sessionStorage.setItem('one_google_pending_registro', JSON.stringify({ uid: cred.user.uid, nombre: 'QA Google', email: correo }))
+    }, { correo, pass: PASS_QA })
+    await page.reload()
+    await esperarCarga(page)
+    await page.getByRole('button', { name: /Soy Cliente/ }).first().click()
+    await expect(page.getByText('¿Cómo quieres registrarte?').first()).toBeVisible({ timeout: 10_000 })
+    await page.getByText('Compra café para tu consumo personal. Solo necesitas tu DNI.').first().click()
+    await page.getByRole('button', { name: /Continuar →/ }).first().click()
+    await expect(campo(page, 'tu@correo.com')).toHaveValue(correo)
+    await expect(campo(page, 'tu@correo.com')).not.toBeEditable()
+    await expect(campo(page, '+51 987 654 321')).toBeEditable()
+    await expect(page.locator('input[type=password]:visible')).toHaveCount(0)
+    await page.evaluate(async () => {
+      const { auth } = await import(/* @vite-ignore */ '/src/shared/firebase.ts')
+      await auth.currentUser?.delete()
+      sessionStorage.removeItem('one_google_pending_registro')
+    })
+  })
+
+  for (const ruta of ['/login?demo=1', '/login?registro=1&demo=1', '/registro?demo=1']) {
+    test(`48 — Con ?demo=1 no se muestra el onboarding (${ruta})`, async ({ page }) => {
+      await irA(page, ruta)
+      await expect.poll(() => new URL(page.url()).pathname, { timeout: 10_000 }).not.toMatch(/^\/(login|registro)/)
+      await expect(page.getByText(/¿Cómo usarás TunayWasi\?|Paso 1 · Tu cuenta/)).toHaveCount(0)
+    })
+  }
 })
