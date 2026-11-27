@@ -305,3 +305,60 @@ test('setup: lote QA del caficultor (prerequisito evidencias / NEGOTIABLE)', asy
   await asegurarLoteQA(page, data!.uid, data!.token)
   console.log(`✅ lote QA listo: one_productos/qa-e2e-lote-${data!.uid} (verde · NEGOTIABLE · activo)`)
 })
+
+test('setup: lotes catálogo QA (TYPE_B tostado + TYPE_C molido visibles para guest/B2C)', async ({ page }) => {
+  await page.goto('/login')
+  await esperarRedQuieta(page)
+  await esperarCarga(page)
+  await page.evaluate(() => { try { localStorage.clear() } catch {} })
+  const data = await loginYObtenerToken(page, 'caficultor@tunaywasi.qa', 'Tunay2026!')
+  expect(data, 'No se pudo loguear caficultor').not.toBeNull()
+  const { uid, token } = data!
+  const ahora = new Date().toISOString()
+  const foto = 'https://res.cloudinary.com/dtc9meqbc/image/upload/v1/tunaywasi/placeholder-cafe.jpg'
+
+  const base = {
+    caficultorId: uid,
+    caficultorNombre: 'Caficultor QA Test',
+    caficultorRegion: 'Cajamarca',
+    variedad: 'Bourbon',
+    proceso: 'lavado',
+    altitudMsnm: 1800,
+    cosecha: '06/2026',
+    notasSabor: ['chocolate', 'panela'],
+    descripcion: 'Lote sintético para pruebas E2E — no es un producto real.',
+    puntajeReferencial: 84,
+    precioBaseKgCents: 3000,
+    kgDisponibles: 500,
+    kgReservados: 0,
+    status: 'activo',
+    pricingMode: 'FIXED',
+    foto,
+    fotos: [foto, foto, foto, foto],
+    kgMinPedido: 1,
+    createdAt: ahora,
+    updatedAt: ahora,
+  }
+
+  // TYPE_B: tostado en grano (visible para guest, B2C, B2B)
+  const loteB = { ...base, nombre: 'Lote QA E2E — TYPE_B Tostado', tipoCafe: 'tostado', presentacion: 'tostado_grano', nivelTueste: 'medio' }
+  const urlB = firestoreDocUrl(token, `one_productos/qa-e2e-lote-typeb`)
+  const resB = await page.evaluate(async ({ url, body, token }: { url: string; body: object; token: string }) => {
+    const resp = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    return { ok: resp.ok, status: resp.status }
+  }, { url: urlB, body: { fields: Object.fromEntries(Object.entries(loteB).map(([k, v]) => [k, aFirestore(v)])) }, token })
+  console.log(`  TYPE_B → ${resB.status}: ${resB.ok ? 'OK' : 'ERROR'}`)
+  expect(resB.ok, `No se pudo crear lote TYPE_B (${resB.status})`).toBe(true)
+
+  // TYPE_C: tostado molido (visible para guest, B2C, B2B)
+  const loteC = { ...base, nombre: 'Lote QA E2E — TYPE_C Molido', tipoCafe: 'tostado', presentacion: 'tostado_molido', nivelTueste: 'medio' }
+  const urlC = firestoreDocUrl(token, `one_productos/qa-e2e-lote-typec`)
+  const resC = await page.evaluate(async ({ url, body, token }: { url: string; body: object; token: string }) => {
+    const resp = await fetch(url, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    return { ok: resp.ok, status: resp.status }
+  }, { url: urlC, body: { fields: Object.fromEntries(Object.entries(loteC).map(([k, v]) => [k, aFirestore(v)])) }, token })
+  console.log(`  TYPE_C → ${resC.status}: ${resC.ok ? 'OK' : 'ERROR'}`)
+  expect(resC.ok, `No se pudo crear lote TYPE_C (${resC.status})`).toBe(true)
+
+  console.log('✅ lotes catálogo QA listos: qa-e2e-lote-typeb (TYPE_B) + qa-e2e-lote-typec (TYPE_C)')
+})
