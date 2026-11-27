@@ -3,19 +3,19 @@ import { defineConfig, devices } from '@playwright/test'
 // Mapeo flujo → specs que lo cubren (para filtrado por F-XX en CI)
 // Uso: npm run e2e -- --grep "F-01" o --grep "F-01|F-02"
 export const FLOW_MAP: Record<string, string> = {
-  'F-01': '27',          // Registro B2C
-  'F-02': '27',          // Registro B2B
-  'F-03': '27',          // Registro Caficultor
-  'F-04': '28|29|30',    // Catálogo + Detalle
-  'F-05': '26|32',       // Pedido B2C
-  'F-06': '23|26|33',    // Pedido B2B (cotización)
-  'F-07': '24|34',       // Despacho Caficultor
-  'F-08': '25',          // Seguimiento Pedido
-  'F-09': '25|31',       // Entrega + Reseña
-  'F-10': '25',          // Reclamo / Disputa
-  'F-11': '24|34|35',    // Gestión de Lotes
-  'F-12': '24',          // Pagos Caficultor
-  'F-13': '21',          // Admin
+  'F-01': '27',               // Registro B2C
+  'F-02': '27',               // Registro B2B
+  'F-03': '27',               // Registro Caficultor
+  'F-04': '28|29|30|22',      // Catálogo + Detalle + Ficha técnica
+  'F-05': '26|32',            // Pedido B2C (PAY-02, ORD-02)
+  'F-06': '23|26|33',         // Pedido B2B (ORD-03, TRIB-02, cotización)
+  'F-07': '24|34|40',         // Despacho Caficultor (SHP-02, codigoAgencia)
+  'F-08': '26',               // Seguimiento Pedido (timeline, estados canónicos)
+  'F-09': '37',               // Entrega + Reseña (ENT-01, calificaciones)
+  'F-10': '36',               // Reclamo / Disputa (SLA, ENT-04/05/07)
+  'F-11': '24|34|35',         // Gestión de Lotes (LOT-01, LOT-04, PR-04)
+  'F-12': '38',               // Pagos Caficultor (COM-03, ESC-05-B, one_pagos)
+  'F-13': '39',               // Admin (ADM-01/02/05/06, audit trail)
 }
 
 export default defineConfig({
