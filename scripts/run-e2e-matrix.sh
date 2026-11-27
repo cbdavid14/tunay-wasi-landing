@@ -21,15 +21,15 @@ WORKFLOW="e2e-report.yml"
 # --- Defaults ---------------------------------------------------------------
 FLOWS_INPUT="all"
 ENVIRONMENT="qa"
-DISPOSITIVOS=("escritorio" "móvil")
+DISPOSITIVO="ambos"
 
 # --- Parsear args -----------------------------------------------------------
 while getopts "f:e:d:" opt; do
   case $opt in
     f) FLOWS_INPUT="$OPTARG" ;;
     e) ENVIRONMENT="$OPTARG" ;;
-    d) DISPOSITIVOS=("$OPTARG") ;;
-    *) echo "Uso: $0 [-f flujos] [-e qa|prod] [-d escritorio|móvil]"; exit 1 ;;
+    d) DISPOSITIVO="$OPTARG" ;;
+    *) echo "Uso: $0 [-f flujos] [-e qa|prod] [-d escritorio|móvil|ambos]"; exit 1 ;;
   esac
 done
 
@@ -54,32 +54,28 @@ if ! gh auth status --hostname github.com 2>&1 | grep -q "Active account"; then
 fi
 
 # --- Disparar jobs -----------------------------------------------------------
-TOTAL=$(( ${#FLOWS[@]} * ${#DISPOSITIVOS[@]} ))
+TOTAL=${#FLOWS[@]}
 COUNT=0
-declare -a RUN_IDS
 
 echo ""
 echo "Disparando $TOTAL jobs E2E en paralelo"
 echo "  Flujos: ${FLOWS[*]}"
-echo "  Dispositivos: ${DISPOSITIVOS[*]}"
+echo "  Dispositivo: $DISPOSITIVO"
 echo "  Ambiente: $ENVIRONMENT"
 echo ""
 
 for FLOW in "${FLOWS[@]}"; do
-  for DEVICE in "${DISPOSITIVOS[@]}"; do
     COUNT=$((COUNT + 1))
-    printf "[%2d/%d] %-6s × %-12s → " "$COUNT" "$TOTAL" "$FLOW" "$DEVICE"
+    printf "[%2d/%d] %-6s → " "$COUNT" "$TOTAL" "$FLOW"
 
     gh workflow run "$WORKFLOW" \
       --repo "$REPO" \
+      --ref qa_one \
       -f flows="$FLOW" \
-      -f dispositivo="$DEVICE" \
       -f environment="$ENVIRONMENT" \
       -f bail="false" 2>&1
 
-    # Pausa mínima para evitar rate-limiting de GitHub API (10 req/s)
     sleep 0.3
-  done
 done
 
 echo ""
