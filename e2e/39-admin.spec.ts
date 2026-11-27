@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test'
 import { loginEmail, irA, esperarCarga, USERS } from './helpers'
 
-// F-13 · Admin — cobertura básica
-// Cubre: dashboard KPIs, cola vouchers, aprobación B2B (ADM-01/02/06)
+// F-12 · Aprobación cuenta B2B (admin) + F-14 · Gestión escrow y liquidación
+// Cubre: dashboard KPIs, cola vouchers, aprobación B2B (ADM-01/02/06),
+//        F12-05 🔒 aprobación solo desde admin,
+//        F14-03 🔒 escrow no liberado en DISPUTED,
+//        F14-05 🔒 fondos escrow solo hacia caficultor o comprador
 
-test.describe('39 — Admin panel (F-13)', () => {
+test.describe('39 — Admin panel (F-12 / F-14)', () => {
 
   test.skip('1 — Admin puede ver dashboard KPIs (ADM-06)', async ({ page }) => {
     // Requires admin credentials — skip en QA sin credenciales admin
@@ -148,6 +151,58 @@ test.describe('39 — Admin panel (F-13)', () => {
     expect(body).toMatch(/dashboard|admin|pedido/i)
     // Al menos uno de los KPIs de gestión debe estar presente
     expect(body).toMatch(/retenido|disputa|B2B.*pendiente|pendiente.*B2B/i)
+  })
+
+  // ── Invariantes de seguridad (F12-05, F14-03, F14-05) ─────────────────────
+
+  test('12 — F12-05: 🔒 buyer_b2c no puede aprobar solicitudes B2B (invariante)', async ({ page }) => {
+    await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
+    await irA(page, '/admin')
+    await esperarCarga(page)
+    const body = await page.locator('body').textContent() ?? ''
+    // El comprador no debe ver el panel de aprobación B2B
+    expect(body).not.toMatch(/aprobar.*B2B|aprobar.*solicitud|rechazar.*solicitud/i)
+  })
+
+  test('13 — F12-05: 🔒 caficultor no puede aprobar solicitudes B2B (invariante)', async ({ page }) => {
+    await loginEmail(page, USERS.caficultor.email, USERS.caficultor.password)
+    await irA(page, '/admin')
+    await esperarCarga(page)
+    const body = await page.locator('body').textContent() ?? ''
+    // El caficultor no debe ver el panel de aprobación B2B
+    expect(body).not.toMatch(/aprobar.*B2B|aprobar.*solicitud|rechazar.*solicitud/i)
+  })
+
+  test('14 — F14-03: 🔒 Panel admin NO muestra "Liberar escrow" para pedidos en DISPUTA (ESC-01/ENT-02)', async ({ page }) => {
+    await irA(page, '/admin?demo=1')
+    await esperarCarga(page)
+    const body = await page.locator('body').textContent() ?? ''
+    const hayDisputa = body.match(/en.*disputa|DISPUTED/i)
+    if (!hayDisputa) { test.skip(); return }
+    // Para pedidos en DISPUTADO, el botón "Liberar" no debe estar disponible
+    const seccionDisputa = page.locator('*').filter({ hasText: /en.*disputa|DISPUTED/i }).first()
+    if (await seccionDisputa.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const textoDisputa = await seccionDisputa.textContent() ?? ''
+      expect(textoDisputa).not.toMatch(/liberar.*escrow|liberar.*pago/i)
+    }
+  })
+
+  test('15 — F14-05: 🔒 Liquidaciones muestran destinatario caficultor (no cuenta operativa AL PASO LIVE)', async ({ page }) => {
+    await irA(page, '/admin?demo=1')
+    await esperarCarga(page)
+    const btnEscrow = page.getByRole('button', { name: /escrow|liquidación|liberación/i }).first()
+    if (await btnEscrow.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await btnEscrow.click()
+      await page.waitForTimeout(1000)
+    }
+    const body = await page.locator('body').textContent() ?? ''
+    const hayLiquidaciones = body.match(/liberado|RELEASED|liquidación/i)
+    if (hayLiquidaciones) {
+      // Ninguna liquidación debe tener como destinatario la cuenta de AL PASO LIVE
+      expect(body).not.toMatch(/AL PASO LIVE.*destino|cuenta.*operativa.*destino/i)
+    } else {
+      test.skip()
+    }
   })
 
 })
