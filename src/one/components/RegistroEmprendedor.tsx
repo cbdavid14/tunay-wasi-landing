@@ -271,10 +271,10 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
           setEnviando(false); return
         }
         await setDoc(doc(db, 'one_usuarios', uid), {
+          nombre,
           telefono,
           rol: 'buyer_b2b',
           negocio: {
-            nombreLocal: razonSocial,
             distritoLocal: '',
             etapa: 'planificando',
             pedidoIds: [],

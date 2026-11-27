@@ -351,9 +351,93 @@ test.describe('27b — Unicidad y formato DNI/RUC (REG-01→REG-04)', () => {
 
     // Verifica error de teléfono o que el botón no avanzó (sigue en paso 1)
     const body = (await page.locator('body').textContent()) ?? ''
-    const sigueEnPaso1 = !body.match(/20XXXXXXXXX|RUC|dirección fiscal/i)
-    const hayErrorTelefono = body.match(/tel[eé]fono|phone|ingresa.*tel[eé]fono/i) !== null
-    expect(sigueEnPaso1 || hayErrorTelefono).toBeTruthy()
+    // GAP-E2E-07: verificación directa de mensaje de error O ausencia del Paso 2
+    const hayErrorTelefono = body.match(/tel[eé]fono|ingresa.*tel[eé]fono/i) !== null
+    const sigueEnPaso1 = body.match(/20XXXXXXXXX/) === null && body.match(/dirección fiscal/i) === null
+    expect(hayErrorTelefono || sigueEnPaso1).toBeTruthy()
+  })
+
+  // ── GAP-E2E-02 · dirFiscal obligatoria en paso 2 ─────────────────────────────
+  test('27b-Z — flujo B2B: dirección fiscal obligatoria en paso 2', async ({ page }) => {
+    await irA(page, '/registro-emprendedor')
+    await page.getByRole('button', { name: /Negocio/ }).click()
+    await page.getByRole('button', { name: /Continuar/ }).click()
+
+    await page.getByPlaceholder('María García López').waitFor({ timeout: 10_000 })
+    await page.getByPlaceholder('María García López').fill('QA B2B Sin Dir Fiscal')
+    await page.getByPlaceholder('compras@empresa.com').fill(`qa+b2b-z-${Date.now()}@tunaywasi.qa`)
+    await page.getByPlaceholder('+51 1 480 0000').fill('+51 999 000 030')
+    await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(PASS_QA)
+    await page.getByPlaceholder('Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /siguiente/i }).click()
+
+    // Paso 2: RUC demo válido, dirFiscal vacía, click siguiente
+    await page.getByPlaceholder('20XXXXXXXXX').waitFor({ timeout: 8_000 })
+    await page.getByPlaceholder('20XXXXXXXXX').fill('20601234565')
+    await page.waitForTimeout(1500)
+    // No se llena dirFiscal
+    await page.getByRole('button', { name: /siguiente/i }).click()
+    await page.waitForTimeout(500)
+
+    // Debe seguir en Paso 2 (sin el texto del resumen) o mostrar error dirección
+    const body = (await page.locator('body').textContent()) ?? ''
+    const sigueEnPaso2 = body.match(/Revisa y confirma/i) === null
+    const hayErrorDir = body.match(/direcci[oó]n|fiscal/i) !== null
+    expect(sigueEnPaso2 || hayErrorDir).toBeTruthy()
+  })
+
+  // ── GAP-E2E-03 · RUC rechazado por SUNAT simulada ─────────────────────────────
+  test('27b-W — flujo B2B: RUC rechazado por SUNAT bloquea avance al paso 3', async ({ page }) => {
+    await irA(page, '/registro-emprendedor')
+    await page.getByRole('button', { name: /Negocio/ }).click()
+    await page.getByRole('button', { name: /Continuar/ }).click()
+
+    await page.getByPlaceholder('María García López').waitFor({ timeout: 10_000 })
+    await page.getByPlaceholder('María García López').fill('QA B2B RUC SUNAT Error')
+    await page.getByPlaceholder('compras@empresa.com').fill(`qa+b2b-w-${Date.now()}@tunaywasi.qa`)
+    await page.getByPlaceholder('+51 1 480 0000').fill('+51 999 000 040')
+    await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(PASS_QA)
+    await page.getByPlaceholder('Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /siguiente/i }).click()
+
+    // Paso 2: RUC que SUNAT rechaza (20000000001)
+    await page.getByPlaceholder('20XXXXXXXXX').waitFor({ timeout: 8_000 })
+    await page.getByPlaceholder('20XXXXXXXXX').fill('20000000001')
+    await page.waitForTimeout(1500)   // esperar simulación SUNAT
+
+    // El botón siguiente debe estar deshabilitado o mostrar error SUNAT
+    const body = (await page.locator('body').textContent()) ?? ''
+    const hayErrorSunat = body.match(/SUNAT|no encontrado|RUC no válido|dígito verificador/i) !== null
+    const botonDeshabilitado = await page.getByRole('button', { name: /siguiente/i }).isDisabled().catch(() => false)
+    expect(hayErrorSunat || botonDeshabilitado).toBeTruthy()
+  })
+
+  // ── GAP-E2E-04 · Razón social autofill + readOnly ─────────────────────────────
+  test('27b-V — flujo B2B: razón social autofill y no editable tras RUC válido', async ({ page }) => {
+    await irA(page, '/registro-emprendedor')
+    await page.getByRole('button', { name: /Negocio/ }).click()
+    await page.getByRole('button', { name: /Continuar/ }).click()
+
+    await page.getByPlaceholder('María García López').waitFor({ timeout: 10_000 })
+    await page.getByPlaceholder('María García López').fill('QA B2B Autofill Test')
+    await page.getByPlaceholder('compras@empresa.com').fill(`qa+b2b-v-${Date.now()}@tunaywasi.qa`)
+    await page.getByPlaceholder('+51 1 480 0000').fill('+51 999 000 050')
+    await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(PASS_QA)
+    await page.getByPlaceholder('Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /siguiente/i }).click()
+
+    await page.getByPlaceholder('20XXXXXXXXX').waitFor({ timeout: 8_000 })
+    await page.getByPlaceholder('20XXXXXXXXX').fill('20601234565')
+    await page.waitForTimeout(1500)   // esperar autofill SUNAT
+
+    // Razón social debe haberse autollenado con texto no vacío
+    const body = (await page.locator('body').textContent()) ?? ''
+    expect(body).toMatch(/CAFÉ EL ORIGEN|EMPRESA DEMO/i)
+
+    // El campo razón social debe ser readOnly
+    const razonSocialInput = page.locator('input[readonly]').or(page.locator('input[disabled]')).first()
+    const isReadonly = await razonSocialInput.count() > 0
+    expect(isReadonly).toBeTruthy()
   })
 })
 

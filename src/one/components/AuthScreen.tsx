@@ -1026,7 +1026,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'var(--tw-terra)' }} />
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: '#2a2a2a' }} />
             </div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#8faf8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Paso 1 · Empresa</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#8faf8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Paso 2 · Empresa</div>
             <h2 style={{ margin: '0 0 4px', fontSize: 22, fontFamily: 'Cormorant Garamond, serif', color: 'var(--tw-text)', fontWeight: 700 }}>Tu empresa</h2>
             <div style={{ fontSize: 11, color: '#888', marginBottom: 22, lineHeight: 1.5 }}>
               Verifica tu RUC para acceder a lotes de especialidad con factura electrónica.
