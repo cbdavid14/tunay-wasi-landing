@@ -9,7 +9,7 @@
  *   npx playwright test e2e/00-setup-qa-users.spec.ts
  */
 import { test, expect } from '@playwright/test'
-import { esperarCarga, dniUnico, PNG_1X1 } from './helpers'
+import { esperarCarga, dniUnico, PNG_1X1, esperarRedQuieta } from './helpers'
 
 // RUCs sintéticos QA con dígito verificador válido (REG-04) — uno por cuenta (REG-02)
 const RUC_QA = { APPROVED: '20999999019', PENDING_APPROVAL: '20999999027' } as const
@@ -27,7 +27,7 @@ function firestoreDocUrl(token: string, path: string): string {
 
 async function loginYObtenerToken(page: Parameters<typeof test>[1] extends (args: { page: infer P }) => unknown ? P : never, email: string, password: string): Promise<{ uid: string; token: string } | null> {
   await page.goto('/login')
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
   await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
@@ -167,7 +167,7 @@ async function asegurarLoteQA(page: Parameters<typeof loginYObtenerToken>[0], ui
 
 async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0], email: string, password: string, nombre: string): Promise<boolean> {
   await page.goto('/registro-caficultor')
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   await page.waitForTimeout(800)
 
@@ -230,7 +230,7 @@ test.describe.configure({ mode: 'serial' })
 
 test('setup: barista (buyer_b2b APPROVED)', async ({ page }) => {
   await page.goto("/login")
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   const data = await loginYObtenerToken(page, 'barista@tunaywasi.qa', 'Tunay2026!')
   expect(data, 'No se pudo loguear barista — verificar que el usuario existe').not.toBeNull()
@@ -241,7 +241,7 @@ test('setup: barista (buyer_b2b APPROVED)', async ({ page }) => {
 test('setup: b2b-pending (buyer_b2b PENDING_APPROVAL)', async ({ page }) => {
   // Cerrar sesión anterior — navegar primero para que localStorage sea accesible
   await page.goto("/login")
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   await page.evaluate(() => { try { localStorage.clear() } catch {} })
   await page.waitForTimeout(500)
@@ -255,14 +255,14 @@ test('setup: b2b-pending (buyer_b2b PENDING_APPROVAL)', async ({ page }) => {
 test('setup: caficultor (seller) — registrar en app si no existe', async ({ page }) => {
   // Cerrar sesión
   await page.goto("/login")
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   await page.evaluate(() => { try { localStorage.clear() } catch {} })
   await page.waitForTimeout(500)
 
   // Intentar login — si falla, registrar
   await page.goto("/login")
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
   await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
@@ -295,7 +295,7 @@ test('setup: caficultor (seller) — registrar en app si no existe', async ({ pa
 
 test('setup: lote QA del caficultor (prerequisito evidencias / NEGOTIABLE)', async ({ page }) => {
   await page.goto('/login')
-  await page.waitForLoadState('networkidle')
+  await esperarRedQuieta(page)
   await esperarCarga(page)
   await page.evaluate(() => { try { localStorage.clear() } catch {} })
   const data = await loginYObtenerToken(page, 'caficultor@tunaywasi.qa', 'Tunay2026!')
