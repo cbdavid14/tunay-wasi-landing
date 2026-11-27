@@ -1076,7 +1076,13 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
       try {
         const [cafic, peds, prods] = await Promise.all([
           isDemo ? demoFetchCaficultor(caficultorId) : fetchCaficultor(caficultorId).catch(() => null),
-          isDemo ? demoFetchPedidosByCaficultor(caficultorId) : fetchPedidosByCaficultor(caficultorId),
+          // Si los pedidos fallan (p.ej. índice compuesto ausente) no deben arrastrar a los productos:
+          // antes Promise.all rechazaba entero y el caficultor veía "0 productos".
+          isDemo ? demoFetchPedidosByCaficultor(caficultorId) : fetchPedidosByCaficultor(caficultorId).catch((e) => {
+            console.error('fetchPedidosByCaficultor', e)
+            toast('No se pudieron cargar tus ventas', 'error')
+            return [] as Awaited<ReturnType<typeof fetchPedidosByCaficultor>>
+          }),
           isDemo ? demoFetchProductosByCaficultorLive(caficultorId) : fetchProductos().then(all => all.filter(p => p.caficultorId === caficultorId)),
         ])
         setCaficultor(cafic)
