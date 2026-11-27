@@ -291,3 +291,34 @@ test.describe('27b — Unicidad y formato DNI/RUC (REG-01→REG-04)', () => {
   })
 })
 
+
+// ── 27c — Embudo de onboarding (iter.16) ─────────────────────────────────────
+// Verifica que los pasos del onboarding se ENVÍAN a Firestore (one_analytics). Antes de iter.16
+// la colección no tenía regla y todos los eventos se perdían en silencio.
+// Se inspecciona el tráfico de escritura de Firestore (WebChannel) buscando el evento.
+test.describe('27c — Embudo de onboarding (iter.16)', () => {
+  test('16 — /login registra el paso "bienvenida" en one_analytics', async ({ page }) => {
+    const escrito = page.waitForRequest(
+      req => req.method() === 'POST' && req.url().includes('firestore.googleapis.com') &&
+        (req.postData() ?? '').includes('onboarding_paso') && (req.postData() ?? '').includes('bienvenida'),
+      { timeout: 20_000 },
+    )
+    await irA(page, '/login')
+    const req = await escrito
+    const body = req.postData() ?? ''
+    expect(body).toContain('onboardingId')
+    expect(body).toMatch(/P1/)                       // puerta: bienvenida
+    expect(body).not.toMatch(/@tunaywasi|@gmail/)     // sin PII
+  })
+
+  test('17 — /registro registra el paso "cuenta" con puerta P3', async ({ page }) => {
+    const escrito = page.waitForRequest(
+      req => req.method() === 'POST' && req.url().includes('firestore.googleapis.com') &&
+        (req.postData() ?? '').includes('onboarding_paso') && (req.postData() ?? '').includes('P3'),
+      { timeout: 20_000 },
+    )
+    await irA(page, '/registro')
+    const body = (await escrito).postData() ?? ''
+    expect(body).toContain('cuenta')
+  })
+})

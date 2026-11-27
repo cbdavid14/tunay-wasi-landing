@@ -1,5 +1,6 @@
 import React from 'react'
 import { navigate } from '@/router'
+import { marcarOrigenOnboarding } from '../../onboarding'
 
 interface Props {
   onClose: () => void
@@ -44,7 +45,7 @@ export const ModalRegistro: React.FC<Props> = ({ onClose, productoIntencion }) =
         {/* Opción 1: Consumidor */}
         <a
           href="/registro"
-          onClick={(e) => { e.preventDefault(); onClose(); navigate('/registro') }}
+          onClick={(e) => { e.preventDefault(); onClose(); marcarOrigenOnboarding('modal_compra'); navigate('/registro') }}
           style={{
             padding: '13px 16px', borderRadius: 9,
             background: 'var(--tw-terra)', color: '#fff',
@@ -63,7 +64,7 @@ export const ModalRegistro: React.FC<Props> = ({ onClose, productoIntencion }) =
         {/* Opción 2: Negocio */}
         <a
           href="/registro-emprendedor"
-          onClick={(e) => { e.preventDefault(); onClose(); navigate('/registro-emprendedor') }}
+          onClick={(e) => { e.preventDefault(); onClose(); marcarOrigenOnboarding('modal_compra'); navigate('/registro-emprendedor') }}
           style={{
             padding: '13px 16px', borderRadius: 9,
             border: '1px solid var(--tw-border)', background: 'var(--tw-card)',
@@ -89,7 +90,7 @@ export const ModalRegistro: React.FC<Props> = ({ onClose, productoIntencion }) =
         {/* Opción 3: Iniciar sesión */}
         <a
           href="/portal"
-          onClick={(e) => { e.preventDefault(); onClose(); navigate('/portal') }}
+          onClick={(e) => { e.preventDefault(); onClose(); marcarOrigenOnboarding('modal_compra'); navigate('/portal') }}
           style={{
             padding: '11px 16px', borderRadius: 9,
             border: '1px solid var(--tw-terra)', background: 'transparent',

@@ -11,7 +11,7 @@
  *   #/caficultor-portal   → PortalCaficultor (requiere auth + rol caficultor)
  *   #/admin               → AdminONE (requiere auth + admin)
  */
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/shared/firebase'
@@ -20,6 +20,7 @@ import { fetchUsuario, createCotizacion } from '@/one/service'
 import type { UsuarioONE, ProductoONE, FormatoONE } from '@/one/types'
 import { calcularPrecioFinal } from '@/one/config'
 import { track, setAnalyticsUser, initAnalytics, setupErrorTracking } from '@/one/analytics'
+import { esRutaOnboarding, iniciarOnboarding, puertaDeRuta } from '@/one/onboarding'
 
 import CatalogoPublico from '@/one/components/CatalogoPublico'
 import CheckoutONE from '@/one/components/CheckoutONE'
@@ -569,6 +570,18 @@ function usePathname() {
     window.addEventListener('popstate', handler)
     return () => window.removeEventListener('popstate', handler)
   }, [])
+  // Embudo de onboarding (iter.16): al entrar a /login o a un /registro* desde otra ruta se abre
+  // un intento nuevo con su puerta (P1/P2/P3/directo) y su origen (ruta previa o pista explícita).
+  const prevPath = useRef<string | null>(null)
+  useEffect(() => {
+    const [pathname, query = ''] = path.split('?')
+    const prev = prevPath.current
+    const prevEraOnboarding = prev !== null && esRutaOnboarding(prev.split('?')[0])
+    if (esRutaOnboarding(pathname) && !prevEraOnboarding) {
+      iniciarOnboarding(prev, puertaDeRuta(pathname, query ? `?${query}` : ''))
+    }
+    prevPath.current = path
+  }, [path])
   return path
 }
 

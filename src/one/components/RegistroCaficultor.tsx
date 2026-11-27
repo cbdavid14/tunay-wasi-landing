@@ -11,6 +11,7 @@ import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado } from '../documentos'
 import type { TipoRegistroCaficultor } from '../types'
+import { completarOnboarding, useOnboardingTracking } from '../onboarding'
 
 // REG-04 / TRIB-04: RUC propio = 10 o 20 · Cooperativa = RUC 20 de la cooperativa
 const PREFIJOS_RUC: Record<'RUC_PROPIO' | 'COOPERATIVA', readonly string[]> = {
@@ -209,6 +210,8 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
   const [paso, setPaso] = useState<Paso>(1)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Embudo de onboarding (iter.16) — antes de cualquier return
+  useOnboardingTracking(paso === 1 ? 'cuenta' : paso === 2 ? 'finca' : paso === 3 ? 'identidad' : 'confirmacion', 'caficultor', 'email', error)
 
   function getInputStyle(focused: boolean, overrides?: React.CSSProperties): React.CSSProperties {
     return {
@@ -303,6 +306,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
             ...(tipoRegistroCaficultor === 'COOPERATIVA' ? { 'caficultor.rucCooperativa': ruc } : {}),
             updatedAt: serverTimestamp(),
           })
+          completarOnboarding(uid, 'seller', 'caficultor', 'email')
         }
       }
       setPaso('confirmacion')

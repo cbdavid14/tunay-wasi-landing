@@ -29,6 +29,8 @@ export type EventoAnalytics =
   | 'portal_negocio_visto'     // entró al portal del negocio
   | 'portal_caficultor_visto'  // entró al portal del caficultor
   | 'error_capturado'          // error JS no manejado
+  | 'onboarding_paso'          // entró a una pantalla del onboarding (iter.16 — ver onboarding.ts)
+  | 'onboarding_error'         // error visible en el onboarding (código clasificado, sin texto)
 
 export interface PropiedadesEvento {
   productoId?: string
@@ -42,7 +44,15 @@ export interface PropiedadesEvento {
   rolUsuario?: string
   pasoDesde?: string          // desde qué paso/ruta venía
   mensaje?: string            // para errores
-  [key: string]: string | number | boolean | undefined
+  // Onboarding (iter.16) — sin PII
+  onboardingId?: string
+  flujo?: string
+  puerta?: string
+  paso?: string
+  origen?: string
+  metodo?: string
+  codigo?: string
+  // Sin índice abierto: firestore.rules (one_analytics) solo admite estos campos.
 }
 
 // ─── Session ID ───────────────────────────────────────────────────────────────

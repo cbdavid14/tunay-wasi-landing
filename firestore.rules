@@ -165,6 +165,47 @@
         allow read: if esAdmin();
       }
 
+      // ── Admin con email verificado (SEC-03: sin email_verified cualquiera registra x@tunaywasi.pe) ──
+      function esAdminVerificado() {
+        return request.auth != null && request.auth.token.email_verified == true &&
+               (request.auth.token.email.matches('.*@tunaywasi\\.pe') ||
+                request.auth.token.email == 'tunaywasi@gmail.com');
+      }
+
+      // ── Analytics propia (src/one/analytics.ts) — iter.16 ─────────────────────────
+      // Solo CREAR eventos con esquema fijo y sin PII. Nadie actualiza ni borra; solo el admin lee.
+      // Antes no había regla → el catch-all rechazaba TODOS los eventos en silencio.
+      match /one_analytics/{id} {
+        function d() { return request.resource.data; }
+        allow create: if d().keys().hasOnly([
+              'sessionId', 'userId', 'rolUsuario', 'evento', 'url', 'fecha', 'ts',
+              'userAgent', 'lang', 'screen', 'mobile', 'timezone',
+              'productoId', 'productoNombre', 'caficultorId', 'cantidadKg', 'totalCents', 'itemCount',
+              'metodoPago', 'pedidoId', 'pasoDesde', 'mensaje',
+              'onboardingId', 'flujo', 'puerta', 'paso', 'origen', 'metodo', 'codigo'])
+          && d().keys().hasAll(['sessionId', 'userId', 'evento', 'url', 'fecha', 'ts'])
+          && d().evento in ['catalogo_visto', 'producto_visto', 'carrito_agregado', 'carrito_quitado',
+              'checkout_intentado', 'login_requerido', 'login_iniciado', 'login_exitoso',
+              'registro_completado', 'checkout_inicio', 'checkout_paso2', 'checkout_confirmado',
+              'portal_negocio_visto', 'portal_caficultor_visto', 'error_capturado',
+              'onboarding_paso', 'onboarding_error']
+          && d().ts == request.time
+          && d().userId is string
+          && (d().userId == 'anonimo' || (request.auth != null && d().userId == request.auth.uid))
+          && d().url is string && d().url.size() <= 300
+          && (!('mensaje' in d()) || (d().mensaje is string && d().mensaje.size() <= 500))
+          && (!('userAgent' in d()) || (d().userAgent is string && d().userAgent.size() <= 150));
+        allow read: if esAdminVerificado();
+        allow update, delete: if false;
+      }
+
+      // ── Cuentas Auth sin perfil en one_usuarios (registro abandonado) — iter.16 ──
+      // Las escribe la Lambda `lambda/onboarding-incompletos` con Admin SDK (salta reglas).
+      match /one_onboarding_incompletos/{uid} {
+        allow read: if esAdminVerificado();
+        allow write: if false;
+      }
+
       match /ubigeos/{id} {
         allow read: if true;
         allow write: if false;

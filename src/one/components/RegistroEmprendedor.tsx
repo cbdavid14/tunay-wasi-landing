@@ -10,6 +10,7 @@ import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { claveRuc, errorFormatoRuc, esDocumentoDuplicado } from '../documentos'
+import { completarOnboarding, useOnboardingTracking } from '../onboarding'
 
 // REG-04: comprador B2B con RUC 10 (persona natural con negocio) o 20 (persona jurídica)
 const PREFIJOS_RUC_B2B = ['10', '20'] as const
@@ -161,6 +162,10 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
   const [tipo, setTipo] = useState<'b2b' | 'b2c' | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Embudo de onboarding (iter.16) — antes de cualquier return
+  useOnboardingTracking(
+    paso === 0 ? 'selector_tipo' : paso === 1 ? 'cuenta' : paso === 2 ? 'empresa' : paso === 3 ? 'revision' : 'confirmacion',
+    paso === 0 ? 'desconocido' : 'b2b', 'email', error)
 
   const rucTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -283,6 +288,7 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
           },
           updatedAt: serverTimestamp(),
         }, { merge: true })
+        completarOnboarding(uid, 'buyer_b2b', 'b2b', 'email')
       }
       setPaso('confirmacion')
     } catch (e: unknown) {

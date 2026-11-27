@@ -5,6 +5,7 @@ import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { claveDniB2C, esDniValido, esDocumentoDuplicado } from '../documentos'
+import { completarOnboarding, useOnboardingTracking } from '../onboarding'
 
 type Paso = 1 | 2 | 'confirmacion'
 
@@ -125,6 +126,8 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
 
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Embudo de onboarding (iter.16) — antes de cualquier return
+  useOnboardingTracking(paso === 1 ? 'cuenta' : paso === 2 ? 'identidad' : 'confirmacion', 'b2c', 'email', error)
 
   // ─── DNI handler ─────────────────────────────────────────────────────────────
   function handleDniChange(val: string) {
@@ -182,6 +185,7 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
               },
               updatedAt: serverTimestamp(),
             }, { merge: true })
+            completarOnboarding(uid, 'buyer_b2c', 'b2c', 'email')
           }
         } catch (e: unknown) {
           const msg = String((e as { message?: string })?.message ?? e)
@@ -395,9 +399,11 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
               </button>
               <button
                 onClick={() => {
-                  if (dni.length !== 8) { setError('Ingresa tu DNI antes de continuar. Es requerido para la boleta electrónica.'); return }
-                  setPaso('confirmacion')
+                  // GAP-F01-12: antes saltaba a la confirmación SIN crear la cuenta ni reservar el DNI.
+                  // La dirección es opcional (se pide en el checkout): registrar igual (valida el DNI).
+                  void handleRegistrar()
                 }}
+                disabled={enviando}
                 style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 10, background: 'none', border: 'none', color: 'var(--tw-text-faint)', fontSize: 12, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
               >
                 Omitir dirección por ahora →

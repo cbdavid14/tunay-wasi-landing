@@ -1,0 +1,18 @@
+{
+  "name": "tunaywasi-onboarding-incompletos",
+  "version": "1.0.0",
+  "description": "Lambda diaria: cuentas de Firebase Auth sin perfil en one_usuarios (registro abandonado)",
+  "main": "handler.js",
+  "scripts": {
+    "deploy:qa": "serverless deploy --stage qa",
+    "deploy:prod": "serverless deploy --stage prod",
+    "invoke:qa": "serverless invoke -f detectar --stage qa",
+    "logs": "serverless logs -f detectar --tail"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0"
+  }
+}

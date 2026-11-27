@@ -8,6 +8,7 @@ import { loginConGoogle, login, registrar, resetPassword } from '../authService'
 import { fetchUsuario } from '../service'
 import type { RolONE } from '../types'
 import { track, setAnalyticsUser } from '../analytics'
+import { completarOnboarding, useOnboardingTracking, type FlujoOnboarding, type PasoOnboarding } from '../onboarding'
 import { claveDniB2C, claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado, reservarDocumentos } from '../documentos'
 
 type Paso = 'inicio' | 'email_login' | 'email_registro' | 'reset' | 'seleccion_rol' | 'seleccion_rol_registro' | 'cuenta_email' | 'seleccion_tipo_cliente' | 'datos_persona' | 'datos_negocio' | 'registro_caficultor' | 'registro_caficultor_finca' | 'registro_caficultor_identidad' | 'verifica_correo' | 'cargando' | 'cargando_cuenta' | 'abriendo_google' | 'google_loading'
@@ -54,6 +55,24 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
   const [rolRegistro, setRolRegistro] = useState<RolONE>('buyer_b2c')
   // Para Google: si el usuario escoge "Cliente" primero, guardamos el uid y pasamos a seleccion_tipo_cliente
   const [googlePendingTipo, setGooglePendingTipo] = useState(!!googlePendingGuardado)
+
+  // ── Embudo de onboarding (iter.16) — antes de cualquier return (rules of hooks) ──
+  const PASO_ONBOARDING: Partial<Record<Paso, PasoOnboarding>> = {
+    inicio: 'bienvenida', email_login: 'email_login', email_registro: 'cuenta',
+    seleccion_rol: 'quien_eres', seleccion_rol_registro: 'quien_eres', seleccion_tipo_cliente: 'selector_tipo',
+    cuenta_email: 'cuenta', datos_persona: 'identidad', datos_negocio: 'empresa',
+    registro_caficultor: 'cuenta', registro_caficultor_finca: 'finca', registro_caficultor_identidad: 'identidad',
+    verifica_correo: 'confirmacion',
+  }
+  const flujoDeRol = (r: RolONE): FlujoOnboarding => r === 'buyer_b2b' ? 'b2b' : r === 'seller' ? 'caficultor' : 'b2c'
+  const flujoOnb: FlujoOnboarding =
+    paso === 'datos_persona' ? 'b2c'
+    : paso === 'datos_negocio' ? 'b2b'
+    : paso.startsWith('registro_caficultor') ? 'caficultor'
+    : (paso === 'cuenta_email' || paso === 'email_registro' || paso === 'verifica_correo') ? flujoDeRol(rolRegistro)
+    : 'desconocido'
+  const metodoOnb = (pendingUid || googlePendingTipo) ? 'google' as const : 'email' as const
+  useOnboardingTracking(PASO_ONBOARDING[paso] ?? null, flujoOnb, metodoOnb, error)
 
   // Email form
   const [nombre, setNombre] = useState('')
@@ -214,7 +233,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
       if (rolRegistro === 'seller') {
         setPaso('registro_caficultor_finca')
       } else {
-        track('registro_completado', { rolUsuario: rolRegistro })
+        completarOnboarding(uid ?? '', rolRegistro, flujoDeRol(rolRegistro), 'email')
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
@@ -306,7 +325,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         await guardarDatosPersona(pendingUid)
         limpiarGooglePending()
         setAnalyticsUser(pendingUid, 'buyer_b2c')
-        track('registro_completado', { rolUsuario: 'buyer_b2c' })
+        completarOnboarding(pendingUid, 'buyer_b2c', 'b2c', 'google')
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
         navigate('/catalogo')
       } else {
@@ -314,7 +333,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         const { auth } = await import('@/shared/firebase')
         const uid = auth.currentUser?.uid
         if (uid) { await guardarDatosPersona(uid); setAnalyticsUser(uid, 'buyer_b2c') }
-        track('registro_completado', { rolUsuario: 'buyer_b2c' })
+        completarOnboarding(uid ?? '', 'buyer_b2c', 'b2c', 'email')
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
@@ -342,7 +361,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         await guardarDatosEmpresa(pendingUid)
         limpiarGooglePending()
         setAnalyticsUser(pendingUid, 'buyer_b2b')
-        track('registro_completado', { rolUsuario: 'buyer_b2b' })
+        completarOnboarding(pendingUid, 'buyer_b2b', 'b2b', 'google')
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
         navigate('/catalogo')
       } else {
@@ -351,7 +370,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         const uid = auth.currentUser?.uid
         // B2B-01: el flujo email no guardaba empresa ni PENDING_APPROVAL
         if (uid) { await guardarDatosEmpresa(uid); setAnalyticsUser(uid, 'buyer_b2b') }
-        track('registro_completado', { rolUsuario: 'buyer_b2b' })
+        completarOnboarding(uid ?? '', 'buyer_b2b', 'b2b', 'email')
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
@@ -1276,7 +1295,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                       updatedAt: serverTimestamp(),
                     }, { merge: true })
                   }
-                  track('registro_completado', { rolUsuario: 'seller' })
+                  completarOnboarding(uidSeller ?? '', 'seller', 'caficultor', metodoOnb)
                   navigate('/caficultor-portal')
                 } catch (e: unknown) {
                   setError(esDocumentoDuplicado(e) ? e.message : 'Error al guardar tu perfil. Intenta de nuevo.')

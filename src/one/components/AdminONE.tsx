@@ -39,8 +39,9 @@ import {
 } from '../demoService'
 import { logout } from '../authService'
 import ChatPedido from './ChatPedido'
+import TabEmbudoOnboarding from './TabEmbudoOnboarding'
 
-type Tab = 'dashboard' | 'pagos' | 'soporte' | 'cuentas_b2b' | 'reviewer' | 'disputas' | 'kyc_caficultores' | 'perfil'
+type Tab = 'dashboard' | 'pagos' | 'soporte' | 'cuentas_b2b' | 'reviewer' | 'disputas' | 'kyc_caficultores' | 'embudo' | 'perfil'
 
 const NAV_ITEMS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'dashboard',        label: 'Dashboard',   emoji: '📊' },
@@ -50,6 +51,7 @@ const NAV_ITEMS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'kyc_caficultores', label: 'KYC Sellers', emoji: '🪪' },
   { id: 'reviewer',         label: 'Reviewer',    emoji: '🔍' },
   { id: 'disputas',         label: 'Disputas',    emoji: '⚠' },
+  { id: 'embudo',           label: 'Embudo registro', emoji: '📉' },
   { id: 'perfil',           label: 'Perfil',      emoji: '👤' },
 ]
 
@@ -2191,6 +2193,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
               {tab === 'kyc_caficultores' && <TabKycCaficultores  onToast={toast} />}
               {tab === 'reviewer'         && <TabReviewer         onToast={toast} />}
               {tab === 'disputas'         && <TabDisputas         onToast={toast} />}
+              {tab === 'embudo'           && <TabEmbudoOnboarding isDemo={isDemo} onToast={toast} />}
               {tab === 'perfil'           && <TabPerfil           onLogout={() => logout().then(() => { navigate('/') })} />}
             </>
           )}

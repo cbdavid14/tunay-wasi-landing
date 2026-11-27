@@ -1,0 +1,25 @@
+service: tunaywasi-onboarding-incompletos
+
+# Lambda programada (sin endpoint HTTP → no expuesta a internet).
+# Deploy:  cd lambda/onboarding-incompletos && npm install && npx serverless deploy --stage qa
+#          (o --stage prod con las variables de PROD)
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  memorySize: 512
+  timeout: 120
+  environment:
+    # JSON de una service account con rol "Firebase Authentication Viewer" + "Cloud Datastore User"
+    # (mínimo privilegio — no reutilizar la SA de beta-invite con scope cloud-platform, SEC-13)
+    GOOGLE_SERVICE_ACCOUNT: ${env:GOOGLE_SERVICE_ACCOUNT}
+    FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}        # alpaso-app (qa) · tunay-wasi (prod)
+    FIRESTORE_DB: ${env:FIRESTORE_DB, '(default)'}         # qa: (default) · prod: default
+    MIN_HORAS: ${env:MIN_HORAS, '1'}
+
+functions:
+  detectar:
+    handler: handler.detectar
+    events:
+      # 06:00 hora Lima (UTC-5) todos los días
+      - schedule: cron(0 11 * * ? *)
