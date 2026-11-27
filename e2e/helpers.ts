@@ -14,15 +14,16 @@ export async function loginEmail(page: Page, email: string, password: string) {
   await page.goto('/login')
   await esperarRedQuieta(page)
   await esperarCarga(page)
-  // Paso 1: si aparece pantalla de selección de método, clic en "Ingresar con email"
-  const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+  // Paso 1: si aparece pantalla de selección de método, clic en "Continuar con Email" (móvil) o "Ingresar con email" (desktop)
+  const btnEmail = page.getByRole('button', { name: /continuar con email|ingresar con email/i }).first()
   await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()
     await page.waitForTimeout(500)
   }
   // Paso 2: rellenar formulario email + contraseña
-  await page.getByPlaceholder('tu@email.com').waitFor({ timeout: 8000 })
+  await page.getByPlaceholder('tu@email.com').waitFor({ timeout: 10_000 })
+  await page.getByPlaceholder('tu@email.com').scrollIntoViewIfNeeded().catch(() => {})
   await page.getByPlaceholder('tu@email.com').fill(email)
   await page.getByPlaceholder('••••••••').fill(password)
   await page.getByRole('button', { name: /ingresar →/i }).click()

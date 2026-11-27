@@ -149,15 +149,16 @@ test.describe('27 — Registro y login gate', () => {
     await page.goto('/login')
     await esperarRedQuieta(page)
     await esperarCarga(page)
-    // Puede tener pantalla de selección primero
-    const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+    // Pantalla inicio: puede llamarse "Continuar con Email" (móvil) o "Ingresar con email"
+    const btnEmail = page.getByRole('button', { name: /continuar con email|ingresar con email/i }).first()
     await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
     if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
       await btnEmail.click()
       await page.waitForTimeout(500)
     }
     const inputEmail = page.getByPlaceholder('tu@email.com').first()
-    await expect(inputEmail).toBeVisible({ timeout: 8000 })
+    await inputEmail.scrollIntoViewIfNeeded().catch(() => {})
+    await expect(inputEmail).toBeVisible({ timeout: 10_000 })
     const inputPass = page.getByPlaceholder('••••••••').first()
     await expect(inputPass).toBeVisible()
     const btnIngresar = page.getByRole('button', { name: /ingresar/i }).first()
@@ -380,7 +381,7 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
     await page.waitForURL(/\/login\?registro=1/, { timeout: 10_000 })
     await esperarCarga(page)
     await expect(page.getByText(/¿Cómo usarás TunayWasi\?/i).first()).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/Soy Cliente/i).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: /Soy Cliente/i }).first()).toBeVisible()
   })
 
   test('21 — "Agregar al carrito" del detalle (guest) también va a /login?registro=1 (GAP-F01-13)', async ({ page }) => {
