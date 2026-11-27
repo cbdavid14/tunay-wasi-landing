@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginEmail, irA, esperarCarga, USERS, dniUnico, rucUnico, rucConDigito, esperarRedQuieta, abrirMenuHamburguesa } from './helpers'
+import { loginEmail, irA, esperarCarga, USERS, dniUnico, rucUnico, rucConDigito, esperarRedQuieta, abrirMenuHamburguesa, PNG_1X1 } from './helpers'
 import type { Browser, Page } from '@playwright/test'
 
 // US-01 · US-02 · US-43 · INV-01 · Registro B2B / B2C
@@ -563,6 +563,10 @@ test.describe('27f — Alta caficultor por /login (BUG-REG-04/05/06)', () => {
     await page.getByRole('button', { name: /Siguiente →/ }).first().click()
     await expect(page.getByText('Verifica tu identidad').first()).toBeVisible({ timeout: 10_000 })
     await vis(page, '12345678').fill(dni)
+    // Fotos KYC obligatorias (be62d73): inputs file ocultos, DNI y selfie
+    const files = page.locator('input[type=file]')
+    await files.nth(0).setInputFiles(PNG_1X1)
+    await files.nth(1).setInputFiles(PNG_1X1)
     await vis(page, '+51 987 654 321').fill('+51 999 222 333')
     await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
   }
@@ -670,5 +674,195 @@ test.describe('27f — Alta caficultor por /login (BUG-REG-04/05/06)', () => {
     await salir.click()
     await page.waitForURL(u => new URL(u).pathname === '/', { timeout: 10_000 })   // vuelve al inicio
     await expect.poll(() => perfilActual(page)).toBeNull()       // sin sesión Auth
+  })
+})
+
+// ── 27g — Flujo caficultor actualizado (GAP-19/20/21/22/13) ──────────────────
+// Verifica los cuatro GAPs del flujo caficultor vía AuthScreen (/login?registro=1):
+//   GAP-19: modalidades tributarias TRIB-04 (SOLO_DNI, RUC_PROPIO, COOPERATIVA)
+//   GAP-21: texto KYC correcto ("Verificación manual", "24", sin "automática" ni "IA")
+//   GAP-22: WhatsApp y Yape son campos separados
+//   GAP-13: inputs file para fotos KYC en paso identidad
+test.describe('27g — Flujo caficultor actualizado (GAP-19/20/21/22/13)', () => {
+
+  const PASS_G = 'Tunay2026!'
+  const emailG = (tag: string) => `qa+g-${tag}-${Date.now()}@tunaywasi.qa`
+  const vis = (page: Page, ph: string) => page.locator(`input[placeholder="${ph}"]:visible`).first()
+
+  /** Navega a /login?registro=1, escoge "Soy Caficultor" y rellena el Paso 1 sin crear la cuenta. */
+  async function llegar_paso1_caficultor(page: Page) {
+    await irA(page, '/login?registro=1')
+    await page.getByRole('button', { name: /Soy Caficultor/ }).first().click()
+    await expect(page.getByText('Paso 1 de 3').first()).toBeVisible({ timeout: 10_000 })
+  }
+
+  /** Rellena Paso 1 y hace click en "Siguiente →" para llegar al Paso 2 (finca). */
+  async function llegar_paso_finca(page: Page) {
+    await llegar_paso1_caficultor(page)
+    await vis(page, 'María Quispe Condori').fill('QA GAP Caficultor')
+    await vis(page, '+51 987 654 321').fill('+51 999 777 888')
+    await vis(page, 'tu@correo.com').fill(emailG('finca'))
+    await vis(page, 'Mín. 8 chars + 1 núm').fill(PASS_G)
+    await vis(page, 'Repite').fill(PASS_G)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText(/Paso 2 de 3|Tu finca/).first()).toBeVisible({ timeout: 15_000 })
+  }
+
+  /** Rellena los campos mínimos de finca y avanza al Paso 3 (identidad). */
+  async function llegar_paso_identidad(page: Page) {
+    await llegar_paso_finca(page)
+    const selects = page.locator('select:visible')
+    await selects.nth(0).selectOption('Cajamarca')
+    await vis(page, 'Ej. San Ignacio').fill('San Ignacio')
+    await selects.nth(1).selectOption('Caturra')
+    await selects.nth(2).selectOption('Honey')
+    // Modalidad por defecto = SOLO_DNI → no se necesita RUC
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Verifica tu identidad').first()).toBeVisible({ timeout: 10_000 })
+  }
+
+  // ── GAP-19 · TRIB-04 en AuthScreen ───────────────────────────────────────────
+
+  test('33 — GAP-19: caficultor SOLO_DNI no ve el campo RUC y puede avanzar', async ({ page }) => {
+    await llegar_paso_finca(page)
+    // Verificar que SOLO_DNI es la opción por defecto
+    const bodyAntes = await page.locator('body').textContent()
+    expect(bodyAntes).toMatch(/Modalidad tributaria|Solo DNI|SOLO_DNI|modalidad/i)
+    // El campo RUC no debe estar visible con SOLO_DNI
+    const campoRuc = page.locator('input[placeholder="10XXXXXXXXX o 20XXXXXXXXX"]')
+      .or(page.locator('input[placeholder="20XXXXXXXXX"]')).first()
+    await expect(campoRuc).not.toBeVisible()
+    // Puede avanzar al paso identidad sin RUC
+    const selects = page.locator('select:visible')
+    await selects.nth(0).selectOption('Cajamarca')
+    await vis(page, 'Ej. San Ignacio').fill('San Ignacio')
+    await selects.nth(1).selectOption('Caturra')
+    await selects.nth(2).selectOption('Honey')
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Verifica tu identidad').first()).toBeVisible({ timeout: 10_000 })
+  })
+
+  test('34 — GAP-19: caficultor RUC_PROPIO ve el campo RUC y no avanza con RUC inválido', async ({ page }) => {
+    await llegar_paso_finca(page)
+    // Seleccionar RUC propio
+    await page.getByText('RUC propio', { exact: true }).click()
+    // El campo RUC debe aparecer con placeholder correcto
+    const campoRuc = page.locator('input[placeholder="10XXXXXXXXX o 20XXXXXXXXX"]').first()
+    await expect(campoRuc).toBeVisible({ timeout: 5_000 })
+    // Rellenar campos mínimos de finca
+    const selects = page.locator('select:visible')
+    await selects.nth(0).selectOption('Cajamarca')
+    await vis(page, 'Ej. San Ignacio').fill('San Ignacio')
+    await selects.nth(1).selectOption('Caturra')
+    await selects.nth(2).selectOption('Honey')
+    // RUC inválido (ni 10 ni 20 de prefijo)
+    await campoRuc.fill('30123456789')
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    // No debe avanzar — debe mostrar error de RUC
+    const body = await page.locator('body').textContent()
+    expect(body).toMatch(/debe empezar con|RUC|inválido/i)
+    // Sigue en paso finca
+    await expect(page.getByText(/Paso 2 de 3|Tu finca/).first()).toBeVisible()
+  })
+
+  test('35 — GAP-19: caficultor COOPERATIVA solo acepta RUC prefijo 20 y rechaza prefijo 10', async ({ page }) => {
+    await llegar_paso_finca(page)
+    // Seleccionar Cooperativa
+    await page.getByText('Cooperativa', { exact: true }).click()
+    // El campo RUC debe aparecer con placeholder 20XXXXXXXXX
+    const campoRuc = page.locator('input[placeholder="20XXXXXXXXX"]').first()
+    await expect(campoRuc).toBeVisible({ timeout: 5_000 })
+    // Rellenar campos mínimos de finca
+    const selects = page.locator('select:visible')
+    await selects.nth(0).selectOption('Cajamarca')
+    await vis(page, 'Ej. San Ignacio').fill('San Ignacio')
+    await selects.nth(1).selectOption('Caturra')
+    await selects.nth(2).selectOption('Honey')
+    // RUC con prefijo 10 (persona natural) — no válido para cooperativa
+    await campoRuc.fill(rucConDigito('1012345678'))
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    const body = await page.locator('body').textContent()
+    expect(body).toMatch(/debe empezar con 20|RUC.*cooperativa|cooperativa.*RUC/i)
+    // Sigue en paso finca
+    await expect(page.getByText(/Paso 2 de 3|Tu finca/).first()).toBeVisible()
+  })
+
+  // ── GAP-21 · Texto KYC correcto ───────────────────────────────────────────────
+
+  test('36 — GAP-21: el paso identidad muestra "Verificación manual" y "24" horas', async ({ page }) => {
+    await llegar_paso_identidad(page)
+    const body = await page.locator('body').textContent()
+    // Debe mencionar verificación manual y plazo de 24 horas
+    expect(body).toMatch(/verificaci[oó]n manual/i)
+    expect(body).toMatch(/24/)
+    // No debe mencionar verificación automática ni IA
+    expect(body).not.toMatch(/verificaci[oó]n autom[aá]tica/i)
+    expect(body).not.toMatch(/inteligencia artificial|\bIA\b/i)
+  })
+
+  // ── GAP-22 · WhatsApp y Yape separados ───────────────────────────────────────
+
+  test('37 — GAP-22: el Paso 1 tiene campo WhatsApp separado; Yape aparece en el Paso 3', async ({ page }) => {
+    await llegar_paso1_caficultor(page)
+    // Paso 1: debe tener una label "WhatsApp"
+    const bodyPaso1 = await page.locator('body').textContent()
+    expect(bodyPaso1).toMatch(/WhatsApp/i)
+    // Paso 1: NO debe tener una label "Yape"
+    expect(bodyPaso1).not.toMatch(/\bYape\b/i)
+    // Avanzar al paso 3 (identidad) para verificar que Yape sí está ahí
+    await vis(page, 'María Quispe Condori').fill('QA GAP22')
+    await vis(page, '+51 987 654 321').fill('+51 999 555 666')
+    await vis(page, 'tu@correo.com').fill(emailG('gap22'))
+    await vis(page, 'Mín. 8 chars + 1 núm').fill(PASS_G)
+    await vis(page, 'Repite').fill(PASS_G)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText(/Paso 2 de 3|Tu finca/).first()).toBeVisible({ timeout: 15_000 })
+    const selects = page.locator('select:visible')
+    await selects.nth(0).selectOption('Cajamarca')
+    await vis(page, 'Ej. San Ignacio').fill('San Ignacio')
+    await selects.nth(1).selectOption('Caturra')
+    await selects.nth(2).selectOption('Honey')
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Verifica tu identidad').first()).toBeVisible({ timeout: 10_000 })
+    // Paso 3: debe tener label "Yape"
+    const bodyPaso3 = await page.locator('body').textContent()
+    expect(bodyPaso3).toMatch(/\bYape\b/i)
+    // Paso 3: no debe duplicar WhatsApp (ya se recogió en paso 1)
+    expect(bodyPaso3).not.toMatch(/WhatsApp/i)
+  })
+
+  // ── GAP-13 · Fotos KYC funcionales ───────────────────────────────────────────
+
+  test('38 — GAP-13: el paso identidad tiene input[type=file] para foto DNI con accept="image/*"', async ({ page }) => {
+    await llegar_paso_identidad(page)
+    // Puede haber dos file inputs; el primero corresponde a la foto frontal del DNI
+    const fileInputs = page.locator('input[type="file"]')
+    await expect(fileInputs.first()).toHaveCount(1)
+    // Verificar atributo accept
+    const accept = await fileInputs.first().getAttribute('accept')
+    expect(accept).toMatch(/image\/\*/)
+  })
+
+  test('39 — GAP-13: el paso identidad tiene input[type=file] para selfie con accept="image/*"', async ({ page }) => {
+    await llegar_paso_identidad(page)
+    const fileInputs = page.locator('input[type="file"]')
+    // Debe haber exactamente 2 inputs file: DNI y selfie
+    await expect(fileInputs).toHaveCount(2)
+    // Ambos deben aceptar imágenes
+    const acceptSelfie = await fileInputs.nth(1).getAttribute('accept')
+    expect(acceptSelfie).toMatch(/image\/\*/)
+  })
+
+  test('40 — GAP-13: intentar avanzar sin foto DNI muestra error descriptivo', async ({ page }) => {
+    await llegar_paso_identidad(page)
+    // Rellenar DNI pero NO subir fotos
+    await vis(page, '12345678').fill('12345678')
+    await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
+    await page.waitForTimeout(500)
+    const body = await page.locator('body').textContent()
+    // Debe mostrar un error que mencione la foto del DNI
+    expect(body).toMatch(/foto.*DNI|DNI.*foto|adjunta.*DNI|foto frontal/i)
+    // No debe haber avanzado (sigue en paso identidad)
+    await expect(page.getByText('Verifica tu identidad').first()).toBeVisible()
   })
 })
