@@ -3447,10 +3447,20 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
             <div style={{ flex: 1, maxWidth: 520, minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
               <div style={{ marginBottom: 20 }}>
                 <div style={sectionTitle}>💳 Cobros</div>
-                <div style={{ marginBottom: 10 }}>
-                  <div style={fieldLabel}>Número Yape</div>
-                  <input style={inputStyle} type="tel" defaultValue={(caficultor as any).numeroYape ?? ''} placeholder="+51 9XX XXX XXX" />
-                </div>
+                {/* ESC-06 / TRIB-06: COOPERATIVA — solo CCI de la cooperativa; sin Yape personal */}
+                {perfilFiscal?.tipoRegistroCaficultor !== 'COOPERATIVA' && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={fieldLabel}>Número Yape</div>
+                    <input style={inputStyle} type="tel" defaultValue={(caficultor as any).numeroYape ?? ''} placeholder="+51 9XX XXX XXX" />
+                  </div>
+                )}
+                {perfilFiscal?.tipoRegistroCaficultor === 'COOPERATIVA' && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={fieldLabel}>CCI Cooperativa <span style={{ color: 'var(--tw-terra)' }}>*</span></div>
+                    <input style={inputStyle} type="text" defaultValue={(caficultor as any).cciCooperativa ?? ''} placeholder="00219100XXXXXXXXXX25" />
+                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 4 }}>CCI de tu cooperativa. El pago se liquida a la cuenta de la cooperativa, no a tu número personal.</div>
+                  </div>
+                )}
                 <div style={{ marginBottom: 10 }}>
                   <div style={fieldLabel}>Banco</div>
                   <div style={{ position: 'relative' }}>
@@ -3488,7 +3498,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
               <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: 14 }}>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', marginBottom: 10 }}>💡 Consejos</div>
                 <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', lineHeight: 1.5 }}>
-                  <div style={{ marginBottom: 8 }}>✅ <b>Yape activo</b> permite que los negocios confirmen sus pedidos más rápido.</div>
+                  <div style={{ marginBottom: 8 }}>🏦 El <b>número de cuenta o CCI</b> es donde recibes el pago una vez que TunayWasi confirma la entrega.</div>
                   <div style={{ marginBottom: 8 }}>🏦 El <b>número de cuenta</b> es donde recibes el pago una vez que TunayWasi confirma la entrega.</div>
                   <div>🚚 Configura tus agencias y tarifas en la pestaña <b>Envíos</b>.</div>
                 </div>

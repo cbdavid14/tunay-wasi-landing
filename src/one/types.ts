@@ -298,7 +298,8 @@ export interface UsuarioONE {
     activo: boolean
     proceso?: string
     kgDisponibles?: number
-    numeroYape?: string
+    numeroYape?: string               // SOLO_DNI y RUC_PROPIO únicamente — undefined para COOPERATIVA (ESC-06/TRIB-06)
+    cciCooperativa?: string           // solo COOPERATIVA — CCI de la cooperativa para liquidación (ESC-06)
     // Identidad y modalidad tributaria (TRIB-04 · REG-01→REG-04)
     dni?: string                                   // inmutable — reservado en one_documentos (DNI_SELLER_)
     tipoRegistroCaficultor?: TipoRegistroCaficultor

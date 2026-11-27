@@ -138,6 +138,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
   const [cafDniEstado, setCafDniEstado] = useState<'idle' | 'ok'>('idle')
   const [cafWhatsapp, setCafWhatsapp] = useState('')   // GAP-22: WhatsApp (paso 1) separado de Yape (paso 3)
   const [cafYape, setCafYape] = useState('')           // GAP-22: Yape para cobros (paso 3)
+  const [cafCciCooperativa, setCafCciCooperativa] = useState('')  // ESC-06/TRIB-06: CCI para COOPERATIVA
   // GAP-19: modalidad tributaria TRIB-04 en paso finca
   const [fincaTipoRegistro, setFincaTipoRegistro] = useState<TipoRegistroCaficultor>('SOLO_DNI')
   const [fincaRuc, setFincaRuc] = useState('')
@@ -1283,7 +1284,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
               <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>Modalidad tributaria <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {([
-                  { value: 'SOLO_DNI' as TipoRegistroCaficultor, label: 'Solo DNI', desc: 'Solo puedes vender café TYPE_A. Cobra con Yape/Plin.' },
+                  { value: 'SOLO_DNI' as TipoRegistroCaficultor, label: 'Solo DNI', desc: 'Persona natural sin negocio. Emite solo Liquidación de Compra. Cobro vía transferencia bancaria.' },
                   { value: 'RUC_PROPIO' as TipoRegistroCaficultor, label: 'RUC propio', desc: 'Emites facturas. Puedes vender todos los tipos.' },
                   { value: 'COOPERATIVA' as TipoRegistroCaficultor, label: 'Cooperativa', desc: 'Tu cooperativa emite los comprobantes por ti.' },
                 ] as { value: TipoRegistroCaficultor; label: string; desc: string }[]).map(opt => (
@@ -1396,15 +1397,31 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
             <div style={{ background: 'rgba(143,175,138,0.07)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 9, padding: '11px 13px', fontSize: 10, color: '#8faf8a', lineHeight: 1.6, marginBottom: 13 }}>
               📋 <strong>Verificación manual (24–48 horas hábiles)</strong> — Tu cuenta quedará en revisión hasta que nuestro equipo valide tu identidad.
             </div>
-            <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Número Yape <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-            <input type="tel" placeholder="+51 987 654 321" value={cafYape} onChange={e => setCafYape(e.target.value)} style={inputStyle} />
-            <div style={{ fontSize: 9, color: '#555', marginTop: -10, marginBottom: 14 }}>Al número donde recibirás tus pagos. Debe ser titular del mismo DNI.</div>
+            {/* ESC-06 / TRIB-06: COOPERATIVA usa CCI de la cooperativa; SOLO_DNI y RUC_PROPIO usan Yape */}
+            {fincaTipoRegistro === 'COOPERATIVA' ? (
+              <>
+                <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>CCI Cooperativa <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
+                <input type="text" placeholder="00219100XXXXXXXXXX25" value={cafCciCooperativa} onChange={e => setCafCciCooperativa(e.target.value)} style={inputStyle} />
+                <div style={{ fontSize: 9, color: '#555', marginTop: -10, marginBottom: 14 }}>CCI de tu cooperativa. El pago se liquida a la cuenta de la cooperativa.</div>
+              </>
+            ) : (
+              <>
+                <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Número Yape <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
+                <input type="tel" placeholder="+51 987 654 321" value={cafYape} onChange={e => setCafYape(e.target.value)} style={inputStyle} />
+                <div style={{ fontSize: 9, color: '#555', marginTop: -10, marginBottom: 14 }}>Al número donde recibirás tus pagos. Debe ser titular del mismo DNI.</div>
+              </>
+            )}
             <button
               onClick={async () => {
                 if (cafDniEstado !== 'ok') { setError('Ingresa tu DNI de 8 dígitos.'); return }
                 if (!cafFotoDniFile) { setError('Adjunta la foto frontal de tu DNI.'); return }
                 if (!cafFotoSelfieFile) { setError('Adjunta una selfie sosteniendo tu DNI.'); return }
-                if (!cafYape.trim()) { setError('Ingresa tu número Yape.'); return }
+                // ESC-06 / TRIB-06: COOPERATIVA requiere CCI; otros requieren Yape
+                if (fincaTipoRegistro === 'COOPERATIVA') {
+                  if (!cafCciCooperativa.trim()) { setError('Ingresa el CCI de tu cooperativa.'); return }
+                } else {
+                  if (!cafYape.trim()) { setError('Ingresa tu número Yape.'); return }
+                }
                 setError(null)
                 setPaso('cargando_cuenta')
                 try {
@@ -1462,7 +1479,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                         foto: '',
                         activo: false,
                         dni: cafDni.trim(),
-                        yape: cafYape.trim(),
+                        yape: fincaTipoRegistro !== 'COOPERATIVA' ? cafYape.trim() : undefined,
+                        cciCooperativa: fincaTipoRegistro === 'COOPERATIVA' ? cafCciCooperativa.trim() : undefined,
                         whatsapp: cafWhatsapp.trim(),   // GAP-22: guardamos WhatsApp separado de Yape
                         variedades: fincaVariedad.trim(),
                         proceso: fincaProceso.trim(),

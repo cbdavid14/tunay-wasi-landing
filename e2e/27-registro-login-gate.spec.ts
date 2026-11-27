@@ -866,3 +866,212 @@ test.describe('27g — Flujo caficultor actualizado (GAP-19/20/21/22/13)', () =>
     await expect(page.getByText('Verifica tu identidad').first()).toBeVisible()
   })
 })
+
+// ── 27h — ESC-06: Yape restringido por modalidad tributaria (TRIB-06) ───────────
+// ESC-06: SOLO_DNI → descripción NO menciona Yape/Plin como método principal de cobro.
+//         COOPERATIVA → campo cobro en registro es CCI de la cooperativa, no Yape personal.
+//         RUC_PROPIO → muestra campo Yape (con eventual aviso Yape Business).
+// Los tests 41-43 usan /registro-caficultor (Paso 2 → Paso 3) o /login?registro=1 (AuthScreen).
+// Los tests 44-45 (portal, tab Cobros) requieren auth real con perfiles de cada modalidad
+// sembrados en Firestore; como ese seed no existe en el entorno E2E, se marcan test.skip
+// con comentario explicativo.
+test.describe('27h — ESC-06: Yape restringido por modalidad tributaria', () => {
+
+  const PASS_H = 'Tunay2026!'
+  const emailH = (tag: string) => `qa+h-${tag}-${Date.now()}@tunaywasi.qa`
+  const vis = (page: Page, ph: string) => page.locator(`input[placeholder="${ph}"]:visible`).first()
+
+  /**
+   * Navega a /registro-caficultor y completa el Paso 1 (cuenta).
+   * Deja al usuario en el formulario del Paso 1 justo antes de hacer clic en "Siguiente →".
+   */
+  async function llegar_paso1_regcaf(page: Page, email: string) {
+    await irA(page, '/registro-caficultor')
+    await page.getByPlaceholder('María Quispe Condori').fill('QA ESC-06')
+    await page.getByPlaceholder('+51 987 654 321').fill('+51 999 100 200')
+    await page.getByPlaceholder('tu@correo.com').fill(email)
+    await page.getByPlaceholder('Mínimo 8 caracteres + 1 número').fill(PASS_H)
+    await page.getByPlaceholder('Repite').fill(PASS_H)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    // El Paso 2 (finca) debe cargarse
+    await expect(page.getByText(/Paso 2 de 3|Tu finca/).first()).toBeVisible({ timeout: 15_000 })
+  }
+
+  /**
+   * Rellena los campos mínimos del Paso 2 (finca) con la modalidad indicada
+   * y avanza al Paso 3 (identidad).
+   */
+  async function llegar_paso3_regcaf(page: Page, modalidad: 'SOLO_DNI' | 'RUC_PROPIO' | 'COOPERATIVA', email: string) {
+    await llegar_paso1_regcaf(page, email)
+    // Seleccionar modalidad si no es la de por defecto (SOLO_DNI)
+    if (modalidad !== 'SOLO_DNI') {
+      const textoBoton = modalidad === 'RUC_PROPIO' ? 'RUC propio' : 'Cooperativa'
+      await page.getByText(textoBoton, { exact: true }).click()
+      // Rellenar RUC requerido para modalidades no-SOLO_DNI
+      const placeholderRuc = modalidad === 'COOPERATIVA' ? '20XXXXXXXXX' : '10XXXXXXXXX o 20XXXXXXXXX'
+      // Usar un RUC válido para cada modalidad
+      const ruc = modalidad === 'COOPERATIVA'
+        ? rucConDigito('2099' + String(Date.now() % 1_000_000).padStart(6, '0'))
+        : rucConDigito('1012345678')
+      await vis(page, placeholderRuc).fill(ruc)
+    }
+    // Rellenar región, distrito, variedad, proceso
+    const selects = page.locator('select:visible')
+    await selects.nth(0).selectOption('Cajamarca')
+    await vis(page, 'Ej. San Ignacio').fill('San Ignacio')
+    await selects.nth(1).selectOption('Caturra')
+    await selects.nth(2).selectOption('Honey')
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Verifica tu identidad').first()).toBeVisible({ timeout: 10_000 })
+  }
+
+  // ── Test 41 ───────────────────────────────────────────────────────────────────
+
+  test('41 — ESC-06: descripción SOLO_DNI NO menciona "Yape/Plin" como método de cobro (AuthScreen)', async ({ page }) => {
+    // Navegar al AuthScreen y llegar al paso de finca donde se ve la modalidad tributaria
+    await irA(page, '/login?registro=1')
+    await page.getByRole('button', { name: /Soy Caficultor/ }).first().click()
+    await expect(page.getByText('Paso 1 de 3').first()).toBeVisible({ timeout: 10_000 })
+    // Rellenar Paso 1 y avanzar al Paso 2 donde se muestra la modalidad tributaria
+    await vis(page, 'María Quispe Condori').fill('QA ESC-06 Test41')
+    await vis(page, '+51 987 654 321').fill('+51 999 410 000')
+    await vis(page, 'tu@correo.com').fill(emailH('t41'))
+    await vis(page, 'Mín. 8 chars + 1 núm').fill(PASS_H)
+    await vis(page, 'Repite').fill(PASS_H)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText(/Paso 2 de 3|Tu finca/).first()).toBeVisible({ timeout: 15_000 })
+    // La descripción de SOLO_DNI no debe mencionar "Yape/Plin" como método de cobro principal.
+    // ESC-06: cobro vía Yape/Plin es exclusivo de RUC_PROPIO; SOLO_DNI usa transferencia bancaria.
+    const bodyPaso2 = await page.locator('body').textContent()
+    // La opción SOLO_DNI debe estar visible (es la seleccionada por defecto)
+    expect(bodyPaso2).toMatch(/Solo DNI|SOLO_DNI|modalidad tributaria/i)
+    // La descripción de SOLO_DNI no debe decir que se cobra con Yape/Plin
+    // (puede mencionar Yape en otros contextos, pero NO en la descripción de esta opción)
+    // Verificar que la card/opción de Solo DNI no tiene "Yape/Plin" en su texto de descripción
+    const textoOpcionSoloDni = await page.locator('[data-testid="opt-SOLO_DNI"], [class*="opt"]:has-text("Solo DNI")')
+      .or(page.locator('div').filter({ hasText: /^Solo DNI/ }).filter({ hasText: /Solo puedes|Persona natural|liquidación/i }))
+      .first()
+      .textContent()
+      .catch(() => null)
+    if (textoOpcionSoloDni !== null) {
+      // Si encontramos la opción específica, verificar que no menciona Yape/Plin como cobro
+      expect(textoOpcionSoloDni).not.toMatch(/Cobra con Yape\/Plin|método.*Yape|Yape.*cobro/i)
+    } else {
+      // Fallback: en la sección de modalidad, el texto visible de SOLO_DNI no debe recomendar Yape/Plin
+      // La regla ESC-06 indica que SOLO_DNI usa transferencia bancaria o liquidación, no Yape personal
+      // Si el texto del body menciona "Solo DNI" junto a "Yape/Plin" como instrucción de cobro, es el bug
+      const hayBug = bodyPaso2?.includes('Cobra con Yape/Plin') || bodyPaso2?.includes('Cobra con Yape')
+      // Documentar si el bug existe (la prueba pasa en verde cuando el bug está corregido)
+      expect(hayBug).toBe(false)
+    }
+    // La modalidad tributaria debe estar visible
+    expect(bodyPaso2).toMatch(/modalidad tributaria|tipo de registro|Solo DNI|RUC propio|Cooperativa/i)
+  })
+
+  // ── Test 42 ───────────────────────────────────────────────────────────────────
+
+  test('42 — ESC-06: COOPERATIVA muestra campo CCI (no campo Yape personal) en paso identidad (/registro-caficultor)', async ({ page }) => {
+    // Navegar a /registro-caficultor y llegar al Paso 3 con modalidad COOPERATIVA
+    await llegar_paso3_regcaf(page, 'COOPERATIVA', emailH('t42'))
+    const body = await page.locator('body').textContent()
+    // Debe mostrar "CCI" o "CCI de la cooperativa" o "cuenta interbancaria"
+    expect(body).toMatch(/CCI|cuenta interbancaria|CCI.*cooperativa|cooperativa.*CCI/i)
+    // No debe mostrar "Número Yape" como campo de cobro para COOPERATIVA
+    // (Yape personal no aplica para socios de cooperativa — ESC-06)
+    const campoYape = page.locator('input[placeholder="+51 987 654 321"]:visible')
+      .or(page.locator('label:has-text("Número Yape"):visible'))
+    const hayYapeVisible = await campoYape.isVisible({ timeout: 2_000 }).catch(() => false)
+    if (hayYapeVisible) {
+      // Si hay un campo con placeholder de teléfono, verificar que su label dice "CCI" no "Yape"
+      const labelCerca = await page.locator('label:visible').filter({ hasText: /CCI|Yape/i }).first().textContent().catch(() => '')
+      expect(labelCerca).toMatch(/CCI/i)
+      expect(labelCerca).not.toMatch(/Yape/i)
+    }
+    // El campo CCI debe estar visible y ser un input de texto
+    // Si existe un campo con placeholder explícito de CCI, debe ser visible
+    const hayPlaceholderCCI = await page.locator('input[placeholder*="CCI" i], input[placeholder*="interbanc" i]').isVisible({ timeout: 2_000 }).catch(() => false)
+    if (hayPlaceholderCCI) {
+      await expect(page.locator('input[placeholder*="CCI" i], input[placeholder*="interbanc" i]').first()).toBeVisible()
+    }
+    // La regla ESC-06 se cumple si el body tiene CCI y NO tiene el campo Yape etiquetado como cobro cooperativa
+    expect(body).toMatch(/CCI|cuenta interbancaria/i)
+  })
+
+  // ── Test 43 ───────────────────────────────────────────────────────────────────
+
+  test('43 — ESC-06: COOPERATIVA — el campo CCI es obligatorio (error al intentar crear cuenta sin él)', async ({ page }) => {
+    // Llegar al Paso 3 de /registro-caficultor con modalidad COOPERATIVA
+    await llegar_paso3_regcaf(page, 'COOPERATIVA', emailH('t43'))
+    // Rellenar DNI y subir fotos KYC (obligatorios) pero NO el campo CCI
+    await vis(page, '12345678').fill('43214321')
+    const files = page.locator('input[type=file]')
+    await files.nth(0).setInputFiles(PNG_1X1)
+    await files.nth(1).setInputFiles(PNG_1X1)
+    // Si hay un campo Yape visible, dejarlo vacío también (el test verifica que CCI bloquea el avance)
+    // Intentar crear la cuenta sin CCI
+    await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
+    await page.waitForTimeout(600)
+    const body = await page.locator('body').textContent()
+    // Debe mostrar error que mencione CCI o cooperativa para cobro
+    expect(body).toMatch(/CCI.*cooperativa|cooperativa.*CCI|Ingresa el CCI|cuenta interbancaria|CCI.*pagos/i)
+    // No debe haber avanzado a la pantalla de bienvenida o portal
+    expect(page.url()).not.toMatch(/caficultor-portal|bienvenid/i)
+    // Sigue en paso identidad
+    await expect(page.getByText('Verifica tu identidad').first()).toBeVisible()
+  })
+
+  // ── Test 44 ───────────────────────────────────────────────────────────────────
+
+  test.skip('44 — ESC-06: caficultor COOPERATIVA — tab Cobros oculta "Número Yape" y muestra "CCI Cooperativa"', async ({ page }) => {
+    // SKIP: Este test requiere un usuario caficultor con modalidad COOPERATIVA autenticado
+    // en Firestore. No existe un seed QA para ese perfil en este entorno E2E.
+    //
+    // Para ejecutar manualmente:
+    //   1. Registrar un caficultor con modalidad COOPERATIVA en /registro-caficultor
+    //   2. Añadir sus credenciales a USERS en e2e/helpers.ts (ej: USERS.caficultor_coop)
+    //   3. Reemplazar test.skip por el flujo de loginEmail + navegación al portal:
+    //
+    //   await loginEmail(page, USERS.caficultor_coop.email, USERS.caficultor_coop.password)
+    //   await irA(page, '/caficultor-portal')
+    //   await esperarCarga(page)
+    //   // Navegar al tab Configuración → subtab Cobros
+    //   await page.getByRole('button', { name: /⚙️.*Configuración|Configuración/i }).first().click()
+    //   await page.getByRole('button', { name: /💳.*Cobros|Cobros/i }).first().click()
+    //   await page.waitForTimeout(500)
+    //   const body = await page.locator('body').textContent()
+    //   // COOPERATIVA: NO debe mostrar "Número Yape" como campo de cobro propio
+    //   expect(body).not.toMatch(/Número Yape/i)
+    //   // COOPERATIVA: SÍ debe mostrar "CCI Cooperativa" o "CCI de la cooperativa"
+    //   expect(body).toMatch(/CCI.*cooperativa|cooperativa.*CCI|CCI Cooperativa/i)
+    //
+    // Criterio ESC-06: socios de cooperativa no usan Yape personal; el cobro es vía CCI cooperativa.
+  })
+
+  // ── Test 45 ───────────────────────────────────────────────────────────────────
+
+  test.skip('45 — ESC-06: caficultor RUC_PROPIO — tab Cobros muestra campo Yape (Yape Business)', async ({ page }) => {
+    // SKIP: Este test requiere un usuario caficultor con modalidad RUC_PROPIO autenticado
+    // en Firestore. No existe un seed QA para ese perfil en este entorno E2E.
+    // El caficultor de USERS.caficultor tiene modalidad indeterminada (campo no sembrado).
+    //
+    // Para ejecutar manualmente:
+    //   1. Registrar un caficultor con modalidad RUC_PROPIO en /registro-caficultor
+    //   2. Añadir sus credenciales a USERS en e2e/helpers.ts (ej: USERS.caficultor_ruc)
+    //   3. Reemplazar test.skip por el flujo de loginEmail + navegación al portal:
+    //
+    //   await loginEmail(page, USERS.caficultor_ruc.email, USERS.caficultor_ruc.password)
+    //   await irA(page, '/caficultor-portal')
+    //   await esperarCarga(page)
+    //   // Navegar al tab Configuración → subtab Cobros
+    //   await page.getByRole('button', { name: /⚙️.*Configuración|Configuración/i }).first().click()
+    //   await page.getByRole('button', { name: /💳.*Cobros|Cobros/i }).first().click()
+    //   await page.waitForTimeout(500)
+    //   const body = await page.locator('body').textContent()
+    //   // RUC_PROPIO: SÍ debe mostrar el campo "Número Yape"
+    //   expect(body).toMatch(/Número Yape/i)
+    //   // RUC_PROPIO: el aviso puede mencionar "Yape Business" o no (es opcional por ahora)
+    //   // expect(body).toMatch(/Yape Business/i)
+    //
+    // Criterio ESC-06: RUC_PROPIO puede cobrar con Yape (Yape Business para personas jurídicas).
+  })
+})

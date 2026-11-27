@@ -40,7 +40,7 @@ const PROCESOS = ['Natural (seco)', 'Washed (lavado)', 'Honey', 'Anaerobic']
 
 // TRIB-04: Modalidades tributarias del caficultor
 const TIPOS_REGISTRO: { value: TipoRegistroCaficultor; label: string; desc: string }[] = [
-  { value: 'SOLO_DNI',   label: 'Solo DNI',   desc: 'Solo puedes vender café TYPE_A. Cobra con Yape/Plin.' },
+  { value: 'SOLO_DNI',   label: 'Solo DNI',   desc: 'Persona natural sin negocio. Emite solo Liquidación de Compra. Cobro vía transferencia bancaria.' },
   { value: 'RUC_PROPIO', label: 'RUC propio', desc: 'Emites facturas. Puedes vender todos los tipos.' },
   { value: 'COOPERATIVA',label: 'Cooperativa', desc: 'Tu cooperativa emite los comprobantes por ti.' },
 ]
@@ -203,6 +203,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
   // Paso 3 — Identidad
   const [dni, setDni] = useState('')
   const [numeroYape, setNumeroYape] = useState('')
+  const [cciCooperativa, setCciCooperativa] = useState('')
   const [fotoDniFile, setFotoDniFile] = useState<File | null>(null)
   const [fotoDniPreview, setFotoDniPreview] = useState<string | null>(null)
   const [fotoSelfieFile, setFotoSelfieFile] = useState<File | null>(null)
@@ -253,7 +254,12 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
       return 'Tu RUC 10 no corresponde a este DNI. Revisa ambos números.'
     if (!fotoDniFile) return 'Adjunta la foto frontal de tu DNI.'
     if (!fotoSelfieFile) return 'Adjunta una selfie sosteniendo tu DNI.'
-    if (!numeroYape.trim()) return 'Ingresa tu número Yape para recibir pagos.'
+    // ESC-06 / TRIB-06: COOPERATIVA no usa Yape — requiere CCI de la cooperativa
+    if (tipoRegistroCaficultor === 'COOPERATIVA') {
+      if (!cciCooperativa.trim()) return 'Ingresa el CCI de tu cooperativa para recibir pagos.'
+    } else {
+      if (!numeroYape.trim()) return 'Ingresa tu número Yape para recibir pagos.'
+    }
     return null
   }
 
@@ -300,7 +306,8 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
           await updateDoc(doc(db, 'one_usuarios', uid), {
             'caficultor.proceso': proceso,
             'caficultor.dni': dni,
-            'caficultor.numeroYape': numeroYape,
+            'caficultor.numeroYape': tipoRegistroCaficultor !== 'COOPERATIVA' ? numeroYape : undefined,
+            'caficultor.cciCooperativa': tipoRegistroCaficultor === 'COOPERATIVA' ? cciCooperativa : undefined,
             'caficultor.kgDisponibles': kgDisponibles,
             'caficultor.tipoRegistroCaficultor': tipoRegistroCaficultor,
             ...(tipoRegistroCaficultor === 'RUC_PROPIO' ? { 'caficultor.ruc': ruc } : {}),
@@ -349,7 +356,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
             {[
               { n: '1', text: 'Te llamamos para verificar tu finca (24–48h)', color: 'var(--tw-terra)' },
               { n: '2', text: 'Publicas tu primer lote con precio y stock', color: 'var(--tw-terra)' },
-              { n: '3', text: 'Recibes tu primer pedido y el Yape llega en 24h', color: 'var(--tw-sage)' },
+              { n: '3', text: 'Recibes tu primer pedido y el pago llega en 24h', color: 'var(--tw-sage)' },
             ].map(s => (
               <div key={s.n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
                 <div style={{ width: 18, height: 18, borderRadius: '50%', background: s.color, color: '#fff', fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{s.n}</div>
@@ -440,7 +447,9 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
           {paso === 3 && (
             <Paso3
               dni={dni} setDni={setDni}
+              tipoRegistroCaficultor={tipoRegistroCaficultor}
               numeroYape={numeroYape} setNumeroYape={setNumeroYape}
+              cciCooperativa={cciCooperativa} setCciCooperativa={setCciCooperativa}
               fotoDniFile={fotoDniFile} setFotoDniFile={setFotoDniFile}
               fotoDniPreview={fotoDniPreview} setFotoDniPreview={setFotoDniPreview}
               fotoSelfieFile={fotoSelfieFile} setFotoSelfieFile={setFotoSelfieFile}
@@ -660,7 +669,9 @@ const Paso2: React.FC<{
 
 const Paso3: React.FC<{
   dni: string; setDni: (v: string) => void
+  tipoRegistroCaficultor: TipoRegistroCaficultor
   numeroYape: string; setNumeroYape: (v: string) => void
+  cciCooperativa: string; setCciCooperativa: (v: string) => void
   fotoDniFile: File | null; setFotoDniFile: (f: File | null) => void
   fotoDniPreview: string | null; setFotoDniPreview: (s: string | null) => void
   fotoSelfieFile: File | null; setFotoSelfieFile: (f: File | null) => void
@@ -669,7 +680,7 @@ const Paso3: React.FC<{
   enviando: boolean
   onRegistrar: () => void
   getInputStyle: GetInputStyle
-}> = ({ dni, setDni, numeroYape, setNumeroYape, fotoDniFile, setFotoDniFile, fotoDniPreview, setFotoDniPreview, fotoSelfieFile, setFotoSelfieFile, fotoSelfiePreview, setFotoSelfiePreview, error, enviando, onRegistrar, getInputStyle }) => {
+}> = ({ dni, setDni, tipoRegistroCaficultor, numeroYape, setNumeroYape, cciCooperativa, setCciCooperativa, fotoDniFile, setFotoDniFile, fotoDniPreview, setFotoDniPreview, fotoSelfieFile, setFotoSelfieFile, fotoSelfiePreview, setFotoSelfiePreview, error, enviando, onRegistrar, getInputStyle }) => {
   const [focused, setFocused] = useState('')
   const refDni = useRef<HTMLInputElement>(null)
   const refSelfie = useRef<HTMLInputElement>(null)
@@ -744,12 +755,22 @@ const Paso3: React.FC<{
           📋 <strong>Verificación manual (24–48 horas hábiles)</strong> — Tu cuenta quedará en revisión hasta que nuestro equipo valide tu identidad.
         </div>
 
-        <Field label="Número Yape" required hint="Al número donde recibirás tus pagos. Debe ser titular del mismo DNI.">
-          <input type="tel" placeholder="+51 987 654 321" value={numeroYape}
-            onChange={e => setNumeroYape(e.target.value)}
-            onFocus={() => setFocused('yape')} onBlur={() => setFocused('')}
-            style={getInputStyle(focused === 'yape')} />
-        </Field>
+        {/* ESC-06 / TRIB-06: COOPERATIVA usa CCI de la cooperativa; SOLO_DNI y RUC_PROPIO usan Yape */}
+        {tipoRegistroCaficultor === 'COOPERATIVA' ? (
+          <Field label="CCI Cooperativa" required hint="CCI de tu cooperativa. El pago se liquida a la cuenta de la cooperativa, no a tu número personal.">
+            <input type="text" placeholder="00219100XXXXXXXXXX25" value={cciCooperativa}
+              onChange={e => setCciCooperativa(e.target.value)}
+              onFocus={() => setFocused('cci')} onBlur={() => setFocused('')}
+              style={getInputStyle(focused === 'cci')} />
+          </Field>
+        ) : (
+          <Field label="Número Yape" required hint="Al número donde recibirás tus pagos. Debe ser titular del mismo DNI.">
+            <input type="tel" placeholder="+51 987 654 321" value={numeroYape}
+              onChange={e => setNumeroYape(e.target.value)}
+              onFocus={() => setFocused('yape')} onBlur={() => setFocused('')}
+              style={getInputStyle(focused === 'yape')} />
+          </Field>
+        )}
       </div>
 
       {error && <p style={{ margin: '12px 0 0', padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', fontSize: 12, color: '#ef4444' }}>{error}</p>}

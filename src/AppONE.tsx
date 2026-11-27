@@ -515,13 +515,16 @@ function useAuthONE(isDemo = false) {
 
   // Cuando el usuario está autenticado pero sin doc (registro Google en proceso),
   // reintentar fetchUsuario cada 1.5s hasta encontrar el doc recién creado.
+  // BUG-REG-04: también mientras el perfil es un seller a medias (sin bloque caficultor), por si
+  // se pierde el aviso EVENTO_PERFIL_ACTUALIZADO al terminar el alta.
   useEffect(() => {
-    if (!user || loading || usuarioONE) return
+    if (!user || loading || (usuarioONE && !sellerIncompleto(usuarioONE))) return
     let stopped = false
     const id = setInterval(async () => {
       try {
         const u = await fetchUsuario(user.uid)
         if (stopped) return
+        if (usuarioONE && sellerIncompleto(u)) return   // sigue a medias: nada que actualizar
         setUsuarioONE(u)
         setAnalyticsUser(user.uid, u.rol)
         clearInterval(id)
