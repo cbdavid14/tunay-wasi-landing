@@ -310,9 +310,11 @@ const NotificacionesCaficultor: React.FC<{
                   <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tw-text)', lineHeight: 1.3, marginBottom: 2 }}>
                     {n.titulo}
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.4 }}
-                    dangerouslySetInnerHTML={{ __html: n.descripcion.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-                  />
+                  <div style={{ fontSize: 10, color: 'var(--tw-text-muted)', lineHeight: 1.4 }}>
+                    {n.descripcion.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+                      i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                    )}
+                  </div>
                   {cta && (
                     <button
                       onClick={e => { e.stopPropagation(); handleCTA(n) }}

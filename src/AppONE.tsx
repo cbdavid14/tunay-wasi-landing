@@ -722,7 +722,7 @@ const SPLASH_MIN_MS = 1000
 
 const AppONE: React.FC = () => {
   useTheme()
-  const isDemo = new URLSearchParams(window.location.search).get('demo') === '1'
+  const isDemo = !import.meta.env.PROD && new URLSearchParams(window.location.search).get('demo') === '1'
   const { user, usuarioONE, loading, isAdmin } = useAuthONE(isDemo)
 
   // Splash visible al menos SPLASH_MIN_MS desde que se abrió la página (cuenta el tiempo de carga del bundle)
