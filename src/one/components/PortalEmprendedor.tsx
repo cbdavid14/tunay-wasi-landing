@@ -4567,7 +4567,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Montserrat, sans-serif' }}>Reclamos y devoluciones</div>
-            <div style={{ fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', marginTop: 2 }}>TW intermedia y resuelve en ≤48h</div>
+            <div style={{ fontSize: 12, color: 'var(--tw-text-muted)', fontFamily: 'Montserrat, sans-serif', marginTop: 2 }}>TW intermedia y resuelve en ≤48h · <a href="#/reclamaciones" style={{ color: 'var(--tw-terra)', textDecoration: 'none' }}>Libro de Reclamaciones formal →</a></div>
           </div>
           <button onClick={() => { setReclamoPantalla('nuevo'); setReclamoPaso(1); setReclamoForm({ pedidoId: '', pedidoRef: '', caficultorId: '', caficultorNombre: '', tipo: 'producto_danado', descripcion: '' }) }}
             style={{ background: 'var(--tw-terra)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>
