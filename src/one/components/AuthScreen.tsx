@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { navigate } from '@/router'
 import { loginConGoogle, login, registrar, resetPassword } from '../authService'
 import { fetchUsuario } from '../service'
-import type { RolONE } from '../types'
+import type { RolONE, TipoRegistroCaficultor } from '../types'
 import { track, setAnalyticsUser } from '../analytics'
 import { completarOnboarding, EVENTO_PERFIL_ACTUALIZADO, useOnboardingTracking, type FlujoOnboarding, type PasoOnboarding } from '../onboarding'
 import { irTrasAcceso, limpiarConfirmacion, marcarConfirmacionPendiente, textoBotonTrasRegistro } from '../retorno'
@@ -136,7 +136,11 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
   const [fincaProceso, setFincaProceso] = useState('')
   const [cafDni, setCafDni] = useState('')
   const [cafDniEstado, setCafDniEstado] = useState<'idle' | 'ok'>('idle')
-  const [cafYape, setCafYape] = useState('')
+  const [cafWhatsapp, setCafWhatsapp] = useState('')   // GAP-22: WhatsApp (paso 1) separado de Yape (paso 3)
+  const [cafYape, setCafYape] = useState('')           // GAP-22: Yape para cobros (paso 3)
+  // GAP-19: modalidad tributaria TRIB-04 en paso finca
+  const [fincaTipoRegistro, setFincaTipoRegistro] = useState<TipoRegistroCaficultor>('SOLO_DNI')
+  const [fincaRuc, setFincaRuc] = useState('')
   const [cafFotoDniFile, setCafFotoDniFile] = useState<File | null>(null)
   const [cafFotoDniPreview, setCafFotoDniPreview] = useState<string | null>(null)
   const [cafFotoSelfieFile, setCafFotoSelfieFile] = useState<File | null>(null)
@@ -1157,7 +1161,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>WhatsApp <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-                <input type="tel" placeholder="+51 987 654 321" value={cafYape} onChange={e => setCafYape(e.target.value)} style={inputStyle} />
+                <input type="tel" placeholder="+51 987 654 321" value={cafWhatsapp} onChange={e => setCafWhatsapp(e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Email <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
@@ -1191,7 +1195,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                 onClick={() => {
                   const n = googlePendingTipo ? pendingNombre : nombre
                   if (!n.trim()) { setError('Ingresa tu nombre.'); return }
-                  if (!cafYape.trim()) { setError('Ingresa tu WhatsApp.'); return }
+                  if (!cafWhatsapp.trim()) { setError('Ingresa tu WhatsApp.'); return }
                   if (googlePendingTipo) {
                     if (!pendingEmail.includes('@')) { setError('Ingresa un email válido.'); return }
                     setError(null)
@@ -1274,9 +1278,61 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                 </select>
               </div>
             </div>
+            {/* GAP-19: Modalidad tributaria TRIB-04 */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>Modalidad tributaria <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {([
+                  { value: 'SOLO_DNI' as TipoRegistroCaficultor, label: 'Solo DNI', desc: 'Solo puedes vender café TYPE_A. Cobra con Yape/Plin.' },
+                  { value: 'RUC_PROPIO' as TipoRegistroCaficultor, label: 'RUC propio', desc: 'Emites facturas. Puedes vender todos los tipos.' },
+                  { value: 'COOPERATIVA' as TipoRegistroCaficultor, label: 'Cooperativa', desc: 'Tu cooperativa emite los comprobantes por ti.' },
+                ] as { value: TipoRegistroCaficultor; label: string; desc: string }[]).map(opt => (
+                  <div
+                    key={opt.value}
+                    onClick={() => { setFincaTipoRegistro(opt.value); setFincaRuc('') }}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 9, border: `1.5px solid ${fincaTipoRegistro === opt.value ? '#4a7c59' : '#2a2a2a'}`, background: fincaTipoRegistro === opt.value ? 'rgba(74,124,89,0.1)' : '#1a1a1a', cursor: 'pointer' }}
+                  >
+                    <div style={{ width: 16, height: 16, borderRadius: '50%', border: `2px solid ${fincaTipoRegistro === opt.value ? '#4a7c59' : '#555'}`, background: fincaTipoRegistro === opt.value ? '#4a7c59' : 'transparent', flexShrink: 0, marginTop: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {fincaTipoRegistro === opt.value && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#fff' }} />}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#f2e0cc', marginBottom: 1 }}>{opt.label}</div>
+                      <div style={{ fontSize: 10, color: '#888', lineHeight: 1.4 }}>{opt.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* GAP-19: Campo RUC condicional */}
+            {fincaTipoRegistro !== 'SOLO_DNI' && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                  {fincaTipoRegistro === 'RUC_PROPIO' ? 'Tu RUC' : 'RUC de la cooperativa'} <span style={{ color: 'var(--tw-terra)' }}>*</span>
+                </label>
+                <input
+                  type="text" placeholder={fincaTipoRegistro === 'RUC_PROPIO' ? '10XXXXXXXXX o 20XXXXXXXXX' : '20XXXXXXXXX'}
+                  maxLength={11}
+                  value={fincaRuc}
+                  onChange={e => setFincaRuc(e.target.value.replace(/\D/g, ''))}
+                  style={{ ...inputStyle, marginBottom: 4 }}
+                />
+                {fincaTipoRegistro === 'RUC_PROPIO' && (
+                  <div style={{ fontSize: 9, color: '#888', lineHeight: 1.4 }}>RUC 10 (persona natural) o RUC 20 (empresa).</div>
+                )}
+                {fincaTipoRegistro === 'COOPERATIVA' && (
+                  <div style={{ fontSize: 9, color: '#888', lineHeight: 1.4 }}>RUC 20 de tu cooperativa. No tiene que ser único: varios socios lo comparten.</div>
+                )}
+              </div>
+            )}
             <button
               onClick={() => {
                 if (!fincaRegion || !fincaDistrito || !fincaVariedad || !fincaProceso) { setError('Completa los campos obligatorios.'); return }
+                // GAP-19: validar RUC si modalidad lo requiere
+                if (fincaTipoRegistro !== 'SOLO_DNI') {
+                  const prefijos = fincaTipoRegistro === 'RUC_PROPIO' ? ['10', '20'] : ['20']
+                  const errRuc = errorFormatoRuc(fincaRuc, prefijos)
+                  if (errRuc) { setError(fincaTipoRegistro === 'COOPERATIVA' ? `RUC de la cooperativa: ${errRuc}` : errRuc); return }
+                }
                 setError(null)
                 setPaso('registro_caficultor_identidad')
               }}
@@ -1338,7 +1394,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
               </div>
             </div>
             <div style={{ background: 'rgba(143,175,138,0.07)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 9, padding: '11px 13px', fontSize: 10, color: '#8faf8a', lineHeight: 1.6, marginBottom: 13 }}>
-              🤖 <strong>Verificación automática</strong> — La IA compara tu DNI con tu selfie en segundos. Tu nivel inicial sube a N1 y puedes publicar tu primer lote.
+              📋 <strong>Verificación manual (24–48 horas hábiles)</strong> — Tu cuenta quedará en revisión hasta que nuestro equipo valide tu identidad.
             </div>
             <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Número Yape <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
             <input type="tel" placeholder="+51 987 654 321" value={cafYape} onChange={e => setCafYape(e.target.value)} style={inputStyle} />
@@ -1353,9 +1409,15 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                 setPaso('cargando_cuenta')
                 try {
                   let uidSeller: string | undefined
+                  // GAP-19: documentos a reservar (DNI siempre; RUC solo si RUC_PROPIO)
+                  const docsReservar = (dni: string) => {
+                    const docs = [claveDniSeller(dni)]
+                    if (fincaTipoRegistro === 'RUC_PROPIO') docs.push(claveRuc(fincaRuc.trim()))
+                    return docs
+                  }
                   if (googlePendingTipo && pendingUid) {
-                    // REG-01: reservar DNI antes de crear el perfil
-                    await reservarDocumentos(pendingUid, 'seller', [claveDniSeller(cafDni.trim())])
+                    // REG-01/02: reservar DNI (y RUC propio si aplica) antes de crear el perfil
+                    await reservarDocumentos(pendingUid, 'seller', docsReservar(cafDni.trim()))
                     const { completarRegistroGoogle } = await import('../authService')
                     await completarRegistroGoogle(pendingUid, pendingNombre, pendingEmail, 'seller')
                     limpiarGooglePending()
@@ -1363,16 +1425,16 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                     try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
                     uidSeller = pendingUid
                   } else if (completarSeller) {
-                    // Alta a medias: la cuenta y el perfil seller ya existen — solo reservar DNI (REG-01)
+                    // Alta a medias: la cuenta y el perfil seller ya existen — solo reservar documentos (REG-01/02)
                     const { auth } = await import('@/shared/firebase')
                     uidSeller = auth.currentUser?.uid
                     if (!uidSeller) throw new Error('sin-sesion')
-                    await reservarDocumentos(uidSeller, 'seller', [claveDniSeller(cafDni.trim())])
+                    await reservarDocumentos(uidSeller, 'seller', docsReservar(cafDni.trim()))
                   } else {
                     // Flujo email (BUG-REG-04): la cuenta se crea AHORA, al final del paso 3. registrar()
-                    // reserva el DNI (REG-01) y, si algo falla, libera el DNI y borra la cuenta Auth.
+                    // reserva los documentos (REG-01/02) y, si algo falla, los libera y borra la cuenta Auth.
                     try {
-                      await registrar(email, password, nombre.trim(), 'seller', [claveDniSeller(cafDni.trim())])
+                      await registrar(email, password, nombre.trim(), 'seller', docsReservar(cafDni.trim()))
                     } catch (e: unknown) {
                       const code = (e as { code?: string }).code ?? ''
                       if (code.startsWith('auth/')) {
@@ -1401,9 +1463,13 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                         activo: false,
                         dni: cafDni.trim(),
                         yape: cafYape.trim(),
+                        whatsapp: cafWhatsapp.trim(),   // GAP-22: guardamos WhatsApp separado de Yape
                         variedades: fincaVariedad.trim(),
                         proceso: fincaProceso.trim(),
-                        kgAnualesEstimados: parseInt(fincaKg) || 0,
+                        kgDisponibles: parseInt(fincaKg) || 0,   // GAP-20: campo canónico kgDisponibles
+                        tipoRegistroCaficultor: fincaTipoRegistro,   // GAP-19: modalidad TRIB-04
+                        ...(fincaTipoRegistro === 'RUC_PROPIO' ? { ruc: fincaRuc.trim() } : {}),
+                        ...(fincaTipoRegistro === 'COOPERATIVA' ? { rucCooperativa: fincaRuc.trim() } : {}),
                       },
                       updatedAt: serverTimestamp(),
                     }, { merge: true })
