@@ -9,7 +9,7 @@ import { fetchUsuario } from '../service'
 import type { RolONE } from '../types'
 import { track, setAnalyticsUser } from '../analytics'
 import { completarOnboarding, useOnboardingTracking, type FlujoOnboarding, type PasoOnboarding } from '../onboarding'
-import { irTrasAcceso } from '../retorno'
+import { irTrasAcceso, limpiarConfirmacion, marcarConfirmacionPendiente, textoBotonTrasRegistro } from '../retorno'
 import { claveDniB2C, claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado, reservarDocumentos } from '../documentos'
 
 type Paso = 'inicio' | 'email_login' | 'email_registro' | 'reset' | 'seleccion_rol' | 'seleccion_rol_registro' | 'cuenta_email' | 'seleccion_tipo_cliente' | 'datos_persona' | 'datos_negocio' | 'registro_caficultor' | 'registro_caficultor_finca' | 'registro_caficultor_identidad' | 'verifica_correo' | 'cargando' | 'cargando_cuenta' | 'abriendo_google' | 'google_loading'
@@ -217,6 +217,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
     if (!nombre.trim()) { setError('Ingresa tu nombre.'); return }
     setError(null)
     setCargando(true)
+    if (rolRegistro !== 'seller') marcarConfirmacionPendiente()   // antes de crear la cuenta: AppONE no redirige
     setPaso('cargando_cuenta')
     try {
       await registrar(email, password, nombre.trim(), rolRegistro)
@@ -227,9 +228,11 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         setPaso('registro_caficultor_finca')
       } else {
         completarOnboarding(uid ?? '', rolRegistro, flujoDeRol(rolRegistro), 'email')
+        marcarConfirmacionPendiente()
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
+      limpiarConfirmacion()
       setError(traducirError((e as { code?: string }).code ?? ''))
       setPaso('registro_caficultor')
     } finally {
@@ -308,6 +311,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
     if (dniEstado !== 'ok' || !esDniValido(dni)) { setError('Ingresa un DNI válido de 8 dígitos.'); return }
     if (!telefono.trim()) { setError('Ingresa tu número de teléfono.'); return }
     setError(null)
+    marcarConfirmacionPendiente()   // antes de crear la cuenta: AppONE no redirige
     setPaso('cargando_cuenta')
     try {
       if (googlePendingTipo && pendingUid) {
@@ -320,16 +324,20 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         setAnalyticsUser(pendingUid, 'buyer_b2c')
         completarOnboarding(pendingUid, 'buyer_b2c', 'b2c', 'google')
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
-        irTrasAcceso('buyer_b2c', true)   // antes '/catalogo' (ruta inexistente, ignoraba el carrito)
+        setRolRegistro('buyer_b2c')
+        marcarConfirmacionPendiente()
+        setPaso('verifica_correo')        // antes '/catalogo' (ruta inexistente); ahora "¡Bienvenido/a!"
       } else {
         await registrar(email, password, nombre.trim(), 'buyer_b2c', [claveDniB2C(dni)])
         const { auth } = await import('@/shared/firebase')
         const uid = auth.currentUser?.uid
         if (uid) { await guardarDatosPersona(uid); setAnalyticsUser(uid, 'buyer_b2c') }
         completarOnboarding(uid ?? '', 'buyer_b2c', 'b2c', 'email')
+        marcarConfirmacionPendiente()
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
+      limpiarConfirmacion()
       setError(esDocumentoDuplicado(e) ? e.message : traducirError((e as { code?: string }).code ?? ''))
       setPaso('datos_persona')
     } finally {
@@ -343,6 +351,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
     if (rucEstado !== 'ok') { setError('Ingresa un RUC válido y verificado.'); return }
     if (!razonSocial.trim()) { setError('La razón social es requerida.'); return }
     setError(null)
+    marcarConfirmacionPendiente()   // antes de crear la cuenta: AppONE no redirige
     setPaso('cargando_cuenta')
     try {
       if (googlePendingTipo && pendingUid) {
@@ -356,7 +365,9 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         setAnalyticsUser(pendingUid, 'buyer_b2b')
         completarOnboarding(pendingUid, 'buyer_b2b', 'b2b', 'google')
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
-        irTrasAcceso('buyer_b2b', true)   // antes '/catalogo' (ruta inexistente, ignoraba el carrito)
+        setRolRegistro('buyer_b2b')
+        marcarConfirmacionPendiente()
+        setPaso('verifica_correo')        // antes '/catalogo' (ruta inexistente); ahora "¡Bienvenido/a!"
       } else {
         await registrar(email, password, nombre.trim(), 'buyer_b2b', [claveRuc(ruc)])
         const { auth } = await import('@/shared/firebase')
@@ -364,9 +375,11 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         // B2B-01: el flujo email no guardaba empresa ni PENDING_APPROVAL
         if (uid) { await guardarDatosEmpresa(uid); setAnalyticsUser(uid, 'buyer_b2b') }
         completarOnboarding(uid ?? '', 'buyer_b2b', 'b2b', 'email')
+        marcarConfirmacionPendiente()
         setPaso('verifica_correo')
       }
     } catch (e: unknown) {
+      limpiarConfirmacion()
       setError(esDocumentoDuplicado(e) ? e.message : traducirError((e as { code?: string }).code ?? ''))
       setPaso('datos_negocio')
     } finally {
@@ -778,6 +791,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
             <input
               type="email" placeholder="tu@correo.com"
               value={googlePendingTipo ? pendingEmail : email}
+              onChange={e => { if (!googlePendingTipo) setEmail(e.target.value) }}   // faltaba: el email no se podía escribir
+              autoComplete="email"
               readOnly={googlePendingTipo}
               style={{ ...inputStyle, ...(googlePendingTipo ? { opacity: 0.6, cursor: 'not-allowed', background: '#111' } : {}) }}
             />
@@ -1337,18 +1352,27 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
 
         {/* ── Verifica tu correo ── */}
         {paso === 'verifica_correo' && (
-          <div style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
-            <div style={{ fontSize: 64, marginBottom: 20 }}>📬</div>
-            <h2 style={{ margin: '0 0 10px', fontSize: 24, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, color: 'var(--tw-text)' }}>Verifica tu correo</h2>
+          // D-15-06 · paso 8: "¡Bienvenido/a!" (antes "Verifica tu correo", que AppONE saltaba al cargar el perfil)
+          <div data-testid="onboarding-bienvenida" style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, color: '#fff', background: 'var(--tw-sage)' }}>✓</div>
+            <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--tw-sage)' }}>
+              {rolRegistro === 'buyer_b2b' ? 'Negocio · Factura electrónica' : 'Comprador · Boleta electrónica'}
+            </p>
+            <h2 style={{ margin: '0 0 10px', fontSize: 28, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, color: 'var(--tw-text)' }}>¡Bienvenido/a!</h2>
             <p style={{ margin: '0 0 8px', fontSize: 14, color: 'var(--tw-text-muted)', lineHeight: 1.6 }}>
-              Te enviamos un link de verificación a <strong style={{ color: 'var(--tw-text)' }}>{email}</strong>.
+              {rolRegistro === 'buyer_b2b'
+                ? 'Tu cuenta está creada. Revisaremos tu RUC y te avisaremos para activar las compras de café verde.'
+                : 'Tu cuenta está lista para comprar.'}
             </p>
-            <p style={{ margin: '0 0 28px', fontSize: 13, color: 'var(--tw-text-muted)', lineHeight: 1.6 }}>
-              Revisa tu bandeja de entrada (y la carpeta de spam). Una vez verificado, ya puedes ingresar.
+            <p style={{ margin: '0 0 24px', fontSize: 12, color: 'var(--tw-text-muted)', lineHeight: 1.6, padding: '10px 12px', borderRadius: 8, background: 'rgba(143,175,138,0.08)', border: '1px solid rgba(143,175,138,0.25)' }}>
+              📬 Te enviamos un email para verificar tu correo{(email || pendingEmail) ? <> (<strong style={{ color: 'var(--tw-text)' }}>{email || pendingEmail}</strong>)</> : null}. Puedes hacerlo más tarde.
             </p>
-            {error && <p style={{ color: '#f87171', fontSize: 12, marginBottom: 16, padding: '10px 14px', background: 'rgba(248,113,113,0.1)', borderRadius: 8 }}>{error}</p>}
-            <button onClick={() => { setError(null); setPaso('email_login') }} style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', marginBottom: 10 }}>
-              Ingresar →
+            {error && <p style={{ color: error.startsWith('✓') ? 'var(--tw-sage)' : '#f87171', fontSize: 12, marginBottom: 16 }}>{error}</p>}
+            <button
+              onClick={() => { limpiarConfirmacion(); irTrasAcceso(rolRegistro, true) }}
+              style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', marginBottom: 10 }}
+            >
+              {textoBotonTrasRegistro(rolRegistro)}
             </button>
             <button
               onClick={async () => {
@@ -1361,12 +1385,12 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                     setError('✓ Correo reenviado. Revisa tu bandeja.')
                   }
                 } catch {
-                  setError('No se pudo reenviar. Intenta ingresar directamente.')
+                  setError('No se pudo reenviar el correo. Inténtalo más tarde.')
                 }
               }}
-              style={{ width: '100%', padding: '11px 0', borderRadius: 10, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 13, fontWeight: 600, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', textDecoration: 'underline' }}
             >
-              Reenviar correo de verificación
+              Reenviar email de verificación
             </button>
           </div>
         )}

@@ -16,7 +16,6 @@ import {
   type CatalogoProps, type MockCafe, type TipoProducto, TIPO_LABEL,
 } from './catalogo/catalogoData'
 import { DetalleProductoInline } from './catalogo/DetalleProductoInline'
-import { ModalRegistro } from './catalogo/ModalRegistro'
 import { ModalCaficultor } from './catalogo/ModalCaficultor'
 
 // ─── Componente Principal ────────────────────────────────────────────────────
@@ -72,8 +71,6 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
   const [productoDetalle, setProductoDetalle] = useState<ProductoONE | null>(null)
   const [detalleFormato, setDetalleFormato] = useState<string>('1kg')
   const [detalleCantidad, setDetalleCantidad] = useState(1)
-  const [modalRegistro, setModalRegistro] = useState(false)
-  const [loginGateProducto, setLoginGateProducto] = useState<{ nombre: string; precio: number } | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [caficultorModalId, setCaficultorModalId] = useState<number | null>(null)
 
@@ -262,7 +259,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
       return (
         <button
           className="sc-add-btn"
-          onClick={ev => { ev.stopPropagation(); navigate('/registro-emprendedor') }}
+          onClick={ev => { ev.stopPropagation(); navigate('/registro-emprendedor?tipo=negocio') }}
           title="¿Eres tostador o cafetería? Registra tu negocio"
           style={{ fontSize: 7, padding: '3px 5px', width: 'auto', minWidth: 36, background: 'var(--tw-sage)' }}
         >Negocio →</button>
@@ -840,7 +837,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
           </div>
           <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--tw-card)', border: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--tw-text)', flexShrink: 0 }}>D</div>
           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-            <button onClick={() => setModalRegistro(true)} style={{ padding: '5px 11px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)' }}>Registrarse</button>
+            <button onClick={() => irALogin({ registro: true })} style={{ padding: '5px 11px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)' }}>Registrarse</button>
             <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{ padding: '5px 11px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tw-font-body)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Mi portal</a>
           </div>
         </header>}
@@ -1282,7 +1279,6 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
         {toastMsg && <div className="sim-toast">{toastMsg}</div>}
 
         {/* ── MODAL REGISTRO ── */}
-        {modalRegistro && <ModalRegistro onClose={() => { setModalRegistro(false); setLoginGateProducto(null) }} productoIntencion={loginGateProducto} />}
 
         {/* ── DRAWER DE DETALLE (ruta #/) ── */}
         {productoDetalle && (() => {
@@ -1539,7 +1535,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
               </a>
               <a href="/docs" onClick={(e) => { e.preventDefault(); navigate('/docs') }} className="bn-item"><span className="bn-icon">📄</span><span>Docs</span></a>
               <a href="/para-caficultores" onClick={(e) => { e.preventDefault(); navigate('/para-caficultores') }} className="bn-item"><span className="bn-icon">🌱</span><span>Caficultor</span></a>
-              <button className="bn-item" onClick={() => setModalRegistro(true)} style={{ position: 'relative' }}>
+              <button className="bn-item" onClick={() => irALogin({ registro: true })} style={{ position: 'relative' }}>
                 <span className="bn-icon">👤</span><span>Perfil</span>
               </button>
             </>

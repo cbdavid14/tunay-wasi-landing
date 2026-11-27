@@ -1,4 +1,5 @@
 import { navigate } from '@/router'
+import { marcarOrigenOnboarding } from '@/one/onboarding'
 
 const CHECK_SVG = (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8faf8a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -96,19 +97,19 @@ export default function Footer() {
               <div className="tw-footer-cta-label" style={{ color: 'var(--tw-terra)' }}>Para consumidores</div>
               <div className="tw-footer-cta-title">Café tostado y molido</div>
               <div className="tw-footer-cta-sub">Por presentación (250 g · 500 g · 1 kg). Boleta electrónica.</div>
-              <button className="tw-footer-btn tw-footer-btn--primary" onClick={() => { navigate('/'); window.scrollTo({ top: 0 }); }}>Registrarme gratis →</button>
+              <button className="tw-footer-btn tw-footer-btn--primary" onClick={() => { marcarOrigenOnboarding('footer'); navigate('/registro'); window.scrollTo({ top: 0 }); }}>Registrarme gratis →</button>
             </div>
             <div className="tw-footer-cta-card tw-footer-cta-card--empresa">
               <div className="tw-footer-cta-label" style={{ color: 'var(--tw-sage)' }}>Para empresas</div>
               <div className="tw-footer-cta-title">Verde · tostado · molido a granel</div>
               <div className="tw-footer-cta-sub">Precio S/kg + escalas de volumen. Factura electrónica. RUC requerido.</div>
-              <button className="tw-footer-btn tw-footer-btn--outline-sage" onClick={() => { navigate('/'); window.scrollTo({ top: 0 }); }}>Solicitar aprobación →</button>
+              <button className="tw-footer-btn tw-footer-btn--outline-sage" onClick={() => { marcarOrigenOnboarding('footer'); navigate('/registro-emprendedor?tipo=negocio'); window.scrollTo({ top: 0 }); }}>Solicitar aprobación →</button>
             </div>
             <div className="tw-footer-cta-card">
               <div className="tw-footer-cta-label">Para caficultores</div>
               <div className="tw-footer-cta-title">Vende directo. 0% comisión beta</div>
               <div className="tw-footer-cta-sub">Fija tu precio, publica tus lotes y recibe el pago en 24h tras entrega.</div>
-              <button className="tw-footer-btn tw-footer-btn--outline" onClick={() => { navigate('/'); window.scrollTo({ top: 0 }); }}>Publicar mi lote →</button>
+              <button className="tw-footer-btn tw-footer-btn--outline" onClick={() => { marcarOrigenOnboarding('footer'); navigate('/registro-caficultor'); window.scrollTo({ top: 0 }); }}>Publicar mi lote →</button>
             </div>
           </div>
         </div>

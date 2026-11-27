@@ -21,7 +21,7 @@ import type { UsuarioONE, ProductoONE, FormatoONE } from '@/one/types'
 import { calcularPrecioFinal } from '@/one/config'
 import { track, setAnalyticsUser, initAnalytics, setupErrorTracking } from '@/one/analytics'
 import { esRutaOnboarding, iniciarOnboarding, puertaDeRuta } from '@/one/onboarding'
-import { destinoTrasAcceso, irALogin, limpiarRetorno } from '@/one/retorno'
+import { confirmacionPendiente, destinoTrasAcceso, irALogin, limpiarConfirmacion, limpiarRetorno } from '@/one/retorno'
 
 import CatalogoPublico from '@/one/components/CatalogoPublico'
 import CheckoutONE from '@/one/components/CheckoutONE'
@@ -703,6 +703,8 @@ const AppONE: React.FC = () => {
     return () => clearTimeout(id)
   }, [splashMinDone])
   const path = usePathname()
+  // GAP-F01-23: las rutas se comparan sin query (antes '/portal?demo=1' caía al catálogo)
+  const ruta = path.split('?')[0]
 
   const [carritoItems, setCarritoItems] = useState<ItemCarrito[]>(leerCarritoStorage)
   const [kitSeleccionados, setKitSeleccionados] = useState<Set<string>>(new Set())
@@ -822,7 +824,7 @@ const AppONE: React.FC = () => {
 
   // Al entrar al portal: marcar todos los estados actuales como vistos
   useEffect(() => {
-    if ((path !== '/portal' && path !== '/caficultor-portal') || !usuarioONE) return
+    if ((ruta !== '/portal' && ruta !== '/caficultor-portal') || !usuarioONE) return
     async function marcarVisto() {
       try {
         const { fetchPedidosByNegocio, fetchPedidosByCaficultor } = await import('./one/service')
@@ -877,7 +879,7 @@ const AppONE: React.FC = () => {
   // AUTH-04: el retorno se consume cuando el usuario, ya con sesión y perfil, llega a una ruta
   // fuera del onboarding (antes de cualquier return condicional — rules of hooks)
   useEffect(() => {
-    if (user && usuarioONE && !esRutaOnboarding(path.split('?')[0])) limpiarRetorno()
+    if (user && usuarioONE && !esRutaOnboarding(path.split('?')[0])) { limpiarRetorno(); limpiarConfirmacion() }
   }, [path, user, usuarioONE])
 
   if (loading || splashMinDone === false) {
@@ -916,7 +918,7 @@ const AppONE: React.FC = () => {
   // ─── Helper: envuelve contenido con el header global ─────────────────────
 
   // Rutas que no muestran el header (fullscreen)
-  const sinHeader = path === '/login' || path.startsWith('/login') || path === '/registro-caficultor' || path === '/registro-emprendedor' || path === '/registro' || path === '/para-caficultores' || path === '/para-cafeterias' || path === '/cafe-verde-peru' || path === '/soporte' || path === '/docs' || path.startsWith('/docs/')
+  const sinHeader = ruta === '/login' || ruta.startsWith('/login') || ruta === '/registro-caficultor' || ruta === '/registro-emprendedor' || ruta === '/registro' || ruta === '/para-caficultores' || ruta === '/para-cafeterias' || ruta === '/cafe-verde-peru' || ruta === '/soporte' || ruta === '/docs' || ruta.startsWith('/docs/')
 
   function withHeader(content: React.ReactNode) {
     if (sinHeader) return <>{content}</>
@@ -931,8 +933,8 @@ const AppONE: React.FC = () => {
           usuarioONE={usuarioONE}
           hash={path}
           avatarBadge={avatarBadge}
-          portalTab={path === '/portal' ? portalTabNeg : path === '/caficultor-portal' ? portalTabCaf : undefined}
-          onPortalTabChange={path === '/portal' ? setPortalTabNeg : path === '/caficultor-portal' ? setPortalTabCaf : undefined}
+          portalTab={ruta === '/portal' ? portalTabNeg : ruta === '/caficultor-portal' ? portalTabCaf : undefined}
+          onPortalTabChange={ruta === '/portal' ? setPortalTabNeg : ruta === '/caficultor-portal' ? setPortalTabCaf : undefined}
           searchValue={catalogoSearch}
           onSearchChange={setCatalogoSearch}
         />
@@ -972,8 +974,8 @@ const AppONE: React.FC = () => {
 
   // ─── Rutas ────────────────────────────────────────────────────────────────
 
-  if (path.startsWith('/caficultor/') && !path.endsWith('/portal')) {
-    const caficultorId = path.replace('/caficultor/', '')
+  if (ruta.startsWith('/caficultor/') && !ruta.endsWith('/portal')) {
+    const caficultorId = ruta.replace('/caficultor/', '')
     return withHeader(
       <>
         <PageMeta title="Perfil del caficultor" description="Conoce al caficultor, su finca y los cafés de especialidad que produce directamente." canonical={`${BASE_URL}/caficultor/${caficultorId}`} />
@@ -983,11 +985,11 @@ const AppONE: React.FC = () => {
   }
 
 
-  if (path === '/caficultores') {
+  if (ruta === '/caficultores') {
     return withHeader(<PaginaCaficultores />)
   }
 
-  if (path === '/para-caficultores') {
+  if (ruta === '/para-caficultores') {
     return withHeader(
       <>
         <PageMeta
@@ -1010,7 +1012,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/para-cafeterias') {
+  if (ruta === '/para-cafeterias') {
     return withHeader(
       <>
         <PageMeta title="Compra café de especialidad al por mayor en Perú — Para cafeterías y negocios" description="Marketplace de café de especialidad peruano para cafeterías, restaurantes y negocios. Compra café verde sin tostar, tostado en grano o molido directamente del caficultor. Envío a Lima y provincias." canonical={`${BASE_URL}/para-cafeterias`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Para cafeterías', url: `${BASE_URL}/para-cafeterias` }]} />
@@ -1019,7 +1021,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/cafe-verde-peru') {
+  if (ruta === '/cafe-verde-peru') {
     return withHeader(
       <>
         <PageMeta
@@ -1051,7 +1053,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/docs' || path.startsWith('/docs/')) {
+  if (ruta === '/docs' || ruta.startsWith('/docs/')) {
     return withHeader(
       <>
         <PageMeta title="Documentación" description="Guías y documentación para caficultores y emprendedores en Tunay Wasi." canonical={`${BASE_URL}/docs`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Documentación', url: `${BASE_URL}/docs` }]} />
@@ -1060,7 +1062,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/soporte') {
+  if (ruta === '/soporte') {
     return withHeader(
       <>
         <PageMeta title="Soporte — Tunay Wasi | Marketplace de Café de Especialidad Peruano" description="¿Tienes alguna duda? El equipo de Tunay Wasi está aquí para ayudarte. Soporte para caficultores y negocios compradores." canonical={`${BASE_URL}/soporte`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Soporte', url: `${BASE_URL}/soporte` }]} />
@@ -1069,23 +1071,23 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/terminos') {
+  if (ruta === '/terminos') {
     return withHeader(<><PageMeta title="Términos y Condiciones — Tunay Wasi" description="Condiciones de uso de la plataforma Tunay Wasi." canonical={`${BASE_URL}/terminos`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Términos y Condiciones', url: `${BASE_URL}/terminos` }]} /><TerminosONE /></>)
   }
 
-  if (path === '/contrato') {
+  if (ruta === '/contrato') {
     return withHeader(<><PageMeta title="Contrato de Comprador — Tunay Wasi" description="Condiciones específicas para compradores en Tunay Wasi." canonical={`${BASE_URL}/contrato`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Contrato de Comprador', url: `${BASE_URL}/contrato` }]} /><ContratoCompradorONE /></>)
   }
 
-  if (path === '/privacidad') {
+  if (ruta === '/privacidad') {
     return withHeader(<><PageMeta title="Política de Privacidad — Tunay Wasi" description="Cómo tratamos tus datos personales en Tunay Wasi." canonical={`${BASE_URL}/privacidad`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Política de Privacidad', url: `${BASE_URL}/privacidad` }]} /><PrivacidadONE /></>)
   }
 
-  if (path === '/reclamaciones') {
+  if (ruta === '/reclamaciones') {
     return withHeader(<><PageMeta title="Libro de Reclamaciones — Tunay Wasi" description="Registra tu reclamo o queja conforme al D.Leg. 1510 y Ley 29571." canonical={`${BASE_URL}/reclamaciones`} breadcrumb={[{ name: 'Inicio', url: BASE_URL }, { name: 'Libro de Reclamaciones', url: `${BASE_URL}/reclamaciones` }]} /><LibroReclamacionesONE /></>)
   }
 
-  if (path === '/armar-kit') {
+  if (ruta === '/armar-kit') {
     function handleKitConfirmar() {
       setKitConfirmando(true)
       setTimeout(() => {
@@ -1127,7 +1129,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/registro-caficultor') {
+  if (ruta === '/registro-caficultor') {
     return (
       <>
         <PageMeta title="Regístrate como caficultor" description="Crea tu perfil de caficultor en Tunay Wasi y empieza a vender tu café de especialidad." canonical={`${BASE_URL}/registro-caficultor`} />
@@ -1136,7 +1138,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/registro') {
+  if (ruta === '/registro') {
     return (
       <>
         <PageMeta title="Crear cuenta" description="Crea tu cuenta en Tunay Wasi para comprar café de especialidad directo del productor." canonical={`${BASE_URL}/registro`} />
@@ -1145,7 +1147,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/registro-emprendedor') {
+  if (ruta === '/registro-emprendedor') {
     return (
       <>
         <PageMeta title="Regístrate como negocio" description="Crea tu cuenta de negocio en Tunay Wasi y accede al catálogo." canonical={`${BASE_URL}/registro-emprendedor`} />
@@ -1155,11 +1157,11 @@ const AppONE: React.FC = () => {
   }
 
   // Limpiar flag de pedido confirmado al salir del checkout
-  if (path !== '/checkout') {
+  if (ruta !== '/checkout') {
     sessionStorage.removeItem('one_pedido_confirmado')
   }
 
-  if (path === '/checkout') {
+  if (ruta === '/checkout') {
     if (!user && !isDemo) {
       trackCarritoMeta('login_requerido', { itemCount: carritoItems.length })
       track('login_requerido', { itemCount: carritoItems.length, pasoDesde: 'checkout' })
@@ -1210,7 +1212,7 @@ const AppONE: React.FC = () => {
         />)
   }
 
-  if (path === '/portal') {
+  if (ruta === '/portal') {
     if (!user && !isDemo) {
       irALogin()
       return null
@@ -1237,7 +1239,7 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/caficultor-portal' || path === '/portal-caficultores') {
+  if (ruta === '/caficultor-portal' || ruta === '/portal-caficultores') {
     if (!user && !isDemo) {
       irALogin()
       return null
@@ -1259,24 +1261,27 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (path === '/admin') {
+  if (ruta === '/admin') {
     if (!isAdmin && !isDemo) {
-      navigate('/')
+      if (!user) irALogin()        // GAP-F01-23: sin sesión → login (antes al inicio)
+      else navigate('/')
       return null
     }
     return withHeader(<AdminONE isDemo={isDemo} />)
   }
 
-  if (path === '/login' || path.startsWith('/login')) {
+  if (ruta === '/login' || ruta.startsWith('/login')) {
     track('login_iniciado', { itemCount: carritoItems.length })
     if (user || isDemo) {
       // GAP-F01-11: con sesión pero SIN perfil (Google nuevo / alta en curso) se completa el registro
       // aquí mismo. Antes se comprobaba el carrito primero → /portal → guard → /login → bucle.
-      if (user && !usuarioONE && !isDemo) {
+      // GAP-F01-18: mientras se muestra "¡Bienvenido/a!" no se redirige; el botón decide el destino.
+      // Mismo elemento <AuthScreen> en la misma posición → React conserva su estado (el paso actual).
+      if (user && (!usuarioONE || confirmacionPendiente()) && !isDemo) {
         return (
           <AuthScreen
             onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
-            pasoInicial="seleccion_rol_registro"
+            pasoInicial={usuarioONE ? 'verifica_correo' : 'seleccion_rol_registro'}
           />
         )
       }

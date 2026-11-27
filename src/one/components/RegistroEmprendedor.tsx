@@ -159,7 +159,8 @@ const RegistroEmprendedor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
   const [rucEstado, setRucEstado] = useState<RucEstado>('idle')
 
   // Estado general
-  const [paso, setPaso] = useState<Paso>(0)
+  // GAP-F01-16: quien ya eligió "Negocio" (?tipo=negocio) no vuelve a ver Persona/Negocio
+  const [paso, setPaso] = useState<Paso>(() => new URLSearchParams(window.location.search).get('tipo') === 'negocio' ? 1 : 0)
   const [tipo, setTipo] = useState<'b2b' | 'b2c' | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)

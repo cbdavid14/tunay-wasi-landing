@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { navigate } from '@/router'
-import { irALogin } from '../retorno'
+import { irALogin, irTrasAcceso, textoBotonTrasRegistro } from '../retorno'
 import { registrar } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
@@ -232,11 +232,12 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
             <p style={{ margin: '0 0 20px', fontSize: 11, color: 'var(--tw-text-faint)' }}>DNI {dni} · Consumidor B2C</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} style={{
+            {/* 3.5: mismo destino que el resto del onboarding (carrito → página de origen → catálogo) */}
+            <a href="/" data-testid="onboarding-bienvenida-cta" onClick={(e) => { e.preventDefault(); irTrasAcceso('buyer_b2c', true) }} style={{
               display: 'block', padding: 14, borderRadius: 10, textAlign: 'center',
               background: 'var(--tw-terra)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700,
             }}>
-              Ver cafés →
+              {textoBotonTrasRegistro('buyer_b2c')}
             </a>
             <a href="/portal" onClick={(e) => { e.preventDefault(); navigate('/portal') }} style={{
               display: 'block', padding: 12, borderRadius: 10, textAlign: 'center',

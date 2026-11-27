@@ -59,7 +59,7 @@ const Nav: React.FC = () => {
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Ver catálogo</button>
           <button onClick={() => navigate('/caficultores')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-text-muted)' }}>Caficultores</button>
           <button onClick={() => navigate('/soporte')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: 'var(--tw-sage)', fontWeight: 600 }}>Soporte</button>
-          <button onClick={() => navigate('/registro-emprendedor')} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigate('/registro-emprendedor?tipo=negocio')} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', fontSize: 13, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             Registrar mi empresa
           </button>
         </div>
@@ -87,7 +87,7 @@ const Nav: React.FC = () => {
           <button onClick={() => { navigate('/'); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${'var(--tw-border)'}22` }}>Ver catálogo</button>
           <button onClick={() => { navigate('/caficultores'); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-text-muted)', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${'var(--tw-border)'}22` }}>Caficultores</button>
           <button onClick={() => { navigate('/soporte'); close() }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 15, color: 'var(--tw-sage)', fontWeight: 600, textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${'var(--tw-border)'}22` }}>Soporte</button>
-          <button onClick={() => { navigate('/registro-emprendedor'); close() }} style={{ marginTop: 8, padding: '13px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer' }}>
+          <button onClick={() => { navigate('/registro-emprendedor?tipo=negocio'); close() }} style={{ marginTop: 8, padding: '13px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: 'var(--tw-text-inverse)', fontSize: 14, fontWeight: 700, fontFamily: 'Montserrat, sans-serif', cursor: 'pointer' }}>
             Registrar mi empresa
           </button>
         </div>
@@ -169,7 +169,7 @@ const Hero: React.FC = () => (
           Ver catálogo de café verde →
         </button>
         <button
-          onClick={() => navigate('/registro-emprendedor')}
+          onClick={() => navigate('/registro-emprendedor?tipo=negocio')}
           style={{
             padding: '14px 32px', borderRadius: 10,
             border: `1px solid ${'var(--tw-border)'}`,
@@ -596,7 +596,7 @@ const SeccionCTA: React.FC = () => (
           Ver catálogo de café verde →
         </button>
         <button
-          onClick={() => navigate('/registro-emprendedor')}
+          onClick={() => navigate('/registro-emprendedor?tipo=negocio')}
           style={{
             width: '100%', maxWidth: 400,
             padding: '14px 0', borderRadius: 10,

@@ -46,7 +46,7 @@ export function irALogin(opciones: { registro?: boolean } = {}): void {
   navigate(opciones.registro ? '/login?registro=1' : '/login')
 }
 
-function hayCarrito(): boolean {
+export function hayCarrito(): boolean {
   try {
     const raw = localStorage.getItem(CARRITO_KEY)
     if (!raw) return false
@@ -79,4 +79,20 @@ export function destinoTrasAcceso(rol: RolONE | null | undefined, esCuentaNueva:
 
 export function irTrasAcceso(rol: RolONE | null | undefined, esCuentaNueva = false): void {
   navigate(destinoTrasAcceso(rol, esCuentaNueva))
+}
+
+// ── Confirmación "¡Bienvenido/a!" (3.5 · D-15-06 · GAP-F01-18) ─────────────────
+// Mientras está pendiente, AppONE no redirige fuera de /login: el destino lo decide el botón.
+const K_CONFIRMANDO = 'tw_onboarding_confirmando'
+
+export function marcarConfirmacionPendiente(): void { ss()?.setItem(K_CONFIRMANDO, '1') }
+export function confirmacionPendiente(): boolean { return ss()?.getItem(K_CONFIRMANDO) === '1' }
+export function limpiarConfirmacion(): void { ss()?.removeItem(K_CONFIRMANDO) }
+
+/** Texto del botón de la confirmación según adónde llevará destinoTrasAcceso(). */
+export function textoBotonTrasRegistro(rol: RolONE | null | undefined): string {
+  if (hayCarrito() && rol !== 'seller') return 'Continuar con tu pedido →'
+  const r = leerRetorno()
+  if (r && rutaPermitida(r, rol)) return 'Continuar →'
+  return 'Ver cafés →'
 }

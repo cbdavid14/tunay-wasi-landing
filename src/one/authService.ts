@@ -13,7 +13,7 @@ import {
 } from 'firebase/auth'
 import { auth } from '@/shared/firebase'
 import { crearUsuario, fetchUsuario } from './service'
-import { reservarDocumentos } from './documentos'
+import { liberarDocumentos, reservarDocumentos } from './documentos'
 import type { CreateUsuarioInput, RolONE } from './types'
 
 const GOOGLE_PENDING_KEY = 'one_google_pending_registro'
@@ -99,21 +99,27 @@ export async function registrar(
 ): Promise<void> {
   const cred = await createUserWithEmailAndPassword(auth, email, password)
   await reservarOBorrarCuenta(cred.user, rol, documentos)
-  await updateProfile(cred.user, { displayName: nombre })
+  // Firestore rechaza campos `undefined`: antes `negocio: undefined` para B2C hacía fallar TODO alta
+  // de persona por email, DESPUÉS de crear la cuenta Auth y reservar el DNI (quedaban huérfanos).
   const input: CreateUsuarioInput = {
     uid: cred.user.uid,
     rol,
     nombre,
     email,
-    negocio: rol === 'buyer_b2b' ? {
-      nombreLocal: '',
-      distritoLocal: '',
-      etapa: 'planificando',
-      pedidoIds: [],
-    } : undefined,
+    ...(rol === 'buyer_b2b' ? {
+      negocio: { nombreLocal: '', distritoLocal: '', etapa: 'planificando', pedidoIds: [] },
+    } : {}),
   }
-  await crearUsuario(cred.user.uid, input)
-  await sendEmailVerification(cred.user)
+  try {
+    await updateProfile(cred.user, { displayName: nombre })
+    await crearUsuario(cred.user.uid, input)
+  } catch (e) {
+    // Rollback: liberar DNI/RUC reservados y borrar la cuenta Auth recién creada
+    await liberarDocumentos(documentos)
+    await deleteUser(cred.user).catch(() => {})
+    throw e
+  }
+  await sendEmailVerification(cred.user).catch(() => {})   // no bloquea el alta
 }
 
 export async function registrarCaficultor(
@@ -135,7 +141,6 @@ export async function registrarCaficultor(
 ): Promise<void> {
   const cred = await createUserWithEmailAndPassword(auth, email, password)
   await reservarOBorrarCuenta(cred.user, 'seller', documentos)
-  await updateProfile(cred.user, { displayName: nombre })
   const input: CreateUsuarioInput = {
     uid: cred.user.uid,
     rol: 'seller',
@@ -155,7 +160,14 @@ export async function registrarCaficultor(
       fotoSelfieUrl: datos.fotoSelfieUrl ?? '',
     } : {}),
   }
-  await crearUsuario(cred.user.uid, input)
+  try {
+    await updateProfile(cred.user, { displayName: nombre })
+    await crearUsuario(cred.user.uid, input)
+  } catch (e) {
+    await liberarDocumentos(documentos)
+    await deleteUser(cred.user).catch(() => {})
+    throw e
+  }
 }
 
 export async function login(email: string, password: string): Promise<void> {

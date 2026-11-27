@@ -277,6 +277,10 @@ test.describe('27b — Unicidad y formato DNI/RUC (REG-01→REG-04)', () => {
     const dni = dniUnico()
     const primero = await registrarB2C(browser, dni)
     expect(primero).not.toMatch(/ya está registrado/i)
+    // El primer alta debe completarse de verdad (antes fallaba por `negocio: undefined` y el test
+    // pasaba igual porque el DNI quedaba reservado por el alta fallida)
+    expect(primero).not.toMatch(/No se pudo crear tu cuenta|Error al registrar/i)
+    expect(primero).toMatch(/Bienvenid/i)
     const segundo = await registrarB2C(browser, dni)
     expect(segundo).toMatch(/DNI ya está registrado/i)
   })
@@ -286,6 +290,7 @@ test.describe('27b — Unicidad y formato DNI/RUC (REG-01→REG-04)', () => {
     const ruc = rucUnico()
     const primero = await registrarB2B(browser, ruc)
     expect(primero).not.toMatch(/ya está registrado/i)
+    expect(primero).not.toMatch(/No se pudo crear tu cuenta|Error al registrar/i)
     const segundo = await registrarB2B(browser, ruc)
     expect(segundo).toMatch(/RUC ya está registrado/i)
   })
@@ -383,5 +388,30 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
     await page.waitForURL(/\/login\?registro=1/, { timeout: 10_000 })
     const carrito = await page.evaluate(() => localStorage.getItem('one_carrito_items'))
     expect(JSON.parse(carrito ?? '[]').length).toBeGreaterThan(0)   // el producto queda guardado
+  })
+
+  test('22 — Alta de persona desde /login muestra "¡Bienvenido/a!" y no se salta (3.5 · GAP-F01-18)', async ({ page }) => {
+    test.setTimeout(90_000)
+    const vis = (ph: string) => page.locator(`input[placeholder="${ph}"]:visible`).first()
+    await irA(page, '/login?registro=1')
+    await page.getByRole('button', { name: /Soy Cliente/ }).first().click()
+    await page.getByText('Compra café para tu consumo personal. Solo necesitas tu DNI.').first().click()
+    await page.getByRole('button', { name: /Continuar →/ }).first().click()
+    await vis('Juan Pérez').fill('QA Bienvenida')
+    await vis('tu@correo.com').fill(emailQA('bienvenida'))     // antes este campo no guardaba lo escrito
+    const pw = page.locator('input[type=password]:visible')
+    for (let i = 0; i < await pw.count(); i++) await pw.nth(i).fill(PASS_QA)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await vis('12345678').fill(dniUnico())
+    await vis('+51 987 654 321').fill('+51 999 111 222')
+    await page.waitForTimeout(1000)
+    await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
+    const bienvenida = page.getByTestId('onboarding-bienvenida')
+    await expect(bienvenida).toBeVisible({ timeout: 30_000 })
+    await page.waitForTimeout(5000)
+    await expect(bienvenida).toBeVisible()                        // AppONE ya no la salta al cargar el perfil
+    await bienvenida.getByRole('button').first().click()
+    await page.waitForTimeout(2000)
+    expect(new URL(page.url()).pathname).toBe('/')                // sin carrito ni origen → catálogo
   })
 })
