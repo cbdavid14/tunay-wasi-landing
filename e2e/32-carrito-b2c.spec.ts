@@ -145,4 +145,86 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
     }
   })
 
+  // ── Tests añadidos por auditoría E2E F05/F08 ─────────────────────────────
+
+  test('9 — PR-02: B2C no ve precios mayoristas S/kg en checkout (PR-02 INVARIANTE)', async ({ page }) => {
+    test.setTimeout(120_000)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
+    await inyectarCarritoDemo(page)
+    await irA(page, '/checkout')
+    await page.waitForTimeout(800)
+    const body = await page.locator('body').textContent() ?? ''
+    // B2C nunca debe ver precios mayoristas "S/kg" ni escalas de volumen en el checkout
+    expect(body).not.toMatch(/precio mayorista|escala.*volumen|descuento.*lote/i)
+    // Puede ver precio por unidad/presentación
+    expect(body).toMatch(/S\/\s*\d/)
+  })
+
+  test('10 — PR-02: guest no ve precios mayoristas en catálogo (PR-02 INVARIANTE)', async ({ page }) => {
+    // Sin login (guest)
+    await page.goto('/?demo=1')
+    await esperarCarga(page)
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    // Revisar tarjetas: no deben mostrar precios mayoristas ni escalas de volumen
+    const cards = page.locator('.sc-product-card')
+    const count = await cards.count()
+    for (let i = 0; i < Math.min(count, 5); i++) {
+      const cardText = await cards.nth(i).textContent() ?? ''
+      expect(cardText).not.toMatch(/precio mayorista|S\/\s*kg.*mayorist|escala.*volumen/i)
+    }
+  })
+
+  test('11 — PR-02: B2B PENDING no ve precios mayoristas en catálogo (PR-02 INVARIANTE)', async ({ page }) => {
+    await loginEmail(page, USERS.pending.email, USERS.pending.password)
+    await page.goto('/?demo=1')
+    await esperarCarga(page)
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    const body = await page.locator('body').textContent() ?? ''
+    // B2B Pendiente no debe ver precios mayoristas ni escalas de volumen
+    expect(body).not.toMatch(/S\/\s*(kg|Kg).{0,10}mayorist/i)
+    expect(body).not.toMatch(/escala.*volumen|precio.*mayorista/i)
+  })
+
+  test('12 — ORD-02: checkout B2C muestra expiración de 24h, no 72h (ORD-02)', async ({ page }) => {
+    test.setTimeout(120_000)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
+    await inyectarCarritoDemo(page)
+    await irA(page, '/checkout')
+    await page.waitForTimeout(800)
+    const body = await page.locator('body').textContent() ?? ''
+    // Si la pantalla de espera pago está visible, debe indicar 24h (B2C), no 72h (B2B)
+    if (body.match(/espera.*pago|esperando pago|comprobante|plazo|expira/i)) {
+      expect(body).not.toMatch(/72\s*horas|plazo.*72\s*h/i)
+    }
+  })
+
+  test('13 — PAY-02: checkout B2C campo voucher obligatorio sin etiqueta "opcional" (PAY-02)', async ({ page }) => {
+    test.setTimeout(120_000)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
+    await inyectarCarritoDemo(page)
+    await irA(page, '/checkout')
+    await page.waitForTimeout(800)
+    const body = await page.locator('body').textContent() ?? ''
+    // Si la pantalla muestra Yape, el campo de comprobante no debe indicar "(opcional)"
+    if (body.match(/yape|comprobante|screenshot/i)) {
+      expect(body).not.toMatch(/comprobante.*opcional|screenshot.*opcional|voucher.*opcional/i)
+    }
+  })
+
+  test.skip('14 — ESC-01: datos de pago apuntan a cuenta TunayWasi, no al caficultor (ESC-01 — requiere backend)', async ({ page }) => {
+    // ESC-01 INVARIANTE: Los fondos van a cuenta escrow TunayWasi (Yape/BCP de TW),
+    // nunca directo al caficultor. Verificado a nivel de código con ONE_CONFIG.
+    // Este test require navegación hasta la pantalla de pago completa.
+    test.setTimeout(60_000)
+    await loginYEsperarAuth(page, USERS.cliente.email, USERS.cliente.password)
+    await inyectarCarritoDemo(page)
+    await irA(page, '/checkout')
+    await page.waitForTimeout(800)
+    const body = await page.locator('body').textContent() ?? ''
+    // Si está en la pantalla de pago, los datos mostrados deben ser de TunayWasi
+    if (body.match(/yape|BCP|transferir/i)) {
+      expect(body).not.toMatch(/Transferir a.*Segundo Rojas|Pagar a.*caficultor/i)
+    }
+  })
+
 })

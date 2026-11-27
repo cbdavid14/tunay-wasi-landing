@@ -1307,3 +1307,114 @@ test.describe('27i — F-01 formulario Persona único (GAP-F01-17)', () => {
     })
   }
 })
+
+// ── 27j — AUTH-01 / AUTH-04 / B2B sin acceso mayorista (F-01/F-02 gaps) ───────
+// AUTH-01: modal inline al intentar comprar como guest — sin salir del catálogo.
+// AUTH-04: retorno exacto a la misma vista, con mismos filtros/posición.
+// F-02: B2B PENDING no puede ver precios mayoristas ni acceder al catálogo B2B.
+test.describe('27j — AUTH-01 / AUTH-04 / B2B-PENDING sin acceso mayorista', () => {
+
+  test('AUTH-01: el modal de login gate NO redirige fuera del catálogo (URL no cambia a /login)', async ({ page }) => {
+    // AUTH-01: modal inline al clickar sin sesión
+    await irA(page, '/?demo=1')
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    const urlAntes = page.url()
+    // Click en la tarjeta para abrir ficha
+    await page.locator('.sc-product-card').first().click()
+    await page.waitForTimeout(500)
+    // Click en el botón de acción de compra
+    const btnAgregar = page.getByRole('button', { name: /agregar al carrito|comprar|solicitar/i }).first()
+    if (!await btnAgregar.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
+    await btnAgregar.evaluate((el: HTMLElement) => el.click())
+    await page.waitForTimeout(600)
+    // La URL no debe haber cambiado a /login (es modal inline)
+    const urlDespues = page.url()
+    expect(urlDespues).not.toMatch(/\/login$/)
+    // El body debe mostrar el modal de login/registro
+    const body = await page.locator('body').textContent()
+    expect(body).toMatch(/ingresar|registr|cuenta|login/i)
+    // La página sigue siendo el catálogo (el catálogo sigue visible)
+    // Verificar que las tarjetas siguen en el DOM (no se navegó fuera)
+    const tarjetasAun = page.locator('.sc-product-card')
+    const count = await tarjetasAun.count()
+    expect(count).toBeGreaterThan(0)
+  })
+
+  test('AUTH-04: tras login, el usuario regresa a la página exacta de origen (returnTo)', async ({ page }) => {
+    // AUTH-04: vuelve exactamente donde estaba
+    // Preparar — ir a una ruta interna con un parámetro identificable
+    await irA(page, '/?origen=e2e-auth04-exact')
+    // Simular que el usuario accede a /login desde esta página (guardando returnTo)
+    await page.evaluate(() => {
+      sessionStorage.setItem('tw_return_to', '/?origen=e2e-auth04-exact')
+    })
+    await irA(page, '/login')
+    await esperarCarga(page)
+    // Login directo
+    const btnEmail = page.getByRole('button', { name: /ya tienes cuenta.*ingresar|continuar con email|ingresar con email/i }).first()
+    await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
+    if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) await btnEmail.click()
+    await page.getByPlaceholder('tu@email.com').waitFor({ timeout: 10_000 })
+    await page.getByPlaceholder('tu@email.com').fill(USERS.cliente.email)
+    await page.getByPlaceholder('••••••••').fill(USERS.cliente.password)
+    await page.getByRole('button', { name: /ingresar →/i }).click()
+    await page.waitForFunction(() => !window.location.pathname.startsWith('/login'), undefined, { timeout: 20_000 })
+    await page.waitForTimeout(1500)
+    // Debe haber vuelto a la página de origen con el query param
+    const url = new URL(page.url())
+    expect(url.pathname).toBe('/')
+    expect(url.search).toContain('origen=e2e-auth04-exact')
+  })
+
+  test('F02/B2B-01: B2B PENDING no ve precios mayoristas tras registro', async ({ page }) => {
+    // B2B PENDING no puede ver precios mayoristas — verificar usando el usuario de QA
+    await loginEmail(page, USERS.pending.email, USERS.pending.password)
+    await irA(page, '/?demo=1')
+    await esperarCarga(page)
+    const body = await page.locator('body').textContent()
+    // No debe ver precios mayoristas ni ficha técnica B2B
+    expect(body).not.toMatch(/precio mayorista/i)
+    expect(body).not.toMatch(/Ficha técnica B2B/i)
+    // No debe ver acceso a catálogo wholesale
+    expect(body).not.toMatch(/catálogo mayorista|acceso mayorista/i)
+  })
+
+  test('F02/B2B-01: B2B PENDING es bloqueado y ve banner de revisión al ir al portal', async ({ page }) => {
+    // Reutiliza el usuario de QA b2b-pending
+    await loginEmail(page, USERS.pending.email, USERS.pending.password)
+    await irA(page, '/portal')
+    await page.waitForFunction(
+      () => !document.body.textContent?.includes('Cargando tu portal'),
+      { timeout: 15_000 }
+    ).catch(() => {})
+    await page.waitForTimeout(500)
+    const body = await page.locator('body').textContent()
+    // Debe mostrar mensaje de cuenta en revisión
+    expect(body).toMatch(/pendiente|revisi[oó]n|en proceso|aprobaci[oó]n|PENDING/i)
+    // No debe mostrar precios mayoristas
+    expect(body).not.toMatch(/precio mayorista/i)
+  })
+
+  test('F02/REG-04: RUC de 10 dígitos se rechaza en registro B2B (REG-04 · formato mínimo)', async ({ page }) => {
+    // El RUC debe tener exactamente 11 dígitos
+    await irA(page, '/registro-emprendedor')
+    await page.getByRole('button', { name: /Negocio/ }).click()
+    await page.getByRole('button', { name: /Continuar/ }).click()
+    await page.getByPlaceholder('María García López').waitFor({ timeout: 10_000 })
+    await page.getByPlaceholder('María García López').fill('QA B2B RUC Corto')
+    await page.getByPlaceholder('compras@empresa.com').fill(`qa+b2b-ruccorto-${Date.now()}@tunaywasi.qa`)
+    await page.getByPlaceholder('+51 1 480 0000').fill('+51 999 000 060')
+    await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(PASS_QA)
+    await page.getByPlaceholder('Repite').fill(PASS_QA)
+    await page.getByRole('button', { name: /siguiente/i }).click()
+    // Paso 2: ingresar RUC de 10 dígitos (inválido — falta 1 dígito)
+    await page.getByPlaceholder('20XXXXXXXXX').waitFor({ timeout: 8_000 })
+    await page.getByPlaceholder('20XXXXXXXXX').fill('2060123456')   // 10 dígitos — inválido
+    await page.waitForTimeout(1500)
+    // Debe mostrar error de formato o mantener el botón deshabilitado
+    const body = await page.locator('body').textContent()
+    const hayErrorFormato = body?.match(/11 dígitos|dígito verificador|RUC.*inválido|formato.*RUC/i) !== null
+    const botonDeshabilitado = await page.getByRole('button', { name: /siguiente/i }).isDisabled().catch(() => false)
+    expect(hayErrorFormato || botonDeshabilitado).toBeTruthy()
+  })
+})
