@@ -5,6 +5,7 @@
  */
 import React, { useState, useRef } from 'react'
 import { navigate } from '@/router'
+import { irALogin } from '../retorno'
 import { registrarCaficultor } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
@@ -524,7 +525,7 @@ const Paso1: React.FC<{
       </button>
       <p style={{ margin: '12px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', textAlign: 'center' }}>
         ¿Ya tienes cuenta?{' '}
-        <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login') }} style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
+        <a href="/login" onClick={(e) => { e.preventDefault(); irALogin() }} style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
       </p>
     </div>
   )

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { navigate } from '@/router'
+import { irALogin } from '../retorno'
 import { registrar } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
@@ -256,7 +257,7 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
       <header style={{ height: 52, padding: '0 32px', borderBottom: '1px solid var(--tw-border)', display: 'flex', alignItems: 'center', gap: 16 }}>
         {paso === 1 ? (
           <a
-            href="/login?registro=1" onClick={(e) => { e.preventDefault(); navigate('/login?registro=1') }}
+            href="/login?registro=1" onClick={(e) => { e.preventDefault(); irALogin({ registro: true }) }}
             style={{ fontSize: 12, color: 'var(--tw-text-muted)', textDecoration: 'none' }}
           >
             ← Cambiar tipo
@@ -335,7 +336,7 @@ const RegistroConsumidor: React.FC<{ isDemo: boolean }> = ({ isDemo }) => {
               </button>
               <p style={{ margin: '12px 0 0', fontSize: 11, color: 'var(--tw-text-faint)', textAlign: 'center' }}>
                 ¿Ya tienes cuenta?{' '}
-                <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login') }} style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
+                <a href="/login" onClick={(e) => { e.preventDefault(); irALogin() }} style={{ color: 'var(--tw-terra)', textDecoration: 'none', fontWeight: 700 }}>Inicia sesión</a>
               </p>
             </div>
           )}

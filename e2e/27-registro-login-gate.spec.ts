@@ -322,3 +322,41 @@ test.describe('27c — Embudo de onboarding (iter.16)', () => {
     expect(body).toContain('cuenta')
   })
 })
+
+// ── 27d — Retorno tras login (web 3.1 · AUTH-04 · GAP-F01-09/10) ─────────────
+// Un único destino tras el acceso: carrito → página de origen (returnTo) → portal del rol.
+test.describe('27d — Retorno tras login (AUTH-04)', () => {
+  async function loginDesdeFormulario(page: Page, email: string, password: string) {
+    const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+    await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
+    if (await btnEmail.isVisible().catch(() => false)) await btnEmail.click()
+    await page.getByPlaceholder('tu@email.com').fill(email)
+    await page.getByPlaceholder('••••••••').fill(password)
+    await page.getByRole('button', { name: /ingresar →/i }).click()
+    await page.waitForFunction(() => !window.location.pathname.startsWith('/login'), undefined, { timeout: 20_000 })
+  }
+
+  test('18 — "Ingresar" del header vuelve a la página de origen tras el login', async ({ page }) => {
+    await irA(page, '/?origen=e2e-retorno')
+    await page.locator('a.header-login-btn').first().click()
+    await page.waitForURL(/\/login/, { timeout: 10_000 })
+    await esperarCarga(page)
+    await loginDesdeFormulario(page, USERS.cliente.email, USERS.cliente.password)
+    await page.waitForTimeout(1500)
+    const url = new URL(page.url())
+    expect(url.pathname).toBe('/')
+    expect(url.search).toContain('origen=e2e-retorno')   // antes: siempre /portal
+  })
+
+  test('19 — Con carrito, tras el login va a /checkout (destino único)', async ({ page }) => {
+    await irA(page, '/')
+    await page.evaluate(() => localStorage.setItem('one_carrito_items', JSON.stringify([{
+      producto: { id: 'producto-001', nombre: 'Bourbon Lavado — Finca La Coipa', precioBaseKgCents: 45000, caficultorId: 'caficultor-001', caficultorNombre: 'Segundo Rojas Herrera' },
+      formato: '1kg', qty: 1,
+    }])))
+    await irA(page, '/login')
+    await loginDesdeFormulario(page, USERS.cliente.email, USERS.cliente.password)
+    await page.waitForTimeout(2000)
+    expect(new URL(page.url()).pathname).toBe('/checkout')   // antes AppONE podía mandar a /portal
+  })
+})

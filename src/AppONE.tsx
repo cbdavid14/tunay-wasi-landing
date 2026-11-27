@@ -21,6 +21,7 @@ import type { UsuarioONE, ProductoONE, FormatoONE } from '@/one/types'
 import { calcularPrecioFinal } from '@/one/config'
 import { track, setAnalyticsUser, initAnalytics, setupErrorTracking } from '@/one/analytics'
 import { esRutaOnboarding, iniciarOnboarding, puertaDeRuta } from '@/one/onboarding'
+import { destinoTrasAcceso, irALogin, limpiarRetorno } from '@/one/retorno'
 
 import CatalogoPublico from '@/one/components/CatalogoPublico'
 import CheckoutONE from '@/one/components/CheckoutONE'
@@ -330,11 +331,11 @@ function GlobalHeader({
                   <span className="header-producer-full">🌱 Soy productor</span>
                   <span className="header-producer-short">🌱 Soy Productor</span>
                 </a>
-                <a href="/login" onClick={e => { e.preventDefault(); navigate('/login') }} className="header-login-btn" style={{ padding: '5px 8px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                <a href="/login" onClick={e => { e.preventDefault(); irALogin() }} className="header-login-btn" style={{ padding: '5px 8px', borderRadius: 7, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   <span className="header-btn-full">Ingresar</span>
                   <span className="header-btn-short">Ingresar</span>
                 </a>
-                <a href="/login" onClick={e => { e.preventDefault(); navigate('/login?registro=1') }} className="header-register-btn" style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                <a href="/login" onClick={e => { e.preventDefault(); irALogin({ registro: true }) }} className="header-register-btn" style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   <span className="header-btn-full">Registrarse</span>
                   <span className="header-btn-short">Registrarse</span>
                 </a>
@@ -459,10 +460,10 @@ function GlobalHeader({
               <span style={{ fontSize: 14, color: 'var(--tw-sage)' }}>›</span>
             </a>
             <div style={{ height: 1, background: 'var(--tw-border)', margin: '2px 0' }} />
-            <a href="/login" onClick={e => { e.preventDefault(); navigate('/login'); cerrarMenu() }} style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+            <a href="/login" onClick={e => { e.preventDefault(); irALogin(); cerrarMenu() }} style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--tw-terra)', background: 'transparent', color: 'var(--tw-terra)', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
               Ingresar
             </a>
-            <a href="/login" onClick={e => { e.preventDefault(); navigate('/login?registro=1'); cerrarMenu() }} style={{ padding: '9px 0', borderRadius: 8, background: 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+            <a href="/login" onClick={e => { e.preventDefault(); irALogin({ registro: true }); cerrarMenu() }} style={{ padding: '9px 0', borderRadius: 8, background: 'var(--tw-terra)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
               Crear cuenta
             </a>
           </div>
@@ -873,6 +874,12 @@ const AppONE: React.FC = () => {
   }, 0)
   const carritoProductoIds = new Set(carritoItems.map(i => i.producto.id))
 
+  // AUTH-04: el retorno se consume cuando el usuario, ya con sesión y perfil, llega a una ruta
+  // fuera del onboarding (antes de cualquier return condicional — rules of hooks)
+  useEffect(() => {
+    if (user && usuarioONE && !esRutaOnboarding(path.split('?')[0])) limpiarRetorno()
+  }, [path, user, usuarioONE])
+
   if (loading || splashMinDone === false) {
     return (
       <div data-testid="tw-splash" style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
@@ -918,7 +925,7 @@ const AppONE: React.FC = () => {
         <GlobalHeader
           carritoCount={carritoItems.length}
           onIrAlCheckout={() => {
-            if (!user && !isDemo) { navigate('/login') }
+            if (!user && !isDemo) { irALogin() }
             else { irAlCarritoPortal() }
           }}
           usuarioONE={usuarioONE}
@@ -1084,7 +1091,7 @@ const AppONE: React.FC = () => {
       setTimeout(() => {
         if (!user && !isDemo) {
           trackCarritoMeta('ir_a_login', { itemCount: carritoItems.length })
-          navigate('/login')
+          irALogin()
         } else {
           irAlCarritoPortal()
         }
@@ -1156,7 +1163,7 @@ const AppONE: React.FC = () => {
     if (!user && !isDemo) {
       trackCarritoMeta('login_requerido', { itemCount: carritoItems.length })
       track('login_requerido', { itemCount: carritoItems.length, pasoDesde: 'checkout' })
-      navigate('/login')
+      irALogin()
       return null
     }
     trackCarritoMeta('checkout', { itemCount: carritoItems.length })
@@ -1205,12 +1212,12 @@ const AppONE: React.FC = () => {
 
   if (path === '/portal') {
     if (!user && !isDemo) {
-      navigate('/login')
+      irALogin()
       return null
     }
     // Sin doc en Firestore — registro Google incompleto, debe elegir rol
     if (user && !usuarioONE && !isDemo) {
-      navigate('/login')
+      irALogin()
       return null
     }
     // TIPO-02 INVARIANTE: caficultor no accede al portal de negocio
@@ -1232,11 +1239,11 @@ const AppONE: React.FC = () => {
 
   if (path === '/caficultor-portal' || path === '/portal-caficultores') {
     if (!user && !isDemo) {
-      navigate('/login')
+      irALogin()
       return null
     }
     if (user && !usuarioONE && !isDemo) {
-      navigate('/login')
+      irALogin()
       return null
     }
     track('portal_caficultor_visto', { rolUsuario: 'seller' })
@@ -1263,13 +1270,9 @@ const AppONE: React.FC = () => {
   if (path === '/login' || path.startsWith('/login')) {
     track('login_iniciado', { itemCount: carritoItems.length })
     if (user || isDemo) {
-      if (hayCarrito) {
-        irAlCarritoPortal()
-        return null
-      }
-      // user logueado pero sin doc en Firestore — registro Google incompleto, debe completar rol
-      // Renderizar AuthScreen directamente para que el flujo continúe sin pantalla en blanco
-      if (!usuarioONE) {
+      // GAP-F01-11: con sesión pero SIN perfil (Google nuevo / alta en curso) se completa el registro
+      // aquí mismo. Antes se comprobaba el carrito primero → /portal → guard → /login → bucle.
+      if (user && !usuarioONE && !isDemo) {
         return (
           <AuthScreen
             onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
@@ -1277,13 +1280,8 @@ const AppONE: React.FC = () => {
           />
         )
       }
-      if (usuarioONE.rol === 'seller') {
-        navigate('/caficultor-portal')
-      } else if (usuarioONE.rol === 'admin' || isAdmin) {
-        navigate('/admin')
-      } else {
-        navigate('/portal')
-      }
+      // GAP-F01-09/10: destino único (carrito → returnTo → portal del rol), igual que AuthScreen
+      navigate(destinoTrasAcceso(isAdmin ? 'admin' : usuarioONE?.rol, false))
       return null
     }
     return (
@@ -1319,7 +1317,7 @@ const AppONE: React.FC = () => {
         onSearchChange={setCatalogoSearch}
         onSolicitarCotizacion={(producto) => {
           if (!user && !isDemo) {
-            navigate('/login')
+            irALogin()
             return
           }
           setModalCotizProducto(producto)
@@ -1329,7 +1327,7 @@ const AppONE: React.FC = () => {
           if (!user && !isDemo) {
             trackCarritoMeta('ir_a_login', { itemCount: carritoItems.length })
             track('checkout_intentado', { itemCount: carritoItems.length, pasoDesde: 'catalogo', totalCents: totalCarritoCents })
-            navigate('/login')
+            irALogin()
           } else {
             track('checkout_intentado', { itemCount: carritoItems.length, totalCents: totalCarritoCents })
             irAlCarritoPortal()

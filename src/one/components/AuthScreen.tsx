@@ -9,6 +9,7 @@ import { fetchUsuario } from '../service'
 import type { RolONE } from '../types'
 import { track, setAnalyticsUser } from '../analytics'
 import { completarOnboarding, useOnboardingTracking, type FlujoOnboarding, type PasoOnboarding } from '../onboarding'
+import { irTrasAcceso } from '../retorno'
 import { claveDniB2C, claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado, reservarDocumentos } from '../documentos'
 
 type Paso = 'inicio' | 'email_login' | 'email_registro' | 'reset' | 'seleccion_rol' | 'seleccion_rol_registro' | 'cuenta_email' | 'seleccion_tipo_cliente' | 'datos_persona' | 'datos_negocio' | 'registro_caficultor' | 'registro_caficultor_finca' | 'registro_caficultor_identidad' | 'verifica_correo' | 'cargando' | 'cargando_cuenta' | 'abriendo_google' | 'google_loading'
@@ -121,17 +122,9 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
     return map[code] ?? 'Ocurrió un error. Intenta de nuevo.'
   }
 
+  // Destino tras login: regla única compartida con AppONE (carrito → returnTo → portal del rol)
   function redirigirSegunRol(rol: RolONE) {
-    // Si hay carrito guardado (localStorage), retomar el checkout — cualquier rol
-    try {
-      if (localStorage.getItem('one_carrito_items')) {
-        navigate('/checkout')
-        return
-      }
-    } catch { /* ok */ }
-    if (rol === 'seller') { navigate('/caficultor-portal'); return }
-    if (rol === 'admin') { navigate('/admin'); return }
-    navigate('/portal')
+    irTrasAcceso(rol, false)
   }
 
   // ── Google ──────────────────────────────────────────────────────────────────
@@ -327,7 +320,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         setAnalyticsUser(pendingUid, 'buyer_b2c')
         completarOnboarding(pendingUid, 'buyer_b2c', 'b2c', 'google')
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
-        navigate('/catalogo')
+        irTrasAcceso('buyer_b2c', true)   // antes '/catalogo' (ruta inexistente, ignoraba el carrito)
       } else {
         await registrar(email, password, nombre.trim(), 'buyer_b2c', [claveDniB2C(dni)])
         const { auth } = await import('@/shared/firebase')
@@ -363,7 +356,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         setAnalyticsUser(pendingUid, 'buyer_b2b')
         completarOnboarding(pendingUid, 'buyer_b2b', 'b2b', 'google')
         try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
-        navigate('/catalogo')
+        irTrasAcceso('buyer_b2b', true)   // antes '/catalogo' (ruta inexistente, ignoraba el carrito)
       } else {
         await registrar(email, password, nombre.trim(), 'buyer_b2b', [claveRuc(ruc)])
         const { auth } = await import('@/shared/firebase')
