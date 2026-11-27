@@ -32,7 +32,6 @@ import PortalEmprendedor from '@/one/components/PortalEmprendedor'
 import PortalCaficultor from '@/one/components/PortalCaficultor'
 import PerfilCaficultor from '@/one/components/PerfilCaficultor'
 import RegistroEmprendedor from '@/one/components/RegistroEmprendedor'
-import RegistroConsumidor from '@/one/components/RegistroConsumidor'
 import RegistroCaficultor from '@/one/components/RegistroCaficultor'
 import LandingCaficultores from '@/one/components/LandingCaficultores'
 import LandingEmprendedor from '@/one/components/LandingEmprendedor'
@@ -1169,15 +1168,6 @@ const AppONE: React.FC = () => {
     )
   }
 
-  if (ruta === '/registro') {
-    return (
-      <>
-        <PageMeta title="Crear cuenta" description="Crea tu cuenta en Tunay Wasi para comprar café de especialidad directo del productor." canonical={`${BASE_URL}/registro`} />
-        <RegistroConsumidor isDemo={isDemo} />
-      </>
-    )
-  }
-
   if (ruta === '/registro-emprendedor') {
     return (
       <>
@@ -1306,8 +1296,13 @@ const AppONE: React.FC = () => {
     return withHeader(<AdminONE isDemo={isDemo} />)
   }
 
-  if (ruta === '/login' || ruta.startsWith('/login')) {
-    track('login_iniciado', { itemCount: carritoItems.length })
+  // GAP-F01-17: /registro (P3) usa el mismo <AuthScreen> que /login: un solo formulario Persona.
+  if (ruta === '/login' || ruta.startsWith('/login') || ruta === '/registro') {
+    const esRegistro = ruta === '/registro'
+    const meta = esRegistro
+      ? <PageMeta title="Crear cuenta" description="Crea tu cuenta en Tunay Wasi para comprar café de especialidad directo del productor." canonical={`${BASE_URL}/registro`} />
+      : null
+    if (!esRegistro) track('login_iniciado', { itemCount: carritoItems.length })
     if (user || isDemo) {
       // GAP-F01-11: con sesión pero SIN perfil (Google nuevo / alta en curso) se completa el registro
       // aquí mismo. Antes se comprobaba el carrito primero → /portal → guard → /login → bucle.
@@ -1316,11 +1311,15 @@ const AppONE: React.FC = () => {
       // BUG-REG-04: un seller sin bloque `caficultor` (alta a medias) tampoco sale: completa Finca + Identidad.
       if (user && (!usuarioONE || confirmacionPendiente() || sellerIncompleto(usuarioONE)) && !isDemo) {
         return (
-          <AuthScreen
-            onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
-            pasoInicial={sellerIncompleto(usuarioONE) ? 'registro_caficultor_finca' : usuarioONE ? 'verifica_correo' : 'seleccion_rol_registro'}
-            completarSeller={sellerIncompleto(usuarioONE)}
-          />
+          <>
+            {meta}
+            <AuthScreen
+              key="auth"
+              onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
+              pasoInicial={sellerIncompleto(usuarioONE) ? 'registro_caficultor_finca' : usuarioONE ? 'verifica_correo' : 'seleccion_rol_registro'}
+              completarSeller={sellerIncompleto(usuarioONE)}
+            />
+          </>
         )
       }
       // GAP-F01-09/10: destino único (carrito → returnTo → portal del rol), igual que AuthScreen
@@ -1328,11 +1327,15 @@ const AppONE: React.FC = () => {
       return null
     }
     return (
-      <AuthScreen
-        mensajePrevia={hayCarrito ? 'Para continuar con tu pedido, ingresa o crea tu cuenta.' : undefined}
-        onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
-        pasoInicial={new URLSearchParams(window.location.search).get('registro') === '1' ? 'seleccion_rol_registro' : 'inicio'}
-      />
+      <>
+        {meta}
+        <AuthScreen
+          key="auth"
+          mensajePrevia={hayCarrito ? 'Para continuar con tu pedido, ingresa o crea tu cuenta.' : undefined}
+          onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
+          pasoInicial={esRegistro ? 'cuenta_email' : new URLSearchParams(window.location.search).get('registro') === '1' ? 'seleccion_rol_registro' : 'inicio'}
+        />
+      </>
     )
   }
 

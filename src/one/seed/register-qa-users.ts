@@ -5,7 +5,7 @@
  *   npx tsx src/one/seed/register-qa-users.ts
  *
  * Flujos:
- *  - cliente@tunaywasi.qa  → #/registro (RegistroConsumidor, buyer_b2c)
+ *  - cliente@tunaywasi.qa  → /registro (formulario Persona de AuthScreen, buyer_b2c)
  *  - caficultor@tunaywasi.qa → #/registro-caficultor
  *  - barista@tunaywasi.qa  → AuthScreen email_registro (buyer_b2b vía registro rápido)
  *  - b2b-pending@tunaywasi.qa → idem
@@ -21,10 +21,10 @@ async function registrarConsumidor(page: Page, email: string, password: string, 
   await page.waitForTimeout(800)
 
   // PASO 1: nombre, email, teléfono, contraseña → "Siguiente →"
-  await page.getByPlaceholder('Juan Carlos Pérez Ríos').fill(nombre)
-  await page.getByPlaceholder('juan@email.com').fill(email)
+  await page.getByPlaceholder('Juan Pérez').fill(nombre)
+  await page.getByPlaceholder('tu@correo.com').fill(email)
   await page.getByPlaceholder('+51 987 654 321').fill('+51 999 000 001')
-  await page.getByPlaceholder('Mín. 8 chars + 1 número').fill(password)
+  await page.getByPlaceholder('Mínimo 8 caracteres + 1 número').fill(password)
   await page.getByPlaceholder('Repite').fill(password)
   await page.getByRole('button', { name: /siguiente/i }).click()
   await page.waitForTimeout(1500)
@@ -34,7 +34,7 @@ async function registrarConsumidor(page: Page, email: string, password: string, 
   if (await inputDni.isVisible({ timeout: 3000 }).catch(() => false)) {
     await inputDni.fill(String(Date.now() % 100_000_000).padStart(8, '0'))  // REG-01: DNI único por ejecución
   }
-  const inputDir = page.getByPlaceholder('Av. Larco 1301, Miraflores').first()
+  const inputDir = page.getByPlaceholder('Jr. Lima 123, Miraflores').first()
   if (await inputDir.isVisible({ timeout: 1500 }).catch(() => false)) {
     await inputDir.fill('Av. Test 123, Miraflores')
   }
