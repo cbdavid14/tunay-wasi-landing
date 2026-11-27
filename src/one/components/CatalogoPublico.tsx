@@ -4,6 +4,8 @@
  */
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { navigate } from '@/router'
+import { irALogin } from '../retorno'
+import { marcarOrigenOnboarding } from '../onboarding'
 import type { ProductoONE, CaficultorONE, FormatoONE } from '../types'
 import { fetchProductos, fetchCaficultores, fetchPedidosByNegocio } from '../service'
 import type { PedidoONE } from '../types'
@@ -216,11 +218,22 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
     }
   }
 
+  // 🔒 guest: guarda el producto como intención (D-15-02) y va directo a "¿Cómo usarás TunayWasi?"
+  // (/login?registro=1). Tras registrarse, el destino único lo lleva al checkout con su producto.
+  // El café verde (TYPE_A) no se guarda: una persona no puede comprarlo (TIPO-01).
+  const irARegistroDesdeCandado = (m: MockCafe) => {
+    if (m.productType !== 'TYPE_A') {
+      const prod = productos.find(p => p.nombre === m.nombre)
+      if (prod) onSeleccionar?.(prod, '1kg')
+    }
+    marcarOrigenOnboarding('candado_tarjeta')
+    irALogin({ registro: true })
+  }
+
   const handleAddClick = (e: React.MouseEvent, m: MockCafe) => {
     e.stopPropagation()
     if (!rolUsuario) {
-      setLoginGateProducto({ nombre: m.nombre, precio: m.precio })
-      setModalRegistro(true)
+      irARegistroDesdeCandado(m)
       return
     }
     // TYPE_A = café verde — solo buyer_b2b APPROVED puede comprar (B2B-02, TIPO-01)
@@ -238,8 +251,8 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
       return (
         <button
           className="sc-add-btn"
-          onClick={ev => { ev.stopPropagation(); setModalRegistro(true) }}
-          title="Inicia sesión para comprar"
+          onClick={ev => { ev.stopPropagation(); irARegistroDesdeCandado(m) }}
+          title="Regístrate para comprar"
           style={{ fontSize: 10, padding: '3px 6px', opacity: 0.85 }}
         >🔒</button>
       )

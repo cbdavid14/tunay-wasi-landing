@@ -359,4 +359,15 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
     await page.waitForTimeout(2000)
     expect(new URL(page.url()).pathname).toBe('/checkout')   // antes AppONE podía mandar a /portal
   })
+
+  test('20 — 🔒 de la tarjeta (guest) va a "¿Cómo usarás TunayWasi?" (/login?registro=1)', async ({ page }) => {
+    await irA(page, '/')
+    const candado = page.locator('.sc-product-card .sc-add-btn').first()
+    await expect(candado).toBeVisible({ timeout: 10_000 })
+    await candado.click()
+    await page.waitForURL(/\/login\?registro=1/, { timeout: 10_000 })
+    await esperarCarga(page)
+    await expect(page.getByText(/¿Cómo usarás TunayWasi\?/i).first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/Soy Cliente/i).first()).toBeVisible()
+  })
 })
