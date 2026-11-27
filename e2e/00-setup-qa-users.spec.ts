@@ -102,6 +102,69 @@ async function actualizarEmpresaB2B(page: Parameters<typeof loginYObtenerToken>[
   expect(result.ok, `Firestore PATCH falló (${result.status}): ${result.text}`).toBe(true)
 }
 
+// ── Lote QA del caficultor (prerequisito de F-07/F-11: evidencias N1–N3, NEGOTIABLE) ──
+// ID fijo por caficultor → idempotente: cada corrida lo deja igual (activo, con stock),
+// aunque un test anterior lo haya pausado. Café verde (TYPE_A) + NEGOTIABLE: válido aun si
+// el caficultor QA es SOLO_DNI (TRIB-01) y cumple PR-04 (negociable solo en verde).
+type FsValue = { stringValue: string } | { integerValue: string } | { doubleValue: number } | { booleanValue: boolean }
+  | { nullValue: null } | { arrayValue: { values: FsValue[] } } | { mapValue: { fields: Record<string, FsValue> } }
+function aFirestore(v: unknown): FsValue {
+  if (v === null || v === undefined) return { nullValue: null }
+  if (typeof v === 'string') return { stringValue: v }
+  if (typeof v === 'boolean') return { booleanValue: v }
+  if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v }
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(aFirestore) } }
+  return { mapValue: { fields: Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, aFirestore(x)])) } }
+}
+
+const LOTE_QA_NOMBRE = 'Lote QA E2E — Bourbon Lavado'
+
+async function asegurarLoteQA(page: Parameters<typeof loginYObtenerToken>[0], uid: string, token: string): Promise<void> {
+  const ahora = new Date().toISOString()
+  const foto = 'https://res.cloudinary.com/dtc9meqbc/image/upload/v1/tunaywasi/placeholder-cafe.jpg'
+  const lote = {
+    caficultorId: uid,
+    caficultorNombre: 'Caficultor QA Test',
+    caficultorRegion: 'Cajamarca',
+    nombre: LOTE_QA_NOMBRE,
+    variedad: 'Bourbon',
+    proceso: 'lavado',
+    tipoCafe: 'verde',
+    presentacion: 'tostado_grano',
+    nivelTueste: 'medio',
+    altitudMsnm: 1800,
+    cosecha: '06/2026',
+    notasSabor: ['chocolate', 'panela'],
+    descripcion: 'Lote sintético para pruebas E2E en QA. No es un producto real.',
+    puntajeReferencial: 84,
+    notaReferencial: 'Puntaje referencial declarado por el caficultor',
+    costos: { precioVerdeKgCents: 3000, costoTuesteKgCents: 0, costoBolsaUndCents: 0, margenPct: 0 },
+    precioBaseKgCents: 3000,
+    kgDisponibles: 500,
+    kgReservados: 0,
+    status: 'activo',
+    pricingMode: 'NEGOTIABLE',
+    foto,
+    fotos: [foto, foto, foto, foto],
+    reposicion: { activa: false, kgMin: 0, frecuenciaDias: null, prioridadTueste: false },
+    kgMinPedido: 60,
+    createdAt: ahora,
+    updatedAt: ahora,
+  }
+  const url = firestoreDocUrl(token, `one_productos/qa-e2e-lote-${uid}`)
+  const body = { fields: Object.fromEntries(Object.entries(lote).map(([k, v]) => [k, aFirestore(v)])) }
+  const result = await page.evaluate(async ({ url, body, token }: { url: string; body: object; token: string }) => {
+    const resp = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    return { ok: resp.ok, status: resp.status, text: await resp.text() }
+  }, { url, body, token })
+  console.log(`  Firestore PATCH lote QA → ${result.status}: ${result.ok ? 'OK' : result.text.slice(0, 200)}`)
+  expect(result.ok, `No se pudo crear el lote QA (${result.status}): ${result.text}`).toBe(true)
+}
+
 async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0], email: string, password: string, nombre: string): Promise<boolean> {
   await page.goto('/registro-caficultor')
   await page.waitForLoadState('networkidle')
@@ -228,4 +291,15 @@ test('setup: caficultor (seller) — registrar en app si no existe', async ({ pa
   await page.evaluate(() => { try { localStorage.clear() } catch {} })
   const ok = await registrarCaficultor(page, 'caficultor@tunaywasi.qa', 'Tunay2026!', 'Caficultor QA Test')
   expect(ok, 'Registro de caficultor falló').toBe(true)
+})
+
+test('setup: lote QA del caficultor (prerequisito evidencias / NEGOTIABLE)', async ({ page }) => {
+  await page.goto('/login')
+  await page.waitForLoadState('networkidle')
+  await esperarCarga(page)
+  await page.evaluate(() => { try { localStorage.clear() } catch {} })
+  const data = await loginYObtenerToken(page, 'caficultor@tunaywasi.qa', 'Tunay2026!')
+  expect(data, 'No se pudo loguear caficultor — el paso anterior debía registrarlo').not.toBeNull()
+  await asegurarLoteQA(page, data!.uid, data!.token)
+  console.log(`✅ lote QA listo: one_productos/qa-e2e-lote-${data!.uid} (verde · NEGOTIABLE · activo)`)
 })

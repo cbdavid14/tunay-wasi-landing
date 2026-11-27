@@ -68,6 +68,9 @@ test.describe('24 — Portal Caficultor: lotes, pricingMode, evidencias', () => 
     if (!await btnNuevo.isVisible()) { test.skip(); return }
     await btnNuevo.click()
     await page.waitForTimeout(500)
+    // El toggle Fijo/Negociable solo aparece con café verde (PR-04) — el formulario abre en tostado
+    await page.getByRole('button', { name: /^café verde$/i }).first().click()
+    await page.waitForTimeout(200)
     // Buscar toggle/botón de NEGOTIABLE
     const btnNegociable = page.getByRole('button', { name: /negociable/i })
       .or(page.getByText(/negociable/i).first())
