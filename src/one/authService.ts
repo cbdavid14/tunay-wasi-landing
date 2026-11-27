@@ -12,6 +12,7 @@ import {
   type User,
 } from 'firebase/auth'
 import { auth } from '@/shared/firebase'
+import { navigate } from '@/router'
 import { crearUsuario, fetchUsuario } from './service'
 import { liberarDocumentos, reservarDocumentos } from './documentos'
 import type { CreateUsuarioInput, RolONE } from './types'
@@ -175,7 +176,24 @@ export async function login(email: string, password: string): Promise<void> {
 }
 
 export async function logout(): Promise<void> {
+  // Un alta con Google a medias no debe sobrevivir al cierre de sesión: si no, el siguiente
+  // alta por email arranca en modo "Google" (email bloqueado).
+  try { sessionStorage.removeItem(GOOGLE_PENDING_KEY) } catch { /* ok */ }
   await signOut(auth)
+}
+
+/**
+ * BUG-REG-06: "Cerrar sesión" de cualquier rol. Cierra la sesión Auth, vuelve al inicio como guest
+ * y limpia el estado de sesión (returnTo, alta en curso, pending de Google, embudo, analytics).
+ * El carrito (localStorage) se conserva.
+ * Se va a "/" y no a /login: AppONE recibe `user = null` un instante después de signOut(); con
+ * /login y la sesión aún en memoria, AppONE rebotaba al portal y este guardaba un returnTo viejo.
+ */
+export async function cerrarSesion(): Promise<void> {
+  await logout()
+  navigate('/')
+  try { sessionStorage.clear() } catch { /* ok */ }
+  try { localStorage.removeItem('one_portal_badge') } catch { /* ok */ }
 }
 
 export async function resetPassword(email: string): Promise<void> {

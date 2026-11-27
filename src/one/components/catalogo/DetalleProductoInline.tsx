@@ -112,6 +112,19 @@ export const DetalleProductoInline: React.FC<Props> = ({
   const bloqueadoTipoA  = esTipoA && !esB2bAprobado
   const ocultarFormatos = bloqueadoNeg || bloqueadoTipoA
 
+  // CAL-02: el badge SCA solo es válido cuando la evidencia de respaldo es N2 o N3 con estado
+  // APPROVED. Si el backend serializa evidenciaNivel/evidenciaStatus los usamos para validación
+  // adicional. Sin esos campos (backend legacy) confiamos en que el backend aplica la regla y
+  // simplemente comprobamos que el dato exista. Esto implementa la defensa frontend de GAP-F04-08.
+  const evidenciaSuficiente = (() => {
+    const nivel  = (producto as any).evidenciaNivel  as string | undefined
+    const estado = (producto as any).evidenciaStatus as string | undefined
+    // Si el backend no proporciona estos campos aún, dejamos pasar (trust-the-backend path)
+    if (!nivel && !estado) return true
+    // Con campos presentes: nivel debe ser N2 o N3 y estado APPROVED
+    return (nivel === 'N2' || nivel === 'N3') && estado === 'APPROVED'
+  })()
+
   // ── Precios mayoristas TYPE_A (escala por volumen) ────────────────────────────
   const kgDisp = producto.kgDisponibles ?? 0
   const kgMinVerde = (producto as any).kgMinPedido ?? 5
@@ -272,8 +285,8 @@ export const DetalleProductoInline: React.FC<Props> = ({
                 {calidadBadgeInfo && (
                   <span className="badge-calidad" style={{ background: calidadBadgeInfo.bg, color: calidadBadgeInfo.color, border: `1px solid ${calidadBadgeInfo.border}` }}>{calidadBadgeInfo.label}</span>
                 )}
-                {/* INV-04: SCA solo para buyer_b2b APPROVED o dueño del producto */}
-                {puedeVerDatosTecnicos && producto.puntajeReferencial && (
+                {/* INV-04/CAL-02: SCA solo para buyer_b2b APPROVED o dueño del producto, con evidencia N2/N3 APPROVED */}
+                {puedeVerDatosTecnicos && producto.puntajeReferencial && evidenciaSuficiente && (
                   <span style={{ background: 'rgba(201,110,75,.12)', color: 'var(--tw-terra)', border: '1px solid rgba(201,110,75,.25)', fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 4 }}>SCA {producto.puntajeReferencial}</span>
                 )}
               </div>
@@ -325,7 +338,8 @@ export const DetalleProductoInline: React.FC<Props> = ({
                     <span style={{ fontSize: 7, color: 'var(--tw-sage)', background: 'rgba(143,175,138,.12)', border: '1px solid rgba(143,175,138,.25)', borderRadius: 3, padding: '1px 5px' }}>Solo para negocios</span>
                   </div>
                   {[
-                    { label: 'Puntaje SCA', value: producto.puntajeReferencial ? `${producto.puntajeReferencial} pts` : null },
+                    // CAL-02: Puntaje SCA solo si evidencia N2/N3 APPROVED (backend debería no serializar si no cumple)
+                    { label: 'Puntaje SCA', value: (producto.puntajeReferencial && evidenciaSuficiente) ? `${producto.puntajeReferencial} pts` : null },
                     { label: 'Humedad',     value: (producto as any).humedad ? `${(producto as any).humedad}%` : '11–12%' },
                     { label: 'Rendimiento', value: (producto as any).rendimiento ? `${(producto as any).rendimiento}%` : null },
                     { label: 'Criba',       value: (producto as any).criba ?? null },

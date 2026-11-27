@@ -63,6 +63,11 @@ export interface ProductoONE {
   // Calidad (referencial, sin Q-Grader por ahora)
   puntajeReferencial?: number     // ~86 pts — declarado por caficultor
   notaReferencial: string         // "Puntaje referencial — certificación independiente próximamente"
+  // CAL-02 guard: el backend debe serializar puntajeReferencial SOLO si existe evidencia N2/N3 con
+  // estado APPROVED. Para defensa en frontend, estos campos opcionales permiten una verificación
+  // adicional cuando el backend los proporciona.
+  evidenciaNivel?: 'N1' | 'N2' | 'N3'       // Nivel máximo de evidencia APPROVED asociada al lote
+  evidenciaStatus?: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED' | 'DISPUTED'  // Estado de la evidencia de mayor nivel
 
   // Costos privados — solo visibles para el caficultor en su portal
   costos: CostosProductoONE

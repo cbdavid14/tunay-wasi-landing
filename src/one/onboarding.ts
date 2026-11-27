@@ -144,3 +144,12 @@ export function useOnboardingTracking(
     errorOnboarding(paso ?? 'bienvenida', flujo, clasificarError(error))
   }, [error]) // eslint-disable-line react-hooks/exhaustive-deps
 }
+
+// ── Alta de caficultor a medias (BUG-REG-04) ──────────────────────────────────
+/** Evento que AuthScreen emite al terminar de escribir el perfil; AppONE recarga `usuarioONE`. */
+export const EVENTO_PERFIL_ACTUALIZADO = 'one:perfil-actualizado'
+
+/** Perfil `seller` sin bloque `caficultor` (cuenta creada pero sin Finca/Identidad): debe completar el alta. */
+export function sellerIncompleto(u: { rol?: string; caficultor?: unknown } | null | undefined): boolean {
+  return !!u && u.rol === 'seller' && !u.caficultor
+}

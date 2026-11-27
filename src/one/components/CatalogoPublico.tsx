@@ -63,7 +63,6 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
   const [regionFilter, setRegionFilter] = useState<string>('all')
   const [procesoFilter, setProcesoFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<TipoProducto | 'all'>('all')
-  const [evidenciaFilter, setEvidenciaFilter] = useState<'all' | 'N1' | 'N2' | 'N3'>('all')
   const [saboresFilter, setSaboresFilter] = useState<'all' | 'floral' | 'frutal' | 'chocolate' | 'caramelo'>('all')
   const [sortBy, setSortBy] = useState<'relevancia' | 'recientes' | 'precio_asc' | 'precio_desc' | 'evidencia'>('relevancia')
   const [_orderStep, _setOrderStep] = useState(1)
@@ -159,7 +158,8 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
       const matchRegion = regionFilter === 'all' || c.region === regionFilter
       const matchProceso = procesoFilter === 'all' || c.proceso === procesoFilter
       const matchType = typeFilter === 'all' || c.productType === typeFilter
-      const matchEvidencia = evidenciaFilter === 'all' || c.nivelEvidencia === parseInt(evidenciaFilter.replace('N', ''), 10)
+      // GAP-F04-09: filtro por nivel de evidencia eliminado — spec §8 indica que el nivel de
+      // evidencia NO debe ser filtro de catálogo (estados vacíos frecuentes en volumen bajo)
       const notasStr = c.notas.toLowerCase()
       const matchSabor = saboresFilter === 'all' || SABOR_NOTAS[saboresFilter]?.some(n => notasStr.includes(n))
       const matchSearch =
@@ -168,7 +168,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
         c.caf.toLowerCase().includes(q) ||
         c.region.toLowerCase().includes(q) ||
         c.notas.toLowerCase().includes(q)
-      return matchRegion && matchProceso && matchType && matchEvidencia && matchSabor && matchSearch
+      return matchRegion && matchProceso && matchType && matchSabor && matchSearch
     })
 
     // Ordenamiento
@@ -179,20 +179,19 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
       if (sortBy === 'recientes') return b.id - a.id
       return 0 // relevancia — mantener orden original
     })
-  }, [search, regionFilter, procesoFilter, typeFilter, evidenciaFilter, saboresFilter, sortBy, productos]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [search, regionFilter, procesoFilter, typeFilter, saboresFilter, sortBy, productos]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtro más restrictivo activo (para sugerencia vacío US-47)
   const filtroMasRestrictivo = useMemo((): { label: string; limpiar: () => void } | null => {
     if (saboresFilter !== 'all') return { label: `perfil "${saboresFilter}"`, limpiar: () => setSaboresFilter('all') }
-    if (evidenciaFilter !== 'all') return { label: `evidencia ${evidenciaFilter}`, limpiar: () => setEvidenciaFilter('all') }
     if (procesoFilter !== 'all') return { label: `proceso ${procesoFilter}`, limpiar: () => setProcesoFilter('all') }
     if (typeFilter !== 'all') return { label: `tipo ${typeFilter === 'TYPE_A' ? 'Verde' : typeFilter === 'TYPE_B' ? 'Tostado' : 'Molido'}`, limpiar: () => setTypeFilter('all') }
     if (regionFilter !== 'all') return { label: `región ${regionFilter}`, limpiar: () => setRegionFilter('all') }
     if (search) return { label: `búsqueda "${search}"`, limpiar: () => setSearch('') }
     return null
-  }, [saboresFilter, evidenciaFilter, procesoFilter, typeFilter, regionFilter, search])
+  }, [saboresFilter, procesoFilter, typeFilter, regionFilter, search])
 
-  const hayFiltrosActivos = regionFilter !== 'all' || procesoFilter !== 'all' || typeFilter !== 'all' || evidenciaFilter !== 'all' || saboresFilter !== 'all' || search !== ''
+  const hayFiltrosActivos = regionFilter !== 'all' || procesoFilter !== 'all' || typeFilter !== 'all' || saboresFilter !== 'all' || search !== ''
 
   const cafesLavado = useMemo(() => cafésFiltrados.filter(c => c.proceso === 'Lavado'), [cafésFiltrados])
   const cafesNatural = useMemo(() => cafésFiltrados.filter(c => c.proceso === 'Natural'), [cafésFiltrados])
@@ -320,6 +319,7 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
         estadoAprobacionB2B={estadoAprobacionB2B}
         userUid={userUid}
         onSolicitarCotizacion={(p) => { onSolicitarCotizacion?.(p) }}
+        onRegistrarNegocio={() => { navigate('/registro-emprendedor?tipo=negocio') }}
       />
     )
   }
@@ -931,13 +931,8 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
                 <button className={`d-fchip ${typeFilter === 'TYPE_B' ? 'active' : ''}`} onClick={() => setTypeFilter('TYPE_B')} title="Café tostado en grano">☕ Tostado</button>
                 <button className={`d-fchip ${typeFilter === 'TYPE_C' ? 'active' : ''}`} onClick={() => setTypeFilter('TYPE_C')} title="Café tostado y molido">🫘 Molido</button>
               </div>
-              {/* Filtros de evidencia y perfil de taza */}
+              {/* Filtros de perfil de taza — sin filtro por evidencia (spec §8: nivel de evidencia NO es filtro de catálogo) */}
               <div className="d-filters-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
-                <button className={`d-fchip ${evidenciaFilter === 'all' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('all')}>Toda evidencia</button>
-                <button className={`d-fchip ${evidenciaFilter === 'N1' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('N1')} title="Foto del lote verificada">N1</button>
-                <button className={`d-fchip ${evidenciaFilter === 'N2' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('N2')} title="Ficha de catación verificada">N2</button>
-                <button className={`d-fchip ${evidenciaFilter === 'N3' ? 'active' : ''}`} onClick={() => setEvidenciaFilter('N3')} title="Certificado de laboratorio">N3</button>
-                <div className="d-filters-divider" style={{ width: 1, background: 'var(--tw-border)', margin: '0 2px' }} />
                 <button className={`d-fchip ${saboresFilter === 'all' ? 'active' : ''}`} onClick={() => setSaboresFilter('all')}>Todo perfil</button>
                 <button className={`d-fchip ${saboresFilter === 'floral' ? 'active' : ''}`} onClick={() => setSaboresFilter('floral')}>🌸 Floral</button>
                 <button className={`d-fchip ${saboresFilter === 'frutal' ? 'active' : ''}`} onClick={() => setSaboresFilter('frutal')}>🍓 Frutal</button>
@@ -951,10 +946,9 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
                   {regionFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{regionFilter} <span onClick={() => setRegionFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
                   {procesoFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{procesoFilter} <span onClick={() => setProcesoFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
                   {typeFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{typeFilter === 'TYPE_A' ? '🌿 Verde' : typeFilter === 'TYPE_B' ? '☕ Tostado' : '🫘 Molido'} <span onClick={() => setTypeFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
-                  {evidenciaFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{evidenciaFilter} <span onClick={() => setEvidenciaFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
                   {saboresFilter !== 'all' && <span className="d-fchip active" style={{ cursor: 'default' }}>{saboresFilter} <span onClick={() => setSaboresFilter('all')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
                   {search && <span className="d-fchip active" style={{ cursor: 'default' }}>"{search}" <span onClick={() => setSearch('')} style={{ cursor: 'pointer', marginLeft: 4 }}>×</span></span>}
-                  <button onClick={() => { setRegionFilter('all'); setProcesoFilter('all'); setTypeFilter('all'); setEvidenciaFilter('all'); setSaboresFilter('all'); setSearch('') }}
+                  <button onClick={() => { setRegionFilter('all'); setProcesoFilter('all'); setTypeFilter('all'); setSaboresFilter('all'); setSearch('') }}
                     style={{ fontSize: 9, color: 'var(--tw-terra)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--tw-font-body)', padding: '2px 4px', textDecoration: 'underline' }}>
                     Limpiar todos
                   </button>

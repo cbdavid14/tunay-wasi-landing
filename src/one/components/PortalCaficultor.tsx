@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useState, useRef } from 'react'
 import { navigate } from '@/router'
+import { cerrarSesion } from '../authService'
 import {
   fetchPedidosByCaficultor, fetchProductos, fetchCaficultor,
   fetchCalificacionesByCaficultor, updateStock,
@@ -3009,6 +3010,15 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
           </a>
         </div>
 
+        {/* BUG-REG-06 · Cerrar sesión (mockup caficultor-perfil.html L262/L287) */}
+        <button
+          data-testid="perfil-cerrar-sesion"
+          onClick={() => { void cerrarSesion() }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', marginTop: 14, padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.25)', background: 'rgba(239,68,68,.04)', color: '#ef4444', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 600 }}
+        >
+          <span style={{ fontSize: 16 }}>🚪</span><span>Cerrar sesión</span>
+        </button>
+
           </div>{/* /columna izquierda */}
 
           {/* Columna derecha: resumen */}
@@ -3705,7 +3715,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                 {/* Estado pago */}
                 <div style={{ padding: '12px 14px', borderRadius: 10, background: (pagoOk ? 'var(--tw-sage)' : '#f39c12') + '11', border: `1px solid ${(pagoOk ? 'var(--tw-sage)' : '#f39c12')}33` }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: pagoOk ? 'var(--tw-sage)' : '#f39c12' }}>
-                    {pagoOk ? '✓ Pago verificado' : p.pagoStatus === 'voucher_subido' ? '🔎 Voucher enviado — verificando' : '⏳ Pago pendiente'}
+                    {pagoOk ? '✓ Pago verificado' : (p.pagoStatus as string) === 'voucher_revisado_caficultor' ? '✓ Comprobante revisado — esperando admin' : p.pagoStatus === 'voucher_subido' ? '🔎 Voucher enviado — pendiente revisión' : '⏳ Pago pendiente'}
                   </p>
                   <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>
                     Método: {p.metodoPago?.toUpperCase() ?? '—'}
@@ -3802,6 +3812,26 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
               </div>
 
               {/* Footer acción */}
+              {isPend && p.pagoStatus === 'voucher_subido' && (
+                <div style={{ padding: '16px 24px', borderTop: `1px solid var(--tw-border)`, flexShrink: 0 }}>
+                  <button
+                    onClick={async () => {
+                      if (isDemo) { toast('Voucher marcado como revisado (demo)', 'ok'); setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, pagoStatus: 'voucher_revisado_caficultor' as any } : x)); return }
+                      try {
+                        await updateDoc(doc(db, 'one_pedidos', p.id), {
+                          pagoStatus: 'voucher_revisado_caficultor',
+                          voucherRevisadoAt: serverTimestamp(),
+                        })
+                        setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, pagoStatus: 'voucher_revisado_caficultor' as any } : x))
+                        toast('Comprobante marcado como revisado', 'ok')
+                      } catch { toast('Error al marcar el comprobante', 'error') }
+                    }}
+                    style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid rgba(243,156,18,0.5)', background: 'rgba(243,156,18,0.12)', color: '#f39c12', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    ✓ Revisé el comprobante
+                  </button>
+                </div>
+              )}
               {isPend && pagoOk && (
                 <div style={{ padding: '16px 24px', borderTop: `1px solid var(--tw-border)`, flexShrink: 0 }}>
                   <button

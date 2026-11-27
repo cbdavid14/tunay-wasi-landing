@@ -23,6 +23,7 @@ import {
   cancelarPedido,
   updateDireccionesNegocio,
   marcarEnDisputa,
+  fetchProducto,
 } from '../service'
 import {
   demoFetchPedidosByNegocio,
@@ -32,8 +33,9 @@ import {
   demoCreatePedido,
   demoSubirVoucher,
   demoSubirVoucherGrupo,
+  demoFetchProducto,
 } from '../demoService'
-import { logout } from '../authService'
+import { cerrarSesion } from '../authService'
 import { ONE_CONFIG, calcularPrecioFinal } from '../config'
 import type { PedidoONE, UsuarioONE, FormatoONE, CotizacionONE, ReclamoONE, TipoReclamo, DireccionEnvioONE } from '../types'
 import CatalogoPublico from './CatalogoPublico'
@@ -900,6 +902,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
         negocioId:           usuarioId,
         negocioNombre:       usuario.nombre ?? '',
         negocioRazonSocial:  (usuario as any).empresa?.razonSocial ?? usuario.nombre ?? '',
+        negocioRuc:          (usuario as any).empresa?.ruc ?? undefined,
         kgSolicitados:       kg,
         precioOfertadoCents: Math.round(precio * 100),
         plazoEntrega:        nuevaCotizForm.plazo.trim(),
@@ -3888,8 +3891,33 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
                     // Abrir chat con el caficultor
                     setSubTab('mensajes')
                   }}
-                  onVerLoteNuevaOferta={(_productoId) => {
-                    setSubTab('pedidos')
+                  onVerLoteNuevaOferta={async (productoId) => {
+                    // US-41: renegociar tras expiración — abrir modal de cotización
+                    // con producto y valores pre-rellenos desde la última ronda
+                    try {
+                      const producto = isDemo
+                        ? await demoFetchProducto(productoId)
+                        : await fetchProducto(productoId)
+                      if (!producto) {
+                        toast('Lote no disponible', 'error')
+                        setTab('catalogo')
+                        return
+                      }
+                      // Pre-rellenar con los valores de la última ronda
+                      const ultimaRonda = cotiz.rondas[cotiz.rondas.length - 1]
+                      setNuevaCotizForm({
+                        kg:          String(ultimaRonda?.kgSolicitados ?? ''),
+                        precioCents: ultimaRonda?.precioOfertadoCents
+                          ? String((ultimaRonda.precioOfertadoCents / 100).toFixed(2))
+                          : '',
+                        plazo:   ultimaRonda?.plazoEntrega ?? '',
+                        mensaje: '',
+                      })
+                      setModalNuevaCotiz(producto)
+                    } catch {
+                      toast('No se pudo cargar el lote', 'error')
+                      setTab('catalogo')
+                    }
                   }}
                   onVerCompras={() => setSubTab('pedidos')}
                 />
@@ -4901,10 +4929,18 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
               <button onClick={() => toast('Próximamente: cambiar contraseña', 'info')} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-terra)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Cambiar contraseña</button>
             </div>
             <div style={{ marginTop: 24 }}>
-              <button onClick={() => logout()} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.2)', background: 'rgba(239,68,68,.04)', color: '#e74c3c', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600 }}>
+              <button onClick={() => { void cerrarSesion() }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.2)', background: 'rgba(239,68,68,.04)', color: '#e74c3c', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600 }}>
                 <span style={{ fontSize: 16 }}>🚪</span><span>Cerrar sesión</span>
               </button>
             </div>
+          </div>
+        )}
+        {/* BUG-REG-06 · Cerrar sesión visible en el perfil (mockup negocio-perfil*.html) */}
+        {perfilB2CTab !== 'seguridad' && (
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--tw-border)', display: 'flex', justifyContent: 'flex-end' }}>
+            <button data-testid="perfil-cerrar-sesion" onClick={() => { void cerrarSesion() }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.3)', background: 'rgba(239,68,68,.04)', color: '#ef4444', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600 }}>
+              <span style={{ fontSize: 16 }}>🚪</span><span>Cerrar sesión</span>
+            </button>
           </div>
         )}
       </div>
@@ -5187,10 +5223,18 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
               </div>
             </div>
             <div style={{ marginTop: 24 }}>
-              <button style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.2)', background: 'rgba(239,68,68,.04)', color: '#e74c3c', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600 }} onClick={() => logout()}>
+              <button style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.2)', background: 'rgba(239,68,68,.04)', color: '#e74c3c', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600 }} onClick={() => { void cerrarSesion() }}>
                 <span style={{ fontSize: 16 }}>🚪</span><span>Cerrar sesión</span>
               </button>
             </div>
+          </div>
+        )}
+        {/* BUG-REG-06 · Cerrar sesión visible en el perfil (mockup negocio-perfil*.html) */}
+        {perfilB2BTab !== 'seguridad' && (
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--tw-border)', display: 'flex', justifyContent: 'flex-end' }}>
+            <button data-testid="perfil-cerrar-sesion" onClick={() => { void cerrarSesion() }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.3)', background: 'rgba(239,68,68,.04)', color: '#ef4444', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600 }}>
+              <span style={{ fontSize: 16 }}>🚪</span><span>Cerrar sesión</span>
+            </button>
           </div>
         )}
       </div>
@@ -5664,7 +5708,7 @@ const PortalEmprendedor: React.FC<Props> = ({ usuarioId, nombreUsuario, isDemo =
             </div>
             <div style={{ marginTop: 24 }}>
               <button style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,.2)', background: 'rgba(239,68,68,.04)', color: '#e74c3c', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 600 }}
-                onClick={() => logout()}>
+                onClick={() => { void cerrarSesion() }}>
                 <span style={{ fontSize: 16 }}>🚪</span>
                 <span>Cerrar sesión</span>
               </button>

@@ -119,12 +119,14 @@ test.describe('31 — Perfil y cuenta de usuario por rol', () => {
       }
     }
     const btnLogout2 = page.getByRole('button', { name: /cerrar sesión|salir|logout/i }).first()
-    if (!await btnLogout2.isVisible()) { test.skip(); return }
+    // BUG-REG-06: sin test.skip() — si no hay botón de cerrar sesión, el test debe fallar
+    await expect(btnLogout2).toBeVisible({ timeout: 5_000 })
     await btnLogout2.evaluate((el: HTMLElement) => el.click())
-    await page.waitForTimeout(1000)
-    // Debe redirigir a login o catálogo como guest
-    const url = page.url()
-    expect(url).toMatch(/\/login/)  // History API: redirige a login o home
+    // Vuelve al inicio como guest: el header ofrece "Ingresar" y el sessionStorage queda limpio
+    await page.waitForURL(u => new URL(u).pathname === '/', { timeout: 10_000 })
+    await expect(page.locator('.header-login-btn')).toBeVisible({ timeout: 10_000 })
+    const retorno = await page.evaluate(() => sessionStorage.getItem('tw_return_to'))
+    expect(retorno).toBeNull()
   })
 
 })

@@ -423,6 +423,66 @@ test.describe('27d — Retorno tras login (AUTH-04)', () => {
     await page.waitForTimeout(2000)
     expect(new URL(page.url()).pathname).toBe('/')                // sin carrito ni origen → catálogo
   })
+
+  // BUG: en "Soy Caficultor → Paso 1 de 3 · Crea tu cuenta" el Email no aceptaba lo tecleado
+  // (input controlado sin onChange) y un pending de Google rancio en sessionStorage lo bloqueaba.
+  // Se teclea carácter a carácter (fill() puede ocultar el bug) en estado limpio y con storage rancio.
+  for (const estado of ['limpio', 'pending-sin-email', 'pending-rancio'] as const) {
+    test(`22b — Caficultor Paso 1: el Email se puede escribir (${estado})`, async ({ page }) => {
+      await irA(page, '/login?registro=1')
+      if (estado !== 'limpio') {
+        await page.evaluate((e) => {
+          const pending = e === 'pending-sin-email'
+            ? { uid: 'uid-rancio', nombre: 'Viejo', email: '' }
+            : { uid: 'uid-rancio', nombre: 'Viejo', email: 'viejo@gmail.com' }
+          sessionStorage.setItem('one_google_pending_registro', JSON.stringify(pending))
+        }, estado)
+        await page.reload()
+        await esperarCarga(page)
+      }
+      await page.getByRole('button', { name: /Soy Caficultor/ }).first().click()
+      await expect(page.getByText('Paso 1 de 3').first()).toBeVisible({ timeout: 10_000 })
+      const emailInput = page.locator('input[type=email]:visible').first()
+      await expect(emailInput).toBeEditable()
+      await emailInput.click()
+      await emailInput.press('ControlOrMeta+a')
+      await emailInput.press('Backspace')
+      await emailInput.pressSequentially('nuevo@correo.pe')
+      await expect(emailInput).toHaveValue('nuevo@correo.pe')
+    })
+  }
+
+  // Contraparte: un alta Google en curso y VÁLIDA (sesión Auth con el mismo uid, sin perfil)
+  // sí deja el Email bloqueado con el correo de Google.
+  test('22c — Caficultor Paso 1: con pending de Google válido el Email queda bloqueado', async ({ page }) => {
+    await irA(page, '/login?registro=1')
+    const correo = emailQA('googlepending')
+    // Se usa la MISMA instancia de Firebase Auth de la app (módulos servidos por Vite):
+    // se crea un usuario Auth sin documento en one_usuarios, como un alta Google a medias.
+    const uid = await page.evaluate(async ({ correo, pass }) => {
+      const src = await (await fetch('/src/one/authService.ts')).text()
+      const authUrl = src.match(/from\s+["']([^"']*firebase_auth[^"']*)["']/)![1]
+      const fa = await import(/* @vite-ignore */ authUrl)
+      const { auth } = await import(/* @vite-ignore */ '/src/shared/firebase.ts')
+      const cred = await fa.createUserWithEmailAndPassword(auth, correo, pass)
+      sessionStorage.setItem('one_google_pending_registro', JSON.stringify({ uid: cred.user.uid, nombre: 'QA Google', email: correo }))
+      return cred.user.uid as string
+    }, { correo, pass: PASS_QA })
+    expect(uid).toBeTruthy()
+    await page.reload()
+    await esperarCarga(page)
+    await page.getByRole('button', { name: /Soy Caficultor/ }).first().click()
+    await expect(page.getByText('Paso 1 de 3').first()).toBeVisible({ timeout: 10_000 })
+    const emailInput = page.locator('input[type=email]:visible').first()
+    await expect(emailInput).toHaveValue(correo)
+    await expect(emailInput).not.toBeEditable()
+    // limpieza: borrar el usuario Auth de prueba
+    await page.evaluate(async () => {
+      const { auth } = await import(/* @vite-ignore */ '/src/shared/firebase.ts')
+      await auth.currentUser?.delete()
+      sessionStorage.removeItem('one_google_pending_registro')
+    })
+  })
 })
 
 // ── 27e — Acceso desde el menú ☰ en móvil (mobile-qa · Pixel 7) ──────────────
@@ -472,5 +532,143 @@ test.describe('27e — Menú ☰: acceso en móvil', () => {
     await page.waitForTimeout(1000)
     const body = await page.locator('body').textContent()
     expect(body).toMatch(/caficultor|registr|productor/i)
+  })
+})
+
+// ── 27f — Alta de caficultor por /login (AuthScreen) · QA 2026-11-27 ─────────
+// BUG-REG-04: el alta terminaba en el paso 1 · BUG-REG-05: "Confirmar" sin comprobar ·
+// BUG-REG-06: no había "Cerrar sesión". Crean cuentas reales en QA (datos desechables).
+test.describe('27f — Alta caficultor por /login (BUG-REG-04/05/06)', () => {
+  const vis = (page: Page, ph: string) => page.locator(`input[placeholder="${ph}"]:visible`).first()
+
+  async function paso1Caficultor(page: Page, email: string, confirmar = PASS_QA) {
+    await irA(page, '/login?registro=1')
+    await page.getByRole('button', { name: /Soy Caficultor/ }).first().click()
+    await expect(page.getByText('Paso 1 de 3').first()).toBeVisible({ timeout: 10_000 })
+    await vis(page, 'María Quispe Condori').fill('QA Caficultor Login')
+    await vis(page, '+51 987 654 321').fill('+51 999 222 333')
+    await vis(page, 'tu@correo.com').fill(email)
+    await vis(page, 'Mín. 8 chars + 1 núm').fill(PASS_QA)
+    await vis(page, 'Repite').fill(confirmar)
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+  }
+
+  async function pasosFincaIdentidad(page: Page, dni: string) {
+    await expect(page.getByText(/Paso 2 de 3|Tu finca/).first()).toBeVisible({ timeout: 15_000 })
+    const selects = page.locator('select:visible')
+    await selects.nth(0).selectOption('Cajamarca')
+    await vis(page, 'Ej. San Ignacio').fill('San Ignacio')
+    await selects.nth(1).selectOption('Caturra')
+    await selects.nth(2).selectOption('Honey')
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Verifica tu identidad').first()).toBeVisible({ timeout: 10_000 })
+    await vis(page, '12345678').fill(dni)
+    await vis(page, '+51 987 654 321').fill('+51 999 222 333')
+    await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
+  }
+
+  /** Lee one_usuarios/{uid actual} con la MISMA instancia de Firebase de la app (módulos de Vite). */
+  async function perfilActual(page: Page) {
+    return page.evaluate(async () => {
+      const src = await (await fetch('/src/one/service.ts')).text()
+      const fsUrl = src.match(/from\s+["']([^"']*firebase_firestore[^"']*)["']/)![1]
+      const fs = await import(/* @vite-ignore */ fsUrl)
+      const { auth, db } = await import(/* @vite-ignore */ '/src/shared/firebase.ts')
+      const uid = auth.currentUser?.uid
+      if (!uid) return null
+      const snap = await fs.getDoc(fs.doc(db, 'one_usuarios', uid))
+      const d = snap.data() ?? {}
+      return { rol: d.rol, dni: d.caficultor?.dni, yape: d.caficultor?.yape, region: d.caficultor?.region, onboarding: d.onboarding?.estado }
+    })
+  }
+
+  test('26 — BUG-REG-04: el alta recorre Cuenta → Finca → Identidad y termina con el perfil completo', async ({ page }) => {
+    test.setTimeout(90_000)
+    await paso1Caficultor(page, emailQA('cafl'))
+    // Antes: "Siguiente →" creaba la cuenta y AppONE sacaba al usuario a /caficultor-portal
+    await expect(page.getByText('Paso 2 de 3').first()).toBeVisible({ timeout: 10_000 })
+    await page.waitForTimeout(3000)
+    expect(new URL(page.url()).pathname).toBe('/login')
+    await expect(page.getByText('Paso 2 de 3').first()).toBeVisible()
+    const dni = dniUnico()
+    await pasosFincaIdentidad(page, dni)
+    await page.waitForURL(/\/caficultor-portal/, { timeout: 30_000 })
+    await expect.poll(() => perfilActual(page), { timeout: 15_000 }).toMatchObject({
+      rol: 'seller', dni, region: 'Cajamarca', yape: '+51 999 222 333', onboarding: 'completo',
+    })
+  })
+
+  test('27 — BUG-REG-04: un seller a medias (sin bloque caficultor) vuelve a completar el alta', async ({ page }) => {
+    test.setTimeout(90_000)
+    await irA(page, '/')
+    // Cuenta + perfil seller SIN bloque caficultor, como dejaba el bug
+    await page.evaluate(async ({ email, pass }) => {
+      const { registrar } = await import(/* @vite-ignore */ '/src/one/authService.ts')
+      await registrar(email, pass, 'QA Seller a medias', 'seller')
+    }, { email: emailQA('medias'), pass: PASS_QA })
+    await irA(page, '/caficultor-portal')
+    await page.waitForURL(/\/login/, { timeout: 15_000 })
+    await expect(page.getByText('Tu finca').first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByTestId('onboarding-cerrar-sesion')).toBeVisible()
+    await pasosFincaIdentidad(page, dniUnico())
+    await page.waitForURL(/\/caficultor-portal/, { timeout: 30_000 })
+    await expect.poll(() => perfilActual(page), { timeout: 15_000 }).toMatchObject({ rol: 'seller', onboarding: 'completo' })
+  })
+
+  test('28 — BUG-REG-05: "Confirmar" distinto de la contraseña no deja avanzar (caficultor)', async ({ page }) => {
+    await paso1Caficultor(page, emailQA('conf'), 'OtraClave99')
+    await expect(page.getByText('Las contraseñas no coinciden.').first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText('Paso 1 de 3').first()).toBeVisible()
+  })
+
+  test('29 — BUG-REG-05: "Confirmar" distinto de la contraseña no deja avanzar (cliente)', async ({ page }) => {
+    await irA(page, '/login?registro=1')
+    await page.getByRole('button', { name: /Soy Cliente/ }).first().click()
+    await page.getByText('Compra café para tu consumo personal. Solo necesitas tu DNI.').first().click()
+    await page.getByRole('button', { name: /Continuar →/ }).first().click()
+    await vis(page, 'Juan Pérez').fill('QA Confirmar')
+    await vis(page, 'tu@correo.com').fill(emailQA('confcli'))
+    await vis(page, 'Mínimo 8 caracteres + 1 número').fill(PASS_QA)
+    await vis(page, 'Repite').fill('OtraClave99')
+    await page.getByRole('button', { name: /Siguiente →/ }).first().click()
+    await expect(page.getByText('Las contraseñas no coinciden.').first()).toBeVisible({ timeout: 5_000 })
+  })
+
+  test('30 — BUG-REG-06: el caficultor cierra sesión desde el menú ☰ y vuelve como guest', async ({ page }) => {
+    await loginEmail(page, USERS.caficultor.email, USERS.caficultor.password)
+    await irA(page, '/caficultor-portal')
+    await abrirMenuHamburguesa(page)
+    const salir = page.getByTestId('menu-cerrar-sesion')
+    await expect(salir).toBeVisible({ timeout: 8_000 })
+    await salir.click()
+    await page.waitForURL(u => new URL(u).pathname === '/', { timeout: 10_000 })   // vuelve al inicio
+    await expect.poll(() => perfilActual(page)).toBeNull()       // sin sesión Auth
+    expect(await page.evaluate(() => sessionStorage.getItem('tw_return_to'))).toBeNull()
+    await irA(page, '/caficultor-portal')
+    await page.waitForURL(/\/login/, { timeout: 10_000 })        // el portal ya no es accesible
+  })
+
+  test('31 — BUG-REG-06: "Cerrar sesión" visible en el Perfil del portal caficultor', async ({ page }) => {
+    await loginEmail(page, USERS.caficultor.email, USERS.caficultor.password)
+    await irA(page, '/caficultor-portal')
+    await abrirMenuHamburguesa(page)
+    await page.locator('nav').getByRole('button', { name: /^⚙️\s*Perfil$/ }).first().click()
+    const salir = page.getByTestId('perfil-cerrar-sesion')
+    await expect(salir).toBeVisible({ timeout: 15_000 })
+    await salir.click()
+    await page.waitForURL(u => new URL(u).pathname === '/', { timeout: 10_000 })   // vuelve al inicio
+    await expect.poll(() => perfilActual(page)).toBeNull()       // sin sesión Auth
+  })
+
+  test('32 — BUG-REG-06: "Cerrar sesión" visible en el Perfil del portal de negocio', async ({ page }) => {
+    await loginEmail(page, USERS.barista.email, USERS.barista.password)
+    await irA(page, '/portal')
+    await abrirMenuHamburguesa(page)
+    await page.locator('nav').getByRole('button', { name: /^⚙️\s*Perfil$/ }).first().click()
+    const salir = page.getByTestId('perfil-cerrar-sesion')
+    await expect(salir).toBeVisible({ timeout: 15_000 })
+    await salir.click()
+    await page.waitForURL(u => new URL(u).pathname === '/', { timeout: 10_000 })   // vuelve al inicio
+    await expect.poll(() => perfilActual(page)).toBeNull()       // sin sesión Auth
   })
 })

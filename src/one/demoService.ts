@@ -364,6 +364,11 @@ export function demoFetchMenuNegocio(negocioId: string): Promise<ProductoONE[]> 
   return Promise.resolve(productos)
 }
 
+export function demoFetchProducto(productoId: string): Promise<ProductoONE | null> {
+  const producto = (seedProductos as unknown as ProductoONE[]).find(p => p.id === productoId) ?? null
+  return Promise.resolve(producto)
+}
+
 // ─── Stock ────────────────────────────────────────────────────────────────────
 
 let productosDemo: ProductoONE[] = (seedProductos as unknown as ProductoONE[]).map(p => ({ ...p }))

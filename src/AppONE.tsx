@@ -17,10 +17,11 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/shared/firebase'
 import type { User } from 'firebase/auth'
 import { fetchUsuario, createCotizacion } from '@/one/service'
+import { cerrarSesion } from '@/one/authService'
 import type { UsuarioONE, ProductoONE, FormatoONE } from '@/one/types'
 import { calcularPrecioFinal } from '@/one/config'
 import { track, setAnalyticsUser, initAnalytics, setupErrorTracking } from '@/one/analytics'
-import { esRutaOnboarding, iniciarOnboarding, puertaDeRuta } from '@/one/onboarding'
+import { esRutaOnboarding, EVENTO_PERFIL_ACTUALIZADO, iniciarOnboarding, puertaDeRuta, sellerIncompleto } from '@/one/onboarding'
 import { confirmacionPendiente, destinoTrasAcceso, irALogin, limpiarConfirmacion, limpiarRetorno } from '@/one/retorno'
 
 import CatalogoPublico from '@/one/components/CatalogoPublico'
@@ -447,6 +448,16 @@ function GlobalHeader({
                 <span style={{ fontSize: 16 }}>⚙️</span> Administración
               </a>
             )}
+
+            {/* BUG-REG-06 · Cerrar sesión para todos los roles (☰ en escritorio y móvil) */}
+            <button
+              data-testid="menu-cerrar-sesion"
+              onClick={() => { cerrarMenu(); void cerrarSesion() }}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', marginTop: 6, padding: '10px 20px', background: 'transparent', border: 'none', borderLeft: '3px solid transparent', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', textAlign: 'left' }}
+            >
+              <span style={{ fontSize: 16 }}>🚪</span>
+              Cerrar sesión
+            </button>
           </div>
         ) : (
           <div style={{ padding: '8px 20px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -518,6 +529,23 @@ function useAuthONE(isDemo = false) {
     }, 1500)
     return () => { stopped = true; clearInterval(id) }
   }, [user, loading, usuarioONE])
+
+  // BUG-REG-04: AuthScreen avisa al terminar el alta de caficultor → recargar el perfil
+  // (el de memoria puede no tener aún el bloque `caficultor`).
+  useEffect(() => {
+    if (isDemo) return
+    const recargar = async () => {
+      const uid = auth.currentUser?.uid
+      if (!uid) return
+      try {
+        const u = await fetchUsuario(uid)
+        setUsuarioONE(u)
+        setAnalyticsUser(uid, u.rol)
+      } catch { /* aún sin doc: el reintento periódico lo encontrará */ }
+    }
+    window.addEventListener(EVENTO_PERFIL_ACTUALIZADO, recargar)
+    return () => window.removeEventListener(EVENTO_PERFIL_ACTUALIZADO, recargar)
+  }, [isDemo])
 
   useEffect(() => {
     // Inicializar analytics (restaura uid/rol de sessionStorage si existía)
@@ -1248,6 +1276,11 @@ const AppONE: React.FC = () => {
       irALogin()
       return null
     }
+    // BUG-REG-04: alta a medias → volver a completar el onboarding (no un portal vacío)
+    if (!isDemo && sellerIncompleto(usuarioONE)) {
+      navigate('/login')
+      return null
+    }
     track('portal_caficultor_visto', { rolUsuario: 'seller' })
     const caficultorId = user?.uid ?? DEMO_USER.uid
     return withHeader(
@@ -1277,11 +1310,13 @@ const AppONE: React.FC = () => {
       // aquí mismo. Antes se comprobaba el carrito primero → /portal → guard → /login → bucle.
       // GAP-F01-18: mientras se muestra "¡Bienvenido/a!" no se redirige; el botón decide el destino.
       // Mismo elemento <AuthScreen> en la misma posición → React conserva su estado (el paso actual).
-      if (user && (!usuarioONE || confirmacionPendiente()) && !isDemo) {
+      // BUG-REG-04: un seller sin bloque `caficultor` (alta a medias) tampoco sale: completa Finca + Identidad.
+      if (user && (!usuarioONE || confirmacionPendiente() || sellerIncompleto(usuarioONE)) && !isDemo) {
         return (
           <AuthScreen
             onSuccess={() => { /* AuthScreen maneja la redirección directamente */ }}
-            pasoInicial={usuarioONE ? 'verifica_correo' : 'seleccion_rol_registro'}
+            pasoInicial={sellerIncompleto(usuarioONE) ? 'registro_caficultor_finca' : usuarioONE ? 'verifica_correo' : 'seleccion_rol_registro'}
+            completarSeller={sellerIncompleto(usuarioONE)}
           />
         )
       }

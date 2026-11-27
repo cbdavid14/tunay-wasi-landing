@@ -8,7 +8,7 @@ import { loginConGoogle, login, registrar, resetPassword } from '../authService'
 import { fetchUsuario } from '../service'
 import type { RolONE } from '../types'
 import { track, setAnalyticsUser } from '../analytics'
-import { completarOnboarding, useOnboardingTracking, type FlujoOnboarding, type PasoOnboarding } from '../onboarding'
+import { completarOnboarding, EVENTO_PERFIL_ACTUALIZADO, useOnboardingTracking, type FlujoOnboarding, type PasoOnboarding } from '../onboarding'
 import { irTrasAcceso, limpiarConfirmacion, marcarConfirmacionPendiente, textoBotonTrasRegistro } from '../retorno'
 import { claveDniB2C, claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado, reservarDocumentos } from '../documentos'
 
@@ -18,6 +18,8 @@ interface Props {
   onSuccess?: () => void
   mensajePrevia?: string
   pasoInicial?: Paso
+  /** BUG-REG-04: hay sesión con perfil `seller` sin bloque `caficultor` (alta a medias) → completar Finca + Identidad. */
+  completarSeller?: boolean
 }
 
 const GOOGLE_PENDING_KEY = 'one_google_pending_registro'
@@ -26,7 +28,11 @@ function leerGooglePending() {
   try {
     const raw = sessionStorage.getItem(GOOGLE_PENDING_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as { uid: string; nombre: string; email: string }
+    const p = JSON.parse(raw) as { uid?: string; nombre?: string; email?: string } | null
+    // Un pending sin uid o sin email no es un alta Google válida: se descarta para que
+    // no deje al usuario nuevo en modo "Google" (email bloqueado / vacío).
+    if (!p || !p.uid || !p.email || !p.email.includes('@')) { limpiarGooglePending(); return null }
+    return { uid: p.uid, nombre: p.nombre ?? '', email: p.email }
   } catch { return null }
 }
 
@@ -38,11 +44,12 @@ function limpiarGooglePending() {
   try { sessionStorage.removeItem(GOOGLE_PENDING_KEY) } catch { /* ok */ }
 }
 
-const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) => {
+const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', completarSeller = false }) => {
   // Si hay datos de Google pending en sessionStorage (sobreviven el remount de onAuthStateChanged),
   // restauramos automáticamente el paso de selección de rol
   const googlePendingGuardado = leerGooglePending()
-  const pasoRestaurado: Paso = googlePendingGuardado ? 'seleccion_rol_registro' : (pasoInicial ?? 'inicio')
+  const pasoRestaurado: Paso = completarSeller ? 'registro_caficultor_finca'
+    : googlePendingGuardado ? 'seleccion_rol_registro' : (pasoInicial ?? 'inicio')
 
   const [paso, setPaso] = useState<Paso>(pasoRestaurado)
   const [error, setError] = useState<string | null>(null)
@@ -56,6 +63,36 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
   const [rolRegistro, setRolRegistro] = useState<RolONE>('buyer_b2c')
   // Para Google: si el usuario escoge "Cliente" primero, guardamos el uid y pasamos a seleccion_tipo_cliente
   const [googlePendingTipo, setGooglePendingTipo] = useState(!!googlePendingGuardado)
+  // El email solo se bloquea si viene verificado por Google en ESTE alta (uid + email reales).
+  const emailBloqueadoGoogle = googlePendingTipo && !!pendingUid && pendingEmail.includes('@')
+
+  // Pending de Google rancio (sesión cerrada u otra cuenta): se descarta y se vuelve al alta por email.
+  useEffect(() => {
+    if (!googlePendingGuardado) return
+    let cancelado = false
+    let unsub: (() => void) | undefined
+    import('@/shared/firebase').then(({ auth }) => {
+      if (cancelado) return
+      unsub = auth.onAuthStateChanged(user => {
+        if (user && user.uid === googlePendingGuardado.uid) return
+        limpiarGooglePending()
+        setGooglePendingTipo(false)
+        setPendingUid(null)
+        setPendingNombre('')
+        setPendingEmail('')
+      })
+    }).catch(() => { /* ok */ })
+    return () => { cancelado = true; unsub?.() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // BUG-REG-04: si AppONE detecta un seller a medias con este AuthScreen ya montado (p. ej. tras
+  // "Ingresar"), se salta a Finca: la cuenta ya existe, solo falta completar el perfil.
+  useEffect(() => {
+    if (!completarSeller) return
+    setRolRegistro('seller')
+    setPaso(p => (p === 'registro_caficultor_finca' || p === 'registro_caficultor_identidad' || p === 'cargando_cuenta') ? p : 'registro_caficultor_finca')
+  }, [completarSeller])
 
   // ── Embudo de onboarding (iter.16) — antes de cualquier return (rules of hooks) ──
   const PASO_ONBOARDING: Partial<Record<Paso, PasoOnboarding>> = {
@@ -79,6 +116,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')   // BUG-REG-05
   const [cargando, setCargando] = useState(false)
 
   // Datos adicionales post-registro
@@ -791,15 +829,17 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
             <input
               type="email" placeholder="tu@correo.com"
               value={googlePendingTipo ? pendingEmail : email}
-              onChange={e => { if (!googlePendingTipo) setEmail(e.target.value) }}   // faltaba: el email no se podía escribir
+              onChange={e => googlePendingTipo ? setPendingEmail(e.target.value) : setEmail(e.target.value)}
               autoComplete="email"
-              readOnly={googlePendingTipo}
-              style={{ ...inputStyle, ...(googlePendingTipo ? { opacity: 0.6, cursor: 'not-allowed', background: '#111' } : {}) }}
+              readOnly={emailBloqueadoGoogle}
+              style={{ ...inputStyle, ...(emailBloqueadoGoogle ? { opacity: 0.6, cursor: 'not-allowed', background: '#111' } : {}) }}
             />
             {!googlePendingTipo && (
               <>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Contraseña <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
                 <input type="password" placeholder="Mínimo 8 caracteres + 1 número" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" style={inputStyle} />
+                <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Confirmar contraseña <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
+                <input type="password" placeholder="Repite" value={passwordConfirm} onChange={e => setPasswordConfirm(e.target.value)} autoComplete="new-password" style={inputStyle} />
               </>
             )}
             {googlePendingTipo && (
@@ -812,10 +852,13 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
               onClick={() => {
                 const n = googlePendingTipo ? pendingNombre : nombre
                 if (!n.trim()) { setError('Ingresa tu nombre.'); return }
-                  if (!googlePendingTipo) {
+                if (googlePendingTipo) {
+                  if (!pendingEmail.includes('@')) { setError('Ingresa un email válido.'); return }
+                } else {
                   if (!email.includes('@')) { setError('Ingresa un email válido.'); return }
                   if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return }
                   if (!/\d/.test(password)) { setError('La contraseña debe incluir al menos 1 número.'); return }
+                  if (password !== passwordConfirm) { setError('Las contraseñas no coinciden.'); return }   // BUG-REG-05
                 }
                 setError(null)
                 if (rolRegistro === 'buyer_b2c') setPaso('datos_persona')
@@ -1103,8 +1146,10 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                 <input
                   type="email" placeholder="tu@correo.com"
                   value={googlePendingTipo ? pendingEmail : email}
-                  readOnly={googlePendingTipo}
-                  style={{ ...inputStyle, ...(googlePendingTipo ? { opacity: 0.6, cursor: 'not-allowed', background: '#111' } : {}) }}
+                  onChange={e => googlePendingTipo ? setPendingEmail(e.target.value) : setEmail(e.target.value)}
+                  autoComplete="email"
+                  readOnly={emailBloqueadoGoogle}
+                  style={{ ...inputStyle, ...(emailBloqueadoGoogle ? { opacity: 0.6, cursor: 'not-allowed', background: '#111' } : {}) }}
                 />
               </div>
               {!googlePendingTipo ? (
@@ -1115,7 +1160,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Confirmar <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
-                    <input type="password" placeholder="Repite" style={inputStyle} />
+                    <input type="password" placeholder="Repite" value={passwordConfirm} onChange={e => setPasswordConfirm(e.target.value)} autoComplete="new-password" style={inputStyle} />
                   </div>
                 </div>
               ) : (
@@ -1129,14 +1174,18 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                   const n = googlePendingTipo ? pendingNombre : nombre
                   if (!n.trim()) { setError('Ingresa tu nombre.'); return }
                   if (!cafYape.trim()) { setError('Ingresa tu WhatsApp.'); return }
-                  if (!googlePendingTipo) {
-                    if (!email.includes('@')) { setError('Ingresa un email válido.'); return }
-                    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return }
-                    if (!/\d/.test(password)) { setError('La contraseña debe incluir al menos 1 número.'); return }
-                    // flujo email: crear cuenta y avanzar a finca
-                    handleEmailRegistro({ preventDefault: () => {} } as React.FormEvent)
+                  if (googlePendingTipo) {
+                    if (!pendingEmail.includes('@')) { setError('Ingresa un email válido.'); return }
+                    setError(null)
+                    setPaso('registro_caficultor_finca')
                     return
                   }
+                  if (!email.includes('@')) { setError('Ingresa un email válido.'); return }
+                  if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return }
+                  if (!/\d/.test(password)) { setError('La contraseña debe incluir al menos 1 número.'); return }
+                  if (password !== passwordConfirm) { setError('Las contraseñas no coinciden.'); return }   // BUG-REG-05
+                  // BUG-REG-04: la cuenta NO se crea aquí (AppONE sacaba al usuario del alta al ver el perfil
+                  // seller). Se crea al final del paso 3, como en /registro-caficultor y en el flujo Google.
                   setError(null)
                   setPaso('registro_caficultor_finca')
                 }}
@@ -1152,7 +1201,13 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
         {/* ── Registro Caficultor — Paso 2: Tu finca ── */}
         {paso === 'registro_caficultor_finca' && (
           <div style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column' }}>
-            <button onClick={() => { setError(null); setPaso(googlePendingTipo ? 'seleccion_rol_registro' : 'registro_caficultor') }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, marginBottom: 24, padding: 0, fontFamily: 'Montserrat, sans-serif', alignSelf: 'flex-start' }}>← Volver</button>
+            {completarSeller ? (
+              // Cuenta ya creada (alta a medias): no se vuelve al paso 1; se puede salir.
+              <button data-testid="onboarding-cerrar-sesion" onClick={async () => { const { cerrarSesion } = await import('../authService'); await cerrarSesion() }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, marginBottom: 24, padding: 0, fontFamily: 'Montserrat, sans-serif', alignSelf: 'flex-start' }}>🚪 Cerrar sesión</button>
+            ) : (
+              <button onClick={() => { setError(null); setPaso(googlePendingTipo ? 'seleccion_rol_registro' : 'registro_caficultor') }} style={{ background: 'none', border: 'none', color: 'var(--tw-text-muted)', cursor: 'pointer', fontSize: 11, marginBottom: 24, padding: 0, fontFamily: 'Montserrat, sans-serif', alignSelf: 'flex-start' }}>← Volver</button>
+            )}
+            {completarSeller && <div style={{ fontSize: 11, color: 'var(--tw-text-muted)', marginBottom: 14, lineHeight: 1.5 }}>Tu cuenta ya está creada. Completa tu finca e identidad para entrar a tu portal.</div>}
             <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'var(--tw-terra)' }} />
               <div style={{ flex: 1, height: 3, borderRadius: 2, background: googlePendingTipo ? '#2a2a2a' : 'var(--tw-terra)' }} />
@@ -1271,16 +1326,30 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                     setAnalyticsUser(pendingUid, 'seller')
                     try { localStorage.setItem('one_portal_badge', '1') } catch { /* ok */ }
                     uidSeller = pendingUid
-                  } else {
-                    // Flujo email — el usuario ya fue creado en handleEmailRegistro
+                  } else if (completarSeller) {
+                    // Alta a medias: la cuenta y el perfil seller ya existen — solo reservar DNI (REG-01)
                     const { auth } = await import('@/shared/firebase')
                     uidSeller = auth.currentUser?.uid
-                    if (!uidSeller) {
-                      await new Promise(r => setTimeout(r, 800))
-                      uidSeller = auth.currentUser?.uid
+                    if (!uidSeller) throw new Error('sin-sesion')
+                    await reservarDocumentos(uidSeller, 'seller', [claveDniSeller(cafDni.trim())])
+                  } else {
+                    // Flujo email (BUG-REG-04): la cuenta se crea AHORA, al final del paso 3. registrar()
+                    // reserva el DNI (REG-01) y, si algo falla, libera el DNI y borra la cuenta Auth.
+                    try {
+                      await registrar(email, password, nombre.trim(), 'seller', [claveDniSeller(cafDni.trim())])
+                    } catch (e: unknown) {
+                      const code = (e as { code?: string }).code ?? ''
+                      if (code.startsWith('auth/')) {
+                        // email ya usado / inválido / contraseña débil → se corrige en el paso 1
+                        setError(traducirError(code))
+                        setPaso('registro_caficultor')
+                        return
+                      }
+                      throw e
                     }
-                    // REG-01: la cuenta ya existe (creada en handleEmailRegistro) — reservar DNI ahora
-                    if (uidSeller) await reservarDocumentos(uidSeller, 'seller', [claveDniSeller(cafDni.trim())])
+                    const { auth } = await import('@/shared/firebase')
+                    uidSeller = auth.currentUser?.uid
+                    if (uidSeller) setAnalyticsUser(uidSeller, 'seller')
                   }
                   // Guardar datos de finca y pago en ambos flujos
                   if (uidSeller) {
@@ -1304,7 +1373,9 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio' }) 
                     }, { merge: true })
                   }
                   completarOnboarding(uidSeller ?? '', 'seller', 'caficultor', metodoOnb)
-                  navigate('/caficultor-portal')
+                  // AppONE recarga el perfil (ya con bloque caficultor) y lleva al portal / returnTo.
+                  // No se navega desde aquí: con el perfil viejo en memoria el portal devolvería al alta.
+                  window.dispatchEvent(new Event(EVENTO_PERFIL_ACTUALIZADO))
                 } catch (e: unknown) {
                   setError(esDocumentoDuplicado(e) ? e.message : 'Error al guardar tu perfil. Intenta de nuevo.')
                   setPaso('registro_caficultor_identidad')
