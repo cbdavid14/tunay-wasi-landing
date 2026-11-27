@@ -14,8 +14,9 @@ export async function loginEmail(page: Page, email: string, password: string) {
   await page.goto('/login')
   await esperarRedQuieta(page)
   await esperarCarga(page)
-  // Paso 1: si aparece pantalla de selección de método, clic en "Continuar con Email" (móvil) o "Ingresar con email" (desktop)
-  const btnEmail = page.getByRole('button', { name: /continuar con email|ingresar con email/i }).first()
+  // Paso 1: en móvil (< 768px) el AuthScreen muestra "¿Ya tienes cuenta? Ingresar";
+  // en desktop muestra "Continuar con Email" / "Ingresar con email".
+  const btnEmail = page.getByRole('button', { name: /ya tienes cuenta.*ingresar|continuar con email|ingresar con email/i }).first()
   await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()

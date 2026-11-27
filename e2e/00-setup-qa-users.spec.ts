@@ -29,7 +29,7 @@ async function loginYObtenerToken(page: Parameters<typeof test>[1] extends (args
   await page.goto('/login')
   await esperarRedQuieta(page)
   await esperarCarga(page)
-  const btnEmail = page.getByRole('button', { name: /continuar con email|ingresar con email/i }).first()
+  const btnEmail = page.getByRole('button', { name: /ya tienes cuenta.*ingresar|continuar con email|ingresar con email/i }).first()
   await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()
@@ -265,7 +265,7 @@ test('setup: caficultor (seller) — registrar en app si no existe', async ({ pa
   await page.goto("/login")
   await esperarRedQuieta(page)
   await esperarCarga(page)
-  const btnEmail = page.getByRole('button', { name: /continuar con email|ingresar con email/i }).first()
+  const btnEmail = page.getByRole('button', { name: /ya tienes cuenta.*ingresar|continuar con email|ingresar con email/i }).first()
   await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
   if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btnEmail.click()

@@ -149,8 +149,8 @@ test.describe('27 — Registro y login gate', () => {
     await page.goto('/login')
     await esperarRedQuieta(page)
     await esperarCarga(page)
-    // Pantalla inicio: puede llamarse "Continuar con Email" (móvil) o "Ingresar con email"
-    const btnEmail = page.getByRole('button', { name: /continuar con email|ingresar con email/i }).first()
+    // Pantalla inicio: "¿Ya tienes cuenta? Ingresar" en móvil, "Continuar con Email" en desktop
+    const btnEmail = page.getByRole('button', { name: /ya tienes cuenta.*ingresar|continuar con email|ingresar con email/i }).first()
     await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
     if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
       await btnEmail.click()
@@ -169,13 +169,13 @@ test.describe('27 — Registro y login gate', () => {
     await page.goto('/login')
     await esperarRedQuieta(page)
     await esperarCarga(page)
-    const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+    const btnEmail = page.getByRole('button', { name: /ya tienes cuenta.*ingresar|continuar con email|ingresar con email/i }).first()
     await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
     if (await btnEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
       await btnEmail.click()
       await page.waitForTimeout(500)
     }
-    await page.getByPlaceholder('tu@email.com').waitFor({ timeout: 8000 })
+    await page.getByPlaceholder('tu@email.com').waitFor({ timeout: 10_000 })
     await page.getByPlaceholder('tu@email.com').fill('inexistente@noexiste.test')
     await page.getByPlaceholder('••••••••').fill('contraseña_mala_123')
     await page.getByRole('button', { name: /ingresar →/i }).click()
@@ -333,9 +333,10 @@ test.describe('27c — Embudo de onboarding (iter.16)', () => {
 // Un único destino tras el acceso: carrito → página de origen (returnTo) → portal del rol.
 test.describe('27d — Retorno tras login (AUTH-04)', () => {
   async function loginDesdeFormulario(page: Page, email: string, password: string) {
-    const btnEmail = page.getByRole('button', { name: /ingresar con email|continuar con email/i }).first()
+    const btnEmail = page.getByRole('button', { name: /ya tienes cuenta.*ingresar|continuar con email|ingresar con email/i }).first()
     await btnEmail.or(page.getByPlaceholder('tu@email.com')).first().waitFor({ timeout: 15_000 }).catch(() => {})
     if (await btnEmail.isVisible().catch(() => false)) await btnEmail.click()
+    await page.getByPlaceholder('tu@email.com').waitFor({ timeout: 10_000 }).catch(() => {})
     await page.getByPlaceholder('tu@email.com').fill(email)
     await page.getByPlaceholder('••••••••').fill(password)
     await page.getByRole('button', { name: /ingresar →/i }).click()
