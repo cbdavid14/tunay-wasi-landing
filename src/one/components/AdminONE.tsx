@@ -2017,7 +2017,7 @@ const AdminONE: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) => {
       </div>
 
       {/* Mobile header */}
-      <div className="adm-mobile-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 150, background: '#0d0d0d', borderBottom: `1px solid ${"var(--tw-border)"}`, padding: '12px 16px', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="adm-mobile-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 210, background: '#0d0d0d', borderBottom: `1px solid ${"var(--tw-border)"}`, padding: '12px 16px', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--tw-text)', fontFamily: 'Cormorant Garamond, serif' }}>Admin Panel</p>
         <button onClick={() => setSidebarOpen(true)} style={{ background: 'none', border: `1px solid ${"var(--tw-border)"}`, color: 'var(--tw-text-muted)', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 16 }}>☰</button>
       </div>

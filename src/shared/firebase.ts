@@ -20,6 +20,6 @@ export const storage = getStorage(app);
 
 // Solo para las pruebas e2e con emuladores (npm run e2e:kyc). En un build publicado DEV es false.
 if (import.meta.env.DEV && import.meta.env.VITE_E2E_EMULATOR === 'true') {
-  connectFirestoreEmulator(db, '127.0.0.1', 8181)
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+  connectFirestoreEmulator(db, '127.0.0.1', Number(import.meta.env.VITE_E2E_FIRESTORE_PORT || 8181))
+  connectAuthEmulator(auth, `http://127.0.0.1:${import.meta.env.VITE_E2E_AUTH_PORT || 9099}`, { disableWarnings: true })
 }

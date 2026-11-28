@@ -12,10 +12,13 @@ async function abrirKyc(page: Page) {
   await loginEmail(page, ADMIN.email, ADMIN.password)
   await page.goto('/admin')
   await esperarCarga(page)
-  // En móvil el menú está detrás de ☰
-  const menu = page.locator('.adm-mobile-header button')
-  if (await menu.isVisible().catch(() => false)) await menu.click()
-  await page.getByRole('button', { name: /KYC Sellers/ }).locator('visible=true').first().click()
+  const kycBtn = page.getByRole('button', { name: /KYC Sellers/ })
+  if (!await kycBtn.filter({ visible: true }).first().isVisible({ timeout: 3_000 }).catch(() => false)) {
+    // Móvil: el sidebar está detrás de ☰
+    await page.locator('.adm-mobile-header button').click()
+    await kycBtn.filter({ visible: true }).first().waitFor({ state: 'visible' })
+  }
+  await kycBtn.filter({ visible: true }).first().click()
   await expect(page.getByText('KYC Caficultores').first()).toBeVisible()
   await expect(tarjeta(page, 'ana').first()).toBeVisible()
 }
@@ -37,7 +40,7 @@ test('KYC-ADM-01: historial con criterios, motivo del rechazo y filtros', async 
   await expect(tarjeta(page, 'beto')).toContainText('Falta nombre, región o distrito')
   // El CCI no impide el alta: se informa
   await expect(tarjeta(page, 'ana')).toContainText('Sin registrar (se exige para cobrar)')
-  await expect(tarjeta(page, 'carla')).toContainText('confirmar que es socio')
+  await expect(tarjeta(page, 'carla')).toContainText('Confirmar que es socio')
   await expect(tarjeta(page, 'carla')).toContainText('RUC cooperativa: 20131312955')
 
   for (const [nombre, uid] of [['Aprobados', 'ana'], ['Rechazados', 'beto']] as const) {

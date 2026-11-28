@@ -10,6 +10,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 export const PROYECTO = 'demo-kyc-e2e'
 export const ADMIN = { email: 'tunaywasi@gmail.com', password: 'ClaveDePrueba1' }
 export const CLIENTE = { email: 'cliente.e2e@example.com', password: 'ClaveDePrueba1' }
+export const CAFICULTORA = { email: 'ana@example.com', password: 'ClaveDePrueba1' }   // Ana, aprobada y sin CCI
 const RUC_COOPERATIVA = '20131312955'   // RUC público de la SUNAT, como dato de prueba
 
 const app = getApps()[0] ?? initializeApp({ projectId: PROYECTO })
@@ -55,6 +56,20 @@ function padronDePrueba() {
   return `file://${join(carpeta, 'p.zip')}`
 }
 
+/** El job real, aplicando y sin verificación facial (permitido solo en QA y emuladores). */
+export function ejecutarJob() {
+  exigirEmuladores()
+  execFileSync('node', ['scripts/kyc/main.mjs'], {
+    stdio: 'pipe',
+    env: { ...process.env, GCLOUD_PROJECT: PROYECTO, KYC_APLICAR: 'true', KYC_OMITIR_ROSTRO: 'true', SUNAT_PADRON_URL: padronDePrueba() },
+  })
+}
+
+export async function perfilPorEmail(email: string) {
+  const { uid } = await auth.getUserByEmail(email)
+  return { uid, ...(await perfil(uid)) }
+}
+
 /**
  * Escenario: Ana aprobada (sin CCI), Beto rechazado (datos incompletos) y Carla pendiente (cooperativa), revisados
  * por el job; Dora se registra después y espera la revisión.
@@ -64,13 +79,11 @@ export async function sembrar() {
   await vaciar()
   await usuario('jefe', ADMIN, 'admin')
   await usuario('cliente', CLIENTE, 'buyer_b2c')
+  await auth.createUser({ uid: 'ana', ...CAFICULTORA, emailVerified: true })
   await caficultor('ana', 'Ana Prueba', '99000001', { cci: '' })
   await caficultor('beto', 'Beto Prueba', '99000002', { distrito: '' })
   await caficultor('carla', 'Carla Prueba', '99000003', { tipoRegistroCaficultor: 'COOPERATIVA', rucCooperativa: RUC_COOPERATIVA })
-  execFileSync('node', ['scripts/kyc/main.mjs'], {
-    stdio: 'pipe',
-    env: { ...process.env, GCLOUD_PROJECT: PROYECTO, KYC_APLICAR: 'true', KYC_OMITIR_ROSTRO: 'true', SUNAT_PADRON_URL: padronDePrueba() },
-  })
+  ejecutarJob()
   await caficultor('dora', 'Dora Prueba', '99000004')
 }
 
