@@ -100,7 +100,8 @@ export const CatalogoPublico: React.FC<CatalogoProps> = ({
         const uid = auth.currentUser?.uid
         const [prods, cafics, peds] = await Promise.all([
           fetchProductos(),
-          fetchCaficultores(),
+          // Las reglas no dejan listar caficultores sin sesión: eso no debe vaciar el catálogo
+          fetchCaficultores().catch(() => []),
           uid ? fetchPedidosByNegocio(uid) : Promise.resolve([]),
         ])
         setProductos(prods)

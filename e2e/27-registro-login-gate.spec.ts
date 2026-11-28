@@ -1330,33 +1330,15 @@ test.describe('27i — F-01 formulario Persona único (GAP-F01-17)', () => {
 // F-02: B2B PENDING no puede ver precios mayoristas ni acceder al catálogo B2B.
 test.describe('27j — AUTH-01 / AUTH-04 / B2B-PENDING sin acceso mayorista', () => {
 
-  test('AUTH-01: el modal de login gate NO redirige fuera del catálogo (URL no cambia a /login)', async ({ page }) => {
-    // AUTH-01: modal inline al clickar sin sesión
+  test('AUTH-01: el guest ve el catálogo y al intentar comprar pasa a "¿Cómo usarás TunayWasi?" (D-15-01)', async ({ page }) => {
     await irA(page, '/')
-    if (!await page.locator('.sc-product-card').first().isVisible({ timeout: 20_000 }).catch(() => false)) {
-      await page.reload(); await esperarCarga(page)
-    }
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 25_000 })
-    const urlAntes = page.url()
-    // Click en la tarjeta para abrir ficha
-    await page.locator('.sc-product-card').first().click()
-    await page.waitForTimeout(500)
-    // Click en el botón de acción de compra
-    const btnAgregar = page.getByRole('button', { name: /agregar al carrito|comprar|solicitar/i }).first()
-    if (!await btnAgregar.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
-    await btnAgregar.evaluate((el: HTMLElement) => el.click())
-    await page.waitForTimeout(600)
-    // La URL no debe haber cambiado a /login (es modal inline)
-    const urlDespues = page.url()
-    expect(urlDespues).not.toMatch(/\/login$/)
-    // El body debe mostrar el modal de login/registro
-    const body = await page.locator('body').textContent()
-    expect(body).toMatch(/ingresar|registr|cuenta|login/i)
-    // La página sigue siendo el catálogo (el catálogo sigue visible)
-    // Verificar que las tarjetas siguen en el DOM (no se navegó fuera)
-    const tarjetasAun = page.locator('.sc-product-card')
-    const count = await tarjetasAun.count()
-    expect(count).toBeGreaterThan(0)
+    // Sin sesión el catálogo debe mostrar lotes
+    const candado = page.locator('.sc-product-card .sc-add-btn').first()
+    await expect(candado).toBeVisible({ timeout: 25_000 })
+    await candado.click()
+    // D-15-01 (cambiada 2026-11-26): ya no hay modal sobre el catálogo
+    await page.waitForURL(/\/login\?registro=1/, { timeout: 10_000 })
+    await expect(page.getByText(/¿Cómo usarás TunayWasi\?/).first()).toBeVisible({ timeout: 10_000 })
   })
 
   test('AUTH-04: tras login, el usuario regresa a la página exacta de origen (returnTo)', async ({ page }) => {
