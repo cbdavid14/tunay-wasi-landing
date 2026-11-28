@@ -7,7 +7,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
 
   test('1 — B2B APPROVED agrega producto al carrito (US-12 B2B · PR-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -25,7 +25,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
 
   test('2 — B2C no puede agregar lote TYPE_A (US-12 B2C restriction)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
@@ -124,7 +124,7 @@ test.describe('26 — Flujo de compra B2B: carrito → checkout 3 pasos', () => 
   })
 
   test('7 — Guest ve login gate al intentar agregar al carrito (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })

@@ -9,9 +9,9 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('1 — Puntaje SCA numérico nunca aparece en las tarjetas del catálogo (CAL-01 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Verificar que las tarjetas en sí no tienen el badge numérico SCA
     // (El texto "Certificado SCA" genérico en banners de marketing es diferente)
     const tarjetas = page.locator('.sc-product-card')
@@ -24,10 +24,10 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
   })
 
   test('2 — Guest abre detalle de producto: sin datos técnicos B2B (CAL-02 · US-42)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     await primeraTarjeta.click()
     await page.waitForTimeout(600)
     const body = await page.locator('body').textContent()
@@ -41,10 +41,10 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('3 — B2C abre detalle: sin datos técnicos ni precio mayorista (CAL-02 · PR-02)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     await primeraTarjeta.click()
     await page.waitForTimeout(600)
     // Acotar al panel de detalle, no al body completo (el footer tiene texto de marketing con "Precio S/kg")
@@ -60,10 +60,10 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('4 — B2B APPROVED: tarjetas del catálogo no muestran puntaje SCA numérico (PR-02 · US-10 · B2B-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
-    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    await expect(tarjetas.first()).toBeVisible({ timeout: 20_000 })
     // Las tarjetas individuales no deben mostrar SCA numérico (ej. "SCA 85")
     const countTarjetas = await tarjetas.count()
     for (let i = 0; i < Math.min(countTarjetas, 5); i++) {
@@ -74,10 +74,10 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('5 — SCA nunca aparece en ningún flujo B2B APPROVED (CAL-01 INVARIANTE global)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     await primeraTarjeta.click()
     await page.waitForTimeout(600)
     const body = await page.locator('body').textContent()
@@ -91,10 +91,10 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
   test('6 — Catálogo B2B con demo: NO hay SCA numérico en las tarjetas (INV-04)', async ({ page }) => {
     // Verificar INV-04 desde el catálogo con datos demo (más determinista que el portal)
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
-    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    await expect(tarjetas.first()).toBeVisible({ timeout: 20_000 })
     // Ninguna tarjeta debe tener badge "SCA 85" ni similar
     const countTarjetas = await tarjetas.count()
     for (let i = 0; i < Math.min(countTarjetas, 8); i++) {
@@ -106,7 +106,7 @@ test.describe('22 — Ficha técnica B2B: SCA, datos técnicos, precios', () => 
 
   test('7 — Lote sin acción comercial (PAUSED): banner y sin botón de compra (PS-02 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetaPausada = page.locator('.sc-product-card').filter({ hasText: /pausad|no disponible/i }).first()
     const existe = await tarjetaPausada.isVisible()
@@ -131,10 +131,10 @@ test.describe('22b — TIPO-VIS-04 / B2B-02 / CAL-02: CTA y score en ficha técn
   test('TIPO-VIS-04: B2C en ficha de lote TYPE_A ve CTA "Registrar negocio" (no botón genérico B2B)', async ({ page }) => {
     // TIPO-VIS-04: el botón de compra se reemplaza por CTA de registro para B2C en TYPE_A
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
-    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    await expect(tarjetas.first()).toBeVisible({ timeout: 20_000 })
     const count = await tarjetas.count()
     // Buscar una tarjeta TYPE_A (café verde) — solo visible para B2B, NO debería estar para B2C
     // Si el catálogo filtra correctamente, no hay tarjetas TYPE_A para B2C
@@ -165,7 +165,7 @@ test.describe('22b — TIPO-VIS-04 / B2B-02 / CAL-02: CTA y score en ficha técn
   test('B2B-02: buyer_b2b PENDING no ve opción de compra activa en ficha (acceso bloqueado)', async ({ page }) => {
     // B2B-02: buyer_b2b no-APPROVED no puede comprar en TYPE_A
     await loginEmail(page, USERS.pending.email, USERS.pending.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
     if (!await tarjetas.first().isVisible({ timeout: 5000 }).catch(() => false)) { test.skip(); return }
@@ -185,7 +185,7 @@ test.describe('22b — TIPO-VIS-04 / B2B-02 / CAL-02: CTA y score en ficha técn
     // CAL-02 Cond.1: Puntaje SCA en ficha solo con evidencia N2/N3 APPROVED del backend
     // Sin esa evidencia, el campo "Puntaje SCA" no debe aparecer en la ficha
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(500)

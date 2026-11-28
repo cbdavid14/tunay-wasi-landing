@@ -6,10 +6,10 @@ import { loginEmail, esperarCarga, USERS } from './helpers'
 test.describe('29 — Tarjetas del catálogo por rol', () => {
 
   test('1 — Tarjeta tiene nombre del café y precio visible (todos los roles)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     const textoTarjeta = await primeraTarjeta.textContent()
     // Nombre del café (algún texto descriptivo)
     expect(textoTarjeta).toMatch(/\w{3,}/)
@@ -20,10 +20,10 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
   test('2 — Tarjeta NO muestra puntuación SCA numérica (INV-04/CAL-01 INVARIANTE)', async ({ page }) => {
     // Este test nunca debe skipearse — es un INVARIANTE de negocio
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
-    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    await expect(tarjetas.first()).toBeVisible({ timeout: 20_000 })
     const count = await tarjetas.count()
     // Revisar cada tarjeta visible
     for (let i = 0; i < Math.min(count, 5); i++) {
@@ -35,10 +35,10 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
 
   test('3 — Guest ve tarjetas con precio pero no botón directo de compra en la tarjeta', async ({ page }) => {
     // Sin login
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     // La tarjeta muestra precio
     const textoTarjeta = await primeraTarjeta.textContent() ?? ''
     expect(textoTarjeta).toMatch(/S\/\s*\d/)
@@ -57,10 +57,10 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
 
   test('4 — B2B APPROVED ve precio y puede abrir ficha de detalle (US-05 · B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     // Ver precio
     const textoTarjeta = await primeraTarjeta.textContent() ?? ''
     expect(textoTarjeta).toMatch(/S\/\s*\d/)
@@ -75,10 +75,10 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
   test('5 — B2C ve tarjetas TYPE_B y TYPE_C pero NO TYPE_A en catálogo (INV restricción)', async ({ page }) => {
     // INVARIANTE: B2C no puede ver lotes TYPE_A (café verde)
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
-    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    await expect(tarjetas.first()).toBeVisible({ timeout: 20_000 })
     const count = await tarjetas.count()
     // Recorrer las tarjetas visibles
     for (let i = 0; i < Math.min(count, 10); i++) {
@@ -92,10 +92,10 @@ test.describe('29 — Tarjetas del catálogo por rol', () => {
   })
 
   test('6 — Tarjeta muestra nombre del caficultor o finca (US-05 trazabilidad)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     const textoTarjeta = await primeraTarjeta.textContent() ?? ''
     // Debe mostrar algo sobre el origen (nombre de caficultor o finca)
     // Es información básica de trazabilidad que siempre aparece en la tarjeta
@@ -117,13 +117,13 @@ test.describe('29b — TIPO-VIS-04 / B2B-02: CTA por rol en lotes TYPE_A', () =>
     // Para este test necesitamos que un B2C llegue a un lote TYPE_A.
     // TYPE_A no aparece en el catálogo para B2C, pero si accede directamente al detalle, debe ver el CTA.
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     // Como B2C, buscar si hay algún lote TYPE_A accesible (puede ser vía B2B con sesión de test)
     // Si no hay tarjetas TYPE_A visibles para B2C (correcto per INV-01), el test verifica
     // que el catálogo filtró correctamente y documenta el comportamiento.
     const tarjetas = page.locator('.sc-product-card')
-    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    await expect(tarjetas.first()).toBeVisible({ timeout: 20_000 })
     const count = await tarjetas.count()
     // Buscar si alguna tarjeta visible es TYPE_A (café verde)
     let encontroTypeA = false
@@ -151,7 +151,7 @@ test.describe('29b — TIPO-VIS-04 / B2B-02: CTA por rol en lotes TYPE_A', () =>
   test('B2B-02: buyer_b2b PENDING no puede agregar al carrito (botón deshabilitado en TYPE_A)', async ({ page }) => {
     // B2B-02: buyer_b2b no-APPROVED bloqueado en TYPE_A
     await loginEmail(page, USERS.pending.email, USERS.pending.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     // Para B2B PENDING, el catálogo puede mostrar tarjetas pero sin acción comercial
     const tarjetas = page.locator('.sc-product-card')
@@ -170,9 +170,9 @@ test.describe('29b — TIPO-VIS-04 / B2B-02: CTA por rol en lotes TYPE_A', () =>
   test('INV-01: mismo catálogo en / — guest ve TYPE_B y TYPE_C (no TYPE_A)', async ({ page }) => {
     // INV-01: catálogo único — TYPE_A solo visible para buyer_b2b APPROVED
     // Para guest y B2C, TYPE_A no se renderiza (filtrado en cliente)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const tarjetas = page.locator('.sc-product-card')
     const count = await tarjetas.count()
     // Recorrer tarjetas: ninguna debe indicar ser exclusiva B2B/TYPE_A para guest

@@ -71,7 +71,7 @@ test.describe('35 — Evidencias N1/N2/N3 desde portal caficultor', () => {
 
   test('5 — Evidencias afectan el badge de nivel en la tarjeta del catálogo (N1-01 visual)', async ({ page }) => {
     // Verificar que las tarjetas del catálogo muestran nivel de evidencia
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await page.waitForFunction(
       () => {
         const splash = [...document.querySelectorAll('div')].find(el =>
@@ -90,7 +90,7 @@ test.describe('35 — Evidencias N1/N2/N3 desde portal caficultor', () => {
 
   test('6 — B2B APPROVED puede ver el nivel de evidencia en la ficha de lote (INV-04)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await page.waitForTimeout(1000)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     await page.locator('.sc-product-card').first().click()

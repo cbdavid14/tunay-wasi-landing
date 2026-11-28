@@ -37,7 +37,7 @@ test.describe('37 — Confirmación entrega + reseña (F-09)', () => {
   })
 
   test('3 — Perfil de caficultor muestra tab de reseñas', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     // Buscar el perfil de un caficultor en el catálogo
     const enlacePerfil = page.locator('a[href*="/caficultor/"]').first()

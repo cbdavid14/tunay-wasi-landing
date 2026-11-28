@@ -188,7 +188,7 @@ test.describe('34 — Portal caficultor: crear y gestionar lotes', () => {
 
   test('14 — IA-02: disclaimer IA obligatorio visible si hay insights IA en ficha de lote', async ({ page }) => {
     // Verificar disclaimer en catálogo público
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await page.waitForFunction(
       () => {
         const splash = [...document.querySelectorAll('div')].find(el =>

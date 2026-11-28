@@ -7,7 +7,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('1 — B2B APPROVED ve opción de cotizar en producto NEGOTIABLE (US-16 · PR-01)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -37,7 +37,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('2 — B2B APPROVED ve aviso de precio NEGOTIABLE en ficha (PR-01 UX)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -54,7 +54,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('3 — B2B PENDING no puede hacer ofertas en NEGOTIABLE (B2B-01 · PR-01)', async ({ page }) => {
     await loginEmail(page, USERS.pending.email, USERS.pending.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -73,7 +73,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('4 — B2C no puede hacer ofertas en productos NEGOTIABLE (US-16 restricción)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -113,7 +113,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('6 — Producto NEGOTIABLE no muestra precio numérico SCA en tarjeta (INV-04)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -127,7 +127,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
   })
 
   test('7 — Guest ve login gate al intentar cotizar (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -148,7 +148,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('8 — ORD-02: cotizaciones B2B solo disponibles en lotes AVAILABLE (ORD-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Si hay productos NEGOTIABLE visibles en el catálogo, están en estado AVAILABLE
@@ -209,7 +209,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('11 — ORD-02: B2B APPROVED puede acceder al modal de cotización en NEGOTIABLE (ORD-02 · PR-02)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const cards = page.locator('.sc-product-card')
     await expect(cards.first()).toBeVisible({ timeout: 10_000 })
@@ -244,7 +244,7 @@ test.describe('33 — Cotización B2B: flujo NEGOTIABLE y restricciones por esta
 
   test('12 — PR-04: productos TYPE_B/C no muestran opción NEGOTIABLE (PR-04 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const cards = page.locator('.sc-product-card')

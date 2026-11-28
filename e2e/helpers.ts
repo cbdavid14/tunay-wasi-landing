@@ -83,10 +83,10 @@ export async function loginYEsperarAuth(page: Page, email: string, password: str
   await loginEmail(page, email, password)
   // Navegar al catálogo y esperar que el catálogo cargue
   // Esto confirma que Firebase Auth ya está propagado en la SPA (loading=false, user!=null)
-  await page.goto('/?demo=1')
+  await page.goto('/')
   await esperarCarga(page)
   // Esperar que aparezca alguna tarjeta de producto (confirma carga completa con auth)
-  await page.locator('.sc-product-card').first().waitFor({ timeout: 10_000 }).catch(() => {})
+  await page.locator('.sc-product-card').first().waitFor({ timeout: 20_000 }).catch(() => {})
 }
 
 // ── Documentos de prueba (REG-01/REG-02: DNI y RUC son únicos en el sistema) ──

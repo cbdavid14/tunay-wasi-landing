@@ -7,7 +7,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('1 — B2C puede agregar lote TYPE_B/C al carrito desde el catálogo (US-12 B2C)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Buscar una tarjeta de tipo B o C (no verde/TYPE_A)
@@ -39,7 +39,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('2 — TIPO-01: B2C no puede agregar lote TYPE_A al carrito (TIPO-01 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const cards = page.locator('.sc-product-card')
@@ -109,7 +109,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('7 — Guest con carrito inyectado en checkout redirige a login (INV-01)', async ({ page }) => {
     // Sin login, inyectar carrito y navegar a checkout
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await page.waitForTimeout(500)
     await page.evaluate(() => {
       const item = { producto: { id: 'prod-001', nombre: 'Bourbon Test', precioBaseKgCents: 40000 }, formato: '1kg', qty: 1 }
@@ -162,7 +162,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('10 — PR-02: guest no ve precios mayoristas en catálogo (PR-02 INVARIANTE)', async ({ page }) => {
     // Sin login (guest)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     // Revisar tarjetas: no deben mostrar precios mayoristas ni escalas de volumen
@@ -176,7 +176,7 @@ test.describe('32 — Carrito B2C: restricciones y flujo de compra', () => {
 
   test('11 — PR-02: B2B PENDING no ve precios mayoristas en catálogo (PR-02 INVARIANTE)', async ({ page }) => {
     await loginEmail(page, USERS.pending.email, USERS.pending.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
     const body = await page.locator('body').textContent() ?? ''

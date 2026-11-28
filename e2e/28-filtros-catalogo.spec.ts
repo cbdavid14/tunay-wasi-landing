@@ -6,18 +6,18 @@ import { loginEmail, irA, esperarCarga, USERS } from './helpers'
 test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', () => {
 
   test('1 — Catálogo carga con tarjetas en modo demo (baseline)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const tarjetas = page.locator('.sc-product-card')
-    await expect(tarjetas.first()).toBeVisible({ timeout: 10_000 })
+    await expect(tarjetas.first()).toBeVisible({ timeout: 20_000 })
     const count = await tarjetas.count()
     expect(count).toBeGreaterThan(0)
   })
 
   test('2 — Filtro Tostado (TYPE_B) muestra tarjetas de café tostado (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Chip "Tostado"
     const chipTostado = page.getByRole('button', { name: /tostado/i }).first()
       .or(page.locator('.d-fchip').filter({ hasText: /tostado/i }).first())
@@ -37,9 +37,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('3 — Filtro Molido (TYPE_C) muestra tarjetas de café molido (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const chipMolido = page.getByRole('button', { name: /molido/i }).first()
       .or(page.locator('.d-fchip').filter({ hasText: /molido/i }).first())
     if (!await chipMolido.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
@@ -52,9 +52,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   test('4 — Filtro Verde (TYPE_A) requiere B2B — B2C no ve tarjetas TYPE_A (INV restricción)', async ({ page }) => {
     // Como B2C
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Intentar click en filtro Verde
     const chipVerde = page.getByRole('button', { name: /verde/i }).first()
       .or(page.locator('.d-fchip').filter({ hasText: /verde/i }).first())
@@ -77,9 +77,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('5 — Limpiar filtro vuelve al catálogo completo (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const countInicial = await page.locator('.sc-product-card').count()
     // Aplicar filtro
     const chipTostado = page.locator('.d-fchip').filter({ hasText: /tostado/i }).first()
@@ -99,9 +99,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('6 — Búsqueda por texto filtra resultados (US-07)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Input de búsqueda
     const inputBusqueda = page.getByPlaceholder(/buscar|café|search/i).first()
     if (!await inputBusqueda.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
@@ -113,9 +113,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('7 — Búsqueda sin resultados muestra mensaje vacío (US-07)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const inputBusqueda = page.getByPlaceholder(/buscar|café|search/i).first()
     if (!await inputBusqueda.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
     // Búsqueda con término inexistente
@@ -131,9 +131,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
 
   test('8 — B2B APPROVED puede ver filtro Verde (TYPE_A) con lotes disponibles (US-05 · B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // B2B puede filtrar por Verde
     const chipVerde = page.locator('.d-fchip').filter({ hasText: /verde/i }).first()
     if (!await chipVerde.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
@@ -147,7 +147,7 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
 
   test('9 — B2C NO ve tarjetas TYPE_A en catálogo (INV-04 restricción visibilidad)', async ({ page }) => {
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     // La lógica: `if (rolUsuario !== 'buyer_b2b' && m.productType === 'TYPE_A') return`
     // B2C no debe ver tarjetas de café verde (TYPE_A) en el catálogo
@@ -168,9 +168,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('10 — Ordenamiento por precio muestra orden correcto (US-05)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Buscar selector/botón de ordenamiento
     const selectorOrden = page.getByRole('combobox').first()
       .or(page.getByRole('button', { name: /orden|precio|reciente/i }).first())
@@ -184,9 +184,9 @@ test.describe('28 — Filtros del catálogo: tipo, búsqueda y ordenamiento', ()
   })
 
   test('11 — Chip de filtro activo se muestra visualmente (US-05 UX)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Aplicar filtro Tostado
     const chipTostado = page.locator('.d-fchip').filter({ hasText: /tostado/i }).first()
     if (!await chipTostado.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
@@ -215,9 +215,9 @@ test.describe('28b — BUS-01 / INV-01 / BUS-03 / PR-01: filtros AND, catálogo 
 
   test('BUS-01: dos filtros combinados aplican lógica AND (menos resultados que con uno solo)', async ({ page }) => {
     // BUS-01: los filtros son AND — aplicar dos filtros debe reducir (o mantener igual) el número de resultados
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const countTodos = await page.locator('.sc-product-card').count()
     // Aplicar primer filtro: Tostado
     const chipTostado = page.locator('.d-fchip').filter({ hasText: /tostado/i }).first()
@@ -241,9 +241,9 @@ test.describe('28b — BUS-01 / INV-01 / BUS-03 / PR-01: filtros AND, catálogo 
 
   test('BUS-01: cada filtro activo se puede eliminar individualmente manteniendo los demás', async ({ page }) => {
     // BUS-01: chips eliminables individualmente
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Aplicar filtro Tostado
     const chipTostado = page.locator('.d-fchip').filter({ hasText: /tostado/i }).first()
     if (!await chipTostado.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
@@ -272,29 +272,29 @@ test.describe('28b — BUS-01 / INV-01 / BUS-03 / PR-01: filtros AND, catálogo 
   test('INV-01: el catálogo es único — guest, B2C y B2B acceden a la misma URL (/)', async ({ page }) => {
     // INV-01: catálogo único para todos los roles — misma URL (/), no rutas separadas
     // Verificar que guest ve tarjetas en la misma URL que los demás roles
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     expect(new URL(page.url()).pathname).toBe('/')
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // B2C también accede al mismo catálogo en /
     await loginEmail(page, USERS.cliente.email, USERS.cliente.password)
-    await irA(page, '/?demo=1')
+    await irA(page, '/')
     await esperarCarga(page)
     expect(new URL(page.url()).pathname).toBe('/')
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // B2B también accede al mismo catálogo en /
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await irA(page, '/?demo=1')
+    await irA(page, '/')
     await esperarCarga(page)
     expect(new URL(page.url()).pathname).toBe('/')
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
   })
 
   test('BUS-03: sin resultados muestra mensaje descriptivo con sugerencia de filtro (US-47)', async ({ page }) => {
     // BUS-03: estado vacío con sugerencia de qué filtro quitar
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Usar búsqueda con término muy específico que no existe
     const inputBusqueda = page.getByPlaceholder(/buscar|café|search/i).first()
     if (!await inputBusqueda.isVisible({ timeout: 3000 }).catch(() => false)) { test.skip(); return }
@@ -317,10 +317,10 @@ test.describe('28b — BUS-01 / INV-01 / BUS-03 / PR-01: filtros AND, catálogo 
     // PR-01 INVARIANTE: el catálogo muestra el precio de la presentación más pequeña
     // Este test verifica que la tarjeta muestra UN precio (el de la presentación más pequeña)
     // y que al abrir el detalle se pueden ver las demás presentaciones con sus propios precios
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     // La tarjeta debe mostrar un precio en soles
     const textoTarjeta = await primeraTarjeta.textContent() ?? ''
     expect(textoTarjeta).toMatch(/S\/\s*\d/)
@@ -348,9 +348,9 @@ test.describe('28b — BUS-01 / INV-01 / BUS-03 / PR-01: filtros AND, catálogo 
       async () => { await loginEmail(page, USERS.barista.email, USERS.barista.password) },
     ]) {
       await setup()
-      await page.goto('/?demo=1')
+      await page.goto('/')
       await esperarCarga(page)
-      await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+      await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
       const tarjetas = page.locator('.sc-product-card')
       const count = await tarjetas.count()
       for (let i = 0; i < Math.min(count, 5); i++) {

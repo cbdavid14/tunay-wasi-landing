@@ -8,10 +8,10 @@ test.describe('21 — Control de acceso y reglas de negocio por rol', () => {
 
   test('1 — Guest ve catálogo pero sin precio mayorista (PR-02 INVARIANTE)', async ({ page }) => {
     // Usar ?demo=1 para garantizar datos seed — el catálogo siempre tiene tarjetas visibles
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     // Tarjetas visibles (clase real del catálogo: sc-product-card)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // No debe haber precio por kg mayorista ni ficha B2B expuesta para guest
     const body = await page.locator('body').textContent()
     expect(body).not.toMatch(/Ficha técnica B2B/i)

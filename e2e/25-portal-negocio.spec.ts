@@ -136,7 +136,7 @@ test.describe('25 — Portal Negocio: navegación y reglas por estado', () => {
 
   test('9 — B2B APPROVED puede iniciar flujo de compra desde catálogo (US-12 · B2B)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await page.waitForTimeout(1000)
     const primeraTarjeta = page.locator('.sc-product-card').first()
     await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })

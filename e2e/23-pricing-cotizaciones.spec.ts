@@ -6,9 +6,9 @@ import { loginEmail, loginYEsperarAuth, irA, esperarCarga, USERS } from './helpe
 test.describe('23 — Pricing y cotizaciones', () => {
 
   test('1 — Solo lotes activos aparecen en catálogo (PS-01 INVARIANTE)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const body = await page.locator('body').textContent()
     expect(body).not.toMatch(/\bDRAFT\b/i)
     const badgesPausado = page.locator('.sc-product-card').filter({ hasText: /\bPAUSADO\b/i })
@@ -16,18 +16,18 @@ test.describe('23 — Pricing y cotizaciones', () => {
   })
 
   test('2 — Guest: catálogo carga y tarjetas muestran precio por presentación (PR-01)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const body = await page.locator('body').textContent()
     expect(body).toMatch(/S\/\s*\d|S\.\s*\d/i)
   })
 
   test('3 — B2B APPROVED puede iniciar solicitud de cotización desde catálogo (US-16)', async ({ page }) => {
     await loginEmail(page, USERS.barista.email, USERS.barista.password)
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const btnCotizar = page.getByRole('button', { name: /cotiz/i }).first()
     if (!await btnCotizar.isVisible()) {
       await page.locator('.sc-product-card').first().click()
@@ -38,9 +38,9 @@ test.describe('23 — Pricing y cotizaciones', () => {
   })
 
   test('4 — B2C no puede agregar lote al carrito sin modal de login (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     // Abrir primera tarjeta para ver acciones disponibles
     await page.locator('.sc-product-card').first().click()
     await page.waitForTimeout(400)
