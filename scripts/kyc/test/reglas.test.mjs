@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   esRucValido, normalizarCelular, nombreCoincide, dniEnTexto,
-  motivosDeDatos, motivosDePadron, motivosDeFotos, decidir, armarPasos, permiteOmitirRostro,
+  motivosDeDatos, motivosDePadron, motivosDeFotos, decidir, armarPasos, permiteOmitirRostro, estadoDeCobro,
 } from '../reglas.mjs'
 import { urlPermitida, evaluarCaras } from '../fotos.mjs'
 
@@ -36,8 +36,8 @@ test('formatos', () => {
 })
 
 test('datos: DNI ajeno, repetidos y fotos ausentes', () => {
-  const m = motivosDeDatos('u1', perfil({}, { fotoSelfieUrl: '' }), { duenoDni: 'otro', dniRepetido: true, cciRepetido: true })
-  assert.deepEqual(m, ['DNI_SIN_RESERVA', 'DNI_REPETIDO', 'CCI_REPETIDO', 'FOTOS_AUSENTES'])
+  const m = motivosDeDatos('u1', perfil({}, { fotoSelfieUrl: '' }), { duenoDni: 'otro', dniRepetido: true })
+  assert.deepEqual(m, ['DNI_SIN_RESERVA', 'DNI_REPETIDO', 'FOTOS_AUSENTES'])
 })
 
 test('cooperativa siempre pasa a revisión manual', () => {
@@ -45,11 +45,14 @@ test('cooperativa siempre pasa a revisión manual', () => {
   assert.deepEqual(motivosDeDatos('u1', p, ctx), ['COOPERATIVA_REVISION_MANUAL'])
 })
 
-test('todos necesitan CCI propio; Yape no bloquea', () => {
-  for (const modalidad of [{ tipoRegistroCaficultor: 'SOLO_DNI' }, { tipoRegistroCaficultor: 'COOPERATIVA', rucCooperativa: '20131312955' }])
-    assert.ok(motivosDeDatos('u1', perfil({ ...modalidad, cci: '' , cciCooperativa: '0'.repeat(20) }), ctx).includes('CCI_INVALIDO'))
-  assert.deepEqual(motivosDeDatos('u1', perfil({ cci: '002 19100 1234567890 25', numeroYape: undefined }), ctx).filter(m => m !== 'CCI_INVALIDO'), [])
-  assert.deepEqual(motivosDeDatos('u1', perfil({ numeroYape: 'abc' }), ctx), [])
+test('el CCI no decide el alta; se informa para el cobro', () => {
+  for (const extra of [{ cci: '' }, { cci: '123' }, { numeroYape: 'abc' }])
+    assert.deepEqual(motivosDeDatos('u1', perfil(extra), ctx), [])
+  const cobro = (extra, repetido) => estadoDeCobro(perfil(extra), repetido)
+  assert.equal(cobro({ cci: '002 19100 123456789 25' }).estado, 'REVISAR')   // 19 dígitos
+  assert.equal(cobro({ cci: '0'.repeat(20) }).estado, 'CUMPLE')
+  assert.deepEqual(cobro({ cci: '' }), { id: 'COBRO', estado: 'SIN_REGISTRAR', motivos: [] })
+  assert.deepEqual(cobro({ cci: '0'.repeat(20) }, true).motivos, ['CCI_REPETIDO'])
 })
 
 test('RUC propio contra el padrón', () => {
@@ -95,8 +98,8 @@ test('decisión: rechaza incumplimientos; fallos técnicos y cooperativa quedan 
 })
 
 test('pasos: cada uno indica si cumple', () => {
-  const estados = armarPasos(perfil(), ['DNI_REPETIDO'], { identidadEvaluada: false }).map(p => `${p.id}:${p.estado}`)
-  assert.deepEqual(estados, ['DATOS:CUMPLE', 'DNI:NO_CUMPLE', 'RUC:NO_APLICA', 'COBRO:CUMPLE', 'FOTOS:CUMPLE', 'IDENTIDAD:NO_EVALUADO'])
+  const estados = armarPasos(perfil({ cci: '' }), ['DNI_REPETIDO'], { identidadEvaluada: false }).map(p => `${p.id}:${p.estado}`)
+  assert.deepEqual(estados, ['DATOS:CUMPLE', 'DNI:NO_CUMPLE', 'RUC:NO_APLICA', 'COOPERATIVA:NO_APLICA', 'FOTOS:CUMPLE', 'IDENTIDAD:NO_EVALUADO', 'COBRO:SIN_REGISTRAR'])
 })
 
 test('omitir el rostro solo en QA y emuladores', () => {

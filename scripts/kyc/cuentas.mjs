@@ -12,9 +12,9 @@ const RUC_COOPERATIVA = '20131312955'
 // Los caficultores se reparten en estos casos, en orden, para ver los tres resultados del job
 const CASOS_CAFICULTOR = [
   { caso: 'Datos correctos', esperado: 'APROBADO' },
-  { caso: 'Datos correctos', esperado: 'APROBADO' },
+  { caso: 'Sin CCI (no impide el alta)', esperado: 'APROBADO', cci: '' },
   { caso: 'DNI sin reservar', esperado: 'RECHAZADO', sinReserva: true },
-  { caso: 'CCI inválido', esperado: 'RECHAZADO', cci: '12345' },
+  { caso: 'Datos incompletos', esperado: 'RECHAZADO', distrito: '' },
   { caso: 'Cooperativa', esperado: 'PENDIENTE', cooperativa: true },
 ]
 
@@ -61,7 +61,7 @@ async function armarPerfil(db, tipo, uid, indice) {
   const c = CASOS_CAFICULTOR[(indice - 1) % CASOS_CAFICULTOR.length]
   const dni = c.sinReserva ? dniFicticio() : await reservar(db, 'DNI_SELLER_', dniFicticio, uid, 'seller', 'DNI')
   const cobro = {
-    cci: c.cci ?? digitos(10) + digitos(10),   // CCI propio (ficticio)
+    ...(c.cci === '' ? {} : { cci: digitos(10) + digitos(10) }),   // CCI propio (ficticio)
     ...(c.cooperativa
       ? { tipoRegistroCaficultor: 'COOPERATIVA', rucCooperativa: RUC_COOPERATIVA }
       : { tipoRegistroCaficultor: 'SOLO_DNI', ...(indice % 2 ? { numeroYape: celularFicticio() } : {}) }),   // Yape opcional
@@ -70,7 +70,7 @@ async function armarPerfil(db, tipo, uid, indice) {
   const foto = n => `https://res.cloudinary.com/demo/image/upload/qa-prueba/${uid}-${n}.jpg`
   return { caso: c.caso, esperado: c.esperado, perfil: {
     rol: 'seller', telefono: celularFicticio(), estadoKyc: 'PENDING_REVIEW', fotoDniUrl: foto('dni'), fotoSelfieUrl: foto('selfie'),
-    caficultor: { region: 'Cajamarca', distrito: 'Jaén', altitudMsnm: 1600, historia: '', foto: '', activo: false, proceso: 'Washed (lavado)', dni, ...cobro },
+    caficultor: { region: 'Cajamarca', distrito: c.distrito ?? 'Jaén', altitudMsnm: 1600, historia: '', foto: '', activo: false, proceso: 'Washed (lavado)', dni, ...cobro },
     onboarding: onboarding('caficultor'),
   } }
 }

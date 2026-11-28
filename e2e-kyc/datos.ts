@@ -56,7 +56,7 @@ function padronDePrueba() {
 }
 
 /**
- * Escenario: Ana aprobada, Beto rechazado (CCI inválido) y Carla pendiente (cooperativa), revisados
+ * Escenario: Ana aprobada (sin CCI), Beto rechazado (datos incompletos) y Carla pendiente (cooperativa), revisados
  * por el job; Dora se registra después y espera la revisión.
  */
 export async function sembrar() {
@@ -64,8 +64,8 @@ export async function sembrar() {
   await vaciar()
   await usuario('jefe', ADMIN, 'admin')
   await usuario('cliente', CLIENTE, 'buyer_b2c')
-  await caficultor('ana', 'Ana Prueba', '99000001')
-  await caficultor('beto', 'Beto Prueba', '99000002', { cci: '12345' })
+  await caficultor('ana', 'Ana Prueba', '99000001', { cci: '' })
+  await caficultor('beto', 'Beto Prueba', '99000002', { distrito: '' })
   await caficultor('carla', 'Carla Prueba', '99000003', { tipoRegistroCaficultor: 'COOPERATIVA', rucCooperativa: RUC_COOPERATIVA })
   execFileSync('node', ['scripts/kyc/main.mjs'], {
     stdio: 'pipe',

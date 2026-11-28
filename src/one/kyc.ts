@@ -4,7 +4,7 @@ import { collection, doc, getDocs, query, serverTimestamp, where, writeBatch, ty
 import type { UsuarioONE } from './types'
 
 export type ResultadoKyc = 'APROBADO' | 'RECHAZADO' | 'PENDIENTE'
-export type EstadoPaso = 'CUMPLE' | 'NO_CUMPLE' | 'PENDIENTE' | 'NO_APLICA' | 'NO_EVALUADO' | 'OMITIDO'
+export type EstadoPaso = 'CUMPLE' | 'NO_CUMPLE' | 'PENDIENTE' | 'NO_APLICA' | 'NO_EVALUADO' | 'OMITIDO' | 'SIN_REGISTRAR' | 'REVISAR'
 export interface PasoKyc { id: string; estado: EstadoPaso; motivos: string[] }
 
 export interface RevisionKyc {
@@ -25,8 +25,8 @@ export interface RevisionKyc {
 export const MENSAJE_MINIMO = 10
 
 export const NOMBRE_PASO: Record<string, string> = {
-  DATOS: 'Datos completos', DNI: 'DNI', RUC: 'RUC en SUNAT', COBRO: 'Cuenta de cobro',
-  FOTOS: 'Fotos', IDENTIDAD: 'Rostro y documento',
+  DATOS: 'Datos completos', DNI: 'DNI', RUC: 'RUC en SUNAT', COOPERATIVA: 'Socio de cooperativa',
+  FOTOS: 'Fotos', IDENTIDAD: 'Rostro y documento', COBRO: 'Cuenta para cobrar (no afecta el alta)',
 }
 
 export const TEXTO_MOTIVO: Record<string, string> = {
@@ -47,7 +47,7 @@ export const TEXTO_MOTIVO: Record<string, string> = {
   CCI_REPETIDO: 'El CCI figura en otra cuenta',
   YAPE_INVALIDO: 'El número Yape no es un celular válido',
   YAPE_REPETIDO: 'El número Yape figura en otra cuenta',
-  COOPERATIVA_REVISION_MANUAL: 'Cooperativa: confirmar que es socio y que la cooperativa autoriza pagarle a su cuenta',
+  COOPERATIVA_REVISION_MANUAL: 'Confirmar que es socio de la cooperativa',
   FOTOS_AUSENTES: 'Falta la foto del DNI o la selfie',
   FOTO_USADA_EN_OTRA_CUENTA: 'Una foto ya se usa en otra cuenta',
   FOTO_ORIGEN_NO_PERMITIDO: 'La foto no está en la cuenta de Cloudinary configurada: revisar',

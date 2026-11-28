@@ -33,8 +33,10 @@ test('KYC-ADM-01: historial con criterios, motivo del rechazo y filtros', async 
   await expect(tarjeta(page, 'ana')).toContainText('Aprobado')
   await expect(tarjeta(page, 'ana')).toContainText('Datos completos: Cumple')
   await expect(tarjeta(page, 'ana')).toContainText('Rostro y documento: Omitido')
-  await expect(tarjeta(page, 'beto')).toContainText('Cuenta de cobro: No cumple')
-  await expect(tarjeta(page, 'beto')).toContainText('El CCI no tiene 20 dígitos')
+  await expect(tarjeta(page, 'beto')).toContainText('Datos completos: No cumple')
+  await expect(tarjeta(page, 'beto')).toContainText('Falta nombre, región o distrito')
+  // El CCI no impide el alta: se informa
+  await expect(tarjeta(page, 'ana')).toContainText('Sin registrar (se exige para cobrar)')
   await expect(tarjeta(page, 'carla')).toContainText('confirmar que es socio')
   await expect(tarjeta(page, 'carla')).toContainText('RUC cooperativa: 20131312955')
 
@@ -66,7 +68,7 @@ test('KYC-ADM-02: aprobar un rechazado exige mensaje y queda registrado', async 
   const historial = await revisiones('beto')
   expect(historial.map(r => [r.origen, r.resultado])).toEqual([['JOB', 'RECHAZADO'], ['ADMIN', 'APROBADO']])
   expect(historial[1]).toMatchObject({ mensaje: MENSAJE, adminEmail: ADMIN.email, adminUid: 'jefe' })
-  expect(historial[1].criteriosPendientes).toContain('COBRO')
+  expect(historial[1].criteriosPendientes).toContain('DATOS')
   expect(p.kycRevisionId).toBeTruthy()
   // La revisión del job sigue en el historial y ya no admite decisiones
   await expect(tarjeta(page, 'beto')).toHaveCount(2)

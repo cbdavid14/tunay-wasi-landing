@@ -254,8 +254,8 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
       return 'Tu RUC 10 no corresponde a este DNI. Revisa ambos números.'
     if (!fotoDniFile) return 'Adjunta la foto frontal de tu DNI.'
     if (!fotoSelfieFile) return 'Adjunta una selfie sosteniendo tu DNI.'
-    // ESC-06: todos cobran en su propio CCI; Yape es opcional
-    if (!esCciValido(cci)) return 'Ingresa el CCI de tu cuenta (20 dígitos).'
+    // ESC-06: el CCI se exige para cobrar, no para el alta; si se escribe, debe estar bien
+    if (cci.trim() && !esCciValido(cci)) return 'El CCI debe tener 20 dígitos. Déjalo vacío si aún no lo tienes.'
     return null
   }
 
@@ -303,7 +303,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
             'caficultor.proceso': proceso,
             'caficultor.dni': dni,
             // Firestore rechaza `undefined`: solo se incluye el campo de cobro de la modalidad
-            'caficultor.cci': normalizarCci(cci),
+            ...(cci.trim() ? { 'caficultor.cci': normalizarCci(cci) } : {}),
             ...(tipoRegistroCaficultor !== 'COOPERATIVA' && numeroYape.trim() ? { 'caficultor.numeroYape': numeroYape.trim() } : {}),
             'caficultor.kgDisponibles': kgDisponibles,
             'caficultor.tipoRegistroCaficultor': tipoRegistroCaficultor,
@@ -752,8 +752,8 @@ const Paso3: React.FC<{
           📋 <strong>Verificación manual (24–48 horas hábiles)</strong> — Tu cuenta quedará en revisión hasta que nuestro equipo valide tu identidad.
         </div>
 
-        {/* ESC-06: la cuenta de cobro es el CCI propio en todas las modalidades; Yape es opcional */}
-        <Field label="CCI de tu cuenta" required hint="Cuenta a tu nombre: aquí recibirás tus pagos. 20 dígitos.">
+        {/* ESC-06: se cobra en el CCI propio; en el alta es opcional, igual que Yape */}
+        <Field label="CCI de tu cuenta (opcional)" hint="Cuenta a tu nombre, 20 dígitos. Se exige para pagarte; puedes añadirlo después en Cobros.">
           <input type="text" inputMode="numeric" placeholder="00219100XXXXXXXXXX25" value={cci}
             onChange={e => setCci(e.target.value)}
             onFocus={() => setFocused('cci')} onBlur={() => setFocused('')}

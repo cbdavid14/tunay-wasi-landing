@@ -1168,24 +1168,15 @@ test.describe('27h — ESC-06: Yape restringido por modalidad tributaria', () =>
 
   // ── Test 43 ───────────────────────────────────────────────────────────────────
 
-  test('43 — ESC-06: COOPERATIVA — el campo CCI es obligatorio (error al intentar crear cuenta sin él)', async ({ page }) => {
-    // Llegar al Paso 3 de /registro-caficultor con modalidad COOPERATIVA
+  test('43 — ESC-06: el CCI es opcional en el alta, pero si se escribe debe tener 20 dígitos', async ({ page }) => {
     await llegar_paso3_regcaf(page, 'COOPERATIVA', emailH('t43'))
-    // Rellenar DNI y subir fotos KYC (obligatorios) pero NO el campo CCI
     await vis(page, '12345678').fill('43214321')
     const files = page.locator('input[type=file]')
     await files.nth(0).setInputFiles(PNG_1X1)
     await files.nth(1).setInputFiles(PNG_1X1)
-    // Si hay un campo Yape visible, dejarlo vacío también (el test verifica que CCI bloquea el avance)
-    // Intentar crear la cuenta sin CCI
+    await vis(page, '00219100XXXXXXXXXX25').fill('123')
     await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
-    await page.waitForTimeout(600)
-    const body = await page.locator('body').textContent()
-    // Debe mostrar error que mencione CCI o cooperativa para cobro
-    expect(body).toMatch(/CCI.*cooperativa|cooperativa.*CCI|Ingresa el CCI|cuenta interbancaria|CCI.*pagos/i)
-    // No debe haber avanzado a la pantalla de bienvenida o portal
-    expect(page.url()).not.toMatch(/caficultor-portal|bienvenid/i)
-    // Sigue en paso identidad
+    await expect(page.getByText(/El CCI debe tener 20 dígitos/).first()).toBeVisible()
     await expect(page.getByText('Verifica tu identidad').first()).toBeVisible()
   })
 

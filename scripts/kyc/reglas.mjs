@@ -4,7 +4,7 @@
 // Se aprueba solo si TODO pasa. Se rechaza si algún criterio no se cumple. Queda pendiente si lo
 // único que falta es una revisión humana o el job no pudo comprobar algo.
 
-export const VERSION = 2   // 2: la cuenta de cobro es el CCI propio (Yape opcional)
+export const VERSION = 3   // 3: el CCI se exige para cobrar y no decide el alta
 export const SIMILITUD_MINIMA = 95
 
 const MODALIDADES = ['SOLO_DNI', 'RUC_PROPIO', 'COOPERATIVA']
@@ -76,11 +76,8 @@ export function motivosDeDatos(uid, perfil, contexto) {
 
   if (modalidad === 'COOPERATIVA' && (!esRucValido(c.rucCooperativa) || !c.rucCooperativa.startsWith('20'))) m.push('RUC_INVALIDO')
 
-  // ESC-06: todos cobran en su propio CCI. Yape es opcional y no se valida.
-  // Que la cuenta esté a su nombre no se puede comprobar con estos datos.
-  if (!/^\d{20}$/.test(normalizarCci(c.cci))) m.push('CCI_INVALIDO')
-  else if (contexto.cciRepetido) m.push('CCI_REPETIDO')
-  // No hay forma de comprobar que es socio ni que la cooperativa autoriza pagarle a él
+  // ESC-06: el CCI se exige para cobrar, no para el alta (ver estadoDeCobro).
+  // No hay forma de comprobar que es socio de la cooperativa
   if (modalidad === 'COOPERATIVA') m.push('COOPERATIVA_REVISION_MANUAL')
 
   if (!perfil.fotoDniUrl || !perfil.fotoSelfieUrl) m.push('FOTOS_AUSENTES')
@@ -134,7 +131,7 @@ export const PASOS = {
   DNI: ['DNI_INVALIDO', 'DNI_SIN_RESERVA', 'DNI_REPETIDO'],
   RUC: ['RUC_INVALIDO', 'RUC_NO_CORRESPONDE_AL_DNI', 'RUC_SIN_RESERVA', 'SIN_PADRON_SUNAT',
     'RUC_NO_FIGURA_EN_SUNAT', 'RUC_NO_ACTIVO', 'RUC_NO_HABIDO', 'NOMBRE_NO_COINCIDE_CON_SUNAT'],
-  COBRO: ['CCI_INVALIDO', 'CCI_REPETIDO', 'COOPERATIVA_REVISION_MANUAL'],
+  COOPERATIVA: ['COOPERATIVA_REVISION_MANUAL'],
   FOTOS: ['FOTOS_AUSENTES', 'FOTO_USADA_EN_OTRA_CUENTA', 'FOTO_ORIGEN_NO_PERMITIDO', 'FOTO_NO_DISPONIBLE',
     'FOTO_DEMASIADO_GRANDE', 'FOTO_FORMATO_NO_SOPORTADO', 'SELFIE_IGUAL_A_FOTO_DNI'],
   IDENTIDAD: ['ROSTRO_NO_COINCIDE', 'ROSTRO_NO_DETECTADO', 'SELFIE_SIN_DNI', 'DNI_NO_COINCIDE_CON_FOTO',
@@ -150,22 +147,33 @@ export const esAmbienteDePruebas = proyecto =>
   PROYECTOS_DE_PRUEBA.has(proyecto) || String(proyecto ?? '').startsWith('demo-')
 export const permiteOmitirRostro = esAmbienteDePruebas
 
-export function armarPasos(perfil, motivos, { identidadEvaluada, identidadOmitida = false }) {
+/** Informativo: se muestra al admin, pero no aprueba ni rechaza (el CCI se exige al pagar). */
+export function estadoDeCobro(perfil, cciRepetido = false) {
+  const cci = normalizarCci(perfil.caficultor?.cci)
+  if (!cci) return { id: 'COBRO', estado: 'SIN_REGISTRAR', motivos: [] }
+  if (!/^\d{20}$/.test(cci)) return { id: 'COBRO', estado: 'REVISAR', motivos: ['CCI_INVALIDO'] }
+  if (cciRepetido) return { id: 'COBRO', estado: 'REVISAR', motivos: ['CCI_REPETIDO'] }
+  return { id: 'COBRO', estado: 'CUMPLE', motivos: [] }
+}
+export const PASOS_INFORMATIVOS = new Set(['COBRO'])
+
+export function armarPasos(perfil, motivos, { identidadEvaluada, identidadOmitida = false, cciRepetido = false }) {
   const modalidad = perfil.caficultor?.tipoRegistroCaficultor
-  return Object.entries(PASOS).map(([id, codigos]) => {
+  return [...Object.entries(PASOS).map(([id, codigos]) => {
     const propios = motivos.filter(m => codigos.includes(m))
     let estado = 'CUMPLE'
     if (propios.length) estado = propios.some(provocaRechazo) ? 'NO_CUMPLE' : 'PENDIENTE'
     else if (id === 'RUC' && modalidad === 'SOLO_DNI') estado = 'NO_APLICA'
+    else if (id === 'COOPERATIVA' && modalidad !== 'COOPERATIVA') estado = 'NO_APLICA'
     else if (id === 'IDENTIDAD' && identidadOmitida) estado = 'OMITIDO'
     else if ((id === 'RUC' && !modalidad) || (id === 'IDENTIDAD' && !identidadEvaluada)) estado = 'NO_EVALUADO'
     return { id, estado, motivos: propios }
-  })
+  }), estadoDeCobro(perfil, cciRepetido)]
 }
 
 /** Cambia cuando el caficultor modifica algo de lo que se valida. */
 export function datosValidados(perfil) {
   const c = perfil.caficultor ?? {}
   return JSON.stringify([perfil.nombre, c.region, c.distrito, c.dni, c.tipoRegistroCaficultor, c.ruc,
-    c.rucCooperativa, normalizarCci(c.cci), perfil.fotoDniUrl, perfil.fotoSelfieUrl])
+    c.rucCooperativa, perfil.fotoDniUrl, perfil.fotoSelfieUrl])
 }

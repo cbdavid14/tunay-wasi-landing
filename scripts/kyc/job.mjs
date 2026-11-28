@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
 import {
   VERSION, normalizarCci, rucAConsultar, motivosDeDatos, motivosDePadron, motivosDeFotos,
-  esTransitorio, provocaRechazo, decidir, armarPasos, datosValidados, permiteOmitirRostro,
+  esTransitorio, provocaRechazo, decidir, armarPasos, datosValidados, permiteOmitirRostro, PASOS_INFORMATIVOS,
 } from './reglas.mjs'
 
 const USUARIOS = 'one_usuarios'
@@ -88,7 +88,6 @@ export async function ejecutar({ db, analizarFotos, consultarPadron, aplicar = f
         duenoDni: /^\d{8}$/.test(c.dni ?? '') ? await dueno(`DNI_SELLER_${c.dni}`) : undefined,
         duenoRuc: /^\d{11}$/.test(c.ruc ?? '') ? await dueno(`RUC_${c.ruc}`) : undefined,
         dniRepetido: vecesDni(c.dni) > 1,
-        cciRepetido: vecesCci(normalizarCci(c.cci)) > 1,
         fotoRepetida: vecesFoto(perfil.fotoDniUrl) > 1 || vecesFoto(perfil.fotoSelfieUrl) > 1,
       }
       const motivos = [...motivosDeDatos(uid, perfil, contexto), ...motivosDePadron(perfil, padron)]
@@ -123,7 +122,8 @@ export async function ejecutar({ db, analizarFotos, consultarPadron, aplicar = f
       for (const m of motivos) resumen.motivos[m] = (resumen.motivos[m] ?? 0) + 1
       if (!aplicar) { resumen.evaluados++; resumen[contador]++; continue }
 
-      const pasos = armarPasos(perfil, motivos, { identidadEvaluada, identidadOmitida: omitirRostro })
+      const cciRepetido = vecesCci(normalizarCci(c.cci)) > 1
+      const pasos = armarPasos(perfil, motivos, { identidadEvaluada, identidadOmitida: omitirRostro, cciRepetido })
       const refRevision = db.collection(REVISIONES).doc()
       const lote = db.batch()
       // La precondición evita decidir sobre un perfil que cambió mientras se revisaba
@@ -133,7 +133,7 @@ export async function ejecutar({ db, analizarFotos, consultarPadron, aplicar = f
       }, { lastUpdateTime: d.updateTime })
       lote.create(refRevision, {
         uid, nombre: perfil.nombre ?? '', origen: 'JOB', resultado, pasos,
-        criteriosPendientes: pasos.filter(p => !['CUMPLE', 'NO_APLICA', 'OMITIDO'].includes(p.estado)).map(p => p.id),
+        criteriosPendientes: pasos.filter(p => !PASOS_INFORMATIVOS.has(p.id) && !['CUMPLE', 'NO_APLICA', 'OMITIDO'].includes(p.estado)).map(p => p.id),
         rostroOmitido: omitirRostro,
         similitud, version: VERSION, huella: huella(perfil),
         reintentar: resultado === 'PENDIENTE' && motivos.some(esTransitorio),

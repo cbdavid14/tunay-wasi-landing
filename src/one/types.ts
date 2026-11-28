@@ -300,6 +300,8 @@ export interface UsuarioONE {
     kgDisponibles?: number
     cci?: string                      // cuenta de cobro: CCI propio, a su nombre, en todas las modalidades (ESC-06)
     numeroYape?: string               // opcional (SOLO_DNI y RUC_PROPIO); no es la cuenta de cobro
+    banco?: string
+    numeroCuenta?: string
     // Identidad y modalidad tributaria (TRIB-04 · REG-01→REG-04)
     dni?: string                                   // inmutable — reservado en one_documentos (DNI_SELLER_)
     tipoRegistroCaficultor?: TipoRegistroCaficultor

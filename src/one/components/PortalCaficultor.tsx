@@ -16,6 +16,7 @@ import {
   fetchUsuario,
 } from '../service'
 import { db } from '@/shared/firebase'
+import { FormCobrosCaficultor } from './FormCobrosCaficultor'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import {
   demoFetchPedidosByCaficultor, demoFetchProductosByCaficultorLive,
@@ -3444,48 +3445,15 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
         {/* Tab: Cobros */}
         {activeTab === 'cobros' && (
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-            <div style={{ flex: 1, maxWidth: 520, minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
-              <div style={{ marginBottom: 20 }}>
-                <div style={sectionTitle}>💳 Cobros</div>
-                {/* ESC-06: se cobra en el CCI propio; Yape es opcional y no existe para cooperativa */}
-                {perfilFiscal?.tipoRegistroCaficultor !== 'COOPERATIVA' && (
-                  <div style={{ marginBottom: 10 }}>
-                    <div style={fieldLabel}>Número Yape <span style={{ fontWeight: 400, color: 'var(--tw-text-muted)' }}>(opcional)</span></div>
-                    <input style={inputStyle} type="tel" defaultValue={(caficultor as any).numeroYape ?? ''} placeholder="+51 9XX XXX XXX" />
-                  </div>
-                )}
-                <div style={{ marginBottom: 10 }}>
-                  <div style={fieldLabel}>Banco</div>
-                  <div style={{ position: 'relative' }}>
-                    <select style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }} defaultValue={(caficultor as any).banco ?? ''}>
-                      <option value="">Seleccionar banco</option>
-                      {['BCP', 'Interbank', 'BBVA', 'Scotiabank', 'BanBif', 'Caja Cusco', 'Caja Piura'].map(b => (
-                        <option key={b} value={b}>{b}</option>
-                      ))}
-                    </select>
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--tw-text-muted)', pointerEvents: 'none' }}>▾</span>
-                  </div>
-                </div>
-                <div style={{ marginBottom: 10 }}>
-                  <div style={fieldLabel}>Número de cuenta</div>
-                  <input style={inputStyle} defaultValue={(caficultor as any).numeroCuenta ?? ''} placeholder="191-XXXXXXXXX-X-XX" />
-                </div>
-                <div style={{ marginBottom: 10 }}>
-                  <div style={fieldLabel}>CCI de tu cuenta <span style={{ color: 'var(--tw-terra)' }}>*</span></div>
-                  <input style={inputStyle} defaultValue={(caficultor as any).cci ?? ''} placeholder="00219100XXXXXXXXXX25" />
-                </div>
-                <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginBottom: 16 }}>
-                  TunayWasi envía los pagos confirmados a esta cuenta dentro de las 24h.
-                </div>
-              </div>
-              <div style={{ padding: '8px 10px', background: 'rgba(143,175,138,.06)', border: '1px solid rgba(143,175,138,.15)', borderRadius: 7, fontSize: 10, color: 'var(--tw-sage)', marginBottom: 20 }}>
-                🚚 La configuración de envíos (origen, agencias, tarifas) se gestiona en la pestaña <strong>Envíos</strong>.
-              </div>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--tw-border)', background: 'transparent', color: 'var(--tw-text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Cancelar</button>
-                <button onClick={() => toast('Datos de cobro guardados', 'ok')} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--tw-sage)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Montserrat, sans-serif' }}>Guardar cambios</button>
-              </div>
-            </div>
+            <FormCobrosCaficultor
+              caficultorId={caficultorId}
+              esCooperativa={perfilFiscal?.tipoRegistroCaficultor === 'COOPERATIVA'}
+              isDemo={isDemo}
+              onToast={toast}
+              inputStyle={inputStyle}
+              fieldLabel={fieldLabel}
+              sectionTitle={sectionTitle}
+            />
             {/* Card lateral: consejos */}
             <div style={{ width: 220, flexShrink: 0, display: 'none' }} className="settings-col-right">
               <div style={{ background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 10, padding: 14 }}>

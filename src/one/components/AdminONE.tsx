@@ -28,6 +28,7 @@ import {
   reintentarEjecucionFinanciera,
   solicitarInfoDisputa,
   liberarPago,
+  SinCciError,
 } from '../service'
 import { db } from '@/shared/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
@@ -295,10 +296,10 @@ const TabPagos: React.FC<{
     setLiberandoPago(pago.id)
     try {
       const adminUid = auth.currentUser?.uid ?? 'admin'
-      await liberarPago(pago.id, adminUid, banco, pago.cuentaDestino ?? '', numComp)
+      await liberarPago(pago.id, adminUid, banco, numComp)
       setPagosRetenidos(prev => prev.filter(p => p.id !== pago.id))
       onToast(`Pago liberado: ${pago.negocioNombre} — S/ ${(pago.montoNetoCents / 100).toFixed(0)}`, 'ok')
-    } catch { onToast('Error al liberar el pago', 'error') }
+    } catch (e) { onToast(e instanceof SinCciError ? e.message : 'Error al liberar el pago', 'error') }
     finally { setLiberandoPago(null) }
   }
 
@@ -499,11 +500,9 @@ const TabPagos: React.FC<{
                     <div>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--tw-text)' }}>{pago.negocioNombre}</p>
                       <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }}>Pedido: {pago.pedidoRef} · Estado: RETENIDO</p>
-                      {pago.cuentaDestino && (
-                        <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                          CCI: {pago.cuentaDestino}
-                        </p>
-                      )}
+                      <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--tw-text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                        {pago.cuentaDestino ? `CCI al crear el pago: ${pago.cuentaDestino}` : '⚠️ Sin CCI al crear el pago: se liberará solo si ya lo registró'}
+                      </p>
                       {pago.motivo && <p style={{ margin: '3px 0 0', fontSize: 10, color: 'var(--tw-terra)' }}>Motivo: {pago.motivo}</p>}
                     </div>
                     <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tw-terra)', flexShrink: 0 }}>S/ {(pago.montoNetoCents / 100).toFixed(0)}</span>

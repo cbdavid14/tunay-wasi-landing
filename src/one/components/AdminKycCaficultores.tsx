@@ -12,8 +12,8 @@ const FILTROS: { id: Filtro; label: string }[] = [
 ]
 const COLOR: Record<ResultadoKyc, string> = { APROBADO: 'var(--tw-sage)', RECHAZADO: '#ef4444', PENDIENTE: '#d97706' }
 const ETIQUETA: Record<ResultadoKyc, string> = { APROBADO: 'Aprobado', RECHAZADO: 'Rechazado', PENDIENTE: 'En revisión' }
-const ICONO: Record<EstadoPaso, string> = { CUMPLE: '✅', NO_CUMPLE: '❌', PENDIENTE: '⏳', NO_APLICA: '➖', NO_EVALUADO: '▫️', OMITIDO: '⚠️' }
-const TEXTO_PASO: Record<EstadoPaso, string> = { CUMPLE: 'Cumple', NO_CUMPLE: 'No cumple', PENDIENTE: 'Pendiente', NO_APLICA: 'No aplica', NO_EVALUADO: 'No evaluado', OMITIDO: 'Omitido (prueba en QA)' }
+const ICONO: Record<EstadoPaso, string> = { CUMPLE: '✅', NO_CUMPLE: '❌', PENDIENTE: '⏳', NO_APLICA: '➖', NO_EVALUADO: '▫️', OMITIDO: '⚠️', SIN_REGISTRAR: '▫️', REVISAR: '⚠️' }
+const TEXTO_PASO: Record<EstadoPaso, string> = { CUMPLE: 'Cumple', NO_CUMPLE: 'No cumple', PENDIENTE: 'Pendiente', NO_APLICA: 'No aplica', NO_EVALUADO: 'No evaluado', OMITIDO: 'Omitido (prueba en QA)', SIN_REGISTRAR: 'Sin registrar (se exige para cobrar)', REVISAR: 'Revisar antes de pagar' }
 
 const caja: React.CSSProperties = { background: 'var(--tw-card)', border: '1px solid var(--tw-border)', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }
 const tenue: React.CSSProperties = { margin: '2px 0 0', fontSize: 11, color: 'var(--tw-text-muted)' }

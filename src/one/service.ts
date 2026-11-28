@@ -1,5 +1,6 @@
 // TunayWasi ONE — operaciones Firestore
 // Noviembre 2026 — alineado al esquema Android
+import { esCciValido, normalizarCci } from './documentos'
 import {
   collection,
   doc,
@@ -1239,8 +1240,17 @@ export async function fetchPagosByCaficultor(caficultorId: string): Promise<Pago
     .sort((a, b) => ((b as any).createdAt ?? '').localeCompare((a as any).createdAt ?? ''))
 }
 
-export async function liberarPago(pagoId: string, adminUid: string, metodoPago: string, cuentaDestino: string, numeroComprobante?: string): Promise<void> {
+export class SinCciError extends Error {
+  constructor() { super('El caficultor no tiene un CCI válido registrado. Pídele que lo añada en Cobros.') }
+}
+
+/** ESC-06: solo se liquida al CCI propio que el caficultor tenga registrado en este momento. */
+export async function liberarPago(pagoId: string, adminUid: string, metodoPago: string, numeroComprobante?: string): Promise<void> {
   const ref = doc(db, ONE_COLLECTIONS.PAGOS_CAFICULTOR, pagoId)
+  const caficultorId = (await getDoc(ref)).data()?.caficultorId as string | undefined
+  const perfil = caficultorId ? (await getDoc(doc(db, ONE_COLLECTIONS.USUARIOS, caficultorId))).data() as UsuarioONE | undefined : undefined
+  const cuentaDestino = normalizarCci(perfil?.caficultor?.cci ?? '')
+  if (!esCciValido(cuentaDestino)) throw new SinCciError()
   await updateDoc(ref, {
     estado: 'LIBERADO',
     metodoPago,

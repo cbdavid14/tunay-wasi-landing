@@ -1417,10 +1417,10 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
             <div style={{ background: 'rgba(143,175,138,0.07)', border: '1px solid rgba(143,175,138,0.2)', borderRadius: 9, padding: '11px 13px', fontSize: 10, color: '#8faf8a', lineHeight: 1.6, marginBottom: 13 }}>
               📋 <strong>Verificación manual (24–48 horas hábiles)</strong> — Tu cuenta quedará en revisión hasta que nuestro equipo valide tu identidad.
             </div>
-            {/* ESC-06: la cuenta de cobro es el CCI propio en todas las modalidades; Yape es opcional */}
-            <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>CCI de tu cuenta <span style={{ color: 'var(--tw-terra)' }}>*</span></label>
+            {/* ESC-06: se cobra en el CCI propio; en el alta es opcional, igual que Yape */}
+            <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>CCI de tu cuenta (opcional)</label>
             <input type="text" inputMode="numeric" placeholder="00219100XXXXXXXXXX25" value={cafCci} onChange={e => setCafCci(e.target.value)} style={inputStyle} />
-            <div style={{ fontSize: 9, color: '#555', marginTop: -10, marginBottom: 14 }}>Cuenta a tu nombre: aquí recibirás tus pagos. 20 dígitos.</div>
+            <div style={{ fontSize: 9, color: '#555', marginTop: -10, marginBottom: 14 }}>Cuenta a tu nombre, 20 dígitos. Se exige para pagarte; puedes añadirlo después en Cobros.</div>
             {fincaTipoRegistro !== 'COOPERATIVA' && (
               <>
                 <label style={{ display: 'block', fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Número Yape (opcional)</label>
@@ -1433,8 +1433,8 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                 if (cafDniEstado !== 'ok') { setError('Ingresa tu DNI de 8 dígitos.'); return }
                 if (!cafFotoDniFile) { setError('Adjunta la foto frontal de tu DNI.'); return }
                 if (!cafFotoSelfieFile) { setError('Adjunta una selfie sosteniendo tu DNI.'); return }
-                // ESC-06: todos cobran en su propio CCI; Yape es opcional
-                if (!esCciValido(cafCci)) { setError('Ingresa el CCI de tu cuenta (20 dígitos).'); return }
+                // ESC-06: el CCI se exige para cobrar, no para el alta; si se escribe, debe estar bien
+                if (cafCci.trim() && !esCciValido(cafCci)) { setError('El CCI debe tener 20 dígitos. Déjalo vacío si aún no lo tienes.'); return }
                 setError(null)
                 setPaso('cargando_cuenta')
                 try {
@@ -1492,7 +1492,7 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                         foto: '',
                         activo: false,
                         dni: cafDni.trim(),
-                        cci: normalizarCci(cafCci),
+                        ...(cafCci.trim() ? { cci: normalizarCci(cafCci) } : {}),
                         // Firestore rechaza `undefined`: Yape solo se incluye si se escribió
                         ...(fincaTipoRegistro !== 'COOPERATIVA' && cafYape.trim() ? { numeroYape: cafYape.trim() } : {}),
                         whatsapp: cafWhatsapp.trim(),   // GAP-22: guardamos WhatsApp separado de Yape
