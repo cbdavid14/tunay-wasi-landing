@@ -67,10 +67,10 @@ test.describe('27 — Registro y login gate', () => {
   })
 
   test('4 — Login gate se muestra inline al clickar "Agregar" como guest (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     await primeraTarjeta.click()
     await page.waitForTimeout(600)
     // Buscar el botón de agregar/comprar en la ficha expandida
@@ -90,10 +90,10 @@ test.describe('27 — Registro y login gate', () => {
   })
 
   test('5 — Login gate: botón "Ingresar" navega a login conservando contexto (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     await primeraTarjeta.click()
     await page.waitForTimeout(600)
     const btnAgregar = page.getByRole('button', { name: /agregar|comprar|al carrito/i }).first()
@@ -110,10 +110,10 @@ test.describe('27 — Registro y login gate', () => {
   })
 
   test('6 — Login gate: botón "Registrarse" navega al registro (US-43)', async ({ page }) => {
-    await page.goto('/?demo=1')
+    await page.goto('/')
     await esperarCarga(page)
     const primeraTarjeta = page.locator('.sc-product-card').first()
-    await expect(primeraTarjeta).toBeVisible({ timeout: 10_000 })
+    await expect(primeraTarjeta).toBeVisible({ timeout: 20_000 })
     await primeraTarjeta.click()
     await page.waitForTimeout(600)
     const btnAgregar = page.getByRole('button', { name: /agregar|comprar|al carrito/i }).first()
@@ -300,7 +300,7 @@ test.describe('27b — Unicidad y formato DNI/RUC (REG-01→REG-04)', () => {
 
   test('27b-X — flujo completo B2B: 3 pasos → PENDING_APPROVAL', async ({ page }) => {
     const email = `qa+b2b-x-${Date.now()}@tunaywasi.qa`
-    const rucDemo = '20601234565'   // RUC demo que pasa la simulación SUNAT
+    const rucDemo = rucUnico()   // RUC único por ejecución — evita REG-02 en runs sucesivos
 
     // Paso 0: navega a /registro-emprendedor y elige "Negocio"
     await irA(page, '/registro-emprendedor')
@@ -1052,13 +1052,11 @@ test.describe('27h — ESC-06: Yape restringido por modalidad tributaria', () =>
     if (modalidad !== 'SOLO_DNI') {
       const textoBoton = modalidad === 'RUC_PROPIO' ? 'RUC propio' : 'Cooperativa'
       await page.getByText(textoBoton, { exact: true }).click()
-      // Rellenar RUC requerido para modalidades no-SOLO_DNI
-      const placeholderRuc = modalidad === 'COOPERATIVA' ? '20XXXXXXXXX' : '10XXXXXXXXX o 20XXXXXXXXX'
-      // Usar un RUC válido para cada modalidad
+      // RegistroCaficultor.tsx usa placeholder '20123456789' para ambas modalidades con RUC
       const ruc = modalidad === 'COOPERATIVA'
         ? rucConDigito('2099' + String(Date.now() % 1_000_000).padStart(6, '0'))
         : rucConDigito('1012345678')
-      await vis(page, placeholderRuc).fill(ruc)
+      await vis(page, '20123456789').fill(ruc)
     }
     // Rellenar región, distrito, variedad, proceso
     const selects = page.locator('select:visible')
@@ -1316,8 +1314,8 @@ test.describe('27j — AUTH-01 / AUTH-04 / B2B-PENDING sin acceso mayorista', ()
 
   test('AUTH-01: el modal de login gate NO redirige fuera del catálogo (URL no cambia a /login)', async ({ page }) => {
     // AUTH-01: modal inline al clickar sin sesión
-    await irA(page, '/?demo=1')
-    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 10_000 })
+    await irA(page, '/')
+    await expect(page.locator('.sc-product-card').first()).toBeVisible({ timeout: 20_000 })
     const urlAntes = page.url()
     // Click en la tarjeta para abrir ficha
     await page.locator('.sc-product-card').first().click()
