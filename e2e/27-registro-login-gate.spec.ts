@@ -735,7 +735,7 @@ test.describe('27f — Alta caficultor por /login (BUG-REG-04/05/06)', () => {
     const files = page.locator('input[type=file]')
     await files.nth(0).setInputFiles(PNG_1X1)
     await files.nth(1).setInputFiles(PNG_1X1)
-    await vis(page, '+51 987 654 321').fill('+51 999 222 333')
+    await vis(page, '00219100XXXXXXXXXX25').fill(String(Date.now()).padStart(20, '0'))   // ESC-06: CCI propio, no repetido
     await page.getByRole('button', { name: /Crear cuenta →/ }).first().click()
   }
 

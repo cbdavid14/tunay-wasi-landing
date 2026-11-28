@@ -10,7 +10,7 @@ import { registrarCaficultor } from '../authService'
 import { auth } from '@/shared/firebase'
 import { db } from '@/shared/firebase'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import { claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado } from '../documentos'
+import { claveDniSeller, claveRuc, errorFormatoRuc, esDniValido, esDocumentoDuplicado, esCciValido, normalizarCci } from '../documentos'
 import type { TipoRegistroCaficultor } from '../types'
 import { completarOnboarding, useOnboardingTracking } from '../onboarding'
 
@@ -203,7 +203,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
   // Paso 3 — Identidad
   const [dni, setDni] = useState('')
   const [numeroYape, setNumeroYape] = useState('')
-  const [cciCooperativa, setCciCooperativa] = useState('')
+  const [cci, setCci] = useState('')
   const [fotoDniFile, setFotoDniFile] = useState<File | null>(null)
   const [fotoDniPreview, setFotoDniPreview] = useState<string | null>(null)
   const [fotoSelfieFile, setFotoSelfieFile] = useState<File | null>(null)
@@ -254,12 +254,8 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
       return 'Tu RUC 10 no corresponde a este DNI. Revisa ambos números.'
     if (!fotoDniFile) return 'Adjunta la foto frontal de tu DNI.'
     if (!fotoSelfieFile) return 'Adjunta una selfie sosteniendo tu DNI.'
-    // ESC-06 / TRIB-06: COOPERATIVA no usa Yape — requiere CCI de la cooperativa
-    if (tipoRegistroCaficultor === 'COOPERATIVA') {
-      if (!cciCooperativa.trim()) return 'Ingresa el CCI de tu cooperativa para recibir pagos.'
-    } else {
-      if (!numeroYape.trim()) return 'Ingresa tu número Yape para recibir pagos.'
-    }
+    // ESC-06: todos cobran en su propio CCI; Yape es opcional
+    if (!esCciValido(cci)) return 'Ingresa el CCI de tu cuenta (20 dígitos).'
     return null
   }
 
@@ -307,9 +303,8 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
             'caficultor.proceso': proceso,
             'caficultor.dni': dni,
             // Firestore rechaza `undefined`: solo se incluye el campo de cobro de la modalidad
-            ...(tipoRegistroCaficultor === 'COOPERATIVA'
-              ? { 'caficultor.cciCooperativa': cciCooperativa }
-              : { 'caficultor.numeroYape': numeroYape }),
+            'caficultor.cci': normalizarCci(cci),
+            ...(tipoRegistroCaficultor !== 'COOPERATIVA' && numeroYape.trim() ? { 'caficultor.numeroYape': numeroYape.trim() } : {}),
             'caficultor.kgDisponibles': kgDisponibles,
             'caficultor.tipoRegistroCaficultor': tipoRegistroCaficultor,
             ...(tipoRegistroCaficultor === 'RUC_PROPIO' ? { 'caficultor.ruc': ruc } : {}),
@@ -451,7 +446,7 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
               dni={dni} setDni={setDni}
               tipoRegistroCaficultor={tipoRegistroCaficultor}
               numeroYape={numeroYape} setNumeroYape={setNumeroYape}
-              cciCooperativa={cciCooperativa} setCciCooperativa={setCciCooperativa}
+              cci={cci} setCci={setCci}
               fotoDniFile={fotoDniFile} setFotoDniFile={setFotoDniFile}
               fotoDniPreview={fotoDniPreview} setFotoDniPreview={setFotoDniPreview}
               fotoSelfieFile={fotoSelfieFile} setFotoSelfieFile={setFotoSelfieFile}
@@ -673,7 +668,7 @@ const Paso3: React.FC<{
   dni: string; setDni: (v: string) => void
   tipoRegistroCaficultor: TipoRegistroCaficultor
   numeroYape: string; setNumeroYape: (v: string) => void
-  cciCooperativa: string; setCciCooperativa: (v: string) => void
+  cci: string; setCci: (v: string) => void
   fotoDniFile: File | null; setFotoDniFile: (f: File | null) => void
   fotoDniPreview: string | null; setFotoDniPreview: (s: string | null) => void
   fotoSelfieFile: File | null; setFotoSelfieFile: (f: File | null) => void
@@ -682,7 +677,7 @@ const Paso3: React.FC<{
   enviando: boolean
   onRegistrar: () => void
   getInputStyle: GetInputStyle
-}> = ({ dni, setDni, tipoRegistroCaficultor, numeroYape, setNumeroYape, cciCooperativa, setCciCooperativa, fotoDniFile, setFotoDniFile, fotoDniPreview, setFotoDniPreview, fotoSelfieFile, setFotoSelfieFile, fotoSelfiePreview, setFotoSelfiePreview, error, enviando, onRegistrar, getInputStyle }) => {
+}> = ({ dni, setDni, tipoRegistroCaficultor, numeroYape, setNumeroYape, cci, setCci, fotoDniFile, setFotoDniFile, fotoDniPreview, setFotoDniPreview, fotoSelfieFile, setFotoSelfieFile, fotoSelfiePreview, setFotoSelfiePreview, error, enviando, onRegistrar, getInputStyle }) => {
   const [focused, setFocused] = useState('')
   const refDni = useRef<HTMLInputElement>(null)
   const refSelfie = useRef<HTMLInputElement>(null)
@@ -757,16 +752,15 @@ const Paso3: React.FC<{
           📋 <strong>Verificación manual (24–48 horas hábiles)</strong> — Tu cuenta quedará en revisión hasta que nuestro equipo valide tu identidad.
         </div>
 
-        {/* ESC-06 / TRIB-06: COOPERATIVA usa CCI de la cooperativa; SOLO_DNI y RUC_PROPIO usan Yape */}
-        {tipoRegistroCaficultor === 'COOPERATIVA' ? (
-          <Field label="CCI Cooperativa" required hint="CCI de tu cooperativa. El pago se liquida a la cuenta de la cooperativa, no a tu número personal.">
-            <input type="text" placeholder="00219100XXXXXXXXXX25" value={cciCooperativa}
-              onChange={e => setCciCooperativa(e.target.value)}
-              onFocus={() => setFocused('cci')} onBlur={() => setFocused('')}
-              style={getInputStyle(focused === 'cci')} />
-          </Field>
-        ) : (
-          <Field label="Número Yape" required hint="Al número donde recibirás tus pagos. Debe ser titular del mismo DNI.">
+        {/* ESC-06: la cuenta de cobro es el CCI propio en todas las modalidades; Yape es opcional */}
+        <Field label="CCI de tu cuenta" required hint="Cuenta a tu nombre: aquí recibirás tus pagos. 20 dígitos.">
+          <input type="text" inputMode="numeric" placeholder="00219100XXXXXXXXXX25" value={cci}
+            onChange={e => setCci(e.target.value)}
+            onFocus={() => setFocused('cci')} onBlur={() => setFocused('')}
+            style={getInputStyle(focused === 'cci')} />
+        </Field>
+        {tipoRegistroCaficultor !== 'COOPERATIVA' && (
+          <Field label="Número Yape (opcional)" hint="Dato de contacto para pagos; los pagos van a tu CCI.">
             <input type="tel" placeholder="+51 987 654 321" value={numeroYape}
               onChange={e => setNumeroYape(e.target.value)}
               onFocus={() => setFocused('yape')} onBlur={() => setFocused('')}

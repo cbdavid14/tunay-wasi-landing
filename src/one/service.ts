@@ -426,7 +426,7 @@ async function crearPagoCaficultor(pedido: PedidoONE): Promise<void> {
   if (!caficultorId) return
   const cafSnap = await getDoc(doc(db, ONE_COLLECTIONS.USUARIOS, caficultorId))
   const caf = cafSnap.data() as UsuarioONE | undefined
-  const cuentaDestino = caf?.caficultor?.numeroYape ?? caf?.caficultor?.cciCooperativa ?? ''
+  const cuentaDestino = caf?.caficultor?.cci ?? ''   // ESC-06: siempre el CCI del caficultor
   const tipoRegistroCaficultor = caf?.caficultor?.tipoRegistroCaficultor
   await addDoc(collection(db, ONE_COLLECTIONS.PAGOS_CAFICULTOR), {
     caficultorId,

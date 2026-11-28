@@ -3447,18 +3447,11 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
             <div style={{ flex: 1, maxWidth: 520, minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
               <div style={{ marginBottom: 20 }}>
                 <div style={sectionTitle}>💳 Cobros</div>
-                {/* ESC-06 / TRIB-06: COOPERATIVA — solo CCI de la cooperativa; sin Yape personal */}
+                {/* ESC-06: se cobra en el CCI propio; Yape es opcional y no existe para cooperativa */}
                 {perfilFiscal?.tipoRegistroCaficultor !== 'COOPERATIVA' && (
                   <div style={{ marginBottom: 10 }}>
-                    <div style={fieldLabel}>Número Yape</div>
+                    <div style={fieldLabel}>Número Yape <span style={{ fontWeight: 400, color: 'var(--tw-text-muted)' }}>(opcional)</span></div>
                     <input style={inputStyle} type="tel" defaultValue={(caficultor as any).numeroYape ?? ''} placeholder="+51 9XX XXX XXX" />
-                  </div>
-                )}
-                {perfilFiscal?.tipoRegistroCaficultor === 'COOPERATIVA' && (
-                  <div style={{ marginBottom: 10 }}>
-                    <div style={fieldLabel}>CCI Cooperativa <span style={{ color: 'var(--tw-terra)' }}>*</span></div>
-                    <input style={inputStyle} type="text" defaultValue={(caficultor as any).cciCooperativa ?? ''} placeholder="00219100XXXXXXXXXX25" />
-                    <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginTop: 4 }}>CCI de tu cooperativa. El pago se liquida a la cuenta de la cooperativa, no a tu número personal.</div>
                   </div>
                 )}
                 <div style={{ marginBottom: 10 }}>
@@ -3478,7 +3471,7 @@ const PortalCaficultor: React.FC<Props> = ({ usuarioId: _usuarioId, caficultorId
                   <input style={inputStyle} defaultValue={(caficultor as any).numeroCuenta ?? ''} placeholder="191-XXXXXXXXX-X-XX" />
                 </div>
                 <div style={{ marginBottom: 10 }}>
-                  <div style={fieldLabel}>CCI <span style={{ fontWeight: 400, color: 'var(--tw-text-muted)' }}>(opcional)</span></div>
+                  <div style={fieldLabel}>CCI de tu cuenta <span style={{ color: 'var(--tw-terra)' }}>*</span></div>
                   <input style={inputStyle} defaultValue={(caficultor as any).cci ?? ''} placeholder="00219100XXXXXXXXXX25" />
                 </div>
                 <div style={{ fontSize: 9, color: 'var(--tw-text-muted)', marginBottom: 16 }}>

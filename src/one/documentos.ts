@@ -84,3 +84,7 @@ export async function reservarDocumentos(uid: string, rol: RolONE, claves: strin
 export async function liberarDocumentos(claves: string[]): Promise<void> {
   await Promise.all(claves.map(c => deleteDoc(doc(db, COLECCION, c)).catch(() => {})))
 }
+
+/** ESC-06 — CCI: 20 dígitos. Se aceptan espacios y guiones al escribirlo. */
+export const normalizarCci = (cci: string) => cci.replace(/[\s-]/g, '')
+export const esCciValido = (cci: string) => /^\d{20}$/.test(normalizarCci(cci))

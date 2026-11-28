@@ -211,12 +211,12 @@ async function registrarCaficultor(page: Parameters<typeof loginYObtenerToken>[0
     return false
   }
 
-  // Paso 3: DNI (único por ejecución — REG-01) + fotos KYC obligatorias + Yape
+  // Paso 3: DNI (único por ejecución — REG-01) + fotos KYC obligatorias + CCI propio (ESC-06)
   await page.getByPlaceholder('12345678').fill(dniUnico())
   const inputsFoto = page.locator('input[type="file"]')
   await inputsFoto.nth(0).setInputFiles(PNG_1X1)
   await inputsFoto.nth(1).setInputFiles(PNG_1X1)
-  await page.getByPlaceholder('+51 987 654 321').fill('+51 999 000 004')
+  await page.getByPlaceholder('00219100XXXXXXXXXX25').fill(String(Date.now()).padStart(20, '0'))
   await page.getByRole('button', { name: /crear cuenta/i }).click()
   await page.waitForTimeout(4000)
 
