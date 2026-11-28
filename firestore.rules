@@ -89,13 +89,55 @@
                       (resource.data.rol == 'seller' &&
                        !resource.data.keys().hasAny(['fotoDniUrl', 'fotoSelfieUrl']));
         allow list: if request.auth != null;
+        // KYC (F-03): el dueño solo puede quedar "en revisión"; nunca aprobarse ni activarse.
+        function kycDelDueno() {
+          let nuevo = request.resource.data;
+          let antes = resource == null ? {} : resource.data;
+          return (nuevo.get('estadoKyc', null) == antes.get('estadoKyc', null) ||
+                  (antes.get('estadoKyc', null) == null && nuevo.get('estadoKyc', null) == 'PENDING_REVIEW')) &&
+                 nuevo.get('kycRevisionId', null) == antes.get('kycRevisionId', null) &&
+                 (nuevo.get('caficultor', {}).get('activo', false) != true ||
+                  antes.get('caficultor', {}).get('activo', false) == true);
+        }
+        // KYC (F-03): el admin solo cambia el estado, y dejando el registro de auditoría en la misma operación.
+        function decisionKycDelAdmin() {
+          let nuevo = request.resource.data;
+          let revision = /databases/$(database)/documents/one_kyc_revisiones/$(nuevo.kycRevisionId);
+          return esAdminVerificado() &&
+                 nuevo.diff(resource.data).affectedKeys().hasOnly(['estadoKyc', 'caficultor', 'kycRevisionId', 'updatedAt']) &&
+                 nuevo.get('caficultor', {}).diff(resource.data.get('caficultor', {})).affectedKeys().hasOnly(['activo']) &&
+                 nuevo.estadoKyc in ['ACTIVO', 'RECHAZADO'] &&
+                 nuevo.kycRevisionId != resource.data.get('kycRevisionId', null) &&
+                 !exists(revision) &&
+                 getAfter(revision).data.uid == uid &&
+                 getAfter(revision).data.resultado == (nuevo.estadoKyc == 'ACTIVO' ? 'APROBADO' : 'RECHAZADO');
+        }
         allow create: if esDueno() &&
                          request.resource.data.uid == uid &&
                          !request.resource.data.keys().hasAny(
                            ['scoreConfianza', 'totalCalificaciones',
-                            'empresa.estadoAprobacion', 'empresa.aprobadoPor']);
-        allow update: if esDueno() && camposEscrituraSeguros();
+                            'empresa.estadoAprobacion', 'empresa.aprobadoPor']) &&
+                         (request.resource.data.get('rol', '') != 'admin' || esAdminVerificado()) &&
+                         kycDelDueno();
+        allow update: if (esDueno() && camposEscrituraSeguros() && kycDelDueno()) || decisionKycDelAdmin();
         allow delete: if false;
+      }
+
+      // ── KYC: historial de revisiones (job nocturno y admin). Solo admins; nadie edita ni borra.
+      match /one_kyc_revisiones/{revisionId} {
+        allow read: if esAdminVerificado();
+        allow create: if esAdminVerificado() &&
+                         request.resource.data.origen == 'ADMIN' &&
+                         request.resource.data.adminUid == request.auth.uid &&
+                         request.resource.data.adminEmail == request.auth.token.email &&
+                         request.resource.data.fecha == request.time &&
+                         request.resource.data.resultado in ['APROBADO', 'RECHAZADO'] &&
+                         ((request.resource.data.resultado == 'APROBADO' &&
+                           request.resource.data.criteriosPendientes.size() == 0) ||
+                          request.resource.data.mensaje.size() >= 10) &&
+                         getAfter(/databases/$(database)/documents/one_usuarios/$(request.resource.data.uid))
+                           .data.kycRevisionId == revisionId;
+        allow update, delete: if false;
       }
 
       // ── SEC-PRD/05: one_productos ─────────────────────────────────────────────
