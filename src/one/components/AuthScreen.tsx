@@ -1499,8 +1499,10 @@ const AuthScreen: React.FC<Props> = ({ mensajePrevia, pasoInicial = 'inicio', co
                         foto: '',
                         activo: false,
                         dni: cafDni.trim(),
-                        yape: fincaTipoRegistro !== 'COOPERATIVA' ? cafYape.trim() : undefined,
-                        cciCooperativa: fincaTipoRegistro === 'COOPERATIVA' ? cafCciCooperativa.trim() : undefined,
+                        // Firestore rechaza `undefined`: solo se incluye el campo de cobro de la modalidad
+                        ...(fincaTipoRegistro === 'COOPERATIVA'
+                          ? { cciCooperativa: cafCciCooperativa.trim() }
+                          : { numeroYape: cafYape.trim() }),
                         whatsapp: cafWhatsapp.trim(),   // GAP-22: guardamos WhatsApp separado de Yape
                         variedades: fincaVariedad.trim(),
                         proceso: fincaProceso.trim(),

@@ -306,8 +306,10 @@ const RegistroCaficultor: React.FC<{ isDemo?: boolean }> = ({ isDemo = false }) 
           await updateDoc(doc(db, 'one_usuarios', uid), {
             'caficultor.proceso': proceso,
             'caficultor.dni': dni,
-            'caficultor.numeroYape': tipoRegistroCaficultor !== 'COOPERATIVA' ? numeroYape : undefined,
-            'caficultor.cciCooperativa': tipoRegistroCaficultor === 'COOPERATIVA' ? cciCooperativa : undefined,
+            // Firestore rechaza `undefined`: solo se incluye el campo de cobro de la modalidad
+            ...(tipoRegistroCaficultor === 'COOPERATIVA'
+              ? { 'caficultor.cciCooperativa': cciCooperativa }
+              : { 'caficultor.numeroYape': numeroYape }),
             'caficultor.kgDisponibles': kgDisponibles,
             'caficultor.tipoRegistroCaficultor': tipoRegistroCaficultor,
             ...(tipoRegistroCaficultor === 'RUC_PROPIO' ? { 'caficultor.ruc': ruc } : {}),
